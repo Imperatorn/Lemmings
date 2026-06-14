@@ -74,6 +74,20 @@ function drawPlayWorld(c,L,cam,tk){
       c.lineWidth=1;
       c.beginPath();c.arc(Math.round(p.x-cam),Math.round(p.y),r,0,7);c.stroke();
       c.globalAlpha=1;
+    }else if(p.smoke){
+      const life=clamp(p.life/Math.max(1,p.maxLife||p.life||1),0,1);
+      const age=1-life, seed=p.seed||0;
+      const s=Math.max(2,Math.round(p.size||2)), w=Math.min(6,s+Math.floor(age*4));
+      const x=Math.round(p.x-cam)+Math.round(Math.sin(seed+age*4.2)*2),y=Math.round(p.y);
+      const side=Math.sin(seed*1.7)>0?1:-1;
+      c.globalAlpha=clamp(0.08+life*0.34,0,0.44);
+      c.fillStyle=p.col||'#707070';
+      c.fillRect(x-Math.floor(w/2),y,w,2);
+      c.fillRect(x-Math.floor(w/2)+1,y-2,Math.max(2,w-2),2);
+      if(age>0.18)c.fillRect(x-side*Math.ceil(w/2),y+1,2,1);
+      if(age>0.36)c.fillRect(x+side*Math.max(1,Math.floor(w/2)-1),y-1,2,2);
+      if(age>0.58)c.fillRect(x-1,y-3,3,1);
+      c.globalAlpha=1;
     }else if(p.dust){
       const life=clamp(p.life/18,0,1);
       c.globalAlpha=0.18+life*0.32;

@@ -299,7 +299,7 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   G.parts = [];
   plane.wreckT = 0;
   for (let i = 0; i < 60; i++) G.updateWreckedSupplyPlane(plane);
-  if (plane.wreckT !== 60 || G.parts.length < 2) {
+  if (plane.wreckT !== 60 || G.parts.filter(p => p && p.smoke).length < 2) {
     throw new Error('Wrecked supply plane did not emit slow smoke/fire particles');
   }
   G.level = prevLevel;

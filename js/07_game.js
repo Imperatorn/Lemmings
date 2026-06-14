@@ -1477,9 +1477,14 @@ const G={
   crashPlaneSmoke(x,y,hot){
     if(this.parts.length>=MAX_PARTICLES)return;
     const fire=hot&&this.rand()<0.45;
-    const col=fire?'#ff7020':(this.rand()<0.55?'#3a3a3a':'#777070');
-    this.parts.push({x:x+this.rand()*10-5,y:y+this.rand()*7-4,vx:this.rand()*0.5-0.25,vy:-0.5-this.rand()*0.8,
-      life:18+this.rand()*18,g:fire?-0.01:0.0,col,glow:fire&&this.rand()<0.35,dust:!fire});
+    if(fire){
+      this.parts.push({x:x+this.rand()*8-4,y:y+this.rand()*5-3,vx:this.rand()*0.22-0.11,vy:-0.18-this.rand()*0.28,
+        life:13+this.rand()*11,g:-0.006,col:this.rand()<0.45?'#ffd040':'#ff7020',glow:true});
+      return;
+    }
+    const life=58+this.rand()*42;
+    this.parts.push({x:x+this.rand()*10-5,y:y+this.rand()*7-4,vx:this.rand()*0.18-0.09,vy:-0.08-this.rand()*0.15,
+      life,maxLife:life,g:-0.001,col:this.rand()<0.55?'#5f5f5f':'#858585',smoke:true,size:this.rand()<0.35?3:2,seed:this.rand()*6.283});
   },
   pickCrashedPlaneLootSkills(){
     const pool=SKILLS.map(s=>s.k), out=[];
@@ -1539,8 +1544,8 @@ const G={
     a.wreckT=(a.wreckT||0)+1;
     // Vraket ska leva kvar visuellt utan att spamma partiklar. Röken är
     // långsam och lågintensiv, med bara enstaka varma puffar från branden.
-    if(a.wreckT%18===0)this.crashPlaneSmoke(a.x-9+this.rand()*7,a.y-13-this.rand()*3,false);
-    if(a.wreckT%46===7)this.crashPlaneSmoke(a.x-14+this.rand()*8,a.y-11-this.rand()*4,true);
+    if(a.wreckT%14===0)this.crashPlaneSmoke(a.x-9+this.rand()*7,a.y-13-this.rand()*3,false);
+    if(a.wreckT%50===7)this.crashPlaneSmoke(a.x-14+this.rand()*8,a.y-11-this.rand()*4,true);
     return true;
   },
   updateCrashingSupplyPlane(a){
