@@ -101,14 +101,18 @@ class Lemming{
   tryStepOverTinyGap(T,nx,baseY){
     // NÃ¥gra banor har 1-2 px skarvar mellan ramp och plattform. De ska lÃ¤sas
     // som ojÃ¤mn mark, inte som en riktig ravin.
-    for(let gap=1;gap<=2;gap++){
+    // Regeln nedan tillater 1-3 px och landning nagra pixlar hogre.
+    const yOffsets=[0,-1,1,-2,2,-3,3,-4,-5,-6];
+    for(let gap=1;gap<=3;gap++){
       const tx=nx+this.dir*gap;
       if(tx<3||tx>T.W-3||this.turnedByBlocker(tx))return false;
-      let ty=baseY,down=0;
-      while(!T.solid(tx,ty+1)&&down<4){ty++;down++}
-      if(down<4&&!T.solid(tx,ty)&&!T.solid(tx,ty-6)){
-        this.x=tx;this.y=ty;
-        return true;
+      for(const yo of yOffsets){
+        const ty=baseY+yo;
+        if(ty<4||ty>T.H-5)continue;
+        if(!T.solid(tx,ty)&&T.solid(tx,ty+1)&&!T.solid(tx,ty-6)){
+          this.x=tx;this.y=ty;
+          return true;
+        }
       }
     }
     return false;
