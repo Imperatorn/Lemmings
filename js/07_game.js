@@ -361,7 +361,7 @@ const G={
     const arrays=['lems','parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
     const data={v:1,label:String(label||'SPARAT LÄGE').slice(0,28),ts:Date.now?Date.now():0,levelIdx:this.levelIdx,levelSeed:this.levelSeed>>>0,
-      terrain:encodeMask(this.T.mask),W:this.T.W,H:this.T.H,fields:{},arrays:{}};
+      terrain:encodeMask(this.T.mask),terrainStairs:encodeMask(this.T.stairMask),W:this.T.W,H:this.T.H,fields:{},arrays:{}};
     for(const f of fields)data.fields[f]=jsonClone(this[f]);
     data.fields.paused=false;
     if(data.fields.manual&&data.fields.manual.keys)data.fields.manual.keys={left:false,right:false,down:false,run:false,aim:false};
@@ -395,6 +395,7 @@ const G={
     this.level=LEVELS[this.levelIdx];
     this.T=new Terrain(s.W||this.level.W,s.H||240);
     this.T.mask=decodeMask(s.terrain,this.T.W*this.T.H);
+    this.T.stairMask=decodeMask(s.terrainStairs||'',this.T.W*this.T.H);
     this.T.renderFromMask(this.level.theme,this.level.materialZones);
     const fields=s.fields||{}, arrays=s.arrays||{};
     for(const k in fields)this[k]=jsonClone(fields[k]);

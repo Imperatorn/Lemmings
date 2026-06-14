@@ -120,6 +120,9 @@ class Lemming{
   walk(T){
     const climbRope=G.findClimbableRope(this);
     if(climbRope){this.startRopeClimb(climbRope.rope,climbRope.t);return}
+    if(T.stairBox&&T.stairBox(this.x,this.y+1,2)&&(this.anim&1)){
+      G.checkExit(this);G.checkLiquid(this);return;
+    }
     const nx=this.x+this.dir;
     if(nx<3||nx>T.W-3){this.dir*=-1;return}
     if(this.turnedByBlocker(nx)){this.dir*=-1;return}

@@ -3,6 +3,7 @@ class Terrain{
   constructor(W,H){
     this.W=W;this.H=H;
     this.mask=new Uint8Array(W*H);
+    this.stairMask=new Uint8Array(W*H);
     this.cv=document.createElement('canvas');
     this.cv.width=W;this.cv.height=H;
     this.cx=this.cv.getContext('2d');
@@ -25,14 +26,14 @@ class Terrain{
     const x0=Math.max(0,x),x1=Math.min(this.W,x+w);
     const y0=Math.max(0,y),y1=Math.min(this.H,y+h);
     for(let yy=y0;yy<y1;yy++){const o=yy*this.W;
-      for(let xx=x0;xx<x1;xx++)this.mask[o+xx]=v;}
+      for(let xx=x0;xx<x1;xx++){this.mask[o+xx]=v;this.stairMask[o+xx]=0;}}
   }
   setDisc(x,y,r,v){
     const x0=Math.max(0,x-r|0),x1=Math.min(this.W-1,x+r|0);
     const y0=Math.max(0,y-r|0),y1=Math.min(this.H-1,y+r|0);
     for(let yy=y0;yy<=y1;yy++){const o=yy*this.W,dy=yy-y;
       for(let xx=x0;xx<=x1;xx++){const dx=xx-x;
-        if(dx*dx+dy*dy<=r*r)this.mask[o+xx]=v;}}
+        if(dx*dx+dy*dy<=r*r){this.mask[o+xx]=v;this.stairMask[o+xx]=0;}}}
   }
   setRamp(x,yBase,w,h,dir,v){ // lutande backe; dir=1 stiger åt höger
     for(let i=0;i<w;i++){
@@ -40,7 +41,7 @@ class Terrain{
       const cx=dir>0?x+i:x+w-1-i;
       for(let k=1;k<=colH;k++){
         const yy=yBase-k;
-        if(cx>=0&&cx<this.W&&yy>=0&&yy<this.H)this.mask[yy*this.W+cx]=v;
+        if(cx>=0&&cx<this.W&&yy>=0&&yy<this.H){this.mask[yy*this.W+cx]=v;this.stairMask[yy*this.W+cx]=0}
       }
     }
   }
@@ -53,8 +54,25 @@ class Terrain{
   }
   brick(x,y,w,h,col){
     this.setRect(x,y,w,h,1);
+    const x0=Math.max(0,x|0),x1=Math.min(this.W,(x+w)|0);
+    const y0=Math.max(0,y|0),y1=Math.min(this.H,(y+h)|0);
+    for(let yy=y0;yy<y1;yy++){const o=yy*this.W;
+      for(let xx=x0;xx<x1;xx++)this.stairMask[o+xx]=1;}
     this.cx.fillStyle=col;this.cx.fillRect(x|0,y|0,w,h);
     this.cx.fillStyle='rgba(255,255,255,0.25)';this.cx.fillRect(x|0,y|0,w,1);
+  }
+  stair(x,y){
+    x|=0;y|=0;
+    if(x<0||x>=this.W||y<0||y>=this.H)return false;
+    return this.stairMask&&this.stairMask[y*this.W+x]===1;
+  }
+  stairBox(x,y,r){
+    x|=0;y|=0;r|=0;
+    if(!this.stairMask)return false;
+    for(let yy=y-r;yy<=y+r;yy++)
+      for(let xx=x-r;xx<=x+r;xx++)
+        if(this.stair(xx,yy))return true;
+    return false;
   }
   renderFromMask(themeKey,materialZones){
     const levelTheme={theme:themeKey,materialZones};
