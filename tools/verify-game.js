@@ -131,6 +131,7 @@ if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is em
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
+  'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','updateMummyScareEffects',
   'updateRandomJumpEvents','updateLemmingChatter','updateWaterfallHeadSplashes'
@@ -206,6 +207,19 @@ if (!savedState || savedState.levelIdx !== 0 || !savedState.terrain || !savedSta
 }
 if (!G.restoreSaveState(savedState) || G.state !== 'PLAY' || !G.T || G.levelIdx !== 0) {
   throw new Error('Restore-state smoke test failed');
+}
+
+G.startLevel(0);
+G.T.setRect(118, 118, 5, 5, 1);
+const rope = {id: 9001, x1: 80, y1: 180, x2: 130, y2: 120, hookX: 120, hookY: 120, active: true, age: 0};
+const ropeLem = {ropeId: rope.id, state: 'ROPE', fall: 7, ropeCooldown: 0};
+G.ropes = [rope];
+G.lems = [ropeLem];
+if (!G.ropeAnchorIntact(rope)) throw new Error('Rope anchor fixture was not solid before blast');
+G.explode(120, 120, 8, false, 'verify');
+if (G.ropes.length !== 0 || rope.active) throw new Error('Rope survived after its anchor terrain was removed');
+if (ropeLem.state !== 'FALL' || ropeLem.ropeId !== null || ropeLem.fall !== 0) {
+  throw new Error('Lemming was not released when rope anchor disappeared');
 }
 
 console.log(`verify-game ok: ${LEVELS.length} levels, ${scripts.length} scripts`);

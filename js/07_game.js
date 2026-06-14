@@ -681,6 +681,7 @@ const G={
   // ---- händelser ----
   explode(x,y,r,big,soundKind){
     this.T.clearDisc(x,y,r);
+    this.pruneDetachedRopes();
     if(soundKind==='bazooka')AU.sBazookaExplosion();
     else if(soundKind==='lemming')AU.sLemmingExplosion();
     else if(soundKind==='banana')AU.sBananaExplosion();
@@ -1245,8 +1246,39 @@ const G={
     if(owner&&this.canApplySkill(owner,'rope')){owner.ropeCooldown=0;owner.startRopeClimb(rope,0)}
     return true;
   },
+  ropeAnchorIntact(rope){
+    if(!this.T||!rope||!rope.active)return false;
+    const x=Math.round(rope.hookX), y=Math.round(rope.hookY);
+    if(!Number.isFinite(x)||!Number.isFinite(y))return false;
+    // Kroken fäster med solidBox(..., 2), så samma lilla kontaktyta avgör om
+    // materialet fortfarande håller repet efter explosioner eller grävning.
+    return this.T.solidBox(x,y,2);
+  },
+  detachRope(rope){
+    if(!rope||!rope.active)return false;
+    rope.active=false;
+    for(const l of this.lems||[]){
+      if(l&&l.ropeId===rope.id){
+        l.state='FALL';l.fall=0;l.ropeId=null;l.ropeCooldown=Math.max(l.ropeCooldown||0,8);
+      }
+    }
+    return true;
+  },
+  pruneDetachedRopes(){
+    if(!this.T||!this.ropes||!this.ropes.length)return 0;
+    let removed=0;
+    for(const rope of this.ropes){
+      if(rope&&rope.active&&!this.ropeAnchorIntact(rope)){
+        this.detachRope(rope);
+        removed++;
+      }
+    }
+    if(removed)this.ropes=this.ropes.filter(r=>r&&r.active);
+    return removed;
+  },
   updateHooksAndRopes(){
     if(!this.T)return;
+    this.pruneDetachedRopes();
     for(const rope of this.ropes||[])rope.age++;
     for(const h of this.hooks||[]){
       h.life--;h.vy+=h.g||0;
