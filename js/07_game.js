@@ -1443,6 +1443,109 @@ const G={
     });
     this.toast('FLYGPLAN MED PAKET!');
   },
+  supplyPlaneHitScore(a,wx,wy,scale){
+    if(!a||a.crashing||a.wrecked)return Infinity;
+    const sc=Math.max(1,scale||1);
+    const dx=Math.abs(a.x-wx), dy=Math.abs(a.y-wy);
+    const body=dx<=30&&dy<=16;
+    const norm=(dx/(34+4*sc))*(dx/(34+4*sc))+(dy/(18+2*sc))*(dy/(18+2*sc));
+    if(!body&&norm>1)return Infinity;
+    return body?norm*0.2:norm;
+  },
+  hitSupplyPlaneAt(wx,wy,scale){
+    if(Math.max(1,scale||1)<2)return null;
+    let best=null,bestScore=Infinity;
+    for(const a of this.planes||[]){
+      const s=this.supplyPlaneHitScore(a,wx,wy,scale);
+      if(s<bestScore){best=a;bestScore=s}
+    }
+    return best;
+  },
+  pickSupplyPlaneForTroll(t){
+    if(!t||this.trollScale(t)<2)return null;
+    let best=null,bestScore=Infinity;
+    for(const a of this.planes||[]){
+      if(!a||a.crashing||a.wrecked)continue;
+      const dx=Math.abs(a.x-t.x), dy=t.y-a.y;
+      if(dx>520||dy<70||dy>230)continue;
+      const ahead=(a.x-t.x)*(t.dir||1);
+      const score=dx+Math.abs(dy-155)*0.45+(ahead<-45?120:0);
+      if(score<bestScore){best=a;bestScore=score}
+    }
+    return best;
+  },
+  crashPlaneSmoke(x,y,hot){
+    if(this.parts.length>=MAX_PARTICLES)return;
+    const fire=hot&&this.rand()<0.45;
+    const col=fire?'#ff7020':(this.rand()<0.55?'#3a3a3a':'#777070');
+    this.parts.push({x:x+this.rand()*10-5,y:y+this.rand()*7-4,vx:this.rand()*0.5-0.25,vy:-0.5-this.rand()*0.8,
+      life:18+this.rand()*18,g:fire?-0.01:0.0,col,glow:fire&&this.rand()<0.35,dust:!fire});
+  },
+  pickCrashedPlaneLootSkills(){
+    const pool=SKILLS.map(s=>s.k), out=[];
+    while(out.length<3&&pool.length){
+      const i=Math.floor(this.rand()*pool.length);
+      out.push(pool.splice(i,1)[0]);
+    }
+    return out;
+  },
+  dropCrashedPlaneLoot(a){
+    if(!a||a.crashLootDropped||!this.level)return false;
+    a.crashLootDropped=true;
+    const skills=this.pickCrashedPlaneLootSkills();
+    const offsets=[-18,0,18];
+    for(let i=0;i<skills.length;i++){
+      const x=clamp(Math.round(a.x+offsets[i]+this.rand()*8-4),5,this.level.W-5);
+      const y=clamp(Math.round(this.findSupplyGroundY(x)-5),12,this.T.H-8);
+      this.packages.push({x,y,vx:0,vy:0,kind:'skill',skill:skills[i],landed:true,opened:false,openT:0,picked:false,loot:true,crashLoot:true,landX:x,landY:y,treeBaseY:null});
+      this.pickupSparkle(x,y,'loot',1);
+    }
+    return true;
+  },
+  damageSupplyPlane(a,x,y){
+    if(!a||a.crashing||a.wrecked)return false;
+    a.crashing=true;
+    a.dropped=true;
+    a.vx*=0.42;
+    a.vy=0.35+this.rand()*0.25;
+    a.crashT=0;
+    a.spin=0;
+    this.flashes.push({x,y,r:46,t:10,maxT:10});
+    for(let i=0;i<22&&this.parts.length<MAX_PARTICLES;i++)this.crashPlaneSmoke(x,y,true);
+    this.shakeT=Math.max(this.shakeT,8);this.shakePow=Math.max(this.shakePow,4);
+    AU.sTrollSmash();
+    this.toast('JÄTTETROLLET TRÄFFADE FLYGPLANET!');
+    return true;
+  },
+  finishSupplyPlaneCrash(a){
+    if(!a||a.wrecked)return false;
+    a.crashing=false;
+    a.wrecked=true;
+    a.vx=0;a.vy=0;
+    a.x=clamp(a.x,8,this.level.W-8);
+    a.y=this.findSupplyGroundY(a.x);
+    a.wreckT=0;
+    this.dropCrashedPlaneLoot(a);
+    this.flashes.push({x:a.x,y:a.y-8,r:84,t:14,maxT:14});
+    for(let i=0;i<34&&this.parts.length<MAX_PARTICLES;i++)this.crashPlaneSmoke(a.x,a.y-10,true);
+    this.debris(a.x,a.y-5,18);
+    this.shakeT=Math.max(this.shakeT,14);this.shakePow=Math.max(this.shakePow,6);
+    AU.sBigBoom();
+    this.toast('FLYGPLANET STÖRTADE - TRE PAKET FÖLL UR!');
+    return true;
+  },
+  updateCrashingSupplyPlane(a){
+    if(!a||!this.level||!this.T)return false;
+    a.crashT=(a.crashT||0)+1;
+    a.x=clamp(a.x+(a.vx||0),5,this.level.W-5);
+    a.vy=Math.min(3.4,(a.vy||0)+0.075);
+    a.y+=a.vy;
+    if(a.crashT%2===0)this.crashPlaneSmoke(a.x-10*(a.vx>=0?1:-1),a.y,true);
+    if(a.crashT%7===0)AU.sPlane();
+    const gy=this.findSupplyGroundY(a.x);
+    if(a.y>=gy-5||a.y>=this.T.H-8)return this.finishSupplyPlaneCrash(a);
+    return false;
+  },
   supplyTouchesLemming(p,l,oldX,oldY){
     // Paketet ska kunna fångas både när det landar bredvid en lemmel och när
     // det faktiskt faller rakt på huvudet. Därför används en svept box mellan
@@ -1534,6 +1637,8 @@ const G={
     }
 
     for(const a of this.planes){
+      if(a.wrecked){a.wreckT=(a.wreckT||0)+1;continue}
+      if(a.crashing){this.updateCrashingSupplyPlane(a);continue}
       a.x+=a.vx;
       if(a.x>this.cam-120&&a.x<this.cam+this.viewW()+120)AU.sPlane();
       if(!a.dropped&&((a.vx>0&&a.x>=a.targetX)||(a.vx<0&&a.x<=a.targetX))){
@@ -1542,7 +1647,7 @@ const G={
         AU.sClick();
       }
     }
-    this.planes=this.planes.filter(a=>a.x>-80&&a.x<this.level.W+80);
+    this.planes=this.planes.filter(a=>a.wrecked||a.crashing||a.x>-80&&a.x<this.level.W+80);
 
     for(const p of this.packages){
       // Kontrollera pickup både före och efter fysiksteget. Det löser fallet
@@ -2016,13 +2121,17 @@ const G={
     return true;
   },
   tryTrollThrowAtMonkey(t){
-    if(!t||t.chewT>0||t.rageT>0||!(this.monkeys&&this.monkeys.length))return false;
+    if(!t||t.chewT>0||t.rageT>0)return false;
     if(t.rockT==null)t.rockT=Math.round((1.5+this.rand()*2.0)*1000/TICK);
+    const plane=this.pickSupplyPlaneForTroll(t);
     const m=this.pickMonkeyForTroll(t);
-    if(m)t.rockT-=2;
+    if(plane)t.rockT-=3;
+    else if(m)t.rockT-=2;
+    else return false;
     t.rockT--;
     if(t.rockT>0)return false;
     t.rockT=Math.round((3.5+this.rand()*4.5)*1000/TICK);
+    if(plane)return this.throwTrollRock(t,plane);
     if(!m||this.rand()>0.82)return false;
     return this.throwTrollRock(t,m);
   },
@@ -2035,8 +2144,12 @@ const G={
       const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
       for(let i=0;i<steps&&!r.hit;i++){
         r.x+=r.vx/steps;r.y+=r.vy/steps;
-        const m=this.findMonkeyTarget(r.x,r.y);
-        if(m){
+        const plane=this.hitSupplyPlaneAt(r.x,r.y,sc);
+        const m=plane?null:this.findMonkeyTarget(r.x,r.y);
+        if(plane){
+          this.damageSupplyPlane(plane,r.x,r.y);
+          r.hit=true;
+        }else if(m){
           this.dismissMonkey(m,'rock',r.x,r.y);
           r.hit=true;
         }else if(this.T&&(this.T.solidBox(r.x,r.y,Math.round(2*sc))||r.y>=this.T.H-4)){

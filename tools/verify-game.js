@@ -153,7 +153,8 @@ const requiredRuntimeMethods = [
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'hitDecorTargetAt',
-  'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','throwTrollRock',
+  'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
+  'damageSupplyPlane','finishSupplyPlaneCrash','tryTrollThrowAtMonkey','throwTrollRock',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -260,6 +261,49 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
     throw new Error('Giant troll rock did not inherit troll scale');
   }
   G.trollRocks = prevRocks;
+  G.rand = prevRand;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevPlanes = G.planes;
+  const prevPackages = G.packages;
+  const prevRocks = G.trollRocks;
+  const prevParts = G.parts;
+  const prevFlashes = G.flashes;
+  const prevToasts = G.toasts;
+  const prevRand = G.rand;
+  G.level = {W:320, hatch:{x:20,y:180}, water:[]};
+  G.T = {W:320, H:240, solid:(x,y)=>y>=210, solidBox:(x,y,r)=>y+(r||0)>=210};
+  G.planes = [{x:150,y:42,vx:1.4,targetX:190,kind:'skill',skill:'baz',dropped:false}];
+  G.packages = [];
+  G.trollRocks = [];
+  G.parts = [];
+  G.flashes = [];
+  G.toasts = [];
+  G.rand = () => 0.35;
+  const troll = {x:100,y:200,scale:2,dir:1,rockT:1,chewT:0,rageT:0};
+  if (!G.pickSupplyPlaneForTroll(troll)) throw new Error('Giant troll did not target supply plane');
+  if (!G.tryTrollThrowAtMonkey(troll) || !G.trollRocks[0] || G.trollRocks[0].scale !== 2) {
+    throw new Error('Giant troll did not throw a scaled rock at supply plane');
+  }
+  const plane = G.planes[0];
+  if (!G.damageSupplyPlane(plane, plane.x, plane.y) || !plane.crashing) {
+    throw new Error('Supply plane did not enter crashing state');
+  }
+  if (!G.finishSupplyPlaneCrash(plane) || !plane.wrecked || G.packages.length !== 3) {
+    throw new Error('Supply plane crash did not create a wreck with three packages');
+  }
+  const lootSkills = new Set(G.packages.map(p => p.skill));
+  if (lootSkills.size !== 3) throw new Error('Supply plane crash packages were not three different skills');
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.planes = prevPlanes;
+  G.packages = prevPackages;
+  G.trollRocks = prevRocks;
+  G.parts = prevParts;
+  G.flashes = prevFlashes;
+  G.toasts = prevToasts;
   G.rand = prevRand;
 }
 G.state = 'MENU';

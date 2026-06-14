@@ -730,7 +730,52 @@ function supplyPackageLetter(kind,skill){
 }
 function hiddenSupplyPackageColor(){return '#9fb8d8'}
 function hiddenSupplyPackageLetter(){return '?'}
+function drawCrashingSupplyPlane(c,a,cam,tk){
+  const x=Math.round(a.x-cam),y=Math.round(a.y),dir=(a.vx||1)>=0?1:-1;
+  if(x<-90||x>VW+90)return;
+  c.save();
+  c.translate(x,y);c.scale(dir,1);
+  const r=(x0,y0,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x0),Math.round(y0),Math.round(w),Math.round(h))};
+  const wob=((tk>>2)&1);
+  r(-20,-7,13,7,'#454850');
+  r(-7,-5,15,8,'#60646e');
+  r(7,-2,12,7,'#747986');
+  r(14,0,5,4,'#d8e8ff');
+  r(-23,-7,6,5,'#303038');
+  c.fillStyle='#555b66';
+  c.beginPath();c.moveTo(-5,-1);c.lineTo(-22,7);c.lineTo(-2,5);c.lineTo(8,2);c.closePath();c.fill();
+  c.fillStyle='#383c44';
+  c.beginPath();c.moveTo(-2,3);c.lineTo(-16,13);c.lineTo(3,7);c.lineTo(9,4);c.closePath();c.fill();
+  r(-16+wob,-9,5,2,'#202020');
+  r(-19,-6,3,3,((tk>>1)&1)?'#ff7020':'#ffd040');
+  r(-22,-4,4,2,'#ff3018');
+  r(-12,3,3,3,((tk>>2)&1)?'#ffb030':'#ff5a18');
+  r(-27,-10,5,2,'#505050');
+  r(-31,-13,4,2,'#707070');
+  r(-35,-16,3,2,'#909090');
+  c.restore();
+}
+function drawSupplyPlaneWreck(c,a,cam,tk){
+  const x=Math.round(a.x-cam),y=Math.round(a.y);
+  if(x<-70||x>VW+70)return;
+  c.save();
+  c.globalAlpha=0.36;c.fillStyle='#000';c.fillRect(x-29,y+1,58,3);c.globalAlpha=1;
+  c.fillStyle='#383c44';c.fillRect(x-22,y-8,26,8);
+  c.fillStyle='#555b66';c.fillRect(x-18,y-10,14,3);
+  c.fillStyle='#24272e';c.fillRect(x+3,y-6,18,6);
+  c.fillStyle='#747986';c.fillRect(x+18,y-4,5,3);
+  c.fillStyle='#303038';c.fillRect(x-27,y-7,8,6);
+  c.fillStyle='#4f5662';c.fillRect(x-8,y-2,22,3);
+  c.fillStyle='#2d3038';c.fillRect(x-16,y-1,10,2);
+  c.fillStyle=((tk>>2)&1)?'#ff7020':'#ffd040';c.fillRect(x-13,y-10,3,4);
+  c.fillStyle='#ff3018';c.fillRect(x-16,y-8,3,2);
+  c.fillStyle='#5a5a5a';c.fillRect(x-8,y-18,5,2);c.fillRect(x-11,y-21,4,2);
+  c.fillStyle='#808080';c.fillRect(x-13,y-24,3,2);
+  c.restore();
+}
 function drawSupplyPlane(c,a,cam,tk){
+  if(a.wrecked)return drawSupplyPlaneWreck(c,a,cam,tk);
+  if(a.crashing)return drawCrashingSupplyPlane(c,a,cam,tk);
   const x=Math.round(a.x-cam),y=Math.round(a.y),dir=a.vx>=0?1:-1;
   if(x<-90||x>VW+90)return;
   const kind=a.kind||((a.skill==='tree')?'tree':'skill');
