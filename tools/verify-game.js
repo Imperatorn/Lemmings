@@ -14,7 +14,7 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL_fixed_v44.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js','js/07_cutscenes.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
@@ -33,22 +33,25 @@ if (debugHtml) {
   const debugRopeIdx = debugScripts.indexOf('js/07_rope.js');
   const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
   const debugCutsceneIdx = debugScripts.indexOf('js/07_cutscenes.js');
+  const debugCutsceneScenesIdx = debugScripts.indexOf('js/07_cutscene_scenes.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugLivingIdx <= debugRopeIdx || debugCutsceneIdx <= debugLivingIdx || debugPageIdx <= debugCutsceneIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugLivingIdx <= debugRopeIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugPageIdx <= debugCutsceneScenesIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
     'animFishRing','animFishRingRope','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
-    'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka',
-    'animCutsceneBox','animCutsceneFull','animFishRingCutscene','animDolphinCutscene'
+    'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
   ];
   for (const action of requiredDebugActions) {
     if (!debugHtml.includes(`data-action="${action}"`)) {
       throw new Error(`debug.html is missing debug action: ${action}`);
     }
   }
+  if (!debugHtml.includes('id="cutsceneButtons"')) {
+    throw new Error('debug.html is missing the dynamic cutscene button container');
+  }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','setupCutsceneAnimation','setupFishRingCutsceneAnimation','setupDolphinCutsceneAnimation']) {
+  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','playDebugCutscene']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
@@ -168,7 +171,7 @@ const requiredRuntimeMethods = [
   'setMusicVolume','setSfxVolume',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
-  'registerCutscene','cutsceneById','playCutscene','stopCutscene','clearCutscene',
+  'registerCutscene','cutsceneById','cutsceneList','playCutscene','stopCutscene','clearCutscene',
   'advanceCutscene','updateCutscene','cutsceneActive','cutsceneRect','currentCutsceneShot',
   'handleCutsceneInput','handleCutsceneKey','makeCutscenePreviewSpec',
   'makeFishRingCutsceneSpec','playFishRingCutscene',
@@ -200,6 +203,17 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   throw new Error('Audio volume setters failed');
 }
 if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCutsceneOverlay');
+{
+  const registeredCutscenes = G.cutsceneList({debug:true});
+  const registeredIds = new Set(registeredCutscenes.map(s => s.id));
+  for (const id of ['cutscene-preview-box','cutscene-preview-fullscreen','fish-ring-closeup','dolphin-rescue-closeup']) {
+    if (!registeredIds.has(id)) throw new Error(`Cutscene registry is missing debug scene: ${id}`);
+  }
+  const fishMeta = registeredCutscenes.find(s => s.id === 'fish-ring-closeup');
+  if (!fishMeta || fishMeta.group !== 'Raddningar' || !fishMeta.label) {
+    throw new Error('Fish ring cutscene metadata is incomplete');
+  }
+}
 {
   const prevState = G.state;
   const prevPaused = G.paused;

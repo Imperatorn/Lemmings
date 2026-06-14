@@ -355,24 +355,6 @@
     finishAnimationSetup('Animation: räddningslucka öppnas och fångade lemlar släpps.');
   }
 
-  function setupCutsceneAnimation(mode){
-    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
-    G.playCutscene(G.makeCutscenePreviewSpec(mode));
-    finishAnimationSetup(mode==='fullscreen'?'Cutscene: fullskarmsoverlay.':'Cutscene: ruta ovanpa spelvyn.');
-  }
-
-  function setupFishRingCutsceneAnimation(){
-    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
-    G.playCutscene(G.makeFishRingCutsceneSpec('fullscreen'));
-    finishAnimationSetup('Cutscene: fisken ger en badring i nara pixelart.');
-  }
-
-  function setupDolphinCutsceneAnimation(){
-    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
-    G.playCutscene(G.makeDolphinRescueCutsceneSpec('fullscreen'));
-    finishAnimationSetup('Cutscene: delfinen lyfter upp lemmeln ur vattnet.');
-  }
-
   function setupSkillAnimation(k){
     if(k==='rope')return setupRopeAnimation();
     const l=firstLiveLemming();
@@ -424,17 +406,13 @@
     if(action==='animPackageFall')return setupPackageFallAnimation();
     if(action==='animWaterfall')return setupWaterfallAnimation();
     if(action==='animFishRing')return setupFishRingAnimation();
-    if(action==='animFishRingCutscene')return setupFishRingCutsceneAnimation();
     if(action==='animFishRingRope')return setupFishRingRopeAnimation();
-    if(action==='animDolphinCutscene')return setupDolphinCutsceneAnimation();
     if(action==='animMeteor')return setupMeteorAnimation();
     if(action==='animMega')return setupMegaAnimation();
     if(action==='animMushroom')return setupMushroomAnimation();
     if(action==='animTrollMushroom')return setupTrollMushroomAnimation();
     if(action==='animBanana')return setupBananaAnimation();
     if(action==='animRescue')return setupRescueAnimation();
-    if(action==='animCutsceneBox')return setupCutsceneAnimation('box');
-    if(action==='animCutsceneFull')return setupCutsceneAnimation('fullscreen');
     if(action==='animClimb')return setupSkillAnimation('climb');
     if(action==='animFloat')return setupSkillAnimation('float');
     if(action==='animBomb')return setupSkillAnimation('bomb');
@@ -506,6 +484,28 @@
     if(cls)b.className=cls;
     b.addEventListener('click',fn);
     return b;
+  }
+
+  function playDebugCutscene(id,label){
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    if(!G.cutsceneById||!G.cutsceneById(id)){setStatus('Cutscene saknas: '+id,'warn');return}
+    const cs=G.playCutscene(id,{respectPrefs:false});
+    if(!cs){setStatus('Kunde inte starta cutscene: '+id,'warn');return}
+    finishAnimationSetup('Cutscene: '+(label||id)+'.');
+  }
+
+  function buildCutsceneButtons(){
+    const wrap=$('cutsceneButtons');
+    if(!wrap)return;
+    wrap.textContent='';
+    const scenes=G.cutsceneList?G.cutsceneList({debug:true}):[];
+    if(!scenes.length){
+      wrap.appendChild(makeButton('Inga scener',()=>setStatus('Inga cutscenes ar registrerade.','warn'),'danger'));
+      return;
+    }
+    for(const scene of scenes){
+      wrap.appendChild(makeButton(scene.label||scene.id,()=>playDebugCutscene(scene.id,scene.label)));
+    }
   }
 
   function playSfx(label,fn){
@@ -589,6 +589,7 @@
     }
 
     buildAudioButtons();
+    buildCutsceneButtons();
     $('debugReady').textContent='Redo';
     $('debugReady').style.color='var(--ok)';
     renderDebug();

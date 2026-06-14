@@ -88,17 +88,13 @@
           <button data-action="animPackageFall">Paketfall</button>
           <button data-action="animWaterfall">Vattenfall på huvud</button>
           <button data-action="animFishRing">Fisk ger badring</button>
-          <button data-action="animFishRingCutscene">Cutscene fisk+badring</button>
           <button data-action="animFishRingRope">Badring + repkrok</button>
-          <button data-action="animDolphinCutscene">Cutscene delfinräddning</button>
           <button data-action="animMeteor">Meteorit</button>
           <button data-action="animMega">Megabomb</button>
           <button data-action="animMushroom">Lemmel äter svamp</button>
           <button data-action="animTrollMushroom">Troll äter svamp</button>
           <button data-action="animBanana">Bananexplosion</button>
           <button data-action="animRescue">Räddningslucka</button>
-          <button data-action="animCutsceneBox">Cutscene ruta</button>
-          <button data-action="animCutsceneFull">Cutscene fullskärm</button>
           <button data-action="animClimb">Klättrare</button>
           <button data-action="animFloat">Fallskärm</button>
           <button data-action="animBomb">Bomb</button>
@@ -114,6 +110,12 @@
           <button data-action="animBazooka">Bazooka</button>
         </div>
         <p class="hint">Animationerna bygger en liten testscen i aktuell nivå och startar loopen automatiskt.</p>
+      </section>
+
+      <section class="group">
+        <h2>Cutscenes</h2>
+        <div class="grid" id="cutsceneButtons"></div>
+        <p class="hint">Listan byggs från cutscene-registret, så nya registrerade scener blir testbara här automatiskt.</p>
       </section>
 
       <section class="group">
@@ -160,6 +162,7 @@
   <script src="js/07_manual_control.js"></script>
   <script src="js/07_living_world.js"></script>
   <script src="js/07_cutscenes.js"></script>
+  <script src="js/07_cutscene_scenes.js"></script>
   <script src="js/08_render.js"></script>
   <script src="js/09_hud.js"></script>
   <script src="js/10_screens.js"></script>
