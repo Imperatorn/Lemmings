@@ -184,9 +184,10 @@ function drawCutsceneFish(c,x,y,sc,p,ringHeld){
   c.fillRect(x+9*sc,y-1*sc,4*sc,3*sc);
   if(ringHeld)drawCutsceneSwimRing(c,x+18*sc,y+2*sc,Math.max(1,Math.round(sc*0.45)),0.95);
 }
-function drawCutsceneLemClose(c,x,y,sc,smile,ringOn,tk){
+function drawCutsceneLemClose(c,x,y,sc,smile,ringOn,tk,euphoria){
   x=Math.round(x);y=Math.round(y);sc=Math.max(1,sc||1);
-  const bob=Math.round(Math.sin(tk*0.2)*sc);
+  euphoria=clamp(euphoria||0,0,1);
+  const bob=Math.round(Math.sin(tk*0.2)*sc)-Math.round(euphoria*2*sc)+Math.round(Math.sin(tk*0.55)*euphoria*2*sc);
   y+=bob;
   c.fillStyle='rgba(0,0,0,0.28)';
   c.fillRect(x-15*sc,y+29*sc,35*sc,3*sc);
@@ -206,17 +207,49 @@ function drawCutsceneLemClose(c,x,y,sc,smile,ringOn,tk){
   c.fillStyle='#42b848';
   c.fillRect(x-8*sc,y-20*sc,8*sc,4*sc);
   c.fillStyle='#101018';
-  c.fillRect(x-5*sc,y-6*sc,3*sc,3*sc);
-  c.fillRect(x+5*sc,y-6*sc,3*sc,3*sc);
+  if(euphoria>0.35){
+    c.fillRect(x-7*sc,y-7*sc,6*sc,2*sc);
+    c.fillRect(x+3*sc,y-7*sc,6*sc,2*sc);
+    c.fillRect(x-5*sc,y-9*sc,2*sc,2*sc);
+    c.fillRect(x+5*sc,y-9*sc,2*sc,2*sc);
+  }else{
+    c.fillRect(x-5*sc,y-6*sc,3*sc,3*sc);
+    c.fillRect(x+5*sc,y-6*sc,3*sc,3*sc);
+  }
   c.fillStyle='#ffffff';
-  c.fillRect(x-4*sc,y-6*sc,1*sc,1*sc);
-  c.fillRect(x+6*sc,y-6*sc,1*sc,1*sc);
+  if(euphoria>0.35){
+    c.fillRect(x-8*sc,y-10*sc,2*sc,2*sc);
+    c.fillRect(x+8*sc,y-10*sc,2*sc,2*sc);
+  }else{
+    c.fillRect(x-4*sc,y-6*sc,1*sc,1*sc);
+    c.fillRect(x+6*sc,y-6*sc,1*sc,1*sc);
+  }
+  if(euphoria>0.25){
+    c.fillStyle='#f0a080';
+    c.fillRect(x-11*sc,y-1*sc,3*sc,2*sc);
+    c.fillRect(x+9*sc,y-1*sc,3*sc,2*sc);
+  }
   c.fillStyle='#9c5c38';
-  if(smile)c.fillRect(x-4*sc,y+2*sc,11*sc,2*sc);
+  if(euphoria>0.35){
+    c.fillStyle='#4a1c1c';
+    c.fillRect(x-5*sc,y+1*sc,12*sc,7*sc);
+    c.fillStyle='#fff4d0';
+    c.fillRect(x-4*sc,y+1*sc,10*sc,2*sc);
+    c.fillStyle='#d85858';
+    c.fillRect(x-2*sc,y+5*sc,7*sc,2*sc);
+  }else if(smile)c.fillRect(x-4*sc,y+2*sc,11*sc,2*sc);
   else c.fillRect(x-2*sc,y+3*sc,7*sc,2*sc);
   c.fillStyle='#f0c090';
-  c.fillRect(x-17*sc,y+8*sc,7*sc,5*sc);
-  c.fillRect(x+10*sc,y+8*sc,7*sc,5*sc);
+  if(euphoria>0.25){
+    const wave=((tk>>2)&1)?1:-1;
+    c.fillRect(x-18*sc,y-7*sc,5*sc,16*sc);
+    c.fillRect(x+13*sc,y-7*sc,5*sc,16*sc);
+    c.fillRect(x-20*sc,y-(12+wave)*sc,8*sc,5*sc);
+    c.fillRect(x+12*sc,y-(12-wave)*sc,8*sc,5*sc);
+  }else{
+    c.fillRect(x-17*sc,y+8*sc,7*sc,5*sc);
+    c.fillRect(x+10*sc,y+8*sc,7*sc,5*sc);
+  }
 }
 function drawFishRingCutscene(c,r,p,cs,tk){
   c.fillStyle='#061122';c.fillRect(r.x,r.y,r.w,r.h);
@@ -236,10 +269,11 @@ function drawFishRingCutscene(c,r,p,cs,tk){
   const settle=clamp((p-0.68)/0.24,0,1);
   const ringOn=p>0.58;
   const smile=p>0.52;
+  const euphoria=clamp((p-0.70)/0.18,0,1);
   const fishX=r.x-50+fishIn*150+(p>0.68?(p-0.68)*170:0);
   const fishY=waterY-28+Math.sin(tk*0.22)*4;
 
-  drawCutsceneLemClose(c,lemX,lemY,4,smile,ringOn,tk);
+  drawCutsceneLemClose(c,lemX,lemY,4,smile,ringOn,tk,euphoria);
   drawCutsceneFish(c,fishX,fishY,3,p,p<0.43);
   if(p>=0.38&&p<0.67){
     const sx=fishX+54, sy=fishY+8;
@@ -264,9 +298,13 @@ function drawFishRingCutscene(c,r,p,cs,tk){
   }
   if(p>0.72){
     c.fillStyle='#fff7b0';
-    c.fillRect(lemX+42,lemY-58,5,5);
-    c.fillRect(lemX+54,lemY-44,3,3);
-    c.fillRect(lemX+35,lemY-37,3,3);
+    const joy=clamp((p-0.72)/0.20,0,1);
+    for(let i=0;i<10;i++){
+      const a=i*0.63+tk*0.04, d=22+joy*46+(i%3)*4;
+      const sx=lemX+Math.cos(a)*d, sy=lemY-18+Math.sin(a)*d*0.75;
+      c.fillRect(Math.round(sx),Math.round(sy),i%2?3:5,i%2?3:5);
+    }
+    if(((tk>>2)&1)===0)drawTextC(c,'JIPPI!',lemX+6,lemY-78,2,'#fff7b0');
   }
 }
 function drawCutsceneOverlay(c,tk){
