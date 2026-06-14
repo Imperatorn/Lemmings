@@ -92,7 +92,18 @@ const THEMES={
       const v=Math.sin(x*0.15+y*0.2)*0.5+0.5+(n-0.5)*0.4;
       if(v<0.3)return [110,168,208]; if(v<0.6)return [140,200,230];
       if(n>0.97)return [255,255,255];
-      return [165,220,245]; } }
+      return [165,220,245]; } },
+  glass:{ sky:['#000018','#06183a'], brick:'#d8f6ff',
+    px(x,y,dTop){ const n=hash2(x,y);
+      const facet=Math.sin(x*0.085+y*0.165)+Math.sin(x*0.22-y*0.075)*0.55;
+      const seam=Math.abs(Math.sin(x*0.072-y*0.118+Math.sin((x+y)*0.021)*2.4));
+      let c=facet<-0.55?[86,152,190]:(facet<0.05?[126,198,224]:(facet<0.66?[172,230,244]:[220,250,255]));
+      if(seam<0.040)c=[245,255,255];
+      else if(seam<0.078)c=[104,178,214];
+      if(((x*5+y*3)&95)===0||n>0.982)c=[255,255,255];
+      if(dTop<2)c=[245,255,255];
+      if(dTop>58)c=[c[0]*0.72|0,c[1]*0.78|0,c[2]*0.86|0];
+      return c; } }
 };
 
 function terrainThemeKeyAt(level,x,y){

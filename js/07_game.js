@@ -161,7 +161,7 @@ const G={
     if(L.night)return r<0.68?'rain':'snow';
     if(L.theme==='desert')return r<0.88?'sun':'rain';
     if(L.theme==='city')return r<0.50?'sun':(r<0.88?'rain':'snow');
-    if(L.theme==='crystal')return r<0.48?'snow':(r<0.70?'rain':'sun');
+    if(L.theme==='crystal'||L.theme==='glass')return r<0.48?'snow':(r<0.70?'rain':'sun');
     if(L.theme==='forest')return r<0.50?'rain':(r<0.68?'snow':'sun');
     if(L.theme==='hell')return r<0.68?'sun':(r<0.88?'rain':'snow');
     if(L.theme==='marble')return r<0.46?'sun':(r<0.72?'snow':'rain');
@@ -735,7 +735,7 @@ const G={
     const key=terrainThemeKeyAt(this.level,x,y);
     const dustCols={
       dirt:['#d8c0a0','#b89068'],forest:['#8a6a3a','#5c4228'],desert:['#e8bf72','#c9904e'],
-      city:['#b8bec6','#7c838c'],cave:['#9aa2ad','#666f7a'],rock:['#a8b2bd','#68727e'],crystal:['#c8f0ff','#86c6e0'],
+      city:['#b8bec6','#7c838c'],cave:['#9aa2ad','#666f7a'],rock:['#a8b2bd','#68727e'],crystal:['#c8f0ff','#86c6e0'],glass:['#e8fbff','#92d8ee'],
       marble:['#dce4eb','#8f9aa8'],hell:['#c07052','#6a3028']
     }[key]||['#d8c0a0','#b89068'];
     const n=Math.round((3+power*7)*sc);

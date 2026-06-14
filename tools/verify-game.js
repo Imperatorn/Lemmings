@@ -226,6 +226,12 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
   if (L.name === 'BAZOOKA-SKOLAN' && !decorTypes.has('target')) {
     throw new Error(`${L.name}: expected practice targets in decor`);
   }
+  if (L.name === 'BAZOOKA-SKOLAN' && L.theme !== 'crystal') {
+    throw new Error(`${L.name}: expected regular crystal theme`);
+  }
+  if (L.name === 'KRISTALLSCHAKTET' && L.theme !== 'glass') {
+    throw new Error(`${L.name}: expected glass crystal shaft theme`);
+  }
   if (L.name === 'JETPACK-KLIPPAN' && L.theme !== 'rock') {
     throw new Error(`${L.name}: expected rock theme`);
   }

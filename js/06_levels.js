@@ -197,7 +197,7 @@ const LEVELS=[
     D.torch(360,180);D.torch(590,180);D.torch(690,185);D.torch(930,185);D.torch(1160,215);
     D.mush(330,209);D.bush(1030,214); } },
 
-{ name:'KRISTALLSCHAKTET', theme:'crystal', night:false, W:1300,
+{ name:'KRISTALLSCHAKTET', theme:'glass', night:false, W:1300,
   lem:16, save:11, rate:40, time:450,
   skills:{climb:2,float:4,bomb:3,block:3,build:6,downbuild:4,bash:3,mine:4,dig:3,baz:5,jet:4,rope:4},
   hatch:{x:85,y:150}, exit:{x:1210,y:149},
@@ -207,8 +207,8 @@ const LEVELS=[
     P.rect(790,175,210,65); P.rect(1080,150,220,90);
     P.rect(405,82,20,78); P.rect(650,62,22,63); P.rect(920,110,22,65);
     P.disc(210,154,18); P.disc(760,95,24); P.disc(1120,120,18); },
-  decor(D){ D.crystal(180,199);D.crystal(360,159);D.crystal(470,159);D.crystal(610,124);D.crystal(730,124);D.crystal(880,174);D.crystal(990,174);D.crystal(1180,149);
-    D.stal(405,160,18,true);D.stal(650,125,20,true);D.stal(920,175,16,true); } },
+  decor(D){ D.crystal(120,199);D.crystal(180,199);D.crystal(360,159);D.crystal(470,159);D.crystal(610,124);D.crystal(730,124);D.crystal(820,174);D.crystal(880,174);D.crystal(990,174);D.crystal(1125,149);D.crystal(1180,149);
+    D.stal(405,160,18,true);D.stal(650,125,20,true);D.stal(735,125,16,false);D.stal(920,175,16,true);D.stal(1040,176,18,false); } },
 
 { name:'DUBBLA DAMMAR', theme:'dirt', night:false, W:1300,
   lem:15, save:10, rate:42, time:420,
