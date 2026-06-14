@@ -727,18 +727,23 @@ const AU={
       return;
     }
     let third=4,pulseVol=0.020,arpVol=0.018,pulseEvery=4,arpEvery=8,padVol=0,padEvery=16;
+    let subVol=0,subEvery=8,subLen=3.2;
     if(kind==='day'){
-      pulseVol=0.023;arpVol=0.023;
+      pulseVol=0.023;arpVol=0.023;subVol=0.026;
     }else if(kind==='day2'){
-      pulseVol=0.025;arpVol=0.026;
+      pulseVol=0.025;arpVol=0.026;subVol=0.029;subLen=3.0;
     }else if(kind==='night'){
-      third=3;pulseVol=0.017;arpVol=0.014;pulseEvery=8;arpEvery=16;padVol=0.012;
+      third=3;pulseVol=0.017;arpVol=0.014;pulseEvery=8;arpEvery=16;padVol=0.012;subVol=0.020;subEvery=16;subLen=7.0;
     }else if(kind==='cave'){
       third=3;pulseVol=0.015;arpVol=0.012;pulseEvery=8;arpEvery=16;padVol=0.010;padEvery=32;
     }else if(kind==='desert'){
       pulseVol=0.020;arpVol=0.020;padVol=0.008;
     }else if(kind==='city'){
       third=3;pulseVol=0.024;arpVol=0.019;pulseEvery=4;arpEvery=16;padVol=0.005;
+    }
+    if(subVol&&i%subEvery===0){
+      this.padTone(this.midi(b-12),stepDur*subLen,'sine',subVol,t+stepDur*0.01,this.musGain);
+      if(kind!=='night')this.tone(this.midi(b),stepDur*0.40,'triangle',subVol*0.62,0.995,t+stepDur*0.03,this.musGain);
     }
     if(i%pulseEvery===0)this.tone(this.midi(b+12),stepDur*0.62,'square',pulseVol,0.98,t+stepDur*0.01,this.musGain);
     if(kind==='city'&&i%8===4)this.tone(this.midi(b+19),stepDur*0.25,'square',pulseVol*0.55,1,t+stepDur*0.05,this.musGain);
