@@ -35,6 +35,19 @@ if (debugHtml) {
   if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugPageIdx <= debugRopeIdx) {
     throw new Error('debug.html script order is wrong');
   }
+  const requiredDebugActions = [
+    'animFishRing','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
+    'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
+  ];
+  for (const action of requiredDebugActions) {
+    if (!debugHtml.includes(`data-action="${action}"`)) {
+      throw new Error(`debug.html is missing debug action: ${action}`);
+    }
+  }
+  const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
+  for (const token of ['setupFishRingAnimation','setupRopeAnimation','ensureWaterLevelForFishRing']) {
+    if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
+  }
 }
 
 function makeContext2d(){

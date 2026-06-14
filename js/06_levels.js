@@ -14,7 +14,7 @@ const LEVELS=[
 
 { name:'BYGG EN BRO', theme:'dirt', night:false, W:900,
   lem:10, save:6, rate:45, time:300,
-  skills:{climb:0,float:2,bomb:2,block:2,build:6,bash:2,mine:1,dig:2,baz:0,jet:0},
+  skills:{climb:1,float:2,bomb:2,block:2,build:6,bash:2,mine:1,dig:2,baz:0,jet:0},
   hatch:{x:120,y:125}, exit:{x:820,y:139},
   water:[{x:350,w:90,y:212,lava:false}],
   hint:'TVÅ BYGGARE PÅ RAD TAR ER ÖVER VATTNET. EN BLOCKERARE HÅLLER FLOCKEN.',
@@ -23,7 +23,7 @@ const LEVELS=[
 
 { name:'GRÄV DJUPT', theme:'dirt', night:false, W:800,
   lem:10, save:8, rate:50, time:300,
-  skills:{climb:0,float:1,bomb:2,block:2,build:2,bash:4,mine:2,dig:8,baz:0,jet:0},
+  skills:{climb:1,float:1,bomb:2,block:2,build:2,bash:4,mine:2,dig:8,baz:0,jet:0},
   hatch:{x:110,y:100}, exit:{x:600,y:209},
   water:[],
   loot:[{x:400,y:196,skill:'build'}],

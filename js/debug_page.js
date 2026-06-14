@@ -174,6 +174,36 @@
     return true;
   }
 
+  function ensureWaterLevelForFishRing(){
+    if(G.level&&Array.isArray(G.level.water)&&G.level.water.some(z=>z&&!z.lava))return true;
+    const idx=LEVELS.findIndex(L=>L&&Array.isArray(L.water)&&L.water.some(z=>z&&!z.lava));
+    if(idx<0)return false;
+    DBG.levelSelect.value=String(idx);
+    startSelectedLevel();
+    return true;
+  }
+
+  function debugBrick(x,y,w,h){
+    if(!G.T)return;
+    G.T.brick(Math.round(x),Math.round(y),Math.round(w),Math.round(h),terrainBrickColor(G.level,x,y));
+  }
+
+  function prepareSkillTestArea(x){
+    const gy=groundYAt(x);
+    if(G.T){
+      G.T.clearRect(x-58,gy-54,152,54);
+      debugBrick(x-62,gy+1,164,8);
+    }
+    return groundYAt(x);
+  }
+
+  function resetDebugLemming(l,x,y){
+    l.x=Math.round(x);l.y=Math.round(y);l.dir=1;l.state='WALK';l.fall=0;l.bombT=-1;l.busyT=0;l.bricks=0;
+    l.jumpT=0;l.jumpVy=0;l.manualAimAngle=null;l.ropeId=null;l.ropeCooldown=0;l.swimRing=false;l.fishRingTried=false;
+    l.climber=false;l.floater=false;l.chute=false;l.soft=false;l.glide=0;l.dead=false;
+    return l;
+  }
+
   function setupPlaneCrashAnimation(){
     clearDebugActors();
     const x=worldCenterX();
@@ -214,6 +244,32 @@
     G.decor.push({t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()});
     focusWorldX(l.x);
     finishAnimationSetup('Animation: lemming går genom vattenfall och får skvätt på huvudet.');
+  }
+
+  function setupFishRingAnimation(){
+    if(!ensureWaterLevelForFishRing()){setStatus('Ingen vattenbana hittades för badringstest.','warn');return}
+    clearDebugActors();
+    const z=(G.level.water||[]).find(w=>w&&!w.lava);
+    if(!z){setStatus('Aktuell nivå saknar vatten för badringstest.','warn');return}
+    G.liquidCache=null;
+    const x=clamp(Math.round(z.x+Math.min(Math.max(z.w*0.38,30),Math.max(30,z.w-18))),z.x+12,z.x+z.w-12);
+    const y=Math.round(z.y+7);
+    if(G.T){
+      G.T.clearRect(x-44,z.y-18,104,78);
+      debugBrick(x+42,z.y-36,9,84);
+    }
+    const l=resetDebugLemming(new Lemming(x,y),x,y);
+    l.state='FALL';l.fall=12;l.climber=true;l.dir=1;
+    G.lems=[l];G.out=1;
+    G.ambientFish=(G.ambientFish||[]).filter(f=>f&&f.zone!==z);
+    G.ambientFish.push({zone:z,x:x-10,y:z.y+12,baseY:z.y+12,dir:1,p:0,s:0.045,spd:0.05,size:2,col:'#ffd060',giftT:0});
+    const oldRand=G.rand;
+    G.rand=()=>0.0;
+    const liquid=G.lemmingLiquidHazard(l);
+    G.tryFishSwimRing(l,liquid);
+    G.rand=oldRand;
+    focusWorldX(x+26);
+    finishAnimationSetup('Animation: fisk ger badring, lemmeln flyter och klättrar upp för väggen.');
   }
 
   function setupMeteorAnimation(){
@@ -271,13 +327,48 @@
   }
 
   function setupSkillAnimation(k){
+    if(k==='rope')return setupRopeAnimation();
     const l=firstLiveLemming();
-    l.state='WALK';l.fall=0;l.dir=1;l.bombT=-1;l.scale=Math.max(1,l.scale||1);
+    const x=worldCenterX();
+    const gy=prepareSkillTestArea(x);
+    resetDebugLemming(l,x,gy);
+    l.scale=Math.max(1,l.scale||1);
     G.skills[k]=Math.max(G.skills[k]||0,9);
-    G.applySkill(l,k,l.x+90,l.y-20);
+    if(k==='float'){
+      l.y=Math.max(28,gy-92);l.state='FALL';l.fall=22;l.floater=true;l.chute=true;
+      focusWorldX(l.x);
+      finishAnimationSetup('Animation: fallskärm/flytare bromsar ett fall.');
+      return;
+    }
+    if(k==='climb'){
+      debugBrick(l.x+26,l.y-46,10,48);
+      G.applySkill(l,k,l.x,l.y-8);
+    }else if(k==='bash'||k==='mine'){
+      debugBrick(l.x+28,l.y-42,16,44);
+      G.applySkill(l,k,l.x+35,l.y-16);
+    }else if(k==='baz'||k==='flame'){
+      debugBrick(l.x+78,l.y-46,16,48);
+      G.applySkill(l,k,l.x+90,l.y-20);
+    }else{
+      G.applySkill(l,k,l.x+90,l.y-20);
+      if(k==='bomb')l.bombT=Math.min(l.bombT,34);
+    }
     focusWorldX(l.x+55);
-    const names={jet:'Jetpack',flame:'Eldkastare',baz:'Bazooka'};
+    const names={climb:'Klättrare',bomb:'Bomb',block:'Blockerare',build:'Byggare',downbuild:'Nedbyggare',
+      bash:'Hacka',mine:'Tunnla',dig:'Gräva',jet:'Jetpack',flame:'Eldkastare',baz:'Bazooka'};
     finishAnimationSetup('Animation: '+(names[k]||k)+'.');
+  }
+
+  function setupRopeAnimation(){
+    const l=firstLiveLemming();
+    const x=worldCenterX(), gy=prepareSkillTestArea(x);
+    resetDebugLemming(l,x,gy);
+    G.skills.rope=Math.max(G.skills.rope||0,9);
+    const hx=l.x+74, hy=l.y-56;
+    debugBrick(hx-6,hy-6,14,12);
+    G.fireRopeHook(l,hx,hy);
+    focusWorldX(l.x+40);
+    finishAnimationSetup('Animation: repkrok skjuts, fastnar och lemmeln klättrar.');
   }
 
   function doAnimation(action){
@@ -285,12 +376,23 @@
     if(action==='animTrollPlane')return setupTrollPlaneAnimation();
     if(action==='animPackageFall')return setupPackageFallAnimation();
     if(action==='animWaterfall')return setupWaterfallAnimation();
+    if(action==='animFishRing')return setupFishRingAnimation();
     if(action==='animMeteor')return setupMeteorAnimation();
     if(action==='animMega')return setupMegaAnimation();
     if(action==='animMushroom')return setupMushroomAnimation();
     if(action==='animTrollMushroom')return setupTrollMushroomAnimation();
     if(action==='animBanana')return setupBananaAnimation();
     if(action==='animRescue')return setupRescueAnimation();
+    if(action==='animClimb')return setupSkillAnimation('climb');
+    if(action==='animFloat')return setupSkillAnimation('float');
+    if(action==='animBomb')return setupSkillAnimation('bomb');
+    if(action==='animBlock')return setupSkillAnimation('block');
+    if(action==='animBuild')return setupSkillAnimation('build');
+    if(action==='animDownbuild')return setupSkillAnimation('downbuild');
+    if(action==='animBash')return setupSkillAnimation('bash');
+    if(action==='animMine')return setupSkillAnimation('mine');
+    if(action==='animDig')return setupSkillAnimation('dig');
+    if(action==='animRope')return setupSkillAnimation('rope');
     if(action==='animJet')return setupSkillAnimation('jet');
     if(action==='animFlame')return setupSkillAnimation('flame');
     if(action==='animBazooka')return setupSkillAnimation('baz');
