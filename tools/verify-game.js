@@ -36,7 +36,7 @@ if (debugHtml) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
-    'animFishRing','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
+    'animFishRing','animFishRingRope','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
     'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
   ];
   for (const action of requiredDebugActions) {
@@ -45,7 +45,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['setupFishRingAnimation','setupRopeAnimation','ensureWaterLevelForFishRing']) {
+  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
@@ -196,6 +196,7 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   const prevTerrain = G.T;
   const prevLems = G.lems;
   const prevFish = G.ambientFish;
+  const prevRopes = G.ropes;
   const prevParts = G.parts;
   const prevToasts = G.toasts;
   const prevRand = G.rand;
@@ -223,6 +224,15 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   }
   G.checkLiquid(lem);
   if (lem.state === 'DROWN' || lem.dead) throw new Error('Swim ring did not protect lemming from water');
+  if (!G.canApplySkill(lem, 'rope')) throw new Error('Swim ring lemming could not use rope hook');
+  const rope = {id: 9101, x1: lem.x, y1: lem.y, x2: lem.x + 42, y2: lem.y - 44, hookX: lem.x + 42, hookY: lem.y - 44, active: true, exitDir: 1, len: 61};
+  G.ropes = [rope];
+  lem.ropeCooldown = 0;
+  if (!lem.startRopeClimb(rope, 0) || lem.state !== 'ROPE' || lem.swimRing) {
+    throw new Error('Swim ring lemming did not switch cleanly into rope climbing');
+  }
+  lem.state = 'SWIM';
+  lem.swimRing = true;
   lem.climber = true;
   lem.x = 149;
   lem.y = 125;
@@ -235,6 +245,7 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   G.T = prevTerrain;
   G.lems = prevLems;
   G.ambientFish = prevFish;
+  G.ropes = prevRopes;
   G.parts = prevParts;
   G.toasts = prevToasts;
   G.rand = prevRand;

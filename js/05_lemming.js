@@ -465,6 +465,7 @@ class Lemming{
     this.ropeId=rope.id;
     this.ropeT=clamp(t==null?0:t,0,0.95);
     this.busyT=0;this.fall=0;this.jumpT=0;this.jumpVy=0;this.soft=false;this.chute=false;
+    this.swimRing=false;this.fishRingTried=false;
     this.dir=(rope.x2>=rope.x1)?1:-1;
     AU.sAssign();
     return true;

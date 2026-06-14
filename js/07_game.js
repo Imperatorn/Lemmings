@@ -1135,7 +1135,7 @@ const G={
       case 'baz':   return l.state!=='BAZ'&&l.state!=='JET'&&l.state!=='FLAME'&&l.state!=='ROPE';
       case 'jet':   return l.state!=='JET'&&l.state!=='BAZ'&&l.state!=='FLAME'&&l.state!=='ROPE';
       case 'flame': return l.state!=='FLAME'&&l.state!=='BAZ'&&l.state!=='JET'&&l.state!=='ROPE';
-      case 'rope':  return st==='WALK'||st==='FALL'||st==='SHRUG';
+      case 'rope':  return st==='WALK'||st==='FALL'||st==='SHRUG'||l.state==='SWIM';
     }
     return false;
   },

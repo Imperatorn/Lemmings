@@ -272,6 +272,33 @@
     finishAnimationSetup('Animation: fisk ger badring, lemmeln flyter och klättrar upp för väggen.');
   }
 
+  function setupFishRingRopeAnimation(){
+    if(!ensureWaterLevelForFishRing()){setStatus('Ingen vattenbana hittades för repkrok från vatten.','warn');return}
+    clearDebugActors();
+    const z=(G.level.water||[]).find(w=>w&&!w.lava);
+    if(!z){setStatus('Aktuell nivå saknar vatten för repkrokstest.','warn');return}
+    G.liquidCache=null;
+    const x=clamp(Math.round(z.x+Math.min(Math.max(z.w*0.34,28),Math.max(28,z.w-20))),z.x+14,z.x+z.w-14);
+    const y=Math.round(z.y+7);
+    const anchorX=clamp(x+68,10,G.level.W-12), anchorY=Math.max(38,z.y-50);
+    if(G.T){
+      G.T.clearRect(x-38,z.y-18,132,82);
+      debugBrick(anchorX-6,anchorY-5,14,10);
+    }
+    const l=resetDebugLemming(new Lemming(x,y),x,y);
+    l.state='FALL';l.fall=12;l.dir=1;
+    G.lems=[l];G.out=1;G.skills.rope=Math.max(G.skills.rope||0,9);
+    G.ambientFish=(G.ambientFish||[]).filter(f=>f&&f.zone!==z);
+    G.ambientFish.push({zone:z,x:x-12,y:z.y+12,baseY:z.y+12,dir:1,p:0,s:0.045,spd:0.05,size:2,col:'#ffd060',giftT:0});
+    const oldRand=G.rand;
+    G.rand=()=>0.0;
+    G.tryFishSwimRing(l,G.lemmingLiquidHazard(l));
+    G.rand=oldRand;
+    G.fireRopeHook(l,anchorX,anchorY);
+    focusWorldX(x+34);
+    finishAnimationSetup('Animation: simmande lemming med badring skjuter repkrok och klättrar upp.');
+  }
+
   function setupMeteorAnimation(){
     if(!ensureNightLevelForMeteor()){setStatus('Ingen nattbana hittades för meteorit-test.','warn');return}
     G.meteors=[];G.meteorT=99999;
@@ -377,6 +404,7 @@
     if(action==='animPackageFall')return setupPackageFallAnimation();
     if(action==='animWaterfall')return setupWaterfallAnimation();
     if(action==='animFishRing')return setupFishRingAnimation();
+    if(action==='animFishRingRope')return setupFishRingRopeAnimation();
     if(action==='animMeteor')return setupMeteorAnimation();
     if(action==='animMega')return setupMegaAnimation();
     if(action==='animMushroom')return setupMushroomAnimation();
