@@ -162,6 +162,39 @@ node tools\verify-game.js
 Verifieringen laddar samma script som HTML-filen, kontrollerar runtime-moduler,
 bygger banorna, gör ett enkelt render-smoketest och provar spara/återställ.
 
+## Överlämning till ny agent
+
+Det här är de viktigaste sakerna att känna till innan du fortsätter utveckla:
+
+- Börja med `README.md`, `js/README.md` och `tools/verify-game.js`. De ger bäst
+  bild av struktur, scriptordning och vilka antaganden som redan verifieras.
+- `debug.html` är en separat testsida som inte laddar `js/13_boot.js`. Den är
+  avsedd för snabb test av animationer, ljud, väder, paket, flygplanskrasch,
+  skills och specialfall som fisk/badring. När en ny synlig mekanik läggs till
+  bör den helst få en debugknapp.
+- `tools/verify-game.js` är projektets viktigaste skyddsnät. Lägg till små
+  objektiva tester där det går, särskilt för regler som annars lätt glöms bort:
+  stöd för dekor, nivågeometri, specialskills, scriptordning och debugknappar.
+- Spelet använder globala browser-script, inte importer. Om en funktion flyttas
+  mellan filer måste scriptordningen i både `LEMMEL_fixed_v44.html` och
+  `debug.html` fortfarande fungera.
+- Nya fält på `Lemming`, `G` eller dekorobjekt bör få rimliga defaultvärden.
+  Spara/ladda använder mycket `Object.assign`, så enkla datafält följer ofta
+  med automatiskt, men tillstånd som kräver återinitiering måste kontrolleras.
+- Vatten och lava har olika regler. Vatten tolererar några pixlars kontakt innan
+  drunkning, medan lava ska vara farligt nästan direkt. En fisk nära en lemmel i
+  vatten kan ge badring med 33% chans per vattenkontakt. Badring ger `SWIM`,
+  skyddar mot vatten, kan gå över till `CLIMB` om lemmeln är klättrare och kan
+  även använda repkrok för att komma upp. Lava ska fortfarande döda även om
+  lemmeln har badring.
+- Repkrok är delad mellan `js/07_rope.js`, `js/05_lemming.js` och
+  `js/07_game.js`. Repet ska lossna om ankarmaterialet sprängs bort, och när en
+  lemmel börjar klättra i rep ska tidigare sim-/fallskärmsliknande status inte
+  ligga kvar och störa.
+- Håll debugscener kontrollerade. Bygg gärna en liten temporär testplattform
+  eller vägg i debugläget, men ändra inte nivådata bara för att en debuganimation
+  ska fungera.
+
 ## Utvecklingsnoteringar
 
 - Spelet använder inte ES-moduler. Det är avsiktligt för att bevara den enkla

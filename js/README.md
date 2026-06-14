@@ -34,3 +34,24 @@ node tools/verify-game.js
 
 Det laddar samma script-taggar som HTML-filen, kontrollerar runtime-moduler,
 bygger alla banor och gor en render-/save-smoketest.
+
+## Praktiska noter for fortsatt utveckling
+
+- `07_game.js` ar fortfarande navet for globalt spelstate, men flera delar ar
+  brutna till tillaggsfiler som monterar metoder pa `G`: rep i `07_rope.js`,
+  save/load i `07_save_state.js`, direktstyrning i `07_manual_control.js` och
+  levande varld-effekter i `07_living_world.js`.
+- Om du lagger till en ny `G`-metod som maste finnas efter script-splitten,
+  uppdatera `requiredRuntimeMethods` i `tools/verify-game.js`.
+- `debug.html` ska ladda samma relevanta runtime-script men inte `13_boot.js`.
+  Nya synliga mekaniker bor fa en knapp i `debug.html` och ett setup-flode i
+  `debug_page.js`, sa de kan testas utan att spela fram situationen manuellt.
+- Lemming-tillstand finns i `05_lemming.js`. Nar ett nytt tillstand eller en ny
+  overstyrande skill laggs till, kontrollera `canApplySkill` i `07_game.js`,
+  rendering i `08_render.js`, debugscener och save/load-konsekvenser.
+- Vatten/lava-regler ligger huvudsakligen i `07_game.js` (`liquidAt`,
+  `lemmingLiquidHazard`, `checkLiquid`). Badring anvander `SWIM`, skyddar bara
+  mot vatten och ska kunna ga vidare till bade `CLIMB` och `ROPE`.
+- Repflodet ligger i bade `07_rope.js` och `05_lemming.js`: sikta/skjut/ankra i
+  `07_rope.js`, sjalva klattringstillstandet i `Lemming.startRopeClimb` och
+  `Lemming.ropeClimb`.
