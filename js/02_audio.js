@@ -610,19 +610,31 @@ const AU={
   mus:{timer:null,step:0,next:0,kind:'day'},
   // melodi/bas i MIDI-nummer, 0 = paus. Åttondelar.
   PAT:{
-    menu:{bpm:88,
-      mel:[72,0,0,76, 79,0,76,0, 71,0,0,74, 76,0,74,0,
-           69,0,0,72, 76,0,72,0, 67,0,0,71, 74,0,71,0,
-           64,0,67,0, 72,0,71,0, 69,0,67,0, 64,0,0,0,
-           65,0,69,0, 72,0,74,0, 76,0,74,0, 72,0,0,0],
-      bass:[48,0,0,0, 55,0,0,0, 43,0,0,0, 50,0,0,0,
-            45,0,0,0, 52,0,0,0, 40,0,0,0, 47,0,0,0,
-            41,0,0,0, 48,0,0,0, 45,0,0,0, 52,0,0,0,
-            43,0,0,0, 50,0,0,0, 48,0,0,0, 48,0,0,0],
-      harm:[0,0,84,0, 0,0,83,0, 0,0,79,0, 0,0,83,0,
-            0,0,81,0, 0,0,84,0, 0,0,79,0, 0,0,83,0,
-            0,0,76,0, 0,0,79,0, 0,0,81,0, 0,0,79,0,
-            0,0,81,0, 0,0,84,0, 0,0,83,0, 0,0,84,0]},
+    menu:{bpm:112,
+      mel:[72,0,76,79, 81,79,76,0, 74,0,77,81, 83,81,77,0,
+           72,76,79,84, 81,79,76,0, 71,74,77,81, 79,77,74,0,
+           72,0,76,79, 84,83,79,76, 74,77,81,84, 86,84,81,77,
+           76,0,79,83, 86,83,79,76, 74,72,71,74, 76,0,72,0,
+           69,0,72,76, 79,76,72,0, 67,0,71,74, 79,74,71,0,
+           65,69,72,77, 76,72,69,0, 67,71,74,79, 77,74,71,0,
+           72,76,79,81, 84,81,79,76, 74,77,79,83, 86,83,79,77,
+           76,79,83,86, 88,86,83,79, 81,79,77,74, 72,0,0,0],
+      bass:[48,0,55,0, 52,0,55,0, 50,0,57,0, 53,0,57,0,
+            45,0,52,0, 48,0,52,0, 43,0,50,0, 47,0,50,0,
+            48,0,55,0, 52,0,59,0, 50,0,57,0, 53,0,60,0,
+            45,0,52,0, 49,0,56,0, 43,0,50,0, 47,0,43,0,
+            41,0,48,0, 45,0,48,0, 43,0,50,0, 47,0,50,0,
+            38,0,45,0, 41,0,45,0, 43,0,50,0, 47,0,50,0,
+            48,0,55,0, 52,0,55,0, 50,0,57,0, 53,0,57,0,
+            45,0,52,0, 48,0,52,0, 50,0,55,0, 48,0,48,0],
+      harm:[0,0,84,0, 88,0,84,0, 0,0,86,0, 89,0,86,0,
+            0,0,84,0, 88,0,91,0, 0,0,83,0, 86,0,83,0,
+            0,0,84,0, 88,0,91,0, 0,0,86,0, 89,0,93,0,
+            0,0,88,0, 91,0,88,0, 0,0,86,0, 84,0,83,0,
+            0,0,81,0, 84,0,81,0, 0,0,79,0, 83,0,79,0,
+            0,0,77,0, 81,0,84,0, 0,0,79,0, 83,0,86,0,
+            0,0,84,0, 88,0,91,0, 0,0,86,0, 89,0,93,0,
+            0,0,88,0, 91,0,95,0, 0,0,89,0, 86,0,84,0]},
     day:{bpm:138,
       mel:[72,0,76,79, 76,72,76,0, 74,0,77,81, 77,74,77,0,
            76,0,79,84, 83,79,76,0, 74,77,76,74, 72,0,0,0,
@@ -745,7 +757,10 @@ const AU={
     }else if(kind==='night'){
       if(i%8===3||i%16===8)this.tone(this.midi(m),stepDur*0.36,'square',0.016,1,t+stepDur*0.02,this.musGain);
     }else if(kind==='menu'){
-      if(i%16===0)this.tone(this.midi(m+12),stepDur*0.48,'sine',0.010,1,t+stepDur*0.08,this.musGain);
+      const p=i%128;
+      if(p%16===0||p%32===12)this.tone(this.midi(m+12),stepDur*0.24,'square',0.012,1,t+stepDur*0.03,this.musGain);
+      if(p%16===10)this.tone(this.midi(m+7),stepDur*0.18,'square',0.008,1,t+stepDur*0.18,this.musGain);
+      if(p>=96&&p%8===4)this.tone(this.midi(m+12),stepDur*0.22,'triangle',0.010,1,t+stepDur*0.12,this.musGain);
     }else if(kind==='cave'){
       if(i%16===4||i%16===12)this.tone(this.midi(m+12),stepDur*0.46,'square',0.010,0.99,t+stepDur*0.05,this.musGain);
     }else if(kind==='desert'){
@@ -773,7 +788,15 @@ const AU={
     }else if(kind==='night'){
       third=3;pulseVol=0.019;arpVol=0.015;pulseEvery=8;arpEvery=16;padVol=0.012;subVol=0.027;subEvery=16;subLen=7.0;
     }else if(kind==='menu'){
-      pulseVol=0.014;arpVol=0.010;pulseEvery=16;arpEvery=16;padVol=0.010;subVol=0.030;subEvery=16;subLen=6.8;
+      const p=i%128;
+      pulseVol=p>=96?0.022:(p>=64?0.015:0.019);
+      arpVol=p>=96?0.017:(p>=64?0.010:0.014);
+      pulseEvery=p>=64&&p<96?8:4;
+      arpEvery=p>=96?4:8;
+      padVol=p>=64&&p<96?0.007:0.003;
+      subVol=p>=96?0.038:0.032;
+      subEvery=8;
+      subLen=p>=64&&p<96?3.4:2.2;
     }else if(kind==='cave'){
       third=3;pulseVol=0.015;arpVol=0.012;pulseEvery=8;arpEvery=16;padVol=0.010;padEvery=32;
     }else if(kind==='desert'){
@@ -788,8 +811,8 @@ const AU={
     if(i%pulseEvery===0)this.tone(this.midi(b+12),stepDur*0.62,'square',pulseVol,0.98,t+stepDur*0.01,this.musGain);
     if(kind==='city'&&i%8===4)this.tone(this.midi(b+19),stepDur*0.25,'square',pulseVol*0.55,1,t+stepDur*0.05,this.musGain);
     if(i%arpEvery===0){
-      const dur=stepDur*(kind==='city'?0.24:0.32);
-      const swing=kind==='day2'?0.03:0;
+      const dur=stepDur*(kind==='city'?0.24:(kind==='menu'?0.22:0.32));
+      const swing=kind==='day2'?0.03:(kind==='menu'&&i%128>=96?0.02:0);
       this.tone(this.midi(b+24),dur,'square',arpVol,1,t+stepDur*(0.04+swing),this.musGain);
       if(kind==='city'){
         this.tone(this.midi(b+31),dur,'square',arpVol*0.82,1,t+stepDur*0.22,this.musGain);
@@ -864,19 +887,25 @@ const AU={
     while(this.mus.next<this.now()+0.25){
       const i=this.mus.step%P.mel.length, t=this.mus.next;
       const m=P.mel[i], b=P.bass[i], kind=this.mus.kind;
-      const lead=kind==='cave'||kind==='menu'?'sine':(kind==='lava'||kind==='night'||kind==='desert'?'triangle':(kind==='day2'&&i%32>=16?'triangle':'square'));
-      const accent=kind==='day2'?(i%16===0?1.18:(i%8===6?0.86:1.0)):1;
-      const leadVol=kind==='cave'?0.075:(kind==='lava'?0.102:(kind==='night'?0.10:(kind==='desert'?0.066:(kind==='menu'?0.052:(kind==='city'?0.068:(kind==='day2'?0.060*accent:0.07))))));
-      const leadLen=kind==='cave'?stepDur*2.55:(kind==='lava'?stepDur*2.25:(kind==='menu'?stepDur*2.05:(kind==='desert'?stepDur*(i%8===0?1.65:1.05):(kind==='city'?stepDur*(P.mel[(i+1)%P.mel.length]?0.84:1.28):(kind==='day2'?(i%16===14?stepDur*1.55:(i%4===0?stepDur*1.10:stepDur*0.82)):stepDur*0.95)))));
+      const mp=i%128;
+      const lead=kind==='cave'?'sine':(kind==='menu'?(mp>=64&&mp<96?'triangle':'square'):(kind==='lava'||kind==='night'||kind==='desert'?'triangle':(kind==='day2'&&i%32>=16?'triangle':'square')));
+      const accent=kind==='day2'?(i%16===0?1.18:(i%8===6?0.86:1.0)):(kind==='menu'?(mp>=96?1.10:(mp>=64?0.88:(mp%32===0?1.06:1.0))):1);
+      const leadVol=kind==='cave'?0.075:(kind==='lava'?0.102:(kind==='night'?0.10:(kind==='desert'?0.066:(kind==='menu'?0.050*accent:(kind==='city'?0.068:(kind==='day2'?0.060*accent:0.07))))));
+      const leadLen=kind==='cave'?stepDur*2.55:(kind==='lava'?stepDur*2.25:(kind==='menu'?stepDur*(P.mel[(i+1)%P.mel.length]?0.62:(mp>=64&&mp<96?1.05:0.88)):(kind==='desert'?stepDur*(i%8===0?1.65:1.05):(kind==='city'?stepDur*(P.mel[(i+1)%P.mel.length]?0.84:1.28):(kind==='day2'?(i%16===14?stepDur*1.55:(i%4===0?stepDur*1.10:stepDur*0.82)):stepDur*0.95)))));
       if(m)this.tone(this.midi(m),leadLen,lead,leadVol,1,t,this.musGain);
       this.retroLeadLayer(kind,m,i,t,stepDur,leadLen);
       if(P.harm){
         const h=P.harm[i%P.harm.length];
-        if(h)this.tone(this.midi(h),kind==='cave'?stepDur*2.2:(kind==='lava'?stepDur*2.05:(kind==='menu'?stepDur*2.4:(kind==='desert'?stepDur*1.75:stepDur*1.35))),'triangle',kind==='cave'?0.024:(kind==='lava'?0.034:(kind==='menu'?0.018:(kind==='desert'?0.022:0.030*accent))),1,t+stepDur*0.08,this.musGain);
+        if(h)this.tone(this.midi(h),kind==='cave'?stepDur*2.2:(kind==='lava'?stepDur*2.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.12:0.78):(kind==='desert'?stepDur*1.75:stepDur*1.35))),'triangle',kind==='cave'?0.024:(kind==='lava'?0.034:(kind==='menu'?0.014*accent:(kind==='desert'?0.022:0.030*accent))),1,t+stepDur*0.08,this.musGain);
       }
-      if(b)this.tone(this.midi(b),kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='menu'?stepDur*3.4:(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8))),'triangle',kind==='cave'?0.128:(kind==='lava'?0.145:(kind==='desert'?0.112:(kind==='menu'?0.105:(kind==='day2'?0.125:0.148)))),1,t,this.musGain);
+      if(b)this.tone(this.midi(b),kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.55:1.05):(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8))),'triangle',kind==='cave'?0.128:(kind==='lava'?0.145:(kind==='desert'?0.112:(kind==='menu'?0.112:(kind==='day2'?0.125:0.148)))),1,t,this.musGain);
       this.retroBassLayer(kind,b,i,t,stepDur);
       if(kind!=='night'&&kind!=='cave'&&kind!=='desert'&&kind!=='lava'&&kind!=='menu'&&i%4===2)this.noise(0.03,kind==='day2'||kind==='city'?0.020:0.03,6000,0.5,t,this.musGain); // hihat-känsla
+      if(kind==='menu'){
+        if(mp%8===6)this.noise(0.018,mp>=96?0.010:0.007,4800,0.46,t+stepDur*0.10,this.musGain);
+        if(mp%32===0&&b)this.padTone(this.midi(b+19),stepDur*(mp>=64&&mp<96?7.0:5.2),'triangle',0.010*(mp>=96?1.15:1),t+stepDur*0.03,this.musGain);
+        if(mp%32===30)this.tone(this.midi(mp>=96?88:84),stepDur*0.34,'square',0.013,1,t+stepDur*0.15,this.musGain);
+      }
       if(kind==='cave'&&i%16===8)this.softNoise(0.42,0.010,520,0.82,t+stepDur*0.2,{type:'lowpass',smooth:0.82,attack:0.12,release:0.24,dest:this.musGain});
       if(kind==='lava'){
         if(i%16===0){
