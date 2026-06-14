@@ -1514,8 +1514,8 @@ const G={
     return best;
   },
   clickWorld(wx,wy){
-    if(this.cancelBlockerAt(wx,wy))return true;
     const k=this.selSkill;
+    if(k!=='bomb'&&this.cancelBlockerAt(wx,wy))return true;
     if(!k)return false;
     if(k==='rope')return this.handleRopeClick(wx,wy);
     if(!this.skills||this.skills[k]<=0){
