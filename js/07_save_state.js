@@ -61,6 +61,7 @@ Object.assign(G,{
     this.weatherKind=this.normalizeWeatherForLevel(this.weatherKind,this.level);
     if(this.weatherKind!=='rain'){this.thunderT=0;this.thunderFlash=0;this.thunderPath=null}
     this.liquidCache=null;
+    if(this.rebindAmbientFishZones)this.rebindAmbientFishZones();
     this.toasts=[];this.msg='';this.msgT=0;this.state='PLAY';this.endT=0;this.menuChapter=menuChapterForLevel(this.levelIdx);
     this.clampView();this.savePrefs();
     AU.startMusic(this.musicKindForLevel(this.levelIdx));

@@ -585,16 +585,44 @@ const G={
         if(y!=null)this.ambientGrass.push({x,y,p:this.rand()*7,s:0.012+this.rand()*0.018,h:3+Math.floor(this.rand()*4),w:2+Math.floor(this.rand()*3),col:this.rand()<0.55?'#3aa33a':'#67bd43'});
       }
     }
-    for(const z of L.water||[]){
+    for(let zoneIdx=0;zoneIdx<(L.water||[]).length;zoneIdx++){
+      const z=L.water[zoneIdx];
       if(z.lava)continue;
       const n=Math.max(1,Math.min(3,Math.round(z.w/55)));
       for(let i=0;i<n;i++)this.ambientFish.push({
-        zone:z,x:z.x+8+this.rand()*Math.max(1,z.w-16),baseY:z.y+9+this.rand()*Math.max(4,Math.min(20,236-z.y)),
+        zone:z,zoneIdx,x:z.x+8+this.rand()*Math.max(1,z.w-16),baseY:z.y+9+this.rand()*Math.max(4,Math.min(20,236-z.y)),
         y:0,dir:this.rand()<0.5?-1:1,p:this.rand()*7,s:0.055+this.rand()*0.055,spd:0.10+this.rand()*0.11,
         size:this.rand()<0.32?2:1,col:this.rand()<0.45?'#ffd060':(this.rand()<0.72?'#d8f0ff':'#ff9c70')
       });
     }
     for(const f of this.ambientFish)if(!f.y)f.y=f.baseY;
+  },
+  rebindAmbientFishZones(){
+    const waters=(this.level&&this.level.water)||[];
+    if(!Array.isArray(this.ambientFish)||!waters.length)return 0;
+    const sameZone=(a,b)=>!!(a&&b&&
+      Math.round(a.x||0)===Math.round(b.x||0)&&
+      Math.round(a.y||0)===Math.round(b.y||0)&&
+      Math.round(a.w||0)===Math.round(b.w||0)&&
+      !!a.lava===!!b.lava);
+    let fixed=0;
+    for(const f of this.ambientFish){
+      if(!f)continue;
+      let zone=waters.includes(f.zone)?f.zone:null;
+      if(!zone&&Number.isFinite(f.zoneIdx)){
+        const zi=f.zoneIdx|0;
+        if(waters[zi])zone=waters[zi];
+      }
+      if(!zone&&f.zone)zone=waters.find(z=>sameZone(z,f.zone))||null;
+      if(!zone&&Number.isFinite(f.x)){
+        zone=waters.find(z=>!z.lava&&f.x>=z.x&&f.x<z.x+z.w)||null;
+      }
+      if(!zone)continue;
+      if(f.zone!==zone)fixed++;
+      f.zone=zone;
+      f.zoneIdx=waters.indexOf(zone);
+    }
+    return fixed;
   },
   updateAmbientLife(){
     for(const b of this.ambientBugs||[]){
@@ -612,6 +640,7 @@ const G={
       const target=f.baseY+Math.sin(f.p*1.1)*2.2+Math.sin(f.p*0.37)*1.4;
       f.y+=(target-f.y)*0.035;
       const z=f.zone;
+      if(!z)continue;
       if(f.x<z.x+5){f.x=z.x+5;f.dir=1}
       if(f.x>z.x+z.w-5){f.x=z.x+z.w-5;f.dir=-1}
     }
@@ -706,6 +735,7 @@ const G={
   // ---- händelser ----
   explode(x,y,r,big,soundKind){
     this.T.clearDisc(x,y,r);
+    if(this.isInGoalZone(x,y,Math.max(16,Math.round(r||0))))this.restoreGoalBase();
     this.pruneDetachedRopes();
     if(soundKind==='bazooka')AU.sBazookaExplosion();
     else if(soundKind==='lemming')AU.sLemmingExplosion();
@@ -732,6 +762,27 @@ const G={
     const b=this.goalBounds(pad||0);
     if(!b)return false;
     return x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1;
+  },
+  restoreGoalBase(){
+    const e=this.level&&this.level.exit,T=this.T;
+    if(!e||!T)return false;
+    const x=Math.round(e.x), y=clamp(Math.round(e.y+1),0,T.H-1);
+    const x0=clamp(x-16,0,T.W), x1=clamp(x+17,0,T.W), h=Math.min(6,T.H-y);
+    if(x1<=x0||h<=0)return false;
+    let missing=false;
+    for(let yy=y;yy<y+h&&!missing;yy++){
+      const o=yy*T.W;
+      for(let xx=x0;xx<x1;xx++)if(!T.mask[o+xx]){missing=true;break}
+    }
+    if(!missing)return false;
+    T.setRect(x0,y,x1-x0,h,1);
+    if(T.cx){
+      const col=terrainBrickColor(this.level,x,y);
+      T.cx.fillStyle=col;T.cx.fillRect(x0,y,x1-x0,h);
+      T.cx.fillStyle='rgba(255,255,255,0.22)';T.cx.fillRect(x0,y,x1-x0,1);
+      T.cx.fillStyle='rgba(0,0,0,0.20)';T.cx.fillRect(x0,y+h-1,x1-x0,1);
+    }
+    return true;
   },
   goalSpark(x,y){
     // Exit/målet är inte destruerbar terräng. Om en raket träffar målet

@@ -175,6 +175,7 @@ const requiredRuntimeMethods = [
   'setMusicVolume','setSfxVolume',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
+  'restoreGoalBase',
   'registerCutscene','cutsceneById','cutsceneList','playCutscene','stopCutscene','clearCutscene',
   'advanceCutscene','updateCutscene','cutsceneActive','cutsceneRect','currentCutsceneShot',
   'handleCutsceneInput','handleCutsceneKey','makeCutscenePreviewSpec',
@@ -183,6 +184,7 @@ const requiredRuntimeMethods = [
   'makeWaterClimbCutsceneSpec','playWaterClimbCutscene','toggleCutscenes',
   'hitDecorTargetAt',
   'findNearbyRingFish','tryFishSwimRing',
+  'rebindAmbientFishZones',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
@@ -724,6 +726,39 @@ if (!savedState || savedState.levelIdx !== 0 || !savedState.terrain || !savedSta
 }
 if (!G.restoreSaveState(savedState) || G.state !== 'PLAY' || !G.T || G.levelIdx !== 0) {
   throw new Error('Restore-state smoke test failed');
+}
+
+const fishSaveLevelIdx = LEVELS.findIndex(L => Array.isArray(L.water) && L.water.some(z => z && !z.lava));
+if (fishSaveLevelIdx < 0) throw new Error('Missing water level for fish save-state test');
+G.startLevel(fishSaveLevelIdx);
+const fishSaveState = G.makeSaveState('VERIFY FISH ZONES');
+if (!fishSaveState || !fishSaveState.arrays || !fishSaveState.arrays.ambientFish.length) {
+  throw new Error('Fish save-state fixture was not created');
+}
+for (const fish of fishSaveState.arrays.ambientFish) delete fish.zoneIdx;
+if (!G.restoreSaveState(fishSaveState)) throw new Error('Fish save-state restore failed');
+const reboundFish = G.ambientFish.find(f => f && G.level.water.includes(f.zone));
+if (!reboundFish) throw new Error('Ambient fish zone was not rebound after restore');
+const reboundLiquid = G.liquidAt(reboundFish.x, reboundFish.y, 0);
+const probeFishLem = new Lemming(reboundFish.x, reboundFish.y);
+if (!reboundLiquid || G.findNearbyRingFish(probeFishLem, reboundLiquid) !== reboundFish) {
+  throw new Error('Ambient fish could not be found after save-state restore');
+}
+
+G.startLevel(0);
+{
+  const e = G.level.exit;
+  G.explode(e.x, e.y + 4, 22, false, 'verify');
+  if (!G.T.solid(e.x, e.y + 1)) {
+    throw new Error('Explosion under goal removed the protected exit base');
+  }
+  const goalLem = new Lemming(e.x, e.y);
+  goalLem.state = 'WALK';
+  G.lems = [goalLem];
+  G.checkExit(goalLem);
+  if (goalLem.state !== 'EXITING') {
+    throw new Error('Lemming could not enter goal after blast under exit');
+  }
 }
 
 G.startLevel(0);

@@ -194,7 +194,7 @@ Det här är de viktigaste sakerna att känna till innan du fortsätter utveckla
   med automatiskt, men tillstånd som kräver återinitiering måste kontrolleras.
 - Vatten och lava har olika regler. Vatten tolererar några pixlars kontakt innan
   drunkning, medan lava ska vara farligt nästan direkt. En fisk nära en lemmel i
-  vatten kan ge badring med 33% chans per vattenkontakt. Badring ger `SWIM`,
+  vatten kan ge badring med 20% chans per vattenkontakt. Badring ger `SWIM`,
   skyddar mot vatten, kan gå över till `CLIMB` om lemmeln är klättrare och kan
   även använda repkrok för att komma upp. Lava ska fortfarande döda även om
   lemmeln har badring.
