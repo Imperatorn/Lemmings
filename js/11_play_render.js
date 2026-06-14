@@ -18,7 +18,8 @@ function drawPlayWorld(c,L,cam,tk){
   c.drawImage(G.T.cv,cam,0,VW,VH,0,0,VW,VH);
   for(const b of G.ambientBugs||[])drawAmbientBug(c,b,cam,tk);
   for(const g of G.ambientGrass||[])drawAmbientGrass(c,g,cam,tk);
-  for(const d of G.decor)if(!isBackgroundDecor(d))drawDecor(c,d,cam,tk);
+  for(const d of G.decor)if(!isBackgroundDecor(d)&&d.t==='road')drawDecor(c,d,cam,tk);
+  for(const d of G.decor)if(!isBackgroundDecor(d)&&d.t!=='road')drawDecor(c,d,cam,tk);
   drawCaveDrips(c,G.caveDrips,cam,tk);
   drawRescueCages(c,G.rescues,cam,tk);
   drawHatch(c,L.hatch.x-cam,L.hatch.y,G.doorT);
