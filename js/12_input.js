@@ -42,6 +42,12 @@ function selectSkill(k){
   G.selSkill=k;
   G.toast(k==='rope'?'VALD REPKROK - KLICKA PÅ EN LEMMEL':'VALD '+s.name+' - KLICKA PÅ EN LEMMEL');
 }
+function selectTrollTransform(){
+  if(G.trollUsed){G.toast('TROLLFÖRVANDLING REDAN ANVÄND');AU.sShrug();return}
+  G.clearRopeAim();
+  G.selSkill='troll';
+  G.toast('VALD TROLL - KLICKA PÅ EN LEMMEL');
+}
 function pressAt(p){
   refreshPointer(p);
   AU.init();
@@ -84,9 +90,7 @@ function pressAt(p){
         if(k==='fs')toggleFullscreen();
         else if(k==='pause')G.paused=!G.paused;
         else if(k==='save')G.promptSaveGame();
-        else if(k==='nuke'){
-          if(G.nukeArm>0)G.nuke(); else {G.nukeArm=18;G.toast('KLICKA IGEN FÖR ATT SPRÄNGA ALLA!')}
-        }
+        else if(k==='troll')selectTrollTransform();
         else selectSkill(k);
         AU.sClick();
       }else if(G.mm&&p.x>=G.mm.x&&p.y>=G.mm.y&&p.y<G.mm.y+G.mm.h){

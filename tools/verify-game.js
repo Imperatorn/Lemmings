@@ -153,7 +153,7 @@ const requiredRuntimeMethods = [
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'hitDecorTargetAt',
-  'trollScale','throwTrollRock',
+  'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','throwTrollRock',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -191,6 +191,39 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   G.level = prevLevel;
   G.lems = prevLems;
   G.lamp = prevLamp;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevLems = G.lems;
+  const prevTrolls = G.trolls;
+  const prevParts = G.parts;
+  const prevToasts = G.toasts;
+  const prevManual = G.manual;
+  const prevSel = G.selSkill;
+  const prevUsed = G.trollUsed;
+  G.level = {W:300, hatch:{x:20,y:180}, water:[]};
+  G.T = {W:300, H:240, solid:(x,y)=>y>=200, solidBox:()=>false};
+  const lem = {id:42, x:100, y:199, dir:-1, scale:1, dead:false, state:'WALK', alive(){return !this.dead}};
+  G.lems = [lem];
+  G.trolls = [];
+  G.parts = [];
+  G.toasts = [];
+  G.manual = {active:false, lemId:null};
+  G.selSkill = 'troll';
+  G.trollUsed = false;
+  if (!G.transformLemmingToTrollAt(100, 193) || !lem.dead || G.trolls.length !== 1 || G.trolls[0].dir !== -1 || !G.trollUsed || G.selSkill !== null) {
+    throw new Error('Troll transform ability did not replace a lemming with a troll');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.lems = prevLems;
+  G.trolls = prevTrolls;
+  G.parts = prevParts;
+  G.toasts = prevToasts;
+  G.manual = prevManual;
+  G.selSkill = prevSel;
+  G.trollUsed = prevUsed;
 }
 {
   const prevDecor = G.decor;

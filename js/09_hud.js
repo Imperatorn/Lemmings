@@ -1,6 +1,6 @@
 // ------------------------------ HUD ---------------------------------
 const BTNW=26,BTNY=252,BTNH=CH-BTNY;
-const BUTTONS=[...SKILLS.map(s=>({k:s.k})),{k:'nuke'},{k:'save'}];
+const BUTTONS=[...SKILLS.map(s=>({k:s.k})),{k:'troll'},{k:'save'}];
 function btnRect(i){return {x:2+i*BTNW,y:BTNY,w:BTNW-1,h:BTNH-2}}
 function btnHitRect(i){const r=btnRect(i),y=Math.max(HUDY,BTNY-7);return {x:r.x,y,w:r.w,h:CH-y}}
 function hitButton(p){
@@ -13,7 +13,7 @@ function hitButton(p){
 
 
 const ICON_LABELS={
-  climb:'KL',float:'FS',bomb:'BO',block:'ST',build:'UP',downbuild:'NED',bash:'HA',mine:'MI',dig:'GR',baz:'BZ',jet:'JP',flame:'EL',rope:'RP',nuke:'!!',save:'SP'
+  climb:'KL',float:'FS',bomb:'BO',block:'ST',build:'UP',downbuild:'NED',bash:'HA',mine:'MI',dig:'GR',baz:'BZ',jet:'JP',flame:'EL',rope:'RP',troll:'TR',save:'SP'
 };
 function drawArrow(c,x,y,dir,col){
   c.fillStyle=col;
@@ -74,7 +74,11 @@ function drawIcon(c,k,x,y){
       for(let i=0;i<9;i+=2)p(4+i,6+i,'#c8a070',2,2);
       p(13,3,'#d8d8e0',5,2);p(16,3,'#d8d8e0',2,6);p(14,8,'#d8d8e0',4,2);
       break;
-    case 'nuke': p(6,5,'#d03030',8,8);p(9,2,'#aaa',2,3);p(5,13,'#ffd040',10,2);drawTextC(c,'!',x+10,y+5,2,'#fff');break;
+    case 'troll':
+      p(5,7,'#7b4b2b',10,9);p(4,9,'#7b4b2b',12,5);
+      p(6,5,'#d8c090',3,3);p(11,5,'#d8c090',3,3);
+      p(7,10,'#101010',2,2);p(12,10,'#101010',2,2);p(9,14,'#d8c090',3,1);
+      break;
     case 'save': p(4,5,'#70a0d8',12,13);p(6,7,'#d8f0ff',8,3);p(7,14,'#203040',7,3);p(13,6,'#203040',2,3);break;
   }
 }
@@ -86,9 +90,11 @@ function drawHUD(c,tk){
   let info='';
   const hb=G.hoverBtn>=0?BUTTONS[G.hoverBtn]:null;
   const hs=hb?SKILLS.find(s=>s.k===hb.k):null;
-  if(hb&&hb.k==='save')info='SPARA LÄGE';
+  if(hb&&hb.k==='troll')info=G.trollUsed?'TROLLFÖRVANDLING ANVÄND':'FÖRVANDLA LEMMEL TILL TROLL';
+  else if(hb&&hb.k==='save')info='SPARA LÄGE';
   else if(hs)info=hs.name+' '+(G.skills&&G.skills[hs.k]!=null?G.skills[hs.k]:'');
   else if(G.hoverLem)info=roleName(G.hoverLem);
+  else if(G.selSkill==='troll')info='FÖRVANDLA LEMMEL TILL TROLL';
   else if(G.selSkill){const ss=SKILLS.find(s=>s.k===G.selSkill);info=(ss?ss.name:G.selSkill)+' '+(G.skills?G.skills[G.selSkill]:'');}
   else info='VÄDER '+G.weatherShort()+'  ZOOM '+Math.round((G.viewZoom||1)*100)+'%';
   if(G.manual&&G.manual.active)info='DIREKT: PILAR STYR  SHIFT SPRING  CTRL SIKTE  L LAMPA';
@@ -103,8 +109,8 @@ function drawHUD(c,tk){
   for(let i=0;i<BUTTONS.length;i++){
     const b=BUTTONS[i],r=btnRect(i);
     const skillButton=!!(G.skills&&Object.prototype.hasOwnProperty.call(G.skills,b.k));
-    const disabled=skillButton&&G.skills[b.k]<=0;
-    const sel=!disabled&&((b.k===G.selSkill)||(b.k==='pause'&&G.paused)||(b.k==='nuke'&&G.nukeArm>0)||(b.k==='fs'&&!!document.fullscreenElement));
+    const disabled=(skillButton&&G.skills[b.k]<=0)||(b.k==='troll'&&G.trollUsed);
+    const sel=!disabled&&((b.k===G.selSkill)||(b.k==='pause'&&G.paused)||(b.k==='fs'&&!!document.fullscreenElement));
     c.fillStyle=disabled?'#181820':(sel?'#284828':'#303038');
     c.fillRect(r.x,r.y,r.w,r.h);
     c.fillStyle=disabled?'#2a2a30':(sel?'#70ff70':'#555560');
@@ -212,8 +218,8 @@ function drawSkillPreview(c,cam,tk){
   if(!baseL)return;
   const sx=baseL.x-cam, sy=baseL.y, d=baseL.dir||1, sc=Math.max(1,baseL.scale||1);
   const ux=useManualAim?Math.cos(manualAim):d, uy=useManualAim?Math.sin(manualAim):0;
-  const ok=(useManualAim&&G.canApplySkill&&G.canApplySkill(baseL,k)&&G.skills&&G.skills[k]>0)||
-    (k==='rope'&&G.ropeAim&&G.findLemById(G.ropeAim.lemId)&&G.skills&&G.skills.rope>0)||!!hit.usable&&G.skills&&G.skills[k]>0;
+  const ok=k==='troll'?(!G.trollUsed&&!!hit.near):((useManualAim&&G.canApplySkill&&G.canApplySkill(baseL,k)&&G.skills&&G.skills[k]>0)||
+    (k==='rope'&&G.ropeAim&&G.findLemById(G.ropeAim.lemId)&&G.skills&&G.skills.rope>0)||!!hit.usable&&G.skills&&G.skills[k]>0);
   const col=ok?'#80ff80':'#ff8080';
   c.save();c.globalAlpha=0.78;
   if(k==='dig')pixelOutline(c,sx-8*sc,sy,16*sc,18*sc,col);
@@ -249,6 +255,7 @@ function drawSkillPreview(c,cam,tk){
     else drawTextC(c,useManualAim?'SIKTE':'KLICKA FÄSTE',clamp(tx,48,VW-48),Math.max(14,ty-16),1,col);
   }
   else if(k==='bomb')pixelOutline(c,sx-15*sc,sy-20*sc,30*sc,30*sc,col);
+  else if(k==='troll')pixelOutline(c,sx-13*sc,sy-25*sc,26*sc,30*sc,col);
   else pixelOutline(c,sx-8*sc,sy-19*sc,16*sc,22*sc,col);
   drawTextC(c,ok?'FÖRHANDSVISNING':'KAN EJ',clamp(sx,36,VW-36),Math.max(14,sy-30),1,col);
   c.restore();

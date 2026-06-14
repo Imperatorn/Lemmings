@@ -79,7 +79,7 @@ const G={
   state:'TITLE', levelIdx:0, level:null, T:null,
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
-  timeT:0, levelTimeT:0, selSkill:'build', paused:false, nukeArm:0, nuked:false, mode:'chaos', tempoIdx:1,
+  timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1,
   lamp:null, cleared:new Array(LEVELS.length).fill(false),
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
@@ -512,7 +512,7 @@ const G={
     this.jumpT=Math.round((22+this.rand()*32)*1000/TICK);
     this.jumpEvents=0;
     this.jumpMax=Math.max(0,Math.min(cfg.jumpCap,Math.floor(L.time/165)+1));
-    this.selSkill=null;this.paused=false;this.nukeArm=0;this.nuked=false;
+    this.selSkill=null;this.paused=false;this.trollUsed=false;
     this.lamp=L.night?{x:L.hatch.x,y:L.hatch.y,holder:null,onGround:false}:null;
     this.fireflies=[];
     if(L.night&&!L.cave)for(let i=0;i<22;i++)
@@ -820,7 +820,7 @@ const G={
   },
   skillSpark(l,k){
     if(!l)return;
-    const cols={build:'#c8a050',downbuild:'#d8b060',dig:'#9a7040',bash:'#d0d0d0',mine:'#b8b8c0',rope:'#d0a060',jet:'#ffb040',flame:'#ff7020',baz:'#ff8040',bomb:'#ff4040',float:'#ff8080',climb:'#ffffff',block:'#70a0ff',faint:'#d8f0ff',warm:'#ffb040',mush:'#e8d070'};
+    const cols={build:'#c8a050',downbuild:'#d8b060',dig:'#9a7040',bash:'#d0d0d0',mine:'#b8b8c0',rope:'#d0a060',jet:'#ffb040',flame:'#ff7020',baz:'#ff8040',bomb:'#ff4040',float:'#ff8080',climb:'#ffffff',block:'#70a0ff',faint:'#d8f0ff',warm:'#ffb040',mush:'#e8d070',troll:'#d0a060'};
     const col=cols[k]||'#ffffff';
     const sc=Math.max(1,l.scale||1);
     for(let i=0;i<Math.round(7*sc)&&this.parts.length<MAX_PARTICLES;i++){
@@ -1197,9 +1197,10 @@ const G={
   findLemById(id){return this.lems.find(l=>l.id===id&&!l.dead)||null},
   clickWorld(wx,wy){
     const k=this.selSkill;
-    if(k!=='bomb'&&this.cancelBlockerAt(wx,wy))return true;
+    if(k!=='bomb'&&k!=='troll'&&this.cancelBlockerAt(wx,wy))return true;
     if(!k)return false;
     if(k==='rope')return this.handleRopeClick(wx,wy);
+    if(k==='troll')return this.transformLemmingToTrollAt(wx,wy);
     if(!this.skills||this.skills[k]<=0){
       const s=SKILLS.find(q=>q.k===k);
       this.toast('INGA '+(s?s.name:k)+' KVAR');
@@ -1227,14 +1228,32 @@ const G={
     }
     return false;
   },
-  nuke(){
-    if(this.nuked)return;
-    this.nuked=true;
-    let i=0;
-    for(const l of this.lems)if(l.alive()&&l.bombT<0){l.bombT=5*16+1+i*3;i++}
-    this.toast('SJÄLVFÖRSTÖRELSE AKTIVERAD!');
+  findTrollTransformTarget(wx,wy){
+    let best=null,bestScore=Infinity;
+    for(const l of this.lems||[]){
+      if(!l.alive||!l.alive())continue;
+      const s=this.skillHitScore(l,wx,wy,'troll');
+      if(Number.isFinite(s)&&s<bestScore){best=l;bestScore=s}
+    }
+    return best;
   },
-
+  transformLemmingToTrollAt(wx,wy){
+    if(this.trollUsed){this.toast('TROLLFÖRVANDLING REDAN ANVÄND');AU.sShrug();return false}
+    if(!this.level||!this.T)return false;
+    const l=this.findTrollTransformTarget(wx,wy);
+    if(!l){this.toast('KLICKA PÅ EN LEMMEL');AU.sShrug();return false}
+    if(this.manual&&this.manual.active&&this.manual.lemId===l.id)this.stopManualControl('dead');
+    this.dropLampIfCarrier(l);
+    l.dead=true;
+    l.ropeId=null;
+    const y=this.trollGroundY(l.x,l.y);
+    const t=this.makeTroll(l.x,y,l.dir||1,Math.max(1,l.scale||1));
+    this.skillSpark(t,'troll');
+    this.trollUsed=true;
+    this.selSkill=null;
+    this.toast('LEMMELN BLEV ETT TROLL!');
+    return true;
+  },
   skillName(k){
     const s=SKILLS.find(q=>q.k===k);
     return s?s.name:k;
@@ -1770,6 +1789,14 @@ const G={
 
   isNewLevelWithTrolls(){return !!(this.level&&!this.isDarkLevel())},
   trollScale(t){return Math.max(1,t&&t.scale||1)},
+  makeTroll(x,y,dir,scale){
+    const t={x,y,dir:dir||1,age:0,chewT:0,targetId:null,stepT:0,scale:Math.max(1,scale||1),
+      rockT:Math.round((2.0+this.rand()*2.5)*1000/TICK),life:Math.round((42+this.rand()*26)*TROLL_LIFE_SCALE*1000/TICK)};
+    this.trolls.push(t);
+    this.trollLastX=t.x;
+    AU.sTroll();
+    return t;
+  },
   trollGroundY(x,fromY){
     if(!this.T)return 220;
     const xx=clamp(Math.round(x),5,this.T.W-6);
@@ -1802,11 +1829,8 @@ const G={
   spawnTroll(data){
     if(!this.isNewLevelWithTrolls()||!this.level||!this.T)return null;
     const e=(data&&data.entry)||this.pickTrollEntry();
-    const t={x:e.x,y:e.y,dir:e.dir||1,age:0,chewT:0,targetId:null,stepT:0,scale:1,rockT:Math.round((2.0+this.rand()*2.5)*1000/TICK),life:Math.round((42+this.rand()*26)*TROLL_LIFE_SCALE*1000/TICK)};
-    this.trolls.push(t);
-    this.trollLastX=t.x;
+    const t=this.makeTroll(e.x,e.y,e.dir||1,1);
     this.toast('ETT TROLL VANDRAR IN!');
-    AU.sTroll();
     return t;
   },
   treeById(id){return (this.trees||[]).find(t=>t.id===id&&!t.eaten&&!t.burning)||null},
@@ -2367,7 +2391,6 @@ const G={
     const L=this.level,T=this.T;
     this.doorT++;this.weatherT++;
     this.updateThunder();
-    if(this.nukeArm>0)this.nukeArm--;
     this.updateToasts();
     // spawn
     if(this.doorT>24&&this.spawned<L.lem){

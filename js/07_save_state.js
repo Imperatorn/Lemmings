@@ -2,7 +2,7 @@
 Object.assign(G,{
   makeSaveState(label){
     if(this.state!=='PLAY'||!this.level||!this.T)return null;
-    const fields=['cam','viewZoom','viewY','out','saved','spawned','doorT','rate','spawnT','timeT','levelTimeT','skills','selSkill','nukeArm','nuked',
+    const fields=['cam','viewZoom','viewY','out','saved','spawned','doorT','rate','spawnT','timeT','levelTimeT','skills','selSkill','trollUsed',
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax',
       'monkeyLastX','trollT','trollEvents','trollMax','trollLastX','treeT','treeEvents','treeMax','treeLastX','jumpT','jumpEvents','jumpMax',
@@ -48,6 +48,8 @@ Object.assign(G,{
     this.T.renderFromMask(this.level.theme,this.level.materialZones);
     const fields=s.fields||{}, arrays=s.arrays||{};
     for(const k in fields)this[k]=jsonClone(fields[k]);
+    if(!Object.prototype.hasOwnProperty.call(fields,'trollUsed'))this.trollUsed=!!fields.nuked;
+    if(this.selSkill==='nuke')this.selSkill=null;
     this.paused=false;
     this.levelIdx=s.levelIdx|0;this.level=LEVELS[this.levelIdx];this.levelSeed=s.levelSeed>>>0;
     this.lems=(arrays.lems||[]).map(d=>{const l=new Lemming(d.x||0,d.y||0);Object.assign(l,d);return l});
