@@ -1534,6 +1534,15 @@ const G={
     this.toast('FLYGPLANET STÖRTADE - TRE PAKET FÖLL UR!');
     return true;
   },
+  updateWreckedSupplyPlane(a){
+    if(!a||!a.wrecked)return false;
+    a.wreckT=(a.wreckT||0)+1;
+    // Vraket ska leva kvar visuellt utan att spamma partiklar. Röken är
+    // långsam och lågintensiv, med bara enstaka varma puffar från branden.
+    if(a.wreckT%18===0)this.crashPlaneSmoke(a.x-9+this.rand()*7,a.y-13-this.rand()*3,false);
+    if(a.wreckT%46===7)this.crashPlaneSmoke(a.x-14+this.rand()*8,a.y-11-this.rand()*4,true);
+    return true;
+  },
   updateCrashingSupplyPlane(a){
     if(!a||!this.level||!this.T)return false;
     a.crashT=(a.crashT||0)+1;
@@ -1637,7 +1646,7 @@ const G={
     }
 
     for(const a of this.planes){
-      if(a.wrecked){a.wreckT=(a.wreckT||0)+1;continue}
+      if(a.wrecked){this.updateWreckedSupplyPlane(a);continue}
       if(a.crashing){this.updateCrashingSupplyPlane(a);continue}
       a.x+=a.vx;
       if(a.x>this.cam-120&&a.x<this.cam+this.viewW()+120)AU.sPlane();

@@ -154,7 +154,7 @@ const requiredRuntimeMethods = [
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'hitDecorTargetAt',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
-  'damageSupplyPlane','finishSupplyPlaneCrash','tryTrollThrowAtMonkey','throwTrollRock',
+  'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -296,6 +296,12 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   }
   const lootSkills = new Set(G.packages.map(p => p.skill));
   if (lootSkills.size !== 3) throw new Error('Supply plane crash packages were not three different skills');
+  G.parts = [];
+  plane.wreckT = 0;
+  for (let i = 0; i < 60; i++) G.updateWreckedSupplyPlane(plane);
+  if (plane.wreckT !== 60 || G.parts.length < 2) {
+    throw new Error('Wrecked supply plane did not emit slow smoke/fire particles');
+  }
   G.level = prevLevel;
   G.T = prevTerrain;
   G.planes = prevPlanes;
