@@ -156,17 +156,19 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TICK};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TICK} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
 if (Math.abs(DOLPHIN_RESCUE_CHANCE - 0.15) > 0.0001) throw new Error('Dolphin rescue chance should be 15%');
 if (Math.abs(FISH_RING_CHANCE - 0.20) > 0.0001) throw new Error('Fish swim ring chance should be 20%');
+const maxGameplayCutsceneTicks = Math.max(1, Math.floor(3000 / TICK));
+const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
@@ -272,8 +274,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!fishScene || !G.cutsceneActive() || fishScene.id !== 'fish-ring-closeup') {
     throw new Error('Fish ring cutscene did not start');
   }
-  if (G.currentCutsceneShot().duration < 50 || G.currentCutsceneShot().duration > 70) {
-    throw new Error('Fish ring cutscene should be around 3-4 seconds long');
+  if (G.currentCutsceneShot().duration < minGameplayCutsceneTicks || G.currentCutsceneShot().duration > maxGameplayCutsceneTicks) {
+    throw new Error('Fish ring cutscene should be at most 3 seconds long');
   }
   drawCutsceneOverlay(WCTX, 3);
   G.clearCutscene('verify-fish-ring');
@@ -281,8 +283,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!dolphinScene || !G.cutsceneActive() || dolphinScene.id !== 'dolphin-rescue-closeup') {
     throw new Error('Dolphin rescue cutscene did not start');
   }
-  if (G.currentCutsceneShot().duration < 50 || G.currentCutsceneShot().duration > 70) {
-    throw new Error('Dolphin rescue cutscene should be around 3-4 seconds long');
+  if (G.currentCutsceneShot().duration < minGameplayCutsceneTicks || G.currentCutsceneShot().duration > maxGameplayCutsceneTicks) {
+    throw new Error('Dolphin rescue cutscene should be at most 3 seconds long');
   }
   drawCutsceneOverlay(WCTX, 4);
   G.clearCutscene('verify-dolphin-rescue');
@@ -290,8 +292,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!waterClimbScene || !G.cutsceneActive() || waterClimbScene.id !== 'water-climb-closeup') {
     throw new Error('Water climb cutscene did not start');
   }
-  if (G.currentCutsceneShot().duration < 52 || G.currentCutsceneShot().duration > 72) {
-    throw new Error('Water climb cutscene should be around 3-4 seconds long');
+  if (G.currentCutsceneShot().duration < minGameplayCutsceneTicks || G.currentCutsceneShot().duration > maxGameplayCutsceneTicks) {
+    throw new Error('Water climb cutscene should be at most 3 seconds long');
   }
   drawCutsceneOverlay(WCTX, 5);
   G.clearCutscene('verify-water-climb');
@@ -315,8 +317,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevCache = G.liquidCache;
   const prevCutscene = G.cutscene;
   const prevCutscenesOn = G.cutscenesOn;
+  const prevWeatherKind = G.weatherKind;
   const water = {x:80, y:120, w:90, lava:false};
-  G.level = {W:240, hatch:{x:20,y:80}, exit:{x:220,y:180}, water:[water]};
+  G.level = {W:240, theme:'dirt', night:true, materialZones:[{x:120,w:120,theme:'desert'}], hatch:{x:20,y:80}, exit:{x:220,y:180}, water:[water]};
+  G.weatherKind = 'snow';
   G.liquidCache = null;
   G.T = {
     W:240,
@@ -364,6 +368,12 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.cutsceneActive() || !G.cutscene || G.cutscene.id !== 'water-climb-closeup') {
     throw new Error('Swim ring climbing transition did not start the water climb cutscene');
   }
+  if (!G.cutscene.spec || !G.cutscene.spec.event || G.cutscene.spec.event.themeKey !== 'desert') {
+    throw new Error('Water climb cutscene did not inherit material zone theme');
+  }
+  if (G.cutscene.spec.event.night !== true || G.cutscene.spec.event.weatherKind !== 'snow') {
+    throw new Error('Water climb cutscene did not inherit night/weather context');
+  }
   G.clearCutscene('verify-water-climb-event');
   G.level = prevLevel;
   G.T = prevTerrain;
@@ -376,6 +386,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.liquidCache = prevCache;
   G.cutscene = prevCutscene;
   G.cutscenesOn = prevCutscenesOn;
+  G.weatherKind = prevWeatherKind;
 }
 {
   const prevLevel = G.level;
