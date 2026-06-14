@@ -594,6 +594,7 @@ const G={
       b.y=b.baseY+Math.sin(b.p*1.15)*0.35;
     }
     for(const f of this.ambientFish||[]){
+      if(f.giftT>0)f.giftT--;
       f.p+=f.s;
       f.x+=f.dir*f.spd*(0.65+0.35*Math.sin(f.p*1.7));
       const target=f.baseY+Math.sin(f.p*1.1)*2.2+Math.sin(f.p*0.37)*1.4;
@@ -1022,14 +1023,59 @@ const G={
     }
     return true;
   },
+  findNearbyRingFish(l,z){
+    if(!l||!z||z.lava)return null;
+    const source=z.source||z;
+    let best=null,bestScore=Infinity;
+    for(const f of this.ambientFish||[]){
+      if(!f||f.zone!==source)continue;
+      const fy=f.y||f.baseY||z.y+10;
+      const dx=Math.abs((f.x||0)-l.x),dy=Math.abs(fy-l.y);
+      if(dx>92||dy>34)continue;
+      const score=dx+dy*0.7;
+      if(score<bestScore){best=f;bestScore=score}
+    }
+    return best;
+  },
+  tryFishSwimRing(l,z){
+    if(!l||!l.alive()||!z||z.lava||l.swimRing||l.fishRingTried)return false;
+    const fish=this.findNearbyRingFish(l,z);
+    if(!fish)return false;
+    l.fishRingTried=true;
+    if(this.rand()>=FISH_RING_CHANCE)return false;
+    l.swimRing=true;
+    l.state='SWIM';l.fall=0;l.busyT=0;l.jumpT=0;l.jumpVy=0;
+    l.chute=false;l.soft=true;l.glide=0;
+    l.y=clamp(Math.round(z.y+5),Math.round(z.y+3),Math.round(z.y+10));
+    fish.giftT=28;
+    fish.dir=(fish.x<l.x)?1:-1;
+    AU.sPop();
+    this.toast('EN FISK GAV EN LEMMEL EN BADRING!');
+    for(let i=0;i<18&&this.parts.length<MAX_PARTICLES;i++){
+      const a=RND()*6.283,sp=0.35+RND()*1.15;
+      this.parts.push({x:l.x+RND()*8-4,y:l.y-5+RND()*5,
+        vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.35,life:12+RND()*14,g:0.06,
+        col:RND()<0.5?'#ffb040':(RND()<0.75?'#ffe070':'#d8f8ff'),glow:RND()<0.25});
+    }
+    return true;
+  },
   checkLiquid(l){
     const z=this.lemmingLiquidHazard(l);
-    if(z){
-      if(l.state!=='DROWN'&&l.state!=='BURN'){
-        if(z.lava)l.kill('burn');
-        else if(!this.tryDolphinRescue(l,z))l.kill('drown');
-      }
+    if(!z){
+      if(l&&l.state!=='SWIM')l.fishRingTried=false;
       return;
+    }
+    if(l.state!=='DROWN'&&l.state!=='BURN'){
+      if(z.lava){
+        l.swimRing=false;
+        l.kill('burn');
+      }else if(l.swimRing){
+        if(l.state!=='SWIM'){
+          l.state='SWIM';l.fall=0;l.busyT=0;l.chute=false;l.soft=true;
+        }
+      }else if(!this.tryFishSwimRing(l,z)&&!this.tryDolphinRescue(l,z)){
+        l.kill('drown');
+      }
     }
   },
   dropLampIfCarrier(l,atExit){

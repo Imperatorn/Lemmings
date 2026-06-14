@@ -26,6 +26,21 @@ function drawLemmingCore(c,l,sx,sy){
   }
   if(l.state==='DROWN'){p(-2,-3,COL.hair,4,2);p(-1,-1,COL.skin,2,1);return}
   if(l.state==='BURN'){p(-2,-6,'#222',4,5);p(-2,-8,'#444',4,2);return}
+  if(l.state==='SWIM'){
+    const bob=(l.anim>>3)&1;
+    p(-6,-5+bob,'#ff8a28',12,2);
+    p(-7,-4+bob,'#ffe070',2,2);
+    p(5,-4+bob,'#ff6a20',2,2);
+    p(-5,-3+bob,'#ff8a28',10,2);
+    p(-4,-4+bob,'#ffd060',2,1);
+    p(2,-4+bob,'#ffd060',2,1);
+    p(-2,-7+bob,COL.body,4,4);
+    p(-1,-9+bob,COL.skin,2,2);
+    p(-2,-11+bob,COL.hair,4,2);
+    p(d>0?1:-2,-9+bob,'#102040',1,1);
+    if(l.climber)p(d>0?3:-4,-8+bob,COL.skin,2,1);
+    return;
+  }
   if(l.state==='EXITING'){
     const k=Math.max(1,8-l.busyT/2);
     p(-2,-k,COL.body,4,k*0.6|0||1);p(-2,-k-2,COL.hair,4,2);
@@ -257,6 +272,17 @@ function drawAmbientFish(c,z,cam,tk){
     c.fillStyle='#123050';
     c.fillRect(4*sc,-1*sc,1*sc,1*sc);
     c.restore();
+    if(f.giftT>0){
+      const k=(f.giftT>>2)&1;
+      c.globalAlpha=0.82;
+      c.fillStyle='#ffb040';
+      c.fillRect(x-d*10,y-8-k,6,1);
+      c.fillRect(x-d*10,y-5-k,6,1);
+      c.fillRect(x-d*11,y-7-k,1,2);
+      c.fillRect(x-d*5,y-7-k,1,2);
+      c.fillStyle='#fff0a0';
+      c.fillRect(x-d*9,y-7-k,4,1);
+    }
     if(((tk+(f.p*17|0))%96)<18){
       c.globalAlpha=0.30;
       c.fillStyle='#d8f8ff';

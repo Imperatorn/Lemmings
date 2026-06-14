@@ -137,12 +137,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,drawPlayWorld,drawMenu,WCTX,menuChapters};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,WCTX,menuChapters};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, drawPlayWorld, drawMenu, WCTX, menuChapters} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, WCTX, menuChapters} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -153,6 +153,7 @@ const requiredRuntimeMethods = [
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'hitDecorTargetAt',
+  'findNearbyRingFish','tryFishSwimRing',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
@@ -176,6 +177,55 @@ G.setMusicVolume(0.42);
 G.setSfxVolume(0.37);
 if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) {
   throw new Error('Audio volume setters failed');
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevLems = G.lems;
+  const prevFish = G.ambientFish;
+  const prevParts = G.parts;
+  const prevToasts = G.toasts;
+  const prevRand = G.rand;
+  const prevCache = G.liquidCache;
+  const water = {x:80, y:120, w:90, lava:false};
+  G.level = {W:240, hatch:{x:20,y:80}, exit:{x:220,y:180}, water:[water]};
+  G.liquidCache = null;
+  G.T = {
+    W:240,
+    H:240,
+    solid(x,y){return y >= 190 || (x >= 150 && y >= 90 && y <= 190)},
+    solidBox(){return false}
+  };
+  G.ambientFish = [{zone:water, x:100, y:128, baseY:128, dir:1, p:0, s:0, spd:0, size:1, col:'#ffd060'}];
+  G.parts = [];
+  G.toasts = [];
+  G.rand = () => 0.0;
+  const lem = new Lemming(100, 128);
+  lem.state = 'FALL';
+  lem.fall = 12;
+  G.lems = [lem];
+  const liquid = G.lemmingLiquidHazard(lem);
+  if (!liquid || !G.tryFishSwimRing(lem, liquid) || lem.state !== 'SWIM' || !lem.swimRing) {
+    throw new Error('Nearby fish did not grant a swim ring when chance succeeded');
+  }
+  G.checkLiquid(lem);
+  if (lem.state === 'DROWN' || lem.dead) throw new Error('Swim ring did not protect lemming from water');
+  lem.climber = true;
+  lem.x = 149;
+  lem.y = 125;
+  lem.dir = 1;
+  lem.swim(G.T);
+  if (lem.state !== 'CLIMB' || lem.swimRing) {
+    throw new Error('Swim ring lemming did not transition into climbing at a wall');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.lems = prevLems;
+  G.ambientFish = prevFish;
+  G.parts = prevParts;
+  G.toasts = prevToasts;
+  G.rand = prevRand;
+  G.liquidCache = prevCache;
 }
 {
   const prevLevel = G.level;

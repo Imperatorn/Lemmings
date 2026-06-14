@@ -1,5 +1,5 @@
 // --------------------------- LEMMEL ---------------------------------
-// Tillstånd: WALK FALL CLIMB BLOCK BUILD SHRUG BASH MINE DIG BAZ JET FLAME JUMP
+// Tillstånd: WALK FALL CLIMB SWIM BLOCK BUILD SHRUG BASH MINE DIG BAZ JET FLAME JUMP
 //            WARM FAINT EXITING SPLAT DROWN BURN DEAD
 let LEM_ID=1;
 class Lemming{
@@ -7,7 +7,7 @@ class Lemming{
     this.id=LEM_ID++;
     this.x=x;this.y=y;this.dir=1;
     this.state='FALL';this.fall=0;this.soft=false;this.glide=0;
-    this.climber=false;this.floater=false;this.chute=false;
+    this.climber=false;this.floater=false;this.chute=false;this.swimRing=false;this.fishRingTried=false;
     this.bombT=-1;this.busyT=0;this.bricks=0;this.fuel=0;
     this.jetT=0;this.jetBlockedT=0;this.afterBazState=null;
     this.jumpT=0;this.jumpVy=0;this.manualVy=0;this.ropeId=null;this.ropeT=0;this.ropeCooldown=0;
@@ -45,6 +45,7 @@ class Lemming{
       case 'MANUAL': this.manualControl(T); break;
       case 'FALL': this.fallStep(T); break;
       case 'CLIMB': this.climb(T); break;
+      case 'SWIM': this.swim(T); break;
       case 'BLOCK':
         if(!T.solid(this.x,this.y+1)){this.state='FALL';this.fall=0;G.blockers=null}
         break;
@@ -170,6 +171,35 @@ class Lemming{
       }
     }
     G.checkLiquid(this);
+  }
+  swim(T){
+    const z=G.liquidAt(this.x,this.y,0)||G.liquidAt(this.x,this.y+4,0);
+    if(!z||z.lava){
+      this.swimRing=false;this.fishRingTried=false;this.chute=false;this.soft=false;
+      this.state=T.solid(this.x,this.y+1)?'WALK':'FALL';this.fall=0;
+      return;
+    }
+    this.fall=0;this.chute=false;this.soft=true;this.glide=0;this.busyT=0;
+    const targetY=z.y+5+Math.sin(this.anim*0.22)*1.1;
+    this.y+=clamp(Math.round(targetY-this.y),-1,1);
+
+    const wallX=this.x+this.dir;
+    const wallAhead=T.solid(wallX,this.y-2)||T.solid(wallX,this.y-8);
+    if(wallAhead){
+      if(this.climber){
+        this.swimRing=false;this.fishRingTried=false;
+        this.state='CLIMB';this.busyT=0;this.fall=0;
+        return;
+      }
+      this.dir*=-1;
+    }else if((this.anim&1)===0){
+      const nx=this.x+this.dir;
+      if(nx<3||nx>T.W-3)this.dir*=-1;
+      else this.x=nx;
+    }
+
+    if(this.anim%8===0)G.bubble(this.x,this.y-4);
+    G.checkExit(this);
   }
   climb(T){
     if(T.solid(this.x,this.y-8)){      // slår i utsprång -> faller bakåt
