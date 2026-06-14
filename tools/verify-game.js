@@ -479,6 +479,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevManual = G.manual;
   const prevSel = G.selSkill;
   const prevUsed = G.trollUsed;
+  const prevTrees = G.trees;
+  const prevRocks = G.trollRocks;
+  const prevMonkeys = G.monkeys;
+  const prevPlanes = G.planes;
+  const prevMegaBoom = G.megaBoom;
+  const prevMegaArmed = G.megaArmed;
+  const prevTrollEvents = G.trollEvents;
+  const prevTrollMax = G.trollMax;
   G.level = {W:300, hatch:{x:20,y:180}, water:[]};
   G.T = {W:300, H:240, solid:(x,y)=>y>=200, solidBox:()=>false};
   const lem = {id:42, x:100, y:199, dir:-1, scale:1, dead:false, state:'WALK', alive(){return !this.dead}};
@@ -492,15 +500,45 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.transformLemmingToTrollAt(100, 193) || !lem.dead || G.trolls.length !== 1 || G.trolls[0].dir !== -1 || !G.trollUsed || G.selSkill !== null) {
     throw new Error('Troll transform ability did not replace a lemming with a troll');
   }
+  const darkLem = {id:43, x:120, y:199, dir:1, scale:1, dead:false, state:'WALK', alive(){return !this.dead}};
+  G.level = {W:300, hatch:{x:20,y:180}, water:[], night:true};
+  G.T = {W:300, H:240, solid:(x,y)=>y>=200, solidBox:()=>false, clearDisc(){}, clearRect(){}};
+  G.lems = [darkLem];
+  G.trolls = [];
+  G.trollRocks = [];
+  G.trees = [];
+  G.monkeys = [];
+  G.planes = [];
+  G.megaBoom = null;
+  G.megaArmed = null;
+  G.trollEvents = 0;
+  G.trollMax = 0;
+  G.selSkill = 'troll';
+  G.trollUsed = false;
+  if (!G.transformLemmingToTrollAt(120, 193) || !darkLem.dead || G.trolls.length !== 1 || !G.trolls[0].playerMade) {
+    throw new Error('Troll transform did not create a player-made troll on a dark level');
+  }
+  G.updateTrollEvents();
+  if (G.trolls.length !== 1 || !G.trolls[0].playerMade) {
+    throw new Error('Player-made troll was removed by dark-level troll cleanup');
+  }
   G.level = prevLevel;
   G.T = prevTerrain;
   G.lems = prevLems;
   G.trolls = prevTrolls;
+  G.trollRocks = prevRocks;
+  G.trees = prevTrees;
+  G.monkeys = prevMonkeys;
+  G.planes = prevPlanes;
   G.parts = prevParts;
   G.toasts = prevToasts;
   G.manual = prevManual;
   G.selSkill = prevSel;
   G.trollUsed = prevUsed;
+  G.megaBoom = prevMegaBoom;
+  G.megaArmed = prevMegaArmed;
+  G.trollEvents = prevTrollEvents;
+  G.trollMax = prevTrollMax;
 }
 {
   const prevDecor = G.decor;

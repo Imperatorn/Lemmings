@@ -1353,12 +1353,13 @@ const G={
     if(!this.level||!this.T)return false;
     const l=this.findTrollTransformTarget(wx,wy);
     if(!l){this.toast('KLICKA PÅ EN LEMMEL');AU.sShrug();return false}
+    const y=this.trollGroundY(l.x,l.y);
+    const t=this.makeTroll(l.x,y,l.dir||1,Math.max(1,l.scale||1),{playerMade:true});
+    if(!t){this.toast('TROLLFORVANDLING MISSLYCKADES');AU.sShrug();return false}
     if(this.manual&&this.manual.active&&this.manual.lemId===l.id)this.stopManualControl('dead');
     this.dropLampIfCarrier(l);
     l.dead=true;
     l.ropeId=null;
-    const y=this.trollGroundY(l.x,l.y);
-    const t=this.makeTroll(l.x,y,l.dir||1,Math.max(1,l.scale||1));
     this.skillSpark(t,'troll');
     this.trollUsed=true;
     this.selSkill=null;
@@ -2019,9 +2020,10 @@ const G={
 
   isNewLevelWithTrolls(){return !!(this.level&&!this.isDarkLevel())},
   trollScale(t){return Math.max(1,t&&t.scale||1)},
-  makeTroll(x,y,dir,scale){
+  makeTroll(x,y,dir,scale,opts){
     const t={x,y,dir:dir||1,age:0,chewT:0,targetId:null,stepT:0,scale:Math.max(1,scale||1),
       rockT:Math.round((2.0+this.rand()*2.5)*1000/TICK),life:Math.round((42+this.rand()*26)*TROLL_LIFE_SCALE*1000/TICK)};
+    if(opts&&opts.playerMade)t.playerMade=true;
     this.trolls.push(t);
     this.trollLastX=t.x;
     AU.sTroll();
@@ -2288,14 +2290,14 @@ const G={
     this.trollRocks=(this.trollRocks||[]).filter(r=>!r.hit);
   },
   updateTrollEvents(){
-    if(this.isDarkLevel()){
-      this.trolls=[];
-      this.trollRocks=[];
+    const dark=this.isDarkLevel();
+    if(dark){
+      this.trolls=(this.trolls||[]).filter(t=>t&&t.playerMade);
       this.trollEvents=0;
-      return;
     }
-    if(!this.isNewLevelWithTrolls()||this.megaBoom||this.megaArmed)return;
-    if(this.trollEvents<this.trollMax){
+    if(this.megaBoom||this.megaArmed)return;
+    if(!dark&&!this.isNewLevelWithTrolls())return;
+    if(!dark&&this.trollEvents<this.trollMax){
       const hasTree=(this.trees||[]).some(t=>!t.eaten);
       this.trollT-=hasTree?2:1;
       if(this.trollT<=0){
