@@ -258,14 +258,14 @@ const G={
     AU.musicOn=!AU.musicOn;
     if(!AU.musicOn)AU.stopMusic();
     else if(this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
-    else AU.startMusic('day');
+    else AU.startMusic('menu');
     this.toast('MUSIK '+(AU.musicOn?'PÅ':'AV'));this.savePrefs();
   },
   setMusicVolume(v){
     AU.musicOn=true;
     AU.setMusicVolume(v);
     if(this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
-    else AU.startMusic('day');
+    else AU.startMusic('menu');
     this.toast('MUSIKVOLYM '+Math.round(AU.musicVol*100)+'%');
     this.savePrefs();
     return AU.musicVol;
@@ -361,7 +361,7 @@ const G={
     AU.stopWeather();
     AU.stopMusic();
     this.state='MENU';
-    AU.startMusic('day');
+    AU.startMusic('menu');
     this.savePrefs();
   },
   restartCurrentLevel(){

@@ -46,7 +46,7 @@ function pressAt(p){
   refreshPointer(p);
   AU.init();
   if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
-  if(G.state==='TITLE'){G.state='MENU';AU.sClick();AU.startMusic('day');return}
+  if(G.state==='TITLE'){G.state='MENU';AU.sClick();AU.startMusic('menu');return}
   if(G.state==='MENU'){
     if(G.menuSettings)for(const k in G.menuSettings){const r=G.menuSettings[k];
       if(p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h){

@@ -610,6 +610,19 @@ const AU={
   mus:{timer:null,step:0,next:0,kind:'day'},
   // melodi/bas i MIDI-nummer, 0 = paus. Åttondelar.
   PAT:{
+    menu:{bpm:88,
+      mel:[72,0,0,76, 79,0,76,0, 71,0,0,74, 76,0,74,0,
+           69,0,0,72, 76,0,72,0, 67,0,0,71, 74,0,71,0,
+           64,0,67,0, 72,0,71,0, 69,0,67,0, 64,0,0,0,
+           65,0,69,0, 72,0,74,0, 76,0,74,0, 72,0,0,0],
+      bass:[48,0,0,0, 55,0,0,0, 43,0,0,0, 50,0,0,0,
+            45,0,0,0, 52,0,0,0, 40,0,0,0, 47,0,0,0,
+            41,0,0,0, 48,0,0,0, 45,0,0,0, 52,0,0,0,
+            43,0,0,0, 50,0,0,0, 48,0,0,0, 48,0,0,0],
+      harm:[0,0,84,0, 0,0,83,0, 0,0,79,0, 0,0,83,0,
+            0,0,81,0, 0,0,84,0, 0,0,79,0, 0,0,83,0,
+            0,0,76,0, 0,0,79,0, 0,0,81,0, 0,0,79,0,
+            0,0,81,0, 0,0,84,0, 0,0,83,0, 0,0,84,0]},
     day:{bpm:138,
       mel:[72,0,76,79, 76,72,76,0, 74,0,77,81, 77,74,77,0,
            76,0,79,84, 83,79,76,0, 74,77,76,74, 72,0,0,0,
@@ -731,6 +744,8 @@ const AU={
       if(i%16===14)this.tone(this.midi(m+7),stepDur*0.26,'square',0.014,1,t+stepDur*0.20,this.musGain);
     }else if(kind==='night'){
       if(i%8===3||i%16===8)this.tone(this.midi(m),stepDur*0.36,'square',0.016,1,t+stepDur*0.02,this.musGain);
+    }else if(kind==='menu'){
+      if(i%16===0)this.tone(this.midi(m+12),stepDur*0.48,'sine',0.010,1,t+stepDur*0.08,this.musGain);
     }else if(kind==='cave'){
       if(i%16===4||i%16===12)this.tone(this.midi(m+12),stepDur*0.46,'square',0.010,0.99,t+stepDur*0.05,this.musGain);
     }else if(kind==='desert'){
@@ -752,11 +767,13 @@ const AU={
     let third=4,pulseVol=0.020,arpVol=0.018,pulseEvery=4,arpEvery=8,padVol=0,padEvery=16;
     let subVol=0,subEvery=8,subLen=3.2;
     if(kind==='day'){
-      pulseVol=0.023;arpVol=0.023;subVol=0.026;
+      pulseVol=0.026;arpVol=0.024;subVol=0.035;
     }else if(kind==='day2'){
-      pulseVol=0.025;arpVol=0.026;subVol=0.029;subLen=3.0;
+      pulseVol=0.028;arpVol=0.027;subVol=0.038;subLen=3.0;
     }else if(kind==='night'){
-      third=3;pulseVol=0.017;arpVol=0.014;pulseEvery=8;arpEvery=16;padVol=0.012;subVol=0.020;subEvery=16;subLen=7.0;
+      third=3;pulseVol=0.019;arpVol=0.015;pulseEvery=8;arpEvery=16;padVol=0.012;subVol=0.027;subEvery=16;subLen=7.0;
+    }else if(kind==='menu'){
+      pulseVol=0.014;arpVol=0.010;pulseEvery=16;arpEvery=16;padVol=0.010;subVol=0.030;subEvery=16;subLen=6.8;
     }else if(kind==='cave'){
       third=3;pulseVol=0.015;arpVol=0.012;pulseEvery=8;arpEvery=16;padVol=0.010;padEvery=32;
     }else if(kind==='desert'){
@@ -847,19 +864,19 @@ const AU={
     while(this.mus.next<this.now()+0.25){
       const i=this.mus.step%P.mel.length, t=this.mus.next;
       const m=P.mel[i], b=P.bass[i], kind=this.mus.kind;
-      const lead=kind==='cave'?'sine':(kind==='lava'||kind==='night'||kind==='desert'?'triangle':(kind==='day2'&&i%32>=16?'triangle':'square'));
+      const lead=kind==='cave'||kind==='menu'?'sine':(kind==='lava'||kind==='night'||kind==='desert'?'triangle':(kind==='day2'&&i%32>=16?'triangle':'square'));
       const accent=kind==='day2'?(i%16===0?1.18:(i%8===6?0.86:1.0)):1;
-      const leadVol=kind==='cave'?0.075:(kind==='lava'?0.102:(kind==='night'?0.10:(kind==='desert'?0.066:(kind==='city'?0.068:(kind==='day2'?0.060*accent:0.07)))));
-      const leadLen=kind==='cave'?stepDur*2.55:(kind==='lava'?stepDur*2.25:(kind==='desert'?stepDur*(i%8===0?1.65:1.05):(kind==='city'?stepDur*(P.mel[(i+1)%P.mel.length]?0.84:1.28):(kind==='day2'?(i%16===14?stepDur*1.55:(i%4===0?stepDur*1.10:stepDur*0.82)):stepDur*0.95))));
+      const leadVol=kind==='cave'?0.075:(kind==='lava'?0.102:(kind==='night'?0.10:(kind==='desert'?0.066:(kind==='menu'?0.052:(kind==='city'?0.068:(kind==='day2'?0.060*accent:0.07))))));
+      const leadLen=kind==='cave'?stepDur*2.55:(kind==='lava'?stepDur*2.25:(kind==='menu'?stepDur*2.05:(kind==='desert'?stepDur*(i%8===0?1.65:1.05):(kind==='city'?stepDur*(P.mel[(i+1)%P.mel.length]?0.84:1.28):(kind==='day2'?(i%16===14?stepDur*1.55:(i%4===0?stepDur*1.10:stepDur*0.82)):stepDur*0.95)))));
       if(m)this.tone(this.midi(m),leadLen,lead,leadVol,1,t,this.musGain);
       this.retroLeadLayer(kind,m,i,t,stepDur,leadLen);
       if(P.harm){
         const h=P.harm[i%P.harm.length];
-        if(h)this.tone(this.midi(h),kind==='cave'?stepDur*2.2:(kind==='lava'?stepDur*2.05:(kind==='desert'?stepDur*1.75:stepDur*1.35)),'triangle',kind==='cave'?0.024:(kind==='lava'?0.034:(kind==='desert'?0.022:0.030*accent)),1,t+stepDur*0.08,this.musGain);
+        if(h)this.tone(this.midi(h),kind==='cave'?stepDur*2.2:(kind==='lava'?stepDur*2.05:(kind==='menu'?stepDur*2.4:(kind==='desert'?stepDur*1.75:stepDur*1.35))),'triangle',kind==='cave'?0.024:(kind==='lava'?0.034:(kind==='menu'?0.018:(kind==='desert'?0.022:0.030*accent))),1,t+stepDur*0.08,this.musGain);
       }
-      if(b)this.tone(this.midi(b),kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8)),'triangle',kind==='cave'?0.105:(kind==='lava'?0.120:(kind==='desert'?0.090:(kind==='day2'?0.095:0.12))),1,t,this.musGain);
+      if(b)this.tone(this.midi(b),kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='menu'?stepDur*3.4:(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8))),'triangle',kind==='cave'?0.128:(kind==='lava'?0.145:(kind==='desert'?0.112:(kind==='menu'?0.105:(kind==='day2'?0.125:0.148)))),1,t,this.musGain);
       this.retroBassLayer(kind,b,i,t,stepDur);
-      if(kind!=='night'&&kind!=='cave'&&kind!=='desert'&&kind!=='lava'&&i%4===2)this.noise(0.03,kind==='day2'||kind==='city'?0.020:0.03,6000,0.5,t,this.musGain); // hihat-känsla
+      if(kind!=='night'&&kind!=='cave'&&kind!=='desert'&&kind!=='lava'&&kind!=='menu'&&i%4===2)this.noise(0.03,kind==='day2'||kind==='city'?0.020:0.03,6000,0.5,t,this.musGain); // hihat-känsla
       if(kind==='cave'&&i%16===8)this.softNoise(0.42,0.010,520,0.82,t+stepDur*0.2,{type:'lowpass',smooth:0.82,attack:0.12,release:0.24,dest:this.musGain});
       if(kind==='lava'){
         if(i%16===0){

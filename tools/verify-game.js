@@ -141,6 +141,9 @@ for (const name of requiredRuntimeMethods) {
 for (const name of ['setMusicVolume','setSfxVolume','applyVolumes']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
+if (!AU.PAT || !AU.PAT.menu || !Array.isArray(AU.PAT.menu.mel) || !Array.isArray(AU.PAT.menu.bass)) {
+  throw new Error('Missing menu music pattern');
+}
 G.setMusicVolume(0.42);
 G.setSfxVolume(0.37);
 if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) {
