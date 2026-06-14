@@ -673,15 +673,27 @@ const AU={
       mel:[67,0,70,72, 74,0,72,70, 67,70,74,77, 79,77,74,0,
            69,0,72,74, 76,74,72,69, 71,74,76,79, 81,79,76,0,
            67,70,72,74, 77,74,72,70, 69,72,74,76, 79,76,74,72,
-           71,0,74,76, 79,0,76,74, 72,70,69,67, 67,0,0,0],
+           71,0,74,76, 79,0,76,74, 72,70,69,67, 67,0,0,0,
+           74,0,77,79, 82,79,77,74, 72,0,76,79, 81,79,76,0,
+           70,72,74,0, 77,79,77,74, 69,0,72,76, 79,76,72,0,
+           67,0,70,74, 77,0,79,81, 82,81,79,77, 74,0,72,70,
+           69,72,76,79, 81,79,76,72, 71,0,74,76, 79,76,74,0],
       bass:[43,0,50,0, 43,0,50,0, 46,0,53,0, 46,0,53,0,
             45,0,52,0, 45,0,52,0, 48,0,55,0, 48,0,55,0,
             43,0,50,0, 46,0,53,0, 45,0,52,0, 48,0,55,0,
-            43,0,50,0, 41,0,48,0, 43,0,50,0, 43,0,43,0],
+            43,0,50,0, 41,0,48,0, 43,0,50,0, 43,0,43,0,
+            48,0,55,0, 48,0,55,0, 45,0,52,0, 45,0,52,0,
+            46,0,53,0, 46,0,53,0, 43,0,50,0, 43,0,50,0,
+            41,0,48,0, 43,0,50,0, 45,0,52,0, 46,0,53,0,
+            48,0,55,0, 45,0,52,0, 43,0,50,0, 43,0,43,0],
       harm:[0,0,0,0, 79,0,77,0, 0,0,81,0, 82,0,0,0,
             0,0,0,0, 81,0,79,0, 0,0,83,0, 86,0,0,0,
             79,0,0,0, 82,0,0,0, 81,0,0,0, 84,0,0,0,
-            0,0,83,0, 86,0,83,0, 81,0,79,0, 79,0,0,0]}
+            0,0,83,0, 86,0,83,0, 81,0,79,0, 79,0,0,0,
+            84,0,82,0, 79,0,77,0, 0,0,81,0, 84,0,0,0,
+            82,0,0,0, 79,0,77,0, 0,0,76,0, 79,0,0,0,
+            0,0,79,0, 82,0,84,0, 86,0,84,0, 82,0,0,0,
+            81,0,79,0, 76,0,74,0, 0,0,76,0, 79,0,0,0]}
   },
   midi(n){return 440*Math.pow(2,(n-69)/12)},
   retroLeadLayer(kind,m,i,t,stepDur,leadLen){
@@ -701,8 +713,10 @@ const AU={
     }else if(kind==='desert'){
       if(i%8===0||i%8===4)this.tone(this.midi(m+12),stepDur*0.30,'square',0.015,1,t+stepDur*0.03,this.musGain);
     }else if(kind==='city'){
-      if(i%4===0)this.tone(this.midi(m+12),stepDur*0.24,'square',0.014,1,t+stepDur*0.02,this.musGain);
-      if(i%16===10)this.tone(this.midi(m+7),stepDur*0.20,'square',0.010,1,t+stepDur*0.18,this.musGain);
+      const bar=i%32;
+      if(bar===0||bar===8||bar===16||bar===24)this.tone(this.midi(m+12),stepDur*0.24,'square',0.013,1,t+stepDur*0.02,this.musGain);
+      if(bar===6||bar===14||bar===22)this.tone(this.midi(m+7),stepDur*0.20,'square',0.010,1,t+stepDur*0.18,this.musGain);
+      if(bar===30)this.tone(this.midi(m+12),stepDur*0.28,'triangle',0.014,0.99,t+stepDur*0.20,this.musGain);
     }
   },
   retroBassLayer(kind,b,i,t,stepDur){
@@ -724,9 +738,10 @@ const AU={
     }else if(kind==='desert'){
       pulseVol=0.020;arpVol=0.020;padVol=0.008;
     }else if(kind==='city'){
-      third=3;pulseVol=0.026;arpVol=0.020;pulseEvery=4;arpEvery=8;padVol=0.006;
+      third=3;pulseVol=0.024;arpVol=0.019;pulseEvery=4;arpEvery=16;padVol=0.005;
     }
     if(i%pulseEvery===0)this.tone(this.midi(b+12),stepDur*0.62,'square',pulseVol,0.98,t+stepDur*0.01,this.musGain);
+    if(kind==='city'&&i%8===4)this.tone(this.midi(b+19),stepDur*0.25,'square',pulseVol*0.55,1,t+stepDur*0.05,this.musGain);
     if(i%arpEvery===0){
       const dur=stepDur*(kind==='city'?0.24:0.32);
       const swing=kind==='day2'?0.03:0;
@@ -834,9 +849,12 @@ const AU={
         if(i%16===14)this.tone(this.midi(76),stepDur*1.4,'sine',0.018,1.04,t+stepDur*0.28,this.musGain);
       }
       if(kind==='city'){
-        if(i%4===0)this.noise(0.035,0.016,900,0.52,t,this.musGain);
-        if(i%8===6)this.noise(0.025,0.012,4200,0.60,t+stepDur*0.2,this.musGain);
-        if(i%16===10)this.tone(this.midi(86),stepDur*0.55,'square',0.018,1.12,t+stepDur*0.32,this.musGain);
+        const phrase=i%64;
+        if(i%4===0)this.noise(0.032,phrase<32?0.014:0.018,900,0.52,t,this.musGain);
+        if(i%8===6||i%32===22)this.noise(0.024,phrase<32?0.010:0.014,4200,0.60,t+stepDur*0.2,this.musGain);
+        if(i%16===10)this.tone(this.midi(phrase<32?86:91),stepDur*0.46,'square',0.015,1.10,t+stepDur*0.32,this.musGain);
+        if(i%32===30)this.tone(this.midi(79+(phrase<32?0:5)),stepDur*0.74,'triangle',0.014,0.96,t+stepDur*0.18,this.musGain);
+        if(i%64===48&&b)this.padTone(this.midi(b+12),stepDur*5.0,'triangle',0.012,t+stepDur*0.05,this.musGain);
       }
       this.mus.next+=stepDur; this.mus.step++;
     }
