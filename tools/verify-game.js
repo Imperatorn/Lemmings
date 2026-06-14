@@ -175,7 +175,8 @@ const requiredRuntimeMethods = [
   'advanceCutscene','updateCutscene','cutsceneActive','cutsceneRect','currentCutsceneShot',
   'handleCutsceneInput','handleCutsceneKey','makeCutscenePreviewSpec',
   'makeFishRingCutsceneSpec','playFishRingCutscene',
-  'makeDolphinRescueCutsceneSpec','playDolphinRescueCutscene','toggleCutscenes',
+  'makeDolphinRescueCutsceneSpec','playDolphinRescueCutscene',
+  'makeWaterClimbCutsceneSpec','playWaterClimbCutscene','toggleCutscenes',
   'hitDecorTargetAt',
   'findNearbyRingFish','tryFishSwimRing',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
@@ -206,7 +207,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
 {
   const registeredCutscenes = G.cutsceneList({debug:true});
   const registeredIds = new Set(registeredCutscenes.map(s => s.id));
-  for (const id of ['cutscene-preview-box','cutscene-preview-fullscreen','fish-ring-closeup','dolphin-rescue-closeup']) {
+  for (const id of ['cutscene-preview-box','cutscene-preview-fullscreen','fish-ring-closeup','dolphin-rescue-closeup','water-climb-closeup']) {
     if (!registeredIds.has(id)) throw new Error(`Cutscene registry is missing debug scene: ${id}`);
   }
   const fishMeta = registeredCutscenes.find(s => s.id === 'fish-ring-closeup');
@@ -259,6 +260,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.cutscenesOn = false;
   const skippedScene = G.playCutscene({id:'verify-disabled-cutscene',mode:'box',shots:[{duration:3,text:'SKIP'}]});
   if (skippedScene || G.cutsceneActive()) throw new Error('Disabled cutscenes preference did not skip playback');
+  const skippedRegisteredScene = G.playCutscene('fish-ring-closeup');
+  if (skippedRegisteredScene || G.cutsceneActive()) throw new Error('Registered gameplay cutscene did not respect disabled preference');
   const forcedScene = G.playCutscene({id:'verify-forced-cutscene',mode:'box',respectPrefs:false,shots:[{duration:3,text:'FORCE'}]});
   if (!forcedScene || !G.cutsceneActive()) throw new Error('Forced cutscene did not ignore disabled preference');
   G.clearCutscene('verify-forced');
@@ -281,6 +284,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   drawCutsceneOverlay(WCTX, 4);
   G.clearCutscene('verify-dolphin-rescue');
+  const waterClimbScene = G.playCutscene(G.makeWaterClimbCutsceneSpec('fullscreen'));
+  if (!waterClimbScene || !G.cutsceneActive() || waterClimbScene.id !== 'water-climb-closeup') {
+    throw new Error('Water climb cutscene did not start');
+  }
+  if (G.currentCutsceneShot().duration < 48 || G.currentCutsceneShot().duration > 64) {
+    throw new Error('Water climb cutscene should be around 3-4 seconds long');
+  }
+  drawCutsceneOverlay(WCTX, 5);
+  G.clearCutscene('verify-water-climb');
   G.state = prevState;
   G.paused = prevPaused;
   G.cutscene = prevCutscene;
@@ -347,6 +359,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (lem.state !== 'CLIMB' || lem.swimRing) {
     throw new Error('Swim ring lemming did not transition into climbing at a wall');
   }
+  if (!G.cutsceneActive() || !G.cutscene || G.cutscene.id !== 'water-climb-closeup') {
+    throw new Error('Swim ring climbing transition did not start the water climb cutscene');
+  }
+  G.clearCutscene('verify-water-climb-event');
   G.level = prevLevel;
   G.T = prevTerrain;
   G.lems = prevLems;

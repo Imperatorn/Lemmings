@@ -189,6 +189,7 @@ class Lemming{
       if(this.climber){
         this.swimRing=false;this.fishRingTried=false;
         this.state='CLIMB';this.busyT=0;this.fall=0;
+        if(G.playWaterClimbCutscene)G.playWaterClimbCutscene(this,z,'fullscreen');
         return;
       }
       this.dir*=-1;
