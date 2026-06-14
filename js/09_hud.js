@@ -202,12 +202,18 @@ function drawSkillPreview(c,cam,tk){
   const wx=G.mouseWorldX!=null?G.mouseWorldX:mx+cam, wy=G.mouseWorldY!=null?G.mouseWorldY:my;
   const k=G.selSkill;
   const hit=G.findSkillTarget(wx,wy,k);
-  const l=hit.usable||hit.near;
+  const aimable=k==='baz'||k==='flame'||k==='rope';
+  const manualBase=aimable&&G.isManualActive&&G.isManualActive()&&G.manualLem?G.manualLem():null;
+  const manualAim=manualBase&&manualBase.alive&&manualBase.alive()?G.manualAimFor(manualBase,k):null;
+  const useManualAim=Number.isFinite(manualAim);
+  const l=(useManualAim?manualBase:null)||hit.usable||hit.near;
   if(!l&&!(k==='rope'&&G.ropeAim&&G.findLemById(G.ropeAim.lemId)))return;
   const baseL=l||(k==='rope'?G.findLemById(G.ropeAim.lemId):null);
   if(!baseL)return;
   const sx=baseL.x-cam, sy=baseL.y, d=baseL.dir||1, sc=Math.max(1,baseL.scale||1);
-  const ok=(k==='rope'&&G.ropeAim&&G.findLemById(G.ropeAim.lemId)&&G.skills&&G.skills.rope>0)||!!hit.usable&&G.skills&&G.skills[k]>0;
+  const ux=useManualAim?Math.cos(manualAim):d, uy=useManualAim?Math.sin(manualAim):0;
+  const ok=(useManualAim&&G.canApplySkill&&G.canApplySkill(baseL,k)&&G.skills&&G.skills[k]>0)||
+    (k==='rope'&&G.ropeAim&&G.findLemById(G.ropeAim.lemId)&&G.skills&&G.skills.rope>0)||!!hit.usable&&G.skills&&G.skills[k]>0;
   const col=ok?'#80ff80':'#ff8080';
   c.save();c.globalAlpha=0.78;
   if(k==='dig')pixelOutline(c,sx-8*sc,sy,16*sc,18*sc,col);
@@ -216,27 +222,31 @@ function drawSkillPreview(c,cam,tk){
   else if(k==='build'){for(let i=0;i<12;i++){c.fillStyle=col;c.fillRect(Math.round(sx+d*(5+i*4)*sc),Math.round(sy-2*sc-i*2*sc),Math.round(8*sc),Math.max(2,Math.round(2*sc)))}}
   else if(k==='downbuild'){for(let i=0;i<12;i++){c.fillStyle=col;c.fillRect(Math.round(sx+d*(5+i*4)*sc),Math.round(sy+3*sc+i*2*sc),Math.round(8*sc),Math.max(2,Math.round(2*sc)))}}
   else if(k==='baz'){
-    let hx=l.x+d*100, hy=l.y-8*sc;
-    let x=l.x+d*7*sc,y=l.y-8*sc,vx=d*6.6,vy=-0.35;
+    let hx=baseL.x+ux*100, hy=baseL.y-8*sc+uy*100;
+    let x=baseL.x+ux*7*sc,y=baseL.y-8*sc+uy*7*sc,vx=ux*6.4,vy=uy*6.4+(useManualAim?0:-0.28);
     for(let i=0;i<80;i++){x+=vx;y+=vy;vy+=0.05;if(G.isInGoalZone(x,y,2)||G.T.solidBox(x,y,Math.max(2,Math.round(2*sc)))||x<2||x>G.level.W-2||y<0||y>G.T.H+20){hx=x;hy=y;break}}
-    pixelLine(c,sx+d*7*sc,sy-8*sc,hx-cam,hy,col);pixelOutline(c,hx-cam-18*sc,hy-18*sc,36*sc,36*sc,col);
+    pixelLine(c,sx+ux*7*sc,sy-8*sc+uy*7*sc,hx-cam,hy,col);pixelOutline(c,hx-cam-18*sc,hy-18*sc,36*sc,36*sc,col);
   }else if(k==='jet'){pixelLine(c,sx,sy-10*sc,sx+d*62*sc,sy-48*sc,col);pixelOutline(c,sx+d*52*sc,sy-56*sc,18*sc,18*sc,col);}
   else if(k==='flame'){
+    const nx=-uy,ny=ux,baseX=sx+ux*7*sc,baseY=sy-8*sc+uy*7*sc;
     for(let dist=8;dist<=FLAME_RANGE;dist+=8){
       const r=Math.round((2+dist*0.14)*sc);
-      const x=sx+d*(6+dist)*sc,y=sy-8*sc+Math.sin(dist*0.19+tk*0.15)*2*sc;
+      const wob=Math.sin(dist*0.19+tk*0.15)*2*sc;
+      const x=baseX+ux*dist*sc+nx*wob,y=baseY+uy*dist*sc+ny*wob;
       pixelOutline(c,x-r,y-r,r*2,r*2,col);
     }
-    pixelLine(c,sx+d*7*sc,sy-8*sc,sx+d*(FLAME_RANGE+8)*sc,sy-5*sc,col);
+    pixelLine(c,baseX,baseY,baseX+ux*(FLAME_RANGE+8)*sc,baseY+uy*(FLAME_RANGE+8)*sc,col);
   }
   else if(k==='rope'){
     const aiming=G.ropeAim&&G.findLemById(G.ropeAim.lemId);
     const rl=aiming||l;
     const rsc=Math.max(1,rl.scale||1),rsx=rl.x-cam,rsy=rl.y-9*rsc;
-    pixelLine(c,rsx,rsy,mx,my,col);
-    pixelOutline(c,mx-5,my-5,10,10,col);
-    if(!aiming)drawTextC(c,'VÄLJ LEMMEL',clamp(rsx,45,VW-45),Math.max(14,rsy-18),1,col);
-    else drawTextC(c,'KLICKA FÄSTE',clamp(mx,48,VW-48),Math.max(14,my-16),1,col);
+    const tx=useManualAim?rsx+ux*86*rsc:mx,ty=useManualAim?rsy+uy*86*rsc:my;
+    pixelLine(c,rsx,rsy,tx,ty,col);
+    pixelOutline(c,tx-5,ty-5,10,10,col);
+    if(useManualAim)drawTextC(c,'SIKTE',clamp(tx,48,VW-48),Math.max(14,ty-16),1,col);
+    else if(!aiming)drawTextC(c,'VÄLJ LEMMEL',clamp(rsx,45,VW-45),Math.max(14,rsy-18),1,col);
+    else drawTextC(c,useManualAim?'SIKTE':'KLICKA FÄSTE',clamp(tx,48,VW-48),Math.max(14,ty-16),1,col);
   }
   else if(k==='bomb')pixelOutline(c,sx-15*sc,sy-20*sc,30*sc,30*sc,col);
   else pixelOutline(c,sx-8*sc,sy-19*sc,16*sc,22*sc,col);

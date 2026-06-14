@@ -431,6 +431,23 @@ const AU={
     this.tone(base*(big?0.88:1.38),0.048,'triangle',0.017,big?0.88:1.04,t+0.175);
     if(RND()<0.45)this.tone(base*(big?1.10:0.92),0.040,'square',0.010,1.08,t+0.235);
   },
+  sLemShiver(big){
+    if(!this.rateFx('lemshiver',0.75))return;
+    const t=this.now()+0.015, base=big?260:360;
+    for(let i=0;i<5;i++){
+      const tt=t+i*0.055, f=base+(i%2?42:-18)+RND()*18;
+      this.tone(f,0.036,'triangle',0.017,1.06,tt);
+      this.tone(f*1.48,0.026,'square',0.006,0.94,tt+0.010);
+    }
+    this.softNoise(0.28,0.010,big?900:1300,0.72,t,{type:'bandpass',q:1.1,smooth:0.32,attack:0.012,release:0.16});
+  },
+  sLemWarmSigh(big){
+    if(!this.rateFx('lemwarmsigh',0.75))return;
+    const t=this.now()+0.020, base=big?260:345;
+    this.tone(base,0.18,'sine',0.025,0.72,t);
+    this.tone(base*0.72,0.24,'triangle',0.019,0.84,t+0.055);
+    this.softNoise(0.32,0.012,520,0.58,t+0.035,{type:'lowpass',smooth:0.72,attack:0.045,release:0.20});
+  },
   sClimbStep(){
     if(!this.rateFx('climbstep',0.120))return;
     const t=this.now();

@@ -41,6 +41,17 @@ function drawLemmingCore(c,l,sx,sy){
     p(6,-11-z,'#d8f0ff',2,1);p(8,-13-z,'#d8f0ff',3,1);p(11,-15-z,'#d8f0ff',2,1);
     return;
   }
+  if(l.state==='WARM'){
+    const heat=(l.anim>>3)&1;
+    p(-2,-1,COL.leg,1,2);p(1,-1,COL.leg,1,2);
+    p(-2,-6,COL.body,4,5);
+    p(-1,-8,COL.skin,2,2);
+    p(-2,-10,COL.hair,4,2);
+    p(d>0?1:-2,-8,'#102040',1,1);
+    p(-5,-6+heat,COL.skin,3,1);p(3,-6+heat,COL.skin,3,1);
+    p(-7,-11-heat,'#ffb040',1,2);p(6,-12+heat,'#ffe060',1,2);
+    return;
+  }
   if(l.state==='ROPE'){
     // Klättringsanimeringen är bunden till faktisk rörelse längs repet, inte bara
     // global frame-counter. Det gör att långsammare repklättring fortfarande ser aktiv ut.
@@ -278,6 +289,16 @@ function drawAmbientGrass(c,g,cam,tk){
   c.fillRect(x+Math.round(sway),y-h,1,1);
   c.globalAlpha=1;
   c.restore();
+}
+
+function drawRootSegment(c,x0,y0,x1,y1,col,w){
+  const steps=Math.max(1,Math.ceil(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))));
+  c.fillStyle=col;
+  for(let i=0;i<=steps;i++){
+    const t=i/steps;
+    const x=Math.round(x0+(x1-x0)*t), y=Math.round(y0+(y1-y0)*t);
+    c.fillRect(x-(w>1?1:0),y,w||1,w||1);
+  }
 }
 
 function drawDecor(c,dec,cam,tk){
@@ -527,6 +548,47 @@ function drawDecor(c,dec,cam,tk){
       c.fillStyle=dec.v<0.5?'#d03030':'#d08030';c.fillRect(x-3,dec.y-6,7,2);
       c.fillRect(x-2,dec.y-7,5,1);
       c.fillStyle='#fff';c.fillRect(x-1,dec.y-6,1,1);c.fillRect(x+2,dec.y-6,1,1);
+      break}
+    case 'root':{
+      const px=Math.round(x),py=Math.round(dec.y),w=dec.w||120,h=dec.h||38;
+      const count=Math.max(4,Math.min(9,Math.round(w/22)));
+      c.save();
+      c.globalAlpha=0.82;
+      for(let i=0;i<count;i++){
+        const seed=(dec.x|0)*0.017+(dec.y|0)*0.031+i*1.71+(dec.v||0)*8;
+        const sx=Math.round(px-w/2+(i+0.5)*w/count+(hash2(i+dec.x,dec.y)-0.5)*10);
+        const len=h*(0.48+hash2(i+7,dec.x)*0.54);
+        const lean=(hash2(i+13,dec.y)-0.5)*h*0.55;
+        let lx=sx,ly=py;
+        const segs=4+Math.floor(hash2(i+21,dec.x)*3);
+        const thick=i%3===0?2:1;
+        for(let s=1;s<=segs;s++){
+          const p=s/segs;
+          const nx=Math.round(sx+lean*p+Math.sin(seed+p*5.2)*4.5);
+          const ny=Math.round(py+len*p);
+          drawRootSegment(c,lx,ly,nx,ny,i%2?'#4a2d18':'#5b361c',thick);
+          if(s===2||s===3){
+            const bd=hash2(i*11+s,dec.x)>0.5?1:-1;
+            const bx=Math.round(nx+bd*(7+hash2(s,i)*13));
+            const by=Math.round(ny+5+hash2(i,s)*12);
+            drawRootSegment(c,nx,ny,bx,by,'#3a2314',1);
+          }
+          lx=nx;ly=ny;
+        }
+        c.fillStyle='#7b4d28';
+        c.fillRect(sx-1,py,2,2);
+      }
+      c.globalAlpha=1;
+      c.restore();
+      break}
+    case 'target':{
+      const px=Math.round(x),py=Math.round(dec.y);
+      c.fillStyle='#3a2a1d';c.fillRect(px-8,py-8,16,16);
+      c.fillStyle='#f0e8d8';c.fillRect(px-6,py-6,12,12);
+      c.fillStyle='#c93030';c.fillRect(px-5,py-5,10,10);
+      c.fillStyle='#f0e8d8';c.fillRect(px-3,py-3,6,6);
+      c.fillStyle='#c93030';c.fillRect(px-1,py-1,3,3);
+      c.fillStyle='#fff8e8';c.fillRect(px-6,py-6,2,1);
       break}
     case 'crystal':{
       const h=8+dec.v*8;

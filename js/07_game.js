@@ -52,6 +52,8 @@ function createLevelDecorApi(game){
     crystal:(x,y)=>add({t:'crystal',x,y,v:RND()}),
     chain:(x,y)=>add({t:'chain',x,y}),
     stal:(x,y,h,up)=>add({t:'stal',x,y,h:h||18,up:up!==false}),
+    root:(x,y,w,h)=>add({t:'root',x,y,w:w||120,h:h||38,v:RND()}),
+    target:(x,y)=>add({t:'target',x,y,v:RND()}),
     waterfall:(x,y,h,w)=>add({t:'waterfall',x,y,h:h||130,w:w||28,v:RND()}),
     cactus:(x,y,s)=>add({t:'cactus',x,y,s:s||1,v:RND()}),
     rock:(x,y,s)=>add({t:'rock',x,y,s:s||1,v:RND()}),
@@ -732,7 +734,7 @@ const G={
     const dustCols={
       dirt:['#d8c0a0','#b89068'],forest:['#8a6a3a','#5c4228'],desert:['#e8bf72','#c9904e'],
       city:['#b8bec6','#7c838c'],cave:['#9aa2ad','#666f7a'],crystal:['#c8f0ff','#86c6e0'],
-      marble:['#d8a060','#a86030'],hell:['#c07052','#6a3028']
+      marble:['#dce4eb','#8f9aa8'],hell:['#c07052','#6a3028']
     }[key]||['#d8c0a0','#b89068'];
     const n=Math.round((3+power*7)*sc);
     for(let i=0;i<n&&this.parts.length<MAX_PARTICLES;i++){
@@ -808,7 +810,7 @@ const G={
   },
   skillSpark(l,k){
     if(!l)return;
-    const cols={build:'#c8a050',downbuild:'#d8b060',dig:'#9a7040',bash:'#d0d0d0',mine:'#b8b8c0',rope:'#d0a060',jet:'#ffb040',flame:'#ff7020',baz:'#ff8040',bomb:'#ff4040',float:'#ff8080',climb:'#ffffff',block:'#70a0ff',faint:'#d8f0ff',mush:'#e8d070'};
+    const cols={build:'#c8a050',downbuild:'#d8b060',dig:'#9a7040',bash:'#d0d0d0',mine:'#b8b8c0',rope:'#d0a060',jet:'#ffb040',flame:'#ff7020',baz:'#ff8040',bomb:'#ff4040',float:'#ff8080',climb:'#ffffff',block:'#70a0ff',faint:'#d8f0ff',warm:'#ffb040',mush:'#e8d070'};
     const col=cols[k]||'#ffffff';
     const sc=Math.max(1,l.scale||1);
     for(let i=0;i<Math.round(7*sc)&&this.parts.length<MAX_PARTICLES;i++){
@@ -860,6 +862,27 @@ const G={
       if(this.decorCanFall(d))this.applyDecorGravity(d);
     }
     this.decor=this.decor.filter(d=>!d.remove);
+  },
+  hitDecorTargetAt(x,y,r){
+    if(!this.decor)return false;
+    const rr=Math.max(1,r||1);
+    for(const d of this.decor){
+      if(!d||d.t!=='target'||d.remove)continue;
+      const nx=clamp(x,d.x-9,d.x+9),ny=clamp(y,d.y-9,d.y+9);
+      if(Math.hypot(x-nx,y-ny)>rr)continue;
+      d.remove=true;
+      this.flashes.push({x:d.x,y:d.y,r:26,t:10,maxT:10});
+      for(let i=0;i<26&&this.parts.length<MAX_PARTICLES;i++){
+        const a=RND()*6.283,sp=0.45+RND()*2.2;
+        this.parts.push({x:d.x+RND()*10-5,y:d.y+RND()*10-5,
+          vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.45,life:12+RND()*18,g:0.12,
+          col:RND()<0.42?'#f0e8d8':(RND()<0.70?'#c93030':'#3a2a1d'),glow:RND()<0.18});
+      }
+      AU.sPop();
+      this.toast('TRÄFFTAVLA SPRÄNGD!');
+      return true;
+    }
+    return false;
   },
   igniteDecorTreeAt(x,y,r){
     if(!this.decor)return false;
@@ -1161,169 +1184,6 @@ const G={
     return true;
   },
   findLemById(id){return this.lems.find(l=>l.id===id&&!l.dead)||null},
-  clearRopeAim(){this.ropeAim=null},
-  handleRopeClick(wx,wy){
-    if(!this.skills||this.skills.rope<=0){this.toast('INGA REPKROK KVAR');AU.sShrug();this.clearRopeAim();return false}
-    if(this.ropeAim){
-      const l=this.findLemById(this.ropeAim.lemId);
-      if(!this.canApplySkill(l,'rope')){this.toast('REPLEMMELN KAN INTE SKJUTA NU');AU.sShrug();this.clearRopeAim();return false}
-      if(this.fireRopeHook(l,wx,wy)){
-        this.skills.rope--;
-        if(this.skills.rope<=0)this.selSkill=null;
-        this.clearRopeAim();
-        return true;
-      }
-      return false;
-    }
-    const hit=this.findSkillTarget(wx,wy,'rope');
-    if(hit.usable){
-      this.ropeAim={lemId:hit.usable.id};
-      this.toast('REPKROK: SIKTA OCH KLICKA IGEN');
-      AU.sAssign();
-      this.skillSpark(hit.usable,'rope');
-      return true;
-    }
-    if(hit.near)this.toast('DEN LEMMELN KAN INTE SKJUTA REP NU');
-    else this.toast('KLICKA PÅ EN LEMMEL FÖRST');
-    AU.sShrug();
-    return false;
-  },
-  fireRopeHook(l,tx,ty){
-    const sc=Math.max(1,l.scale||1);
-    const sx=l.x, sy=l.y-9*sc;
-    const manualAim=this.manualAimFor(l,'rope');
-    let dx,dy;
-    if(manualAim!=null){
-      dx=Math.cos(manualAim);dy=Math.sin(manualAim);
-    }else{
-      dx=tx-sx;dy=ty-sy;
-      const len=Math.hypot(dx,dy);
-      if(len<18){this.toast('SIKTA LÄNGRE BORT');AU.sShrug();return false}
-      dx/=len;dy/=len;
-    }
-    l.dir=dx>=0?1:-1;
-    this.hooks.push({x:sx,y:sy,px:sx,py:sy,vx:dx*8.2,vy:dy*8.2,g:0.018,life:86,owner:l.id,baseX:l.x,baseY:l.y,hit:false});
-    l.ropeCooldown=12;
-    AU.sRopeLaunch();
-    this.toast('REPKROK AVFYRAD!');
-    return true;
-  },
-  findRopeDismount(hitX,hitY,baseX,baseY){
-    if(!this.T)return null;
-    let best=null,bestScore=Infinity;
-    const preferDir=hitX>=baseX?1:-1;
-    for(let dx=-28;dx<=28;dx++){
-      for(let dy=-24;dy<=22;dy++){
-        const x=Math.round(hitX+dx), y=Math.round(hitY+dy);
-        if(x<4||x>this.T.W-5||y<12||y>this.T.H-3)continue;
-        if(!this.isBodyClearAt(x,y))continue;
-        if(!this.T.solid(x,y+1))continue;
-        const sideBonus=(Math.sign(dx||preferDir)===preferDir)?-3:0;
-        const score=Math.abs(dx)*1.6+Math.abs(dy)*1.15+(y>baseY?70:0)+sideBonus;
-        if(score<bestScore){bestScore=score;best={x,y,dir:preferDir}}
-      }
-    }
-    return best;
-  },
-  isBodyClearAt(x,y){
-    if(!this.T)return false;
-    for(let yy=y-12;yy<=y;yy+=2){
-      if(this.T.solid(x,yy)||this.T.solid(x-2,yy)||this.T.solid(x+2,yy))return false;
-    }
-    return !this.T.solid(x,y);
-  },
-  attachRopeFromHook(h,hitX,hitY){
-    const dis=this.findRopeDismount(hitX,hitY,h.baseX,h.baseY);
-    if(!dis){this.toast('KROKEN FICK INGET FÄSTE');AU.sShrug();return false}
-    const ropeLen=Math.max(1,Math.hypot(dis.x-h.baseX,dis.y-h.baseY));
-    const rope={id:this.ropeSeq++,x1:Math.round(h.baseX),y1:Math.round(h.baseY),x2:dis.x,y2:dis.y,hookX:Math.round(hitX),hookY:Math.round(hitY),exitDir:dis.dir,active:true,age:0,
-      len:ropeLen,climbPxPerTick:clamp(ropeLen*0.0225,0.65,1.80)};
-    this.ropes.push(rope);
-    while(this.ropes.length>6)this.ropes.shift();
-    AU.sRopeAttach();
-    this.toast('REPET SITTER FAST!');
-    const owner=this.findLemById(h.owner);
-    if(owner&&this.canApplySkill(owner,'rope')){owner.ropeCooldown=0;owner.startRopeClimb(rope,0)}
-    return true;
-  },
-  ropeAnchorIntact(rope){
-    if(!this.T||!rope||!rope.active)return false;
-    const x=Math.round(rope.hookX), y=Math.round(rope.hookY);
-    if(!Number.isFinite(x)||!Number.isFinite(y))return false;
-    // Kroken fäster med solidBox(..., 2), så samma lilla kontaktyta avgör om
-    // materialet fortfarande håller repet efter explosioner eller grävning.
-    return this.T.solidBox(x,y,2);
-  },
-  detachRope(rope){
-    if(!rope||!rope.active)return false;
-    rope.active=false;
-    for(const l of this.lems||[]){
-      if(l&&l.ropeId===rope.id){
-        l.state='FALL';l.fall=0;l.ropeId=null;l.ropeCooldown=Math.max(l.ropeCooldown||0,8);
-      }
-    }
-    return true;
-  },
-  pruneDetachedRopes(){
-    if(!this.T||!this.ropes||!this.ropes.length)return 0;
-    let removed=0;
-    for(const rope of this.ropes){
-      if(rope&&rope.active&&!this.ropeAnchorIntact(rope)){
-        this.detachRope(rope);
-        removed++;
-      }
-    }
-    if(removed)this.ropes=this.ropes.filter(r=>r&&r.active);
-    return removed;
-  },
-  updateHooksAndRopes(){
-    if(!this.T)return;
-    this.pruneDetachedRopes();
-    for(const rope of this.ropes||[])rope.age++;
-    for(const h of this.hooks||[]){
-      h.life--;h.vy+=h.g||0;
-      const steps=Math.max(1,Math.ceil(Math.max(Math.abs(h.vx),Math.abs(h.vy))));
-      for(let i=0;i<steps&&!h.hit;i++){
-        h.px=h.x;h.py=h.y;
-        h.x+=h.vx/steps;h.y+=h.vy/steps;
-        if(h.x<2||h.x>this.T.W-2||h.y<0||h.y>this.T.H+18||h.life<=0){h.hit=true;h.missed=true;break}
-        if(this.T.solidBox(h.x,h.y,2)){
-          h.hit=true;
-          this.attachRopeFromHook(h,h.x,h.y);
-        }
-      }
-      if(h.missed){this.toast('KROKEN MISSADE');AU.sShrug()}
-      if(!h.hit&&this.parts.length<MAX_PARTICLES){
-        this.parts.push({x:h.x,y:h.y,vx:0,vy:0,life:5,g:0,col:'#c8b080'});
-      }
-    }
-    this.hooks=this.hooks.filter(h=>!h.hit);
-  },
-  closestPointOnRope(rope,x,y){
-    const ax=rope.x1,ay=rope.y1,bx=rope.x2,by=rope.y2;
-    const vx=bx-ax,vy=by-ay,den=vx*vx+vy*vy||1;
-    let t=((x-ax)*vx+(y-ay)*vy)/den;
-    t=clamp(t,0,1);
-    const px=ax+vx*t,py=ay+vy*t;
-    return {t,x:px,y:py,d:Math.hypot(x-px,y-py)};
-  },
-  findClimbableRope(l){
-    if(!l||!l.alive()||l.ropeCooldown>0||!this.ropes||this.ropes.length===0)return null;
-    if(!(l.state==='WALK'||l.state==='FALL'))return null;
-    let best=null,bestScore=Infinity;
-    for(const rope of this.ropes){
-      if(!rope.active)continue;
-      const cp=this.closestPointOnRope(rope,l.x,l.y-5);
-      const nearBase=Math.abs(l.x-rope.x1)<=9&&Math.abs(l.y-rope.y1)<=12;
-      if(cp.t>=0.96)continue;
-      if(cp.d<=6.5||nearBase){
-        const t=nearBase?0:clamp(cp.t,0,0.94);
-        const score=(nearBase?0:cp.d)+t*2;
-        if(score<bestScore){bestScore=score;best={rope,t}}
-      }
-    }
-    return best;
-  },
   clickWorld(wx,wy){
     const k=this.selSkill;
     if(k!=='bomb'&&this.cancelBlockerAt(wx,wy))return true;
@@ -2503,6 +2363,7 @@ const G={
     this.updateLemmingChatter();
     this.updateWaterfallHeadSplashes();
     this.updateMushroomEatingEffects();
+    this.updateTorchWarmEffects();
     this.updateLevelRescues();
     this.updateMummyScareEffects();
     // lyktplock
@@ -2556,7 +2417,9 @@ const G={
       const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
       for(let i=0;i<steps&&!r.hit;i++){
         r.x+=r.vx/steps;r.y+=r.vy/steps;
-        if(this.isInGoalZone(r.x,r.y,2)){
+        if(this.hitDecorTargetAt(r.x,r.y,Math.max(10,hitR+7))){
+          r.hit=true;
+        }else if(this.isInGoalZone(r.x,r.y,2)){
           this.goalSpark(r.x,r.y);
           r.hit=true;
         }else if(this.T.solidBox(r.x,r.y,hitR)){

@@ -125,6 +125,49 @@ Object.assign(G,{
       m.scareIds=m.scareIds.filter(id=>nearIds.includes(id));
     }
   },
+  canWarmAtTorch(l){
+    return !!(l&&l.alive&&l.alive()&&l.bombT<=0&&(l.state==='WALK'||l.state==='SHRUG'));
+  },
+  startTorchWarm(l,torch){
+    if(!this.canWarmAtTorch(l)||!torch)return false;
+    l.state='WARM';
+    l.busyT=TORCH_WARM_TICKS;
+    l.fall=0;l.jumpT=0;l.jumpVy=0;l.manualVy=0;l.ropeId=null;l.afterBazState=null;l.fuel=0;
+    if(Number.isFinite(torch.x)&&Math.abs(torch.x-l.x)>1)l.dir=torch.x>l.x?1:-1;
+    l.warmTorchX=torch.x;l.warmTorchY=torch.y;
+    this.skillSpark(l,'warm');
+    this.toast('EN LEMMEL: "JAG FRYSER!"');
+    AU.sLemShiver((l.scale||1)>1);
+    return true;
+  },
+  finishTorchWarm(l,T){
+    if(!l||l.state!=='WARM')return false;
+    l.state=(T&&T.solid(l.x,l.y+1))?'WALK':'FALL';
+    l.busyT=0;l.fall=0;l.warmTorchX=null;l.warmTorchY=null;
+    this.skillSpark(l,'warm');
+    this.toast('EN LEMMEL: "VARM IGEN!"');
+    AU.sLemWarmSigh((l.scale||1)>1);
+    return true;
+  },
+  updateTorchWarmEffects(){
+    const torches=(this.decor||[]).filter(d=>d.t==='torch'&&!d.remove);
+    if(!torches.length||!this.lems||!this.lems.length)return;
+    for(const torch of torches){
+      if(!Array.isArray(torch.warmIds))torch.warmIds=[];
+      const nearIds=[];
+      for(const l of this.lems){
+        if(!l.alive||!l.alive())continue;
+        const sc=Math.max(1,l.scale||1);
+        const near=Math.abs(l.x-torch.x)<=10*sc&&Math.abs(l.y-torch.y)<=13*sc;
+        if(!near)continue;
+        nearIds.push(l.id);
+        if(torch.warmIds.includes(l.id))continue;
+        torch.warmIds.push(l.id);
+        if(this.canWarmAtTorch(l)&&this.rand()<TORCH_WARM_CHANCE)this.startTorchWarm(l,torch);
+      }
+      torch.warmIds=torch.warmIds.filter(id=>nearIds.includes(id));
+    }
+  },
   canSillyJump(l){
     return !!(l&&l.alive()&&(l.state==='WALK'||l.state==='SHRUG')&&l.bombT<=0);
   },

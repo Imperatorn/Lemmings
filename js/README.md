@@ -13,15 +13,16 @@ Behall laddningsordningen i `LEMMEL_fixed_v44.html`:
 6. `05_lemming.js` - lemminglogik (`Lemming`)
 7. `06_levels.js` - bandata (`LEVELS`)
 8. `07_game.js` - spelmotor och state (`G`)
-9. `07_save_state.js` - spara/ladda-metoder for `G`
-10. `07_manual_control.js` - direktstyrning och manual-skill helpers
-11. `07_living_world.js` - levande varld-effekter som svamp, mumier och meteorer
-12. `08_render.js` - varlds- och figur-rendering
-13. `09_hud.js` - HUD och knappar
-14. `10_screens.js` - titel, meny, briefing och overlays
-15. `11_play_render.js` - huvudrendering for spelvyn
-16. `12_input.js` - mus, touch och tangentbord
-17. `13_boot.js` - initiering och huvudloop
+9. `07_rope.js` - repkrok/rephantering for `G`
+10. `07_save_state.js` - spara/ladda-metoder for `G`
+11. `07_manual_control.js` - direktstyrning och manual-skill helpers
+12. `07_living_world.js` - levande varld-effekter som svamp, mumier och meteorer
+13. `08_render.js` - varlds- och figur-rendering
+14. `09_hud.js` - HUD och knappar
+15. `10_screens.js` - titel, meny, briefing och overlays
+16. `11_play_render.js` - huvudrendering for spelvyn
+17. `12_input.js` - mus, touch och tangentbord
+18. `13_boot.js` - initiering och huvudloop
 
 Om en fil flyttas tidigare kan den sakna globala bindningar fran filerna ovanfor.
 

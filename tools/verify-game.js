@@ -6,15 +6,34 @@ const root = path.resolve(__dirname, '..');
 const htmlPath = path.join(root, 'LEMMEL_fixed_v44.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
+const debugHtmlPath = path.join(root, 'debug.html');
+const debugHtml = fs.existsSync(debugHtmlPath) ? fs.readFileSync(debugHtmlPath, 'utf8') : '';
+const debugScripts = debugHtml
+  ? [...debugHtml.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1])
+  : [];
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL_fixed_v44.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
   if (i > 0 && idx <= scripts.indexOf(runtimeScripts[i - 1])) {
     throw new Error(`Script order is wrong around ${runtimeScripts[i]}`);
+  }
+}
+
+if (debugHtml) {
+  if (debugScripts.includes('js/13_boot.js')) throw new Error('debug.html must not load js/13_boot.js');
+  if (!debugScripts.includes('js/debug_page.js')) throw new Error('debug.html does not load js/debug_page.js');
+  for (const src of debugScripts) {
+    if (!fs.existsSync(path.join(root, src))) throw new Error(`debug.html references missing script: ${src}`);
+  }
+  const debugGameIdx = debugScripts.indexOf('js/07_game.js');
+  const debugRopeIdx = debugScripts.indexOf('js/07_rope.js');
+  const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugPageIdx <= debugRopeIdx) {
+    throw new Error('debug.html script order is wrong');
   }
 }
 
@@ -131,9 +150,12 @@ if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is em
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
+  'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
+  'hitDecorTargetAt',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','updateMummyScareEffects',
+  'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
   'updateRandomJumpEvents','updateLemmingChatter','updateWaterfallHeadSplashes'
 ];
 for (const name of requiredRuntimeMethods) {
@@ -141,6 +163,9 @@ for (const name of requiredRuntimeMethods) {
 }
 for (const name of ['setMusicVolume','setSfxVolume','applyVolumes']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
+}
+for (const name of ['sLemShiver','sLemWarmSigh']) {
+  if (typeof AU[name] !== 'function') throw new Error(`Missing AU lemming warmth sfx method: ${name}`);
 }
 if (!AU.PAT || !AU.PAT.menu || !Array.isArray(AU.PAT.menu.mel) || !Array.isArray(AU.PAT.menu.bass)) {
   throw new Error('Missing menu music pattern');
@@ -167,6 +192,13 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
   const musicKind = G.musicKindForLevel(idx);
   if (!AU.PAT[musicKind]) throw new Error(`${L.name}: missing music pattern ${musicKind}`);
   if (!G.T || G.T.W !== L.W) throw new Error(`${L.name}: terrain was not built`);
+  const decorTypes = new Set((G.decor || []).map(d => d && d.t).filter(Boolean));
+  if (L.name === 'UNDER RÖTTERNA' && !decorTypes.has('root')) {
+    throw new Error(`${L.name}: expected visible roots in decor`);
+  }
+  if (L.name === 'BAZOOKA-SKOLAN' && !decorTypes.has('target')) {
+    throw new Error(`${L.name}: expected practice targets in decor`);
+  }
 
   for (const road of (G.decor || []).filter(d => d && d.t === 'road')) {
     const rx0 = Math.round(road.x - 44);
@@ -242,6 +274,47 @@ G.explode(120, 120, 8, false, 'verify');
 if (G.ropes.length !== 0 || rope.active) throw new Error('Rope survived after its anchor terrain was removed');
 if (ropeLem.state !== 'FALL' || ropeLem.ropeId !== null || ropeLem.fall !== 0) {
   throw new Error('Lemming was not released when rope anchor disappeared');
+}
+
+const bazookaSchoolIdx = LEVELS.findIndex(L => L.name === 'BAZOOKA-SKOLAN');
+if (bazookaSchoolIdx < 0) throw new Error('Missing BAZOOKA-SKOLAN');
+G.startLevel(bazookaSchoolIdx);
+const target = G.decor.find(d => d && d.t === 'target');
+if (!target) throw new Error('BAZOOKA-SKOLAN target fixture missing');
+G.rockets = [{x: target.x - 14, y: target.y, vx: 6.4, vy: 0, g: 0, life: 20, dir: 1, scale: 1}];
+G.tick();
+if (G.decor.some(d => d === target || d.remove)) {
+  throw new Error('Bazooka rocket did not remove target decor');
+}
+
+const directTarget = G.decor.find(d => d && d.t === 'target');
+if (!directTarget) throw new Error('BAZOOKA-SKOLAN second target fixture missing');
+if (!G.hitDecorTargetAt(directTarget.x, directTarget.y, 3) || !directTarget.remove) {
+  throw new Error('Direct target hit helper did not mark target as removed');
+}
+G.updateDecorPhysics();
+if (G.decor.some(d => d === directTarget || d.remove)) {
+  throw new Error('Directly broken bazooka target was not removed from decor');
+}
+
+G.startLevel(0);
+G.T.setRect(92, 181, 24, 5, 1);
+const oldRand = G.rand;
+G.rand = () => 0.05;
+const warmLem = {
+  id: 777, x: 100, y: 180, dir: 1, state: 'WALK', bombT: -1, busyT: 0, fall: 0, scale: 1,
+  alive(){ return !this.dead && this.state !== 'EXITING'; }
+};
+G.lems = [warmLem];
+G.decor = [{t: 'torch', x: 102, y: 178}];
+G.updateTorchWarmEffects();
+G.rand = oldRand;
+if (warmLem.state !== 'WARM' || warmLem.busyT < 40) {
+  throw new Error('Torch warming did not start when chance succeeded');
+}
+G.finishTorchWarm(warmLem, G.T);
+if (warmLem.state !== 'WALK' || warmLem.busyT !== 0) {
+  throw new Error('Torch warming did not return lemming to walking state');
 }
 
 console.log(`verify-game ok: ${LEVELS.length} levels, ${scripts.length} scripts`);

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LEMMEL debug</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b0f17;--panel:#151b28;--panel2:#101622;--line:#2b3546;--text:#e7edf7;--muted:#94a4ba;--accent:#63d0ff;--ok:#78dd86;--warn:#ffd166}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+    header{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);background:#090d14}
+    h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.02em}
+    header p{margin:3px 0 0;color:var(--muted)}
+    main{display:grid;grid-template-columns:minmax(520px,1fr) 430px;gap:14px;padding:14px}
+    canvas{display:block;width:min(960px,100%);height:auto;image-rendering:pixelated;background:#000;border:1px solid var(--line)}
+    .stage,.panel,.group{background:var(--panel);border:1px solid var(--line);border-radius:8px}
+    .stage{padding:12px}
+    .status{min-height:28px;margin-top:10px;color:var(--muted)}
+    .panel{padding:12px;max-height:calc(100vh - 96px);overflow:auto}
+    .group{background:var(--panel2);padding:10px;margin-bottom:10px}
+    .group h2{font-size:13px;margin:0 0 8px;color:#c6d3e4;text-transform:uppercase;letter-spacing:.08em}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:7px 0}
+    .row label{color:var(--muted)}
+    button,select,input[type="range"]{font:inherit}
+    button,select{border:1px solid #334156;background:#1d2635;color:var(--text);border-radius:6px;padding:7px 9px}
+    button{cursor:pointer}
+    button:hover{border-color:var(--accent);background:#243149}
+    button.primary{border-color:#3a8bb0;background:#17354a}
+    button.danger{border-color:#694049;background:#331b22}
+    button.small{padding:5px 7px;font-size:12px}
+    select{min-width:190px;max-width:100%}
+    input[type="range"]{width:170px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px}
+    .hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+    .pill{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--muted);font-size:12px}
+    @media (max-width:980px){main{grid-template-columns:1fr}.panel{max-height:none}}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>LEMMEL debug</h1>
+      <p>Testa nivåer, speleffekter, musik, väder och ljudeffekter utan vanlig boot-loop.</p>
+    </div>
+    <span class="pill" id="debugReady">Laddar...</span>
+  </header>
+
+  <main>
+    <section class="stage">
+      <canvas id="cv" width="480" height="300"></canvas>
+      <div class="status" id="debugStatus">Välj en nivå och tryck Starta nivå.</div>
+    </section>
+
+    <aside class="panel">
+      <section class="group">
+        <h2>Nivåtest</h2>
+        <div class="row">
+          <label for="levelSelect">Nivå</label>
+          <select id="levelSelect"></select>
+        </div>
+        <div class="row">
+          <button class="primary" id="startLevelBtn">Starta nivå</button>
+          <button id="toggleRunBtn">Kör</button>
+          <button id="stepBtn">Ett steg</button>
+          <button id="resetBtn">Starta om</button>
+        </div>
+        <div class="row">
+          <button class="small" data-action="camLeft">Kamera vänster</button>
+          <button class="small" data-action="camRight">Kamera höger</button>
+          <button class="small" data-action="spawnLem">Lägg till lemming</button>
+          <button class="small" data-action="giveSkills">Ge skills</button>
+        </div>
+        <div class="row">
+          <button class="small" data-action="explode">Explosion</button>
+          <button class="small" data-action="torchWarm">Fackelvärme</button>
+          <button class="small" data-action="plane">Paketflyg</button>
+          <button class="small" data-action="monkey">Apa</button>
+          <button class="small" data-action="troll">Troll</button>
+        </div>
+        <p class="hint">Debugsidan påverkar inte den vanliga startsidan. Den använder samma nivådata, rendering och ljudmotor.</p>
+      </section>
+
+      <section class="group">
+        <h2>Volym</h2>
+        <div class="row">
+          <label for="musicVol">Musik</label>
+          <input id="musicVol" type="range" min="0" max="100" value="100">
+          <span id="musicVolLabel">100%</span>
+        </div>
+        <div class="row">
+          <label for="sfxVol">SFX</label>
+          <input id="sfxVol" type="range" min="0" max="100" value="100">
+          <span id="sfxVolLabel">100%</span>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Musik</h2>
+        <div class="grid" id="musicButtons"></div>
+      </section>
+
+      <section class="group">
+        <h2>Väderljud</h2>
+        <div class="grid" id="weatherButtons"></div>
+      </section>
+
+      <section class="group">
+        <h2>Ljudeffekter</h2>
+        <div id="sfxButtons"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="js/00_util.js"></script>
+  <script src="js/01_pixelfont.js"></script>
+  <script src="js/02_audio.js"></script>
+  <script src="js/03_themes.js"></script>
+  <script src="js/04_terrain.js"></script>
+  <script src="js/05_lemming.js"></script>
+  <script src="js/06_levels.js"></script>
+  <script src="js/07_game.js"></script>
+  <script src="js/07_rope.js"></script>
+  <script src="js/07_save_state.js"></script>
+  <script src="js/07_manual_control.js"></script>
+  <script src="js/07_living_world.js"></script>
+  <script src="js/08_render.js"></script>
+  <script src="js/09_hud.js"></script>
+  <script src="js/10_screens.js"></script>
+  <script src="js/11_play_render.js"></script>
+  <script src="js/debug_page.js"></script>
+</body>
+</html>

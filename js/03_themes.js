@@ -17,12 +17,25 @@ const THEMES={
       if(mortar) return [42,15,15];
       let c=n<0.4?[122,48,48]:(n<0.8?[140,58,52]:[105,40,42]);
       return c; } },
-  marble:{ sky:['#0a0402','#1c0a04'], brick:'#d2a040',
+  marble:{ sky:['#05070d','#15101a'], brick:'#cfd7df',
     px(x,y,dTop){ const n=hash2(x,y);
-      if(dTop<3 && hash2(x*5,11)>0.25) return n<0.5?[70,150,60]:[50,120,45]; // mossa
-      const v=Math.sin(x*0.07+Math.sin(y*0.05)*2+y*0.11)*0.5+0.5+(n-0.5)*0.35;
-      if(v<0.25)return [112,47,12]; if(v<0.5)return [143,60,16];
-      if(v<0.75)return [179,84,24]; return [210,105,30]; } },
+      const flow=Math.sin(x*0.045+y*0.083+Math.sin(y*0.036)*3.2);
+      const swirl=Math.sin(x*0.018-y*0.052+Math.sin((x+y)*0.017)*2.6);
+      let shade=0.52+flow*0.23+swirl*0.15+(n-0.5)*0.20;
+      shade=clamp(shade,0,1);
+      let c=shade<0.20?[118,126,138]:(shade<0.42?[158,168,178]:(shade<0.66?[194,202,210]:[225,230,234]));
+      const vein=Math.abs(flow*0.72+swirl*0.55+(n-0.5)*0.28);
+      if(vein<0.075)c=[72,82,98];
+      else if(vein<0.135)c=[104,114,130];
+      else if(vein<0.19)c=[138,148,162];
+      if(Math.abs(Math.sin(x*0.10-y*0.024+swirl*0.8))<0.035&&n>0.58)c=[176,164,130]; // svag varm mineralåder
+      if(n>0.986)c=[244,246,248];           // små blänk i polerad sten
+      if(dTop<2){
+        c=[Math.min(255,c[0]+28),Math.min(255,c[1]+30),Math.min(255,c[2]+32)];
+        if(hash2(x*5,11)>0.88)c=n<0.5?[86,132,96]:[66,108,82]; // diskret mossa i skarvar
+      }
+      if(dTop>68)c=[c[0]*0.76|0,c[1]*0.78|0,c[2]*0.82|0];
+      return c; } },
   forest:{ sky:['#000400','#001200'], brick:'#8a6a3a',
     px(x,y,dTop){ const n=hash2(x,y);
       if(dTop<3) return n<0.5?[30,92,30]:[42,122,42];

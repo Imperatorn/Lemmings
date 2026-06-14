@@ -1,6 +1,6 @@
 // --------------------------- LEMMEL ---------------------------------
 // Tillstånd: WALK FALL CLIMB BLOCK BUILD SHRUG BASH MINE DIG BAZ JET FLAME JUMP
-//            FAINT EXITING SPLAT DROWN BURN DEAD
+//            WARM FAINT EXITING SPLAT DROWN BURN DEAD
 let LEM_ID=1;
 class Lemming{
   constructor(x,y){
@@ -59,6 +59,10 @@ class Lemming{
       case 'FLAME': this.flamethrower(T); break;
       case 'JUMP': this.sillyJump(T); break;
       case 'ROPE': this.ropeClimb(T); break;
+      case 'WARM':
+        if(!T.solid(this.x,this.y+1)){this.state='FALL';this.fall=0;break}
+        if(--this.busyT<=0)G.finishTorchWarm(this,T);
+        break;
       case 'FAINT':
         if(!T.solid(this.x,this.y+1)){this.state='FALL';this.fall=0;break}
         if(--this.busyT<=0){this.state='WALK';this.busyT=0}

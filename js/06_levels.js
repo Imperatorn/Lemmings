@@ -70,7 +70,8 @@ const LEVELS=[
   build(P){ P.rect(0,195,900,45);
     P.rect(300,110,26,85); P.rect(520,110,26,85); P.rect(720,110,26,85);
     P.disc(120,60,18); P.disc(620,55,14); },
-  decor(D){ D.crystal(180,194);D.crystal(420,194);D.crystal(650,194);D.crystal(870,194); } },
+  decor(D){ D.target(313,128);D.target(533,128);D.target(733,128);
+    D.crystal(180,194);D.crystal(420,194);D.crystal(650,194);D.crystal(870,194); } },
 
 { name:'JETPACK-KLIPPAN', theme:'marble', night:false, W:1000,
   lem:12, save:8, rate:45, time:360,
@@ -185,6 +186,7 @@ const LEVELS=[
     P.erase.rect(565,150,260,30); P.erase.rect(825,185,425,30);
     P.erase.rect(690,185,50,55); P.rect(360,140,18,40); P.rect(610,180,20,60); P.disc(930,185,22); },
   decor(D){ D.tree(160,160,1.2);D.tree(450,180,1.0);D.tree(780,150,1.3);
+    D.root(150,160,165,35);D.root(450,180,185,34);D.root(780,150,190,44);D.root(1030,185,210,32);
     D.torch(360,180);D.torch(590,180);D.torch(690,185);D.torch(930,185);D.torch(1160,215);
     D.mush(330,209);D.bush(1030,214); } },
 
