@@ -367,6 +367,12 @@
     finishAnimationSetup('Cutscene: fisken ger en badring i nara pixelart.');
   }
 
+  function setupDolphinCutsceneAnimation(){
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    G.playCutscene(G.makeDolphinRescueCutsceneSpec('fullscreen'));
+    finishAnimationSetup('Cutscene: delfinen lyfter upp lemmeln ur vattnet.');
+  }
+
   function setupSkillAnimation(k){
     if(k==='rope')return setupRopeAnimation();
     const l=firstLiveLemming();
@@ -420,6 +426,7 @@
     if(action==='animFishRing')return setupFishRingAnimation();
     if(action==='animFishRingCutscene')return setupFishRingCutsceneAnimation();
     if(action==='animFishRingRope')return setupFishRingRopeAnimation();
+    if(action==='animDolphinCutscene')return setupDolphinCutsceneAnimation();
     if(action==='animMeteor')return setupMeteorAnimation();
     if(action==='animMega')return setupMegaAnimation();
     if(action==='animMushroom')return setupMushroomAnimation();

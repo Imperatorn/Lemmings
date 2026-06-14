@@ -1033,6 +1033,7 @@ const G={
       const a=RND()*6.283,sp=0.45+RND()*1.4;
       this.parts.push({x:sx,y:sy-4,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.1,life:12+RND()*12,g:0.10,col:'#a0d0ff',glow:true});
     }
+    if(this.playDolphinRescueCutscene)this.playDolphinRescueCutscene(l,z,spot,sx,sy,'fullscreen');
     return true;
   },
   findNearbyRingFish(l,z){
@@ -1069,6 +1070,7 @@ const G={
         vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.35,life:12+RND()*14,g:0.06,
         col:RND()<0.5?'#ffb040':(RND()<0.75?'#ffe070':'#d8f8ff'),glow:RND()<0.25});
     }
+    if(this.playFishRingCutscene)this.playFishRingCutscene(l,fish,z,'fullscreen');
     return true;
   },
   checkLiquid(l){

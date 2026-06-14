@@ -184,6 +184,28 @@ function drawCutsceneFish(c,x,y,sc,p,ringHeld){
   c.fillRect(x+9*sc,y-1*sc,4*sc,3*sc);
   if(ringHeld)drawCutsceneSwimRing(c,x+18*sc,y+2*sc,Math.max(1,Math.round(sc*0.45)),0.95);
 }
+function drawCutsceneDolphinClose(c,x,y,sc,p,dir){
+  x=Math.round(x);y=Math.round(y);sc=Math.max(1,sc||1);dir=dir||1;
+  c.save();c.translate(x,y);c.scale(dir,1);
+  const r=(x0,y0,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x0*sc),Math.round(y0*sc),Math.round(w*sc),Math.round(h*sc))};
+  r(-23,-6,38,13,'#3f95c8');
+  r(-15,-11,26,6,'#68c8f4');
+  r(9,-4,14,8,'#3f95c8');
+  r(20,-1,4,3,'#d8f8ff');
+  r(-20,4,26,7,'#d8f8ff');
+  r(-27,-4,10,5,'#2a6f9e');
+  r(-34,-10,8,8,'#2a6f9e');
+  r(-34,4,8,8,'#2a6f9e');
+  r(-4,-17,9,10,'#2a6f9e');
+  r(2,7,9,10,'#2a6f9e');
+  r(15,-8,3,3,'#091421');
+  r(16,-8,1,1,'#ffffff');
+  if(p>0.55){
+    r(11,2,8,2,'#ffffff');
+    r(12,4,5,1,'#d8f8ff');
+  }
+  c.restore();
+}
 function drawCutsceneLemClose(c,x,y,sc,smile,ringOn,tk,euphoria){
   x=Math.round(x);y=Math.round(y);sc=Math.max(1,sc||1);
   euphoria=clamp(euphoria||0,0,1);
@@ -249,6 +271,58 @@ function drawCutsceneLemClose(c,x,y,sc,smile,ringOn,tk,euphoria){
   }else{
     c.fillRect(x-17*sc,y+8*sc,7*sc,5*sc);
     c.fillRect(x+10*sc,y+8*sc,7*sc,5*sc);
+  }
+}
+function drawDolphinRescueCutscene(c,r,p,cs,tk){
+  c.fillStyle='#061425';c.fillRect(r.x,r.y,r.w,r.h);
+  const waterY=r.y+Math.round(r.h*0.62);
+  const skyGradTop='#0e2742';
+  c.fillStyle=skyGradTop;c.fillRect(r.x,r.y,r.w,waterY-r.y);
+  c.fillStyle='#084f76';c.fillRect(r.x,waterY,r.w,r.h-waterY);
+  c.fillStyle='#0d8fbb';
+  for(let x=r.x-30;x<r.x+r.w+60;x+=38)c.fillRect(x+Math.round(Math.sin(tk*0.12)*3),waterY+6+((x+tk)&9),28,3);
+  c.fillStyle='#a8f0ff';
+  for(let x=r.x+12;x<r.x+r.w;x+=58)c.fillRect(x-Math.round(Math.sin(tk*0.18)*2),waterY+1,30,2);
+
+  const leap=clamp((p-0.10)/0.52,0,1);
+  const land=clamp((p-0.66)/0.22,0,1);
+  const joy=clamp((p-0.70)/0.20,0,1);
+  const arc=Math.sin(leap*Math.PI);
+  const dolphinX=r.x+70+leap*(r.w-160);
+  const dolphinY=waterY+20-arc*76+land*22;
+  const dir=leap<0.94?1:-1;
+  const lemX=dolphinX-4;
+  const lemY=dolphinY-42-arc*8;
+
+  if(p<0.18){
+    c.fillStyle='#d8fbff';
+    for(let i=0;i<10;i++){
+      const a=i*0.63, d=8+p*90;
+      c.fillRect(r.x+78+Math.cos(a)*d,waterY+12+Math.sin(a)*d*0.35,2,2);
+    }
+  }
+  drawCutsceneDolphinClose(c,dolphinX,dolphinY,3,p,dir);
+  drawCutsceneLemClose(c,lemX,lemY,3,p>0.46,false,tk,joy);
+  if(p>0.58&&p<0.92){
+    const spray=clamp((p-0.58)/0.34,0,1);
+    c.save();c.globalAlpha=1-spray*0.65;c.fillStyle='#d8fbff';
+    for(let i=0;i<18;i++){
+      const a=i*0.35+0.4, d=12+spray*66+(i%4)*3;
+      c.fillRect(dolphinX-28+Math.cos(a)*d,dolphinY+18+Math.sin(a)*d*0.75,2+(i%2),2);
+    }
+    c.restore();
+  }
+  if(p>0.72){
+    c.fillStyle='#fff7b0';
+    for(let i=0;i<9;i++){
+      const a=i*0.7+tk*0.05, d=18+joy*42;
+      c.fillRect(Math.round(lemX+Math.cos(a)*d),Math.round(lemY-16+Math.sin(a)*d*0.70),i%2?3:5,i%2?3:5);
+    }
+    if(((tk>>2)&1)===0)drawTextC(c,'RADDAD!',lemX+4,lemY-58,2,'#fff7b0');
+  }
+  for(let i=0;i<9;i++){
+    const bp=(p*1.2+i*0.13)%1;
+    drawCutsceneBubble(c,r.x+40+i*45,waterY+50-bp*90,2+(i%3),tk,i+20);
   }
 }
 function drawFishRingCutscene(c,r,p,cs,tk){
@@ -380,6 +454,51 @@ Object.assign(G,{
       }]
     };
   },
+  makeDolphinRescueCutsceneSpec(mode){
+    mode=(mode==='box')?'box':'fullscreen';
+    return {
+      id:'dolphin-rescue-closeup',
+      title:'DELFINEN RADDAR',
+      mode,
+      pauseGame:true,
+      respectPrefs:false,
+      skippable:true,
+      advanceOnInput:false,
+      shots:[{
+        duration:Math.round(3700/TICK),
+        title:'DELFINEN RADDAR',
+        text:['EN DELFIN LYFTER LEMMELN UR VATTNET!'],
+        draw:drawDolphinRescueCutscene
+      }]
+    };
+  },
+  playFishRingCutscene(l,fish,z,mode){
+    if(this.cutsceneActive&&this.cutsceneActive())return null;
+    if(!this.makeFishRingCutsceneSpec||!this.playCutscene)return null;
+    const spec=this.makeFishRingCutsceneSpec(mode||'fullscreen');
+    spec.event={
+      lemX:l&&Number.isFinite(l.x)?Math.round(l.x):null,
+      lemY:l&&Number.isFinite(l.y)?Math.round(l.y):null,
+      fishX:fish&&Number.isFinite(fish.x)?Math.round(fish.x):null,
+      fishY:fish&&Number.isFinite(fish.y)?Math.round(fish.y):null,
+      waterY:z&&Number.isFinite(z.y)?Math.round(z.y):null
+    };
+    return this.playCutscene(spec,{respectPrefs:true});
+  },
+  playDolphinRescueCutscene(l,z,spot,sx,sy,mode){
+    if(this.cutsceneActive&&this.cutsceneActive())return null;
+    if(!this.makeDolphinRescueCutsceneSpec||!this.playCutscene)return null;
+    const spec=this.makeDolphinRescueCutsceneSpec(mode||'fullscreen');
+    spec.event={
+      lemX:l&&Number.isFinite(l.x)?Math.round(l.x):null,
+      lemY:l&&Number.isFinite(l.y)?Math.round(l.y):null,
+      waterX:Number.isFinite(sx)?Math.round(sx):null,
+      waterY:Number.isFinite(sy)?Math.round(sy):null,
+      shoreX:spot&&Number.isFinite(spot.x)?Math.round(spot.x):null,
+      shoreY:spot&&Number.isFinite(spot.y)?Math.round(spot.y):null
+    };
+    return this.playCutscene(spec,{respectPrefs:true});
+  },
   playCutscene(src,opts){
     const spec=normalizeCutsceneSpec(src,opts);
     if(!spec){this.toast('CUTSCENE SAKNAS');return null}
@@ -446,3 +565,4 @@ Object.assign(G,{
 G.registerCutscene('cutscene-preview-box',G.makeCutscenePreviewSpec('box'));
 G.registerCutscene('cutscene-preview-fullscreen',G.makeCutscenePreviewSpec('fullscreen'));
 G.registerCutscene('cutscene-fish-ring',G.makeFishRingCutsceneSpec('fullscreen'));
+G.registerCutscene('cutscene-dolphin-rescue',G.makeDolphinRescueCutsceneSpec('fullscreen'));

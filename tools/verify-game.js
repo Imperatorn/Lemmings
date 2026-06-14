@@ -40,7 +40,7 @@ if (debugHtml) {
   const requiredDebugActions = [
     'animFishRing','animFishRingRope','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
     'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka',
-    'animCutsceneBox','animCutsceneFull','animFishRingCutscene'
+    'animCutsceneBox','animCutsceneFull','animFishRingCutscene','animDolphinCutscene'
   ];
   for (const action of requiredDebugActions) {
     if (!debugHtml.includes(`data-action="${action}"`)) {
@@ -48,7 +48,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','setupCutsceneAnimation','setupFishRingCutsceneAnimation']) {
+  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','setupCutsceneAnimation','setupFishRingCutsceneAnimation','setupDolphinCutsceneAnimation']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
@@ -170,7 +170,9 @@ const requiredRuntimeMethods = [
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'registerCutscene','cutsceneById','playCutscene','stopCutscene','clearCutscene',
   'advanceCutscene','updateCutscene','cutsceneActive','cutsceneRect','currentCutsceneShot',
-  'handleCutsceneInput','handleCutsceneKey','makeCutscenePreviewSpec','makeFishRingCutsceneSpec','toggleCutscenes',
+  'handleCutsceneInput','handleCutsceneKey','makeCutscenePreviewSpec',
+  'makeFishRingCutsceneSpec','playFishRingCutscene',
+  'makeDolphinRescueCutsceneSpec','playDolphinRescueCutscene','toggleCutscenes',
   'hitDecorTargetAt',
   'findNearbyRingFish','tryFishSwimRing',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
@@ -256,6 +258,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   drawCutsceneOverlay(WCTX, 3);
   G.clearCutscene('verify-fish-ring');
+  const dolphinScene = G.playCutscene(G.makeDolphinRescueCutsceneSpec('fullscreen'));
+  if (!dolphinScene || !G.cutsceneActive() || dolphinScene.id !== 'dolphin-rescue-closeup') {
+    throw new Error('Dolphin rescue cutscene did not start');
+  }
+  if (G.currentCutsceneShot().duration < 50 || G.currentCutsceneShot().duration > 70) {
+    throw new Error('Dolphin rescue cutscene should be around 3-4 seconds long');
+  }
+  drawCutsceneOverlay(WCTX, 4);
+  G.clearCutscene('verify-dolphin-rescue');
   G.state = prevState;
   G.paused = prevPaused;
   G.cutscene = prevCutscene;
@@ -274,6 +285,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevToasts = G.toasts;
   const prevRand = G.rand;
   const prevCache = G.liquidCache;
+  const prevCutscene = G.cutscene;
+  const prevCutscenesOn = G.cutscenesOn;
   const water = {x:80, y:120, w:90, lava:false};
   G.level = {W:240, hatch:{x:20,y:80}, exit:{x:220,y:180}, water:[water]};
   G.liquidCache = null;
@@ -287,6 +300,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.parts = [];
   G.toasts = [];
   G.rand = () => 0.0;
+  G.cutscene = null;
+  G.cutscenesOn = true;
   const lem = new Lemming(100, 128);
   lem.state = 'FALL';
   lem.fall = 12;
@@ -295,6 +310,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!liquid || !G.tryFishSwimRing(lem, liquid) || lem.state !== 'SWIM' || !lem.swimRing) {
     throw new Error('Nearby fish did not grant a swim ring when chance succeeded');
   }
+  if (!G.cutsceneActive() || !G.cutscene || G.cutscene.id !== 'fish-ring-closeup') {
+    throw new Error('Fish ring rescue did not start the fish ring cutscene');
+  }
+  G.clearCutscene('verify-fish-ring-event');
   G.checkLiquid(lem);
   if (lem.state === 'DROWN' || lem.dead) throw new Error('Swim ring did not protect lemming from water');
   if (!G.canApplySkill(lem, 'rope')) throw new Error('Swim ring lemming could not use rope hook');
@@ -323,6 +342,56 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.toasts = prevToasts;
   G.rand = prevRand;
   G.liquidCache = prevCache;
+  G.cutscene = prevCutscene;
+  G.cutscenesOn = prevCutscenesOn;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevLems = G.lems;
+  const prevDolphins = G.dolphins;
+  const prevParts = G.parts;
+  const prevToasts = G.toasts;
+  const prevRand = G.rand;
+  const prevCache = G.liquidCache;
+  const prevCutscene = G.cutscene;
+  const prevCutscenesOn = G.cutscenesOn;
+  const water = {x:72, y:130, w:100, lava:false};
+  G.level = {W:260, hatch:{x:20,y:80}, exit:{x:235,y:180}, water:[water]};
+  G.liquidCache = null;
+  G.T = {
+    W:260,
+    H:240,
+    solid(x,y){return ((x < 70 || x > 174) && y >= 124) || y >= 198},
+    solidBox(){return false}
+  };
+  G.lems = [];
+  G.dolphins = [];
+  G.parts = [];
+  G.toasts = [];
+  G.rand = () => 0.0;
+  G.cutscene = null;
+  G.cutscenesOn = true;
+  const lem = new Lemming(112, 138);
+  lem.state = 'FALL';
+  G.lems = [lem];
+  if (!G.tryDolphinRescue(lem, water) || lem.state !== 'WALK' || G.dolphins.length !== 1) {
+    throw new Error('Dolphin rescue did not move the lemming to safety');
+  }
+  if (!G.cutsceneActive() || !G.cutscene || G.cutscene.id !== 'dolphin-rescue-closeup') {
+    throw new Error('Dolphin rescue did not start the dolphin cutscene');
+  }
+  G.clearCutscene('verify-dolphin-event');
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.lems = prevLems;
+  G.dolphins = prevDolphins;
+  G.parts = prevParts;
+  G.toasts = prevToasts;
+  G.rand = prevRand;
+  G.liquidCache = prevCache;
+  G.cutscene = prevCutscene;
+  G.cutscenesOn = prevCutscenesOn;
 }
 {
   const prevLevel = G.level;
