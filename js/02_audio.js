@@ -784,9 +784,9 @@ const AU={
     if(kind==='day'){
       pulseVol=0.026;arpVol=0.024;subVol=0.035;
     }else if(kind==='day2'){
-      pulseVol=0.028;arpVol=0.027;subVol=0.038;subLen=3.0;
+      pulseVol=0.031;arpVol=0.029;subVol=0.041;subLen=3.0;
     }else if(kind==='night'){
-      third=3;pulseVol=0.019;arpVol=0.015;pulseEvery=8;arpEvery=16;padVol=0.012;subVol=0.027;subEvery=16;subLen=7.0;
+      third=3;pulseVol=0.046;arpVol=0.024;pulseEvery=4;arpEvery=16;padVol=0.016;subVol=0.046;subEvery=8;subLen=5.2;
     }else if(kind==='menu'){
       const p=i%128;
       pulseVol=p>=96?0.022:(p>=64?0.015:0.019);
@@ -798,15 +798,23 @@ const AU={
       subEvery=8;
       subLen=p>=64&&p<96?3.4:2.2;
     }else if(kind==='cave'){
-      third=3;pulseVol=0.015;arpVol=0.012;pulseEvery=8;arpEvery=16;padVol=0.010;padEvery=32;
+      third=3;pulseVol=0.027;arpVol=0.017;pulseEvery=4;arpEvery=16;padVol=0.012;padEvery=32;
     }else if(kind==='desert'){
-      pulseVol=0.020;arpVol=0.020;padVol=0.008;
+      pulseVol=0.024;arpVol=0.022;padVol=0.008;
     }else if(kind==='city'){
-      third=3;pulseVol=0.024;arpVol=0.019;pulseEvery=4;arpEvery=16;padVol=0.005;
+      third=3;pulseVol=0.027;arpVol=0.021;pulseEvery=4;arpEvery=16;padVol=0.005;
     }
     if(subVol&&i%subEvery===0){
       this.padTone(this.midi(b-12),stepDur*subLen,'sine',subVol,t+stepDur*0.01,this.musGain);
-      if(kind!=='night')this.tone(this.midi(b),stepDur*0.40,'triangle',subVol*0.62,0.995,t+stepDur*0.03,this.musGain);
+      this.tone(this.midi(b),stepDur*0.40,'triangle',subVol*(kind==='night'?0.72:0.62),0.995,t+stepDur*0.03,this.musGain);
+      if(kind==='night')this.tone(this.midi(b+12),stepDur*0.34,'square',subVol*0.34,0.99,t+stepDur*0.06,this.musGain);
+    }
+    if(kind==='night'){
+      const strong=i%8===0?1.0:0.82;
+      this.padTone(this.midi(b),stepDur*2.55,'triangle',0.050*strong,t+stepDur*0.002,this.musGain);
+      this.padTone(this.midi(b),stepDur*2.35,'sawtooth',0.032*strong,t+stepDur*0.020,this.musGain);
+      this.tone(this.midi(b+12),stepDur*0.74,'square',0.044*strong,0.985,t+stepDur*0.030,this.musGain);
+      if(i%8===4)this.tone(this.midi(b+7),stepDur*0.46,'square',0.034,0.99,t+stepDur*0.12,this.musGain);
     }
     if(i%pulseEvery===0)this.tone(this.midi(b+12),stepDur*0.62,'square',pulseVol,0.98,t+stepDur*0.01,this.musGain);
     if(kind==='city'&&i%8===4)this.tone(this.midi(b+19),stepDur*0.25,'square',pulseVol*0.55,1,t+stepDur*0.05,this.musGain);
@@ -829,6 +837,7 @@ const AU={
     if(padVol&&i%padEvery===0){
       this.padTone(this.midi(b+12),stepDur*(kind==='cave'?7.5:5.5),'triangle',padVol,t+stepDur*0.02,this.musGain);
       if(kind==='night')this.padTone(this.midi(b+19),stepDur*4.8,'sine',padVol*0.55,t+stepDur*0.10,this.musGain);
+      if(kind==='cave')this.padTone(this.midi(b+19),stepDur*4.8,'sine',padVol*0.48,t+stepDur*0.12,this.musGain);
     }
   },
   startWeather(kind){
@@ -898,7 +907,7 @@ const AU={
         const h=P.harm[i%P.harm.length];
         if(h)this.tone(this.midi(h),kind==='cave'?stepDur*2.2:(kind==='lava'?stepDur*2.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.12:0.78):(kind==='desert'?stepDur*1.75:stepDur*1.35))),'triangle',kind==='cave'?0.024:(kind==='lava'?0.034:(kind==='menu'?0.014*accent:(kind==='desert'?0.022:0.030*accent))),1,t+stepDur*0.08,this.musGain);
       }
-      if(b)this.tone(this.midi(b),kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.55:1.05):(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8))),'triangle',kind==='cave'?0.128:(kind==='lava'?0.145:(kind==='desert'?0.112:(kind==='menu'?0.112:(kind==='day2'?0.125:0.148)))),1,t,this.musGain);
+      if(b)this.tone(this.midi(b),kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.55:1.05):(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8))),'triangle',kind==='cave'?0.158:(kind==='lava'?0.158:(kind==='night'?0.225:(kind==='desert'?0.130:(kind==='menu'?0.112:(kind==='day2'?0.140:0.158))))),1,t,this.musGain);
       this.retroBassLayer(kind,b,i,t,stepDur);
       if(kind!=='night'&&kind!=='cave'&&kind!=='desert'&&kind!=='lava'&&kind!=='menu'&&i%4===2)this.noise(0.03,kind==='day2'||kind==='city'?0.020:0.03,6000,0.5,t,this.musGain); // hihat-känsla
       if(kind==='menu'){
