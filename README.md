@@ -92,7 +92,10 @@ js/03_themes.js         terrängteman och material
 js/04_terrain.js        destruerbar terrängmask
 js/05_lemming.js        lemmel-tillstånd och skill-logik
 js/06_levels.js         banor
-js/07_game.js           spelmotor, state, events och objektlogik
+js/07_game.js           spelmotor, state, events och huvudflöde
+js/07_save_state.js     spara/ladda-logik för spelstate
+js/07_manual_control.js direktstyrning, sikte och manual-skill helpers
+js/07_living_world.js   svamp, mumier, meteorer och andra levande värld-effekter
 js/08_render.js         rendering av värld, figurer, dekor och väder
 js/09_hud.js            HUD, knappar och minikarta
 js/10_screens.js        titel, meny, briefing, resultat och hjälp
@@ -119,8 +122,8 @@ Kör spelets verifiering:
 node tools\verify-game.js
 ```
 
-Verifieringen laddar samma script som HTML-filen, bygger banorna och gör ett
-enkelt render-smoketest.
+Verifieringen laddar samma script som HTML-filen, kontrollerar runtime-moduler,
+bygger banorna, gör ett enkelt render-smoketest och provar spara/återställ.
 
 ## Utvecklingsnoteringar
 

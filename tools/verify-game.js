@@ -9,6 +9,15 @@ const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m =>
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL_fixed_v44.html');
 
+const runtimeScripts = ['js/07_game.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js'];
+for (let i = 0; i < runtimeScripts.length; i++) {
+  const idx = scripts.indexOf(runtimeScripts[i]);
+  if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
+  if (i > 0 && idx <= scripts.indexOf(runtimeScripts[i - 1])) {
+    throw new Error(`Script order is wrong around ${runtimeScripts[i]}`);
+  }
+}
+
 function makeContext2d(){
   return {
     imageSmoothingEnabled:false,
@@ -119,6 +128,16 @@ const {G, LEVELS, THEMES, AU, SKILLS, drawPlayWorld, WCTX, menuChapters} = sandb
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
 
+const requiredRuntimeMethods = [
+  'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
+  'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
+  'updateDolphins','updateMeteors','updateMushroomEatingEffects','updateMummyScareEffects',
+  'updateRandomJumpEvents','updateLemmingChatter','updateWaterfallHeadSplashes'
+];
+for (const name of requiredRuntimeMethods) {
+  if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
+}
+
 const levelNames = new Set();
 for (let idx = 0; idx < LEVELS.length; idx++) {
   const L = LEVELS[idx];
@@ -161,6 +180,15 @@ const chapters = menuChapters();
 if (chapters.length !== 3) throw new Error(`Expected 3 menu chapters, got ${chapters.length}`);
 if (Math.max(...chapters.map(ch => ch.to - ch.from)) > 10) {
   throw new Error('Too many rows in a menu chapter');
+}
+
+G.startLevel(0);
+const savedState = G.makeSaveState('VERIFY');
+if (!savedState || savedState.levelIdx !== 0 || !savedState.terrain || !savedState.fields || !savedState.arrays) {
+  throw new Error('Save-state smoke test failed');
+}
+if (!G.restoreSaveState(savedState) || G.state !== 'PLAY' || !G.T || G.levelIdx !== 0) {
+  throw new Error('Restore-state smoke test failed');
 }
 
 console.log(`verify-game ok: ${LEVELS.length} levels, ${scripts.length} scripts`);

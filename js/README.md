@@ -13,12 +13,15 @@ Behall laddningsordningen i `LEMMEL_fixed_v44.html`:
 6. `05_lemming.js` - lemminglogik (`Lemming`)
 7. `06_levels.js` - bandata (`LEVELS`)
 8. `07_game.js` - spelmotor och state (`G`)
-9. `08_render.js` - varlds- och figur-rendering
-10. `09_hud.js` - HUD och knappar
-11. `10_screens.js` - titel, meny, briefing och overlays
-12. `11_play_render.js` - huvudrendering for spelvyn
-13. `12_input.js` - mus, touch och tangentbord
-14. `13_boot.js` - initiering och huvudloop
+9. `07_save_state.js` - spara/ladda-metoder for `G`
+10. `07_manual_control.js` - direktstyrning och manual-skill helpers
+11. `07_living_world.js` - levande varld-effekter som svamp, mumier och meteorer
+12. `08_render.js` - varlds- och figur-rendering
+13. `09_hud.js` - HUD och knappar
+14. `10_screens.js` - titel, meny, briefing och overlays
+15. `11_play_render.js` - huvudrendering for spelvyn
+16. `12_input.js` - mus, touch och tangentbord
+17. `13_boot.js` - initiering och huvudloop
 
 Om en fil flyttas tidigare kan den sakna globala bindningar fran filerna ovanfor.
 
@@ -28,5 +31,5 @@ Efter storre andringar, kor:
 node tools/verify-game.js
 ```
 
-Det laddar samma script-taggar som HTML-filen, bygger alla banor och gor en
-render-smoketest.
+Det laddar samma script-taggar som HTML-filen, kontrollerar runtime-moduler,
+bygger alla banor och gor en render-/save-smoketest.

@@ -99,8 +99,8 @@ class Lemming{
     return false;
   }
   tryStepOverTinyGap(T,nx,baseY){
-    // NÃ¥gra banor har 1-2 px skarvar mellan ramp och plattform. De ska lÃ¤sas
-    // som ojÃ¤mn mark, inte som en riktig ravin.
+    // Några banor har 1-2 px skarvar mellan ramp och plattform. De ska läsas
+    // som ojämn mark, inte som en riktig ravin.
     // Regeln nedan tillater 1-3 px och landning nagra pixlar hogre.
     const yOffsets=[0,-1,1,-2,2,-3,3,-4,-5,-6];
     for(let gap=1;gap<=3;gap++){
