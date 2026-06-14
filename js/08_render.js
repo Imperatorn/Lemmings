@@ -72,9 +72,10 @@ function drawLemmingCore(c,l,sx,sy){
   const blockSway=l.state==='BLOCK'?((l.anim>>3)&1):0;
   // ben
   if(l.state==='WALK'||l.state==='MANUAL'||l.state==='BASH'||l.state==='BAZ'||l.state==='FLAME'||l.state==='SHRUG'){
-    if(f===0){p(-2,-2,COL.leg,2,2);p(1,-2,COL.leg,2,2)}
-    else if(f===1){p(-3,-1,COL.leg,2,1);p(-2,-2,COL.leg,2,1);p(1,-2,COL.leg,2,2)}
-    else if(f===2){p(-1,-2,COL.leg,2,2);p(0,-2,COL.leg,1,2)}
+    const lf=(l.state==='MANUAL'&&!l.manualMoving)?0:f;
+    if(lf===0){p(-2,-2,COL.leg,2,2);p(1,-2,COL.leg,2,2)}
+    else if(lf===1){p(-3,-1,COL.leg,2,1);p(-2,-2,COL.leg,2,1);p(1,-2,COL.leg,2,2)}
+    else if(lf===2){p(-1,-2,COL.leg,2,2);p(0,-2,COL.leg,1,2)}
     else{p(-2,-2,COL.leg,2,2);p(2,-1,COL.leg,2,1);p(1,-2,COL.leg,2,1)}
   }else if(l.state==='FALL'||l.state==='JET'||l.state==='JUMP'){
     p(-2,-2,COL.leg,1,2);p(1,-2+( (l.anim>>1)&1),COL.leg,1,2);

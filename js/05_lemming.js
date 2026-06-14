@@ -11,7 +11,7 @@ class Lemming{
     this.bombT=-1;this.busyT=0;this.bricks=0;this.fuel=0;
     this.jetT=0;this.jetBlockedT=0;this.afterBazState=null;
     this.jumpT=0;this.jumpVy=0;this.manualVy=0;this.ropeId=null;this.ropeT=0;this.ropeCooldown=0;
-    this.scale=1;
+    this.scale=1;this.manualMoving=false;
     this.anim=Math.floor(RND()*4);this.dead=false;
   }
   alive(){return !this.dead&&this.state!=='SPLAT'&&this.state!=='DROWN'&&this.state!=='BURN'&&this.state!=='EXITING'}
@@ -296,8 +296,9 @@ class Lemming{
   }
   manualControl(T){
     const m=G.manual||{};
-    if(!m.active||m.lemId!==this.id){this.state=this.manualSolidAt(T,this.x,this.y+1)?'WALK':'FALL';this.fall=0;return}
+    if(!m.active||m.lemId!==this.id){this.manualMoving=false;this.state=this.manualSolidAt(T,this.x,this.y+1)?'WALK':'FALL';this.fall=0;return}
     const keys=m.keys||{};
+    const startX=this.x,startY=this.y;
     this.busyT++;
     let grounded=this.manualSolidAt(T,this.x,this.y+1);
 
@@ -375,6 +376,7 @@ class Lemming{
 
     G.checkExit(this);
     G.checkLiquid(this);
+    this.manualMoving=!grounded||Math.abs(this.x-startX)>0.05||Math.abs(this.y-startY)>0.05;
   }
   sillyJump(T){
     this.jumpT--;
