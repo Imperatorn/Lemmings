@@ -153,8 +153,9 @@ const requiredRuntimeMethods = [
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'hitDecorTargetAt',
+  'trollScale','throwTrollRock',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'updateDolphins','updateMeteors','updateMushroomEatingEffects','updateMummyScareEffects',
+  'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
   'updateRandomJumpEvents','updateLemmingChatter','updateWaterfallHeadSplashes'
 ];
@@ -190,6 +191,43 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
   G.level = prevLevel;
   G.lems = prevLems;
   G.lamp = prevLamp;
+}
+{
+  const prevDecor = G.decor;
+  const prevTrolls = G.trolls;
+  const prevParts = G.parts;
+  const prevFlashes = G.flashes;
+  const prevToasts = G.toasts;
+  const mushroom = {t:'mush', x:100, y:180, v:0.4};
+  const troll = {x:104, y:180, life:100, scale:1, dir:1, chewT:0};
+  G.decor = [mushroom];
+  G.trolls = [troll];
+  G.parts = [];
+  G.flashes = [];
+  G.toasts = [];
+  G.updateMushroomEatingEffects();
+  if (troll.scale !== 2 || !mushroom.eaten || !mushroom.remove) {
+    throw new Error('Troll did not eat mushroom and grow to scale 2');
+  }
+  G.decor = prevDecor;
+  G.trolls = prevTrolls;
+  G.parts = prevParts;
+  G.flashes = prevFlashes;
+  G.toasts = prevToasts;
+}
+
+{
+  const prevRocks = G.trollRocks;
+  const prevRand = G.rand;
+  G.trollRocks = [];
+  G.rand = () => 0.5;
+  const troll = { x: 100, y: 190, scale: 2, dir: 1 };
+  const monkey = { x: 180, y: 110, vx: 0 };
+  if (!G.throwTrollRock(troll, monkey) || !G.trollRocks[0] || G.trollRocks[0].scale !== 2) {
+    throw new Error('Giant troll rock did not inherit troll scale');
+  }
+  G.trollRocks = prevRocks;
+  G.rand = prevRand;
 }
 G.state = 'MENU';
 drawMenu(WCTX, 1);
@@ -232,6 +270,9 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
   if (L.name === 'KRISTALLSCHAKTET' && L.theme !== 'glass') {
     throw new Error(`${L.name}: expected glass crystal shaft theme`);
   }
+  if (L.name === 'KRISTALLSCHAKTET' && decorTypes.has('stal')) {
+    throw new Error(`${L.name}: expected crystal clusters instead of cave stalagmites`);
+  }
   if (L.name === 'JETPACK-KLIPPAN' && L.theme !== 'rock') {
     throw new Error(`${L.name}: expected rock theme`);
   }
@@ -250,6 +291,19 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
   for (const root of (G.decor || []).filter(d => d && d.t === 'root')) {
     if (!rootDecorHasSupport(G.T, root.x, root.y)) {
       throw new Error(`${L.name}: root decor at ${root.x},${root.y} is not attached to terrain`);
+    }
+  }
+  for (const torch of (G.decor || []).filter(d => d && d.t === 'torch')) {
+    for (const z of L.water || []) {
+      if (torch.x >= z.x - 4 && torch.x <= z.x + z.w + 4) {
+        throw new Error(`${L.name}: torch at ${torch.x},${torch.y} is over ${z.lava ? 'lava' : 'water'}`);
+      }
+    }
+  }
+  for (const d of (G.decor || []).filter(d => d && (d.t === 'mush' || d.t === 'rock'))) {
+    const liquid = G.liquidAt(d.x, Math.round((d.y || 0) + 6), 2);
+    if (liquid) {
+      throw new Error(`${L.name}: ${d.t} at ${d.x},${d.y} spawned in ${liquid.lava ? 'lava' : 'water'}`);
     }
   }
 

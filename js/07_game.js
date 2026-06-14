@@ -43,7 +43,11 @@ function createLevelBuildApi(T){
 }
 
 function createLevelDecorApi(game){
-  const add=d=>game.decor.push(d);
+  const add=d=>{
+    if(game&&game.decorLiquidSpawnBlocked&&game.decorLiquidSpawnBlocked(d))return null;
+    game.decor.push(d);
+    return d;
+  };
   return {
     torch:(x,y)=>add({t:'torch',x,y,vy:0}),
     tree:(x,y,s)=>add({t:'tree',x,y,s}),
@@ -333,6 +337,10 @@ const G={
       if(xx>=z.x-p&&xx<z.x+z.w+p&&yy>=z.y-2)return z;
     }
     return null;
+  },
+  decorLiquidSpawnBlocked(d){
+    if(!d||(d.t!=='mush'&&d.t!=='rock'))return false;
+    return !!this.liquidAt(d.x,Math.round((d.y||0)+6),2);
   },
   lemmingLiquidHazard(l){
     if(!l)return null;
@@ -1761,6 +1769,7 @@ const G={
 
 
   isNewLevelWithTrolls(){return !!(this.level&&!this.isDarkLevel())},
+  trollScale(t){return Math.max(1,t&&t.scale||1)},
   trollGroundY(x,fromY){
     if(!this.T)return 220;
     const xx=clamp(Math.round(x),5,this.T.W-6);
@@ -1793,7 +1802,7 @@ const G={
   spawnTroll(data){
     if(!this.isNewLevelWithTrolls()||!this.level||!this.T)return null;
     const e=(data&&data.entry)||this.pickTrollEntry();
-    const t={x:e.x,y:e.y,dir:e.dir||1,age:0,chewT:0,targetId:null,stepT:0,rockT:Math.round((2.0+this.rand()*2.5)*1000/TICK),life:Math.round((42+this.rand()*26)*TROLL_LIFE_SCALE*1000/TICK)};
+    const t={x:e.x,y:e.y,dir:e.dir||1,age:0,chewT:0,targetId:null,stepT:0,scale:1,rockT:Math.round((2.0+this.rand()*2.5)*1000/TICK),life:Math.round((42+this.rand()*26)*TROLL_LIFE_SCALE*1000/TICK)};
     this.trolls.push(t);
     this.trollLastX=t.x;
     this.toast('ETT TROLL VANDRAR IN!');
@@ -1803,11 +1812,12 @@ const G={
   treeById(id){return (this.trees||[]).find(t=>t.id===id&&!t.eaten&&!t.burning)||null},
   findTreeForTroll(t){
     if(!t||!this.trees)return null;
+    const sc=this.trollScale(t);
     let best=null,bestD=1e9;
     for(const tr of this.trees){
       if(tr.eaten||tr.burning)continue;
       const dx=Math.abs(tr.x-t.x),dy=Math.abs((tr.baseY||t.y)-t.y);
-      if(dx<bestD&&dx<42&&dy<28){best=tr;bestD=dx}
+      if(dx<bestD&&dx<42*sc&&dy<28*sc){best=tr;bestD=dx}
     }
     return best;
   },
@@ -1823,22 +1833,24 @@ const G={
   },
   trollEatTree(t,tr){
     if(!t||!tr||tr.eaten)return false;
-    t.chewT=(t.chewT||0)+1;
+    const sc=this.trollScale(t);
+    const prev=t.chewT||0;
+    t.chewT=prev+sc;
     t.dir=tr.x>=t.x?1:-1;
-    if(t.chewT%6===1){
-      const biteR=6+((t.chewT/6)|0)%3;
-      const bx=tr.x+(this.rand()*2-1)*7, by=tr.baseY-(tr.height||28)*0.45+this.rand()*14;
+    if(Math.floor(prev/6)!==Math.floor(t.chewT/6)){
+      const biteR=Math.round((6+((t.chewT/6)|0)%3)*sc);
+      const bx=tr.x+(this.rand()*2-1)*7*sc, by=tr.baseY-(tr.height||28)*0.45+this.rand()*14;
       this.T.clearDisc(bx,by,biteR);
-      this.debris(bx,by,5);
+      this.debris(bx,by,Math.round(5*sc));
       AU.sTrollMunch();
-      if(t.chewT%18===1)AU.sTroll();
+      if(Math.floor(prev/18)!==Math.floor(t.chewT/18))AU.sTroll();
     }
     if(t.chewT>=30){
-      this.clearTreeShape(tr,1);
+      this.clearTreeShape(tr,Math.ceil(sc));
       tr.eaten=true;
       this.toast('TROLLET ÅT UPP ETT TRÄD!');
       AU.sTrollBurp();
-      for(let i=0;i<18&&this.parts.length<MAX_PARTICLES;i++){
+      for(let i=0;i<Math.round(18*sc)&&this.parts.length<MAX_PARTICLES;i++){
         const a=RND()*6.283,sp=0.45+RND()*1.4;
         this.parts.push({x:tr.x,y:tr.baseY-(tr.height||28)/2,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.7,life:14+RND()*14,g:0.10,col:RND()<0.5?'#40b850':'#8a552c'});
       }
@@ -1849,10 +1861,11 @@ const G={
   },
   trollWallAhead(t){
     if(!t||!this.T)return false;
+    const sc=this.trollScale(t);
     const d=t.dir>=0?1:-1;
     let hits=0;
-    for(let dx=8;dx<=18;dx+=2){
-      for(let dy=-25;dy<=0;dy+=3){
+    for(let dx=8*sc;dx<=18*sc;dx+=Math.max(2,2*sc)){
+      for(let dy=-25*sc;dy<=0;dy+=3){
         if(this.T.solid(t.x+d*dx,t.y+dy)&&++hits>=7)return true;
       }
     }
@@ -1860,40 +1873,42 @@ const G={
   },
   clearTrollWallBite(t,finishing){
     if(!t||!this.T)return;
+    const sc=this.trollScale(t);
     const d=t.dir>=0?1:-1;
     const max=t.rageMax||TROLL_RAGE_TICKS;
     const elapsed=max-(t.rageT||0);
     const p=clamp(elapsed/max,0,1);
-    const x=t.x+d*(5+Math.round(p*23));
+    const x=t.x+d*(5+Math.round(p*23))*sc;
     const wob=(elapsed%3)-1;
     const cuts=[
-      {x:x,y:t.y-23+wob,r:5},
-      {x:x+d*2,y:t.y-17-wob,r:6},
-      {x:x+d,y:t.y-10+wob,r:6},
-      {x:x+d*2,y:t.y-4,r:5}
+      {x:x,y:t.y-23*sc+wob,r:Math.round(5*sc)},
+      {x:x+d*2*sc,y:t.y-17*sc-wob,r:Math.round(6*sc)},
+      {x:x+d*sc,y:t.y-10*sc+wob,r:Math.round(6*sc)},
+      {x:x+d*2*sc,y:t.y-4*sc,r:Math.round(5*sc)}
     ];
     if(finishing){
-      const x1=t.x+d*8;
-      const x2=t.x+d*22;
-      cuts.push({x:x1,y:t.y-22,r:6},{x:x1+d*2,y:t.y-15,r:7},{x:x1,y:t.y-8,r:7},{x:x1+d,y:t.y-2,r:5});
-      cuts.push({x:x2,y:t.y-22,r:6},{x:x2+d*2,y:t.y-15,r:7},{x:x2,y:t.y-8,r:7},{x:x2+d,y:t.y-2,r:5});
+      const x1=t.x+d*8*sc;
+      const x2=t.x+d*22*sc;
+      cuts.push({x:x1,y:t.y-22*sc,r:Math.round(6*sc)},{x:x1+d*2*sc,y:t.y-15*sc,r:Math.round(7*sc)},{x:x1,y:t.y-8*sc,r:Math.round(7*sc)},{x:x1+d*sc,y:t.y-2*sc,r:Math.round(5*sc)});
+      cuts.push({x:x2,y:t.y-22*sc,r:Math.round(6*sc)},{x:x2+d*2*sc,y:t.y-15*sc,r:Math.round(7*sc)},{x:x2,y:t.y-8*sc,r:Math.round(7*sc)},{x:x2+d*sc,y:t.y-2*sc,r:Math.round(5*sc)});
     }
     for(const c of cuts)this.T.clearDisc(c.x,c.y,c.r);
-    this.debris(x,t.y-12,finishing?10:6);
+    this.debris(x,t.y-12*sc,Math.round((finishing?10:6)*sc));
   },
   clearTrollWallMouth(t){
     if(!t||!this.T)return;
+    const sc=this.trollScale(t);
     const d=t.dir>=0?1:-1;
-    const x=d>0?Math.round(t.x+2):Math.round(t.x-24);
-    const y=Math.round(t.y-27);
+    const x=d>0?Math.round(t.x+2*sc):Math.round(t.x-24*sc);
+    const y=Math.round(t.y-27*sc);
     // Rensa en sammanhängande startöppning direkt vid trollets slagyta.
     // De progressiva cirklarna såg bra ut, men kunde lämna en tunn rest längst
     // in i väggen som var visuellt liten men fortfarande blockerade lemlar.
-    this.T.clearRect(x,y,22,28);
-    this.T.clearDisc(t.x+d*7,t.y-20,8);
-    this.T.clearDisc(t.x+d*9,t.y-11,9);
-    this.T.clearDisc(t.x+d*8,t.y-3,7);
-    this.debris(t.x+d*10,t.y-12,8);
+    this.T.clearRect(x,y,Math.round(22*sc),Math.round(28*sc));
+    this.T.clearDisc(t.x+d*7*sc,t.y-20*sc,Math.round(8*sc));
+    this.T.clearDisc(t.x+d*9*sc,t.y-11*sc,Math.round(9*sc));
+    this.T.clearDisc(t.x+d*8*sc,t.y-3*sc,Math.round(7*sc));
+    this.debris(t.x+d*10*sc,t.y-12*sc,Math.round(8*sc));
   },
   startTrollWallRage(t){
     if(!t||!this.T||!this.trollWallAhead(t))return false;
@@ -1926,25 +1941,26 @@ const G={
   moveTroll(t){
     if(!t||!this.T||!this.level)return;
     if(this.updateTrollWallRage(t))return;
+    const sc=this.trollScale(t);
     t.stepT++;
     const speed=0.72;
     let nx=t.x+t.dir*speed, ny=t.y;
-    if(nx<8||nx>this.level.W-8){t.dir*=-1;return}
-    if(this.T.solid(nx,ny-8)){
+    if(nx<8*sc||nx>this.level.W-8*sc){t.dir*=-1;return}
+    if(this.T.solid(nx,ny-8*sc)){
       if(this.startTrollWallRage(t))return;
       t.dir*=-1;return
     }
     if(this.T.solid(nx,ny)){
       let up=0;
-      while(this.T.solid(nx,ny)&&up<8){ny--;up++}
-      if(up>=8){
+      while(this.T.solid(nx,ny)&&up<8*sc){ny--;up++}
+      if(up>=8*sc){
         if(this.startTrollWallRage(t))return;
         t.dir*=-1;return
       }
     }else{
       let down=0;
-      while(!this.T.solid(nx,ny+1)&&down<10){ny++;down++}
-      if(down>=10){t.dir*=-1;return}
+      while(!this.T.solid(nx,ny+1)&&down<10*sc){ny++;down++}
+      if(down>=10*sc){t.dir*=-1;return}
     }
     t.x=nx;t.y=ny;
     if(t.stepT%24===1)AU.sTrollStep();
@@ -1962,14 +1978,15 @@ const G={
   },
   throwTrollRock(t,m){
     if(!t||!m)return false;
-    const sx=t.x+(m.x>=t.x?1:-1)*9, sy=t.y-22;
+    const sc=this.trollScale(t);
+    const sx=t.x+(m.x>=t.x?1:-1)*9*sc, sy=t.y-22*sc;
     const frames=clamp(32+Math.abs(m.x-sx)/8,34,74);
     const g=0.18;
     const tx=m.x+(m.vx||0)*frames*0.72+(this.rand()*26-13);
     const ty=m.y-4+(this.rand()*18-9);
     const vx=(tx-sx)/frames;
     const vy=(ty-sy-0.5*g*frames*frames)/frames;
-    this.trollRocks.push({x:sx,y:sy,vx,vy,g,life:Math.ceil(frames)+42,spin:0,hit:false});
+    this.trollRocks.push({x:sx,y:sy,vx,vy,g,life:Math.ceil(frames)+42,spin:0,hit:false,scale:sc});
     t.dir=m.x>=t.x?1:-1;
     AU.sTrollUgh();
     return true;
@@ -1988,6 +2005,7 @@ const G={
   updateTrollRocks(){
     for(const r of this.trollRocks||[]){
       if(r.hit)continue;
+      const sc=Math.max(1,r.scale||1);
       r.life--;r.spin++;
       r.vy+=r.g||0;
       const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
@@ -1997,8 +2015,8 @@ const G={
         if(m){
           this.dismissMonkey(m,'rock',r.x,r.y);
           r.hit=true;
-        }else if(this.T&&(this.T.solidBox(r.x,r.y,2)||r.y>=this.T.H-4)){
-          this.debris(r.x,r.y,7);
+        }else if(this.T&&(this.T.solidBox(r.x,r.y,Math.round(2*sc))||r.y>=this.T.H-4)){
+          this.debris(r.x,r.y,Math.round(7*sc));
           AU.sPop();
           r.hit=true;
         }
@@ -2029,10 +2047,11 @@ const G={
     this.trees=(this.trees||[]).filter(tr=>!tr.eaten||tr.removeT<10);
     for(const t of this.trolls){
       t.age++;t.life--;
+      const sc=this.trollScale(t);
       let tr=this.treeById(t.targetId)||this.findTreeForTroll(t);
       if(tr){
         t.targetId=tr.id;
-        if(Math.abs(t.x-tr.x)>13){t.dir=tr.x>t.x?1:-1;this.moveTroll(t)}
+        if(Math.abs(t.x-tr.x)>13*sc){t.dir=tr.x>t.x?1:-1;this.moveTroll(t)}
         else this.trollEatTree(t,tr);
       }else{t.targetId=null;t.chewT=0;this.moveTroll(t)}
       this.tryTrollThrowAtMonkey(t);

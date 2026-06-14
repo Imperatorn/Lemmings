@@ -8,7 +8,6 @@ const THEMES={
       }
       let c=n<0.33?[122,74,33]:(n<0.66?[107,61,26]:[140,90,45]);
       if(n>0.965)c=[160,120,80];           // småsten
-      if(dTop>50){c=[c[0]*0.7|0,c[1]*0.7|0,c[2]*0.7|0]}
       return c; } },
   hell:{ sky:['#1a0000','#3a0505'], brick:'#9a5a40',
     px(x,y,dTop){ const n=hash2(x,y);
@@ -34,7 +33,6 @@ const THEMES={
         c=[Math.min(255,c[0]+28),Math.min(255,c[1]+30),Math.min(255,c[2]+32)];
         if(hash2(x*5,11)>0.88)c=n<0.5?[86,132,96]:[66,108,82]; // diskret mossa i skarvar
       }
-      if(dTop>68)c=[c[0]*0.76|0,c[1]*0.78|0,c[2]*0.82|0];
       return c; } },
   forest:{ sky:['#000400','#001200'], brick:'#8a6a3a',
     px(x,y,dTop){ const n=hash2(x,y);
@@ -43,7 +41,6 @@ const THEMES={
       const root=Math.abs(Math.sin(x*0.055+y*0.115+Math.sin(y*0.041)*2.0));
       if(dTop>5&&dTop<46&&root<0.045&&hash2(x>>2,y>>2)>0.42)c=[92,54,28];
       else if(dTop>12&&dTop<64&&n>0.965)c=[94,72,44];
-      if(dTop>58)c=[c[0]*0.72|0,c[1]*0.70|0,c[2]*0.68|0];
       return c; } },
   cave:{ sky:['#02050a','#070b10'], brick:'#8c929a',
     px(x,y,dTop){ const n=hash2(x,y), seam=((x+(y>>1))&31)===0||((y+(x>>2))&37)===0;
@@ -52,7 +49,6 @@ const THEMES={
       if(vein>0.78)c=[c[0]+18,c[1]+20,c[2]+22];
       if(seam)c=[Math.max(28,c[0]-24),Math.max(30,c[1]-24),Math.max(34,c[2]-24)];
       if(dTop<2)c=[Math.min(155,c[0]+44),Math.min(162,c[1]+44),Math.min(172,c[2]+46)];
-      if(dTop>70)c=[c[0]*0.72|0,c[1]*0.72|0,c[2]*0.74|0];
       return c; } },
   rock:{ sky:['#08111f','#31475e'], brick:'#7b858e',
     px(x,y,dTop){ const n=hash2(x,y);
@@ -67,7 +63,6 @@ const THEMES={
         c=[Math.min(170,c[0]+44),Math.min(182,c[1]+46),Math.min(194,c[2]+50)];
         if(hash2(x*7,19)>0.86)c=n<0.5?[70,118,76]:[56,96,66]; // lav/mossa på klippkanten
       }
-      if(dTop>55)c=[c[0]*0.72|0,c[1]*0.74|0,c[2]*0.78|0];
       return c; } },
   desert:{ sky:['#2a1730','#f2a84f'], brick:'#d8a85a',
     px(x,y,dTop){ const n=hash2(x,y), ripple=Math.sin(x*0.18+y*0.035)*0.5+0.5;
@@ -75,7 +70,6 @@ const THEMES={
       let c=n<0.36?[176,118,54]:(n<0.70?[198,139,62]:[220,166,78]);
       if(((x+y*2)&47)===0)c=[136,96,62];
       if(n>0.972)c=[112,84,66];
-      if(dTop>45)c=[c[0]*0.78|0,c[1]*0.72|0,c[2]*0.62|0];
       return c; } },
   city:{ sky:['#141824','#46505e'], brick:'#9ca0a6',
     px(x,y,dTop){ const n=hash2(x,y);
@@ -84,7 +78,6 @@ const THEMES={
       if(mortar)return [42,46,52];
       let c=n<0.34?[82,86,92]:(n<0.68?[98,102,108]:[116,120,128]);
       if(n>0.965)c=[150,154,160];
-      if(dTop>55)c=[c[0]*0.72|0,c[1]*0.72|0,c[2]*0.74|0];
       return c; } },
   crystal:{ sky:['#000014','#041030'], brick:'#a0d8f0',
     px(x,y,dTop){ const n=hash2(x,y);
@@ -102,7 +95,6 @@ const THEMES={
       else if(seam<0.078)c=[104,178,214];
       if(((x*5+y*3)&95)===0||n>0.982)c=[255,255,255];
       if(dTop<2)c=[245,255,255];
-      if(dTop>58)c=[c[0]*0.72|0,c[1]*0.78|0,c[2]*0.86|0];
       return c; } }
 };
 

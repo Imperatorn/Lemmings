@@ -59,10 +59,40 @@ Object.assign(G,{
     AU.sPop();
     return true;
   },
+  canTrollEatMushroom(t){
+    return !!(t&&t.life>0&&(t.scale||1)<LEM_GIANT_SCALE);
+  },
+  growTrollFromMushroom(t,mush){
+    if(!this.canTrollEatMushroom(t))return false;
+    t.scale=LEM_GIANT_SCALE;
+    t.giant=true;
+    t.life+=Math.round(12*1000/TICK);
+    t.chewT=0;
+    t.rageT=0;
+    this.flashes.push({x:t.x,y:t.y-20*LEM_GIANT_SCALE,r:46,t:15,maxT:15});
+    for(let i=0;i<24&&this.parts.length<MAX_PARTICLES;i++){
+      const a=RND()*6.283,sp=0.45+RND()*1.7;
+      this.parts.push({x:mush.x+RND()*10-5,y:mush.y-6+RND()*5-2,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.9,
+        life:14+RND()*18,g:0.08,col:RND()<0.55?'#e8d070':'#7b4b2b',glow:RND()<0.35});
+    }
+    this.toast('TROLLET ÅT EN SVAMP OCH VÄXTE!');
+    AU.sTrollBurp();
+    return true;
+  },
   updateMushroomEatingEffects(){
     const mushrooms=(this.decor||[]).filter(d=>d.t==='mush'&&!d.eaten&&!d.remove);
     if(!mushrooms.length)return;
     for(const m of mushrooms){
+      for(const t of this.trolls||[]){
+        const sc=this.trollScale?this.trollScale(t):Math.max(1,t.scale||1);
+        const near=Math.abs(t.x-m.x)<=12*sc&&Math.abs(t.y-m.y)<=18*sc;
+        if(near&&this.growTrollFromMushroom(t,m)){
+          m.eaten=true;
+          m.remove=true;
+          break;
+        }
+      }
+      if(m.eaten||m.remove)continue;
       if(!Array.isArray(m.tasteIds))m.tasteIds=[];
       const nearIds=[];
       for(const l of this.lems||[]){

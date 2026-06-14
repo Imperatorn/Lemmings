@@ -92,11 +92,22 @@ spelidé. Det här är de designregler vi har sett tydliga exempel på i spelet:
   känns förankrade i marken.
 - Byt inte gameplay-geometri när ändringen bara gäller material eller stil. Om
   en bana bygger på en vägg, ett gap eller en platå ska den formen bevaras.
+- Materialeffekter ska vara sammanhängande över sammanhängande terräng. Undvik
+  höjd-/djupgradienter som startar om från varje separat toppyta, eftersom det
+  ger synliga färgband mellan pelare, väggar och plattformar. Använd hellre
+  mönster, ådror, sprickor och ythighlights, eller en globalt konsekvent
+  ljussättning.
 - Dekor ska vara fysiskt rimlig. Rötter ska sitta i mark, skyltar ska stå på
   något, pyramider och stenar ska inte sväva och fordon ska inte klippas på ett
   sätt som ser oavsiktligt ut.
+- Dekor ska också passa materialet. Grottdetaljer som stalagmiter kan fungera i
+  grottor men se fel ut i glas- eller kristallbanor, särskilt om de hamnar nära
+  väggar eller pelare. Byt färg/stil eller ersätt dem med mer tematiska objekt.
 - Otydliga pixelart-detaljer ska förenklas, flyttas eller tas bort. En detalj
   som inte läses som det den föreställer gör banan mindre polerad.
+- Banor som delar grundtema bör ändå få egen visuell identitet. Skilj dem med
+  materialvariant, dekorplacering och tydliga motiv, inte genom att ändra
+  spelidén eller lägga in objekt som inte hör hemma.
 - All grafik, väder och alla effekter ska hålla samma retro/DOS-känsla. Undvik
   animationer eller former som ser för moderna, mjuka eller stilmässigt
   avvikande ut.

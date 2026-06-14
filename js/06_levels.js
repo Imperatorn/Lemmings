@@ -110,7 +110,7 @@ const LEVELS=[
     P.rect(520,125,26,70);
     P.rect(900,170,200,25);
     P.rect(80,85,20,40); P.rect(640,85,20,40); },
-  decor(D){ D.torch(90,125);D.torch(255,195);D.torch(335,195);D.torch(515,125);D.torch(650,125);D.torch(895,170);D.torch(980,170);
+  decor(D){ D.torch(90,125);D.torch(250,195);D.torch(376,195);D.torch(515,125);D.torch(650,125);D.torch(895,170);D.torch(980,170);
     D.chain(200,0);D.chain(760,0);D.chain(1050,0); } },
 
 { name:'DEN LÅNGA RESAN', theme:'dirt', night:false, W:1400,
@@ -194,7 +194,7 @@ const LEVELS=[
     P.erase.rect(690,185,50,55); P.rect(360,140,18,40); P.rect(610,180,20,60); P.disc(930,185,22); },
   decor(D){ D.tree(160,160,1.2);D.tree(450,180,1.0);D.tree(780,150,1.3);
     D.root(150,160,165,35);D.root(450,180,185,34);D.root(780,150,190,44);D.root(1030,185,210,32);D.root(610,180,120,24);
-    D.torch(360,180);D.torch(590,180);D.torch(690,185);D.torch(930,185);D.torch(1160,215);
+    D.torch(360,180);D.torch(590,180);D.torch(682,185);D.torch(930,185);D.torch(1160,215);
     D.mush(330,209);D.bush(1030,214); } },
 
 { name:'KRISTALLSCHAKTET', theme:'glass', night:false, W:1300,
@@ -207,8 +207,8 @@ const LEVELS=[
     P.rect(790,175,210,65); P.rect(1080,150,220,90);
     P.rect(405,82,20,78); P.rect(650,62,22,63); P.rect(920,110,22,65);
     P.disc(210,154,18); P.disc(760,95,24); P.disc(1120,120,18); },
-  decor(D){ D.crystal(120,199);D.crystal(180,199);D.crystal(360,159);D.crystal(470,159);D.crystal(610,124);D.crystal(730,124);D.crystal(820,174);D.crystal(880,174);D.crystal(990,174);D.crystal(1125,149);D.crystal(1180,149);
-    D.stal(405,160,18,true);D.stal(650,125,20,true);D.stal(735,125,16,false);D.stal(920,175,16,true);D.stal(1040,176,18,false); } },
+  decor(D){ D.crystal(120,199);D.crystal(180,199);D.crystal(330,159);D.crystal(360,159);D.crystal(470,159);D.crystal(570,124);D.crystal(610,124);D.crystal(705,124);D.crystal(730,124);
+    D.crystal(820,174);D.crystal(880,174);D.crystal(965,174);D.crystal(990,174);D.crystal(1125,149);D.crystal(1180,149);D.crystal(1240,149); } },
 
 { name:'DUBBLA DAMMAR', theme:'dirt', night:false, W:1300,
   lem:15, save:10, rate:42, time:420,
@@ -231,7 +231,7 @@ const LEVELS=[
   build(P){ P.rect(0,195,1400,45); P.erase.rect(470,195,45,45);P.erase.rect(740,195,45,45);
     P.rect(260,130,30,65); P.rect(545,100,30,95); P.rect(880,120,30,75);
     P.rect(1120,160,280,80); P.rect(120,90,18,45);P.rect(1020,80,18,55); },
-  decor(D){ D.torch(130,135);D.torch(260,130);D.torch(470,195);D.torch(545,100);D.torch(740,195);D.torch(880,120);D.torch(1120,160);D.torch(1200,160);
+  decor(D){ D.torch(130,135);D.torch(260,130);D.torch(462,195);D.torch(545,100);D.torch(732,195);D.torch(880,120);D.torch(1120,160);D.torch(1200,160);
     D.chain(210,0);D.chain(340,0);D.chain(650,0);D.chain(815,0);D.chain(980,0);D.chain(1250,0); } },
 
 { name:'BALKONGERNA', theme:'marble', night:false, W:1300,

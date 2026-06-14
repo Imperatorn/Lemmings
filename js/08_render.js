@@ -623,15 +623,17 @@ function drawDecor(c,dec,cam,tk){
       break}
     case 'stal':{
       const h=dec.h||18, up=dec.up!==false;
-      c.fillStyle='#565d66';
+      const key=G.level?terrainThemeKeyAt(G.level,dec.x,dec.y):'';
+      const icy=key==='crystal'||key==='glass';
+      c.fillStyle=icy?'#7fd6ef':'#565d66';
       c.beginPath();
       if(up){c.moveTo(x-5,dec.y);c.lineTo(x+5,dec.y);c.lineTo(x,dec.y-h);}
       else{c.moveTo(x-5,dec.y);c.lineTo(x+5,dec.y);c.lineTo(x,dec.y+h);}
       c.closePath();c.fill();
-      c.fillStyle='#8e98a4';
+      c.fillStyle=icy?'#d8fbff':'#8e98a4';
       if(up)c.fillRect(Math.round(x-1),Math.round(dec.y-h+4),2,Math.max(2,h-5));
       else c.fillRect(Math.round(x-1),Math.round(dec.y+2),2,Math.max(2,h-5));
-      c.fillStyle='#343941';
+      c.fillStyle=icy?'#4ca3c8':'#343941';
       if(up)c.fillRect(Math.round(x+2),Math.round(dec.y-h/2),1,Math.max(2,h/2|0));
       else c.fillRect(Math.round(x+2),Math.round(dec.y+2),1,Math.max(2,h/2|0));
       break}
@@ -964,14 +966,18 @@ function drawMonkey(c,m,cam,tk){
 
 function drawTroll(c,t,cam,tk){
   const x=Math.round(t.x-cam), y=Math.round(t.y), d=t.dir>=0?1:-1;
-  if(x<-48||x>VW+48)return;
+  const sc=Math.max(1,t&&t.scale||1);
+  if(x<-48*sc||x>VW+48*sc)return;
   const rage=t.rageT>0;
   const chew=!rage&&t.chewT>0;
   const rageFrame=rage?(((t.rageMax||TROLL_RAGE_TICKS)-(t.rageT||0))>>1)&3:0;
   const walk=rage?rageFrame:(((t.stepT||tk)>>2)&3);
   const bob=rage?(rageFrame===1?-1:(rageFrame===3?1:0)):((walk===1||walk===2)?1:0);
   const chewFrame=chew?((t.chewT||0)>>1)&3:0;
-  function p(xx,yy,col,w,h){c.fillStyle=col;c.fillRect(x+xx,y+yy,w||1,h||1)}
+  function p(xx,yy,col,w,h){
+    c.fillStyle=col;
+    c.fillRect(x+Math.round(xx*sc),y+Math.round(yy*sc),Math.max(1,Math.round((w||1)*sc)),Math.max(1,Math.round((h||1)*sc)));
+  }
   function q(xx,yy,col){p(d*xx,yy,col,1,1)}
   // Blockigt troll: större silhuett än lemlarna men samma fillRect-pixelstil.
   // Skugga och stora fötter gör att det känns tungt när det går.
@@ -1058,12 +1064,14 @@ function drawThrownBanana(c,b,cam,tk){
 }
 function drawTrollRock(c,r,cam,tk){
   const x=Math.round(r.x-cam),y=Math.round(r.y);
-  if(x<-25||x>VW+25||y<-25||y>VH+25)return;
+  const sc=Math.max(1,r&&r.scale||1);
+  if(x<-25*sc||x>VW+25*sc||y<-25*sc||y>VH+25*sc)return;
   const phase=(tk+(r.spin||0))&3;
-  c.fillStyle='#5a5148';c.fillRect(x-3,y-2,6,5);
-  c.fillStyle='#7a7064';c.fillRect(x-2,y-3,4,2);
-  c.fillStyle='#302820';c.fillRect(x+1-(phase&1),y+1,2,1);
-  c.fillStyle='#b0a090';c.fillRect(x-2+(phase===2?1:0),y-2,1,1);
+  const rct=(xx,yy,w,h,col)=>{c.fillStyle=col;c.fillRect(x+Math.round(xx*sc),y+Math.round(yy*sc),Math.max(1,Math.round(w*sc)),Math.max(1,Math.round(h*sc)))};
+  rct(-3,-2,6,5,'#5a5148');
+  rct(-2,-3,4,2,'#7a7064');
+  rct(1-(phase&1),1,2,1,'#302820');
+  rct(-2+(phase===2?1:0),-2,1,1,'#b0a090');
 }
 
 
