@@ -108,6 +108,29 @@
     DBG.timer=setInterval(tickOnce,Math.max(24,G.tempoTickMs?G.tempoTickMs():TICK));
   }
 
+  function ensureLoop(){
+    if(!DBG.running)startLoop();
+  }
+
+  function finishAnimationSetup(msg){
+    renderDebug();
+    ensureLoop();
+    setStatus(msg,'ok');
+  }
+
+  function worldCenterX(){
+    return clamp(Math.round((G.cam||0)+VW/2),12,G.level.W-12);
+  }
+
+  function focusWorldX(x){
+    G.cam=clamp(Math.round(x)-Math.round(VW*0.45),0,G.maxCam());
+  }
+
+  function clearDebugActors(){
+    G.planes=[];G.packages=[];G.trolls=[];G.trollRocks=[];G.monkeys=[];G.bananas=[];
+    G.rockets=[];G.hooks=[];G.ropes=[];G.meteors=[];G.flashes=[];G.parts=[];
+  }
+
   function startSelectedLevel(){
     audioReady();
     stopLoop();
@@ -142,9 +165,142 @@
     return (G.lems||[]).find(l=>l&&l.alive&&l.alive())||addDebugLemming();
   }
 
+  function ensureNightLevelForMeteor(){
+    if(G.level&&G.level.night&&!G.level.cave)return true;
+    const idx=LEVELS.findIndex(L=>L&&L.night&&!L.cave);
+    if(idx<0)return false;
+    DBG.levelSelect.value=String(idx);
+    startSelectedLevel();
+    return true;
+  }
+
+  function setupPlaneCrashAnimation(){
+    clearDebugActors();
+    const x=worldCenterX();
+    const a={x,y:38,vx:1.1,targetX:x+120,kind:'skill',skill:'baz',dropped:false};
+    G.planes.push(a);
+    G.damageSupplyPlane(a,a.x,a.y);
+    focusWorldX(x);
+    finishAnimationSetup('Animation: flygplanet störtar, brinner/ryker, blir vrak och släpper tre paket.');
+  }
+
+  function setupTrollPlaneAnimation(){
+    clearDebugActors();
+    const maxTrollX=Math.max(45,G.level.W-230);
+    const tX=clamp(worldCenterX()-115,45,maxTrollX);
+    const t=G.makeTroll(tX,G.trollGroundY(tX),1,2);
+    t.rockT=9999;
+    const px=clamp(t.x+190,65,G.level.W-65);
+    const a={x:px,y:Math.max(28,t.y-155),vx:0.22,targetX:px+140,kind:'skill',skill:'jet',dropped:false};
+    G.planes.push(a);
+    G.throwTrollRock(t,a);
+    focusWorldX((t.x+a.x)/2);
+    finishAnimationSetup('Animation: jättetroll kastar sten mot flygplan.');
+  }
+
+  function setupPackageFallAnimation(){
+    G.packages=[];G.planes=[];
+    const x=worldCenterX();
+    G.packages.push({x,y:26,vx:0,vy:0,kind:'skill',skill:'rope',landed:false,opened:false,openT:0,picked:false,landX:null,landY:null,treeBaseY:null});
+    focusWorldX(x);
+    finishAnimationSetup('Animation: paket faller med fallskärm och landar.');
+  }
+
+  function setupWaterfallAnimation(){
+    const x=worldCenterX();
+    const l=firstLiveLemming();
+    l.x=x;l.y=groundYAt(x);l.state='WALK';l.fall=0;l.dir=1;l.waterfallWetT=0;
+    G.decor=G.decor.filter(d=>!d||d.t!=='waterfall');
+    G.decor.push({t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()});
+    focusWorldX(l.x);
+    finishAnimationSetup('Animation: lemming går genom vattenfall och får skvätt på huvudet.');
+  }
+
+  function setupMeteorAnimation(){
+    if(!ensureNightLevelForMeteor()){setStatus('Ingen nattbana hittades för meteorit-test.','warn');return}
+    G.meteors=[];G.meteorT=99999;
+    G.spawnMeteor();
+    finishAnimationSetup('Animation: meteorit lyser upp nattbanan.');
+  }
+
+  function setupMegaAnimation(){
+    const x=worldCenterX(), y=Math.max(22,groundYAt(x)-22);
+    if(!G.startMegaBoom(x,y)){setStatus('Kunde inte starta megabomb just nu.','warn');return}
+    finishAnimationSetup('Animation: megabombens svep och ljus.');
+  }
+
+  function setupMushroomAnimation(){
+    const l=firstLiveLemming();
+    l.state='WALK';l.fall=0;l.bombT=-1;l.scale=1;
+    const mush={t:'mush',x:l.x+4,y:l.y,v:RND()};
+    G.decor.push(mush);
+    G.growLemmingFromMushroom(l,mush);
+    mush.eaten=true;mush.remove=true;
+    focusWorldX(l.x);
+    finishAnimationSetup('Animation: lemming äter svamp och växer.');
+  }
+
+  function setupTrollMushroomAnimation(){
+    clearDebugActors();
+    const x=worldCenterX();
+    const t=G.makeTroll(x,G.trollGroundY(x),1,1);
+    const mush={t:'mush',x:t.x+6,y:t.y,v:RND()};
+    G.decor.push(mush);
+    G.growTrollFromMushroom(t,mush);
+    mush.eaten=true;mush.remove=true;
+    focusWorldX(t.x);
+    finishAnimationSetup('Animation: troll äter svamp och blir jättetroll.');
+  }
+
+  function setupBananaAnimation(){
+    G.bananas=[];
+    const x=clamp(worldCenterX()-120,12,G.level.W-12);
+    G.bananas.push({x,y:62,vx:3.5,vy:-1.15,g:0.145,life:95,spin:0,hit:false});
+    focusWorldX(x+120);
+    finishAnimationSetup('Animation: banan flyger och exploderar mot terrängen.');
+  }
+
+  function setupRescueAnimation(){
+    const x=worldCenterX(), gy=groundYAt(x);
+    const r={id:9001,buttonX:x-46,buttonY:gy-2,releaseX:x+42,releaseY:gy-54,
+      openX:x+35,openY:gy-52,openW:16,openH:54,count:3,dir:1,opened:false,released:0,releaseT:0,p:RND()*7};
+    G.rescues=[r];
+    G.openRescue(r);
+    focusWorldX(x);
+    finishAnimationSetup('Animation: räddningslucka öppnas och fångade lemlar släpps.');
+  }
+
+  function setupSkillAnimation(k){
+    const l=firstLiveLemming();
+    l.state='WALK';l.fall=0;l.dir=1;l.bombT=-1;l.scale=Math.max(1,l.scale||1);
+    G.skills[k]=Math.max(G.skills[k]||0,9);
+    G.applySkill(l,k,l.x+90,l.y-20);
+    focusWorldX(l.x+55);
+    const names={jet:'Jetpack',flame:'Eldkastare',baz:'Bazooka'};
+    finishAnimationSetup('Animation: '+(names[k]||k)+'.');
+  }
+
+  function doAnimation(action){
+    if(action==='animPlaneCrash')return setupPlaneCrashAnimation();
+    if(action==='animTrollPlane')return setupTrollPlaneAnimation();
+    if(action==='animPackageFall')return setupPackageFallAnimation();
+    if(action==='animWaterfall')return setupWaterfallAnimation();
+    if(action==='animMeteor')return setupMeteorAnimation();
+    if(action==='animMega')return setupMegaAnimation();
+    if(action==='animMushroom')return setupMushroomAnimation();
+    if(action==='animTrollMushroom')return setupTrollMushroomAnimation();
+    if(action==='animBanana')return setupBananaAnimation();
+    if(action==='animRescue')return setupRescueAnimation();
+    if(action==='animJet')return setupSkillAnimation('jet');
+    if(action==='animFlame')return setupSkillAnimation('flame');
+    if(action==='animBazooka')return setupSkillAnimation('baz');
+    setStatus('Okänd animation: '+action,'warn');
+  }
+
   function doAction(action){
     if(action!=='camLeft'&&action!=='camRight'&&!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
     audioReady();
+    if(action&&action.indexOf('anim')===0){doAnimation(action);return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;
     }
