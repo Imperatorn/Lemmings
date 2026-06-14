@@ -156,17 +156,18 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TICK};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TICK} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
 if (Math.abs(DOLPHIN_RESCUE_CHANCE - 0.15) > 0.0001) throw new Error('Dolphin rescue chance should be 15%');
 if (Math.abs(FISH_RING_CHANCE - 0.20) > 0.0001) throw new Error('Fish swim ring chance should be 20%');
+if (Math.abs(TORCH_WARM_CHANCE - 0.09) > 0.0001) throw new Error('Torch warming chance should be 9%');
 const maxGameplayCutsceneTicks = Math.max(1, Math.floor(3000 / TICK));
 const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 
