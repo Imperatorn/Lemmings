@@ -34,7 +34,7 @@ const AU={
   sfxDest(){return this.sfxGain||this.master},
   applyVolumes(){
     const t=this.now();
-    const mv=0.35*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    const mv=0.40*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
     const sv=clamp(Number.isFinite(this.sfxVol)?this.sfxVol:1,0,1);
     if(this.musGain&&this.musGain.gain)this.gainRamp(this.musGain,this.musGain.gain,t,mv,'linear');
     if(this.sfxGain&&this.sfxGain.gain)this.gainRamp(this.sfxGain,this.sfxGain.gain,t,sv,'linear');
