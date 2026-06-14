@@ -118,24 +118,38 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,drawPlayWorld,WCTX,menuChapters};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,drawPlayWorld,drawMenu,WCTX,menuChapters};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, drawPlayWorld, WCTX, menuChapters} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, drawPlayWorld, drawMenu, WCTX, menuChapters} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
 
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
+  'setMusicVolume','setSfxVolume',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','updateMummyScareEffects',
   'updateRandomJumpEvents','updateLemmingChatter','updateWaterfallHeadSplashes'
 ];
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
+}
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes']) {
+  if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
+}
+G.setMusicVolume(0.42);
+G.setSfxVolume(0.37);
+if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) {
+  throw new Error('Audio volume setters failed');
+}
+G.state = 'MENU';
+drawMenu(WCTX, 1);
+if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol) {
+  throw new Error('Menu volume controls were not created');
 }
 
 const levelNames = new Set();

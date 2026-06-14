@@ -50,7 +50,13 @@ function pressAt(p){
   if(G.state==='MENU'){
     if(G.menuSettings)for(const k in G.menuSettings){const r=G.menuSettings[k];
       if(p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h){
-        if(k==='mode')G.toggleMode(); else if(k==='music')G.toggleMusic(); else if(k==='sfx')G.toggleSfx(); else if(k==='load')G.promptLoadGame(); else if(k==='fs')toggleFullscreen();
+        if(k==='mode')G.toggleMode();
+        else if(k==='music')G.toggleMusic();
+        else if(k==='musicVol')G.setMusicVolume((p.x-r.x)/Math.max(1,r.w));
+        else if(k==='sfx')G.toggleSfx();
+        else if(k==='sfxVol')G.setSfxVolume((p.x-r.x)/Math.max(1,r.w));
+        else if(k==='load')G.promptLoadGame();
+        else if(k==='fs')toggleFullscreen();
         return;
       }
     }

@@ -241,6 +241,8 @@ const G={
     if(Array.isArray(p.cleared))this.cleared=this.cleared.map((_,i)=>!!p.cleared[i]);
     if(typeof p.musicOn==='boolean')AU.musicOn=p.musicOn;
     if(typeof p.sfxOn==='boolean')AU.sfxOn=p.sfxOn;
+    if(Number.isFinite(p.musicVol))AU.setMusicVolume(p.musicVol);
+    if(Number.isFinite(p.sfxVol))AU.setSfxVolume(p.sfxVol);
     if(Number.isFinite(p.tempoIdx))this.tempoIdx=clamp(p.tempoIdx|0,0,TEMPO_CFG.length-1);
     if(Number.isFinite(p.lastLevelIdx))this.levelIdx=clamp(p.lastLevelIdx|0,0,LEVELS.length-1);
     this.menuChapter=menuChapterForLevel(this.levelIdx);
@@ -248,7 +250,7 @@ const G={
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
@@ -259,11 +261,29 @@ const G={
     else AU.startMusic('day');
     this.toast('MUSIK '+(AU.musicOn?'PÅ':'AV'));this.savePrefs();
   },
+  setMusicVolume(v){
+    AU.musicOn=true;
+    AU.setMusicVolume(v);
+    if(this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
+    else AU.startMusic('day');
+    this.toast('MUSIKVOLYM '+Math.round(AU.musicVol*100)+'%');
+    this.savePrefs();
+    return AU.musicVol;
+  },
   toggleSfx(){
     AU.sfxOn=!AU.sfxOn;
     if(!AU.sfxOn)AU.stopWeather();
     else {AU.sClick();if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind)}
     this.toast('SFX '+(AU.sfxOn?'PÅ':'AV'));this.savePrefs();
+  },
+  setSfxVolume(v){
+    AU.sfxOn=true;
+    AU.setSfxVolume(v);
+    if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind);
+    this.toast('SFX-VOLYM '+Math.round(AU.sfxVol*100)+'%');
+    this.savePrefs();
+    AU.sClick();
+    return AU.sfxVol;
   },
   toggleHelp(){
     this.showHelp=!this.showHelp;

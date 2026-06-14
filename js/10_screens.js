@@ -141,6 +141,17 @@ function drawTitle(c,tk){
   drawTextC(c,'BYGG GRÄV SPRÄNG FLYG - RÄDDA LEMLARNA',CW/2,232,1,'#70a070');
 }
 
+function drawMenuVolumeBar(c,r,val,on){
+  val=clamp(Number.isFinite(val)?val:1,0,1);
+  c.fillStyle='#080c14';c.fillRect(r.x,r.y+4,r.w,r.h-8);
+  c.fillStyle='#1d2c40';c.fillRect(r.x+1,r.y+5,r.w-2,r.h-10);
+  c.fillStyle=on?'#4fc060':'#505050';c.fillRect(r.x+2,r.y+6,Math.max(1,Math.round((r.w-4)*val)),r.h-12);
+  c.fillStyle=on?'#b8ffc0':'#909090';
+  const tx=clamp(r.x+2+Math.round((r.w-4)*val),r.x+2,r.x+r.w-5);
+  c.fillRect(tx,r.y+3,3,r.h-6);
+  drawTextC(c,Math.round(val*100)+'%',r.x+r.w/2,r.y+2,1,on?'#ffffff':'#808080');
+}
+
 function drawMenu(c,tk){
   c.fillStyle='#000010';c.fillRect(0,0,CW,CH);
   drawTextC(c,'VÄLJ BANA',CW/2,14,3,'#5fa8ff');
@@ -175,23 +186,27 @@ function drawMenu(c,tk){
     if(G.cleared[i])drawText(c,'✓',x+w-18,y+1,1,'#40ff40');
     G.menuRows.push({x,y:y-4,w,h:18,idx:i});
   }
-  const setY=266;
+  const setY=258, volY=274;
   G.menuSettings={
     mode:{x:18,y:setY-4,w:120,h:14},
-    music:{x:142,y:setY-4,w:74,h:14},
-    sfx:{x:220,y:setY-4,w:58,h:14},
-    load:{x:282,y:setY-4,w:70,h:14},
-    fs:{x:356,y:setY-4,w:108,h:14}
+    load:{x:146,y:setY-4,w:62,h:14},
+    fs:{x:216,y:setY-4,w:100,h:14},
+    music:{x:18,y:volY-4,w:44,h:14},
+    musicVol:{x:66,y:volY-4,w:154,h:14},
+    sfx:{x:238,y:volY-4,w:34,h:14},
+    sfxVol:{x:276,y:volY-4,w:174,h:14}
   };
   for(const k in G.menuSettings){const r=G.menuSettings[k];
     if(G.mx>=r.x&&G.mx<r.x+r.w&&G.my>=r.y&&G.my<r.y+r.h){c.fillStyle='rgba(255,220,64,0.12)';c.fillRect(r.x,r.y,r.w,r.h)}
   }
   drawText(c,'LÄGE: '+G.modeName(),22,setY,1,'#ffd040');
-  drawText(c,'MUSIK '+(AU.musicOn?'PÅ':'AV'),146,setY,1,AU.musicOn?'#a0ffa0':'#808080');
-  drawText(c,'SFX '+(AU.sfxOn?'PÅ':'AV'),224,setY,1,AU.sfxOn?'#a0ffa0':'#808080');
-  drawText(c,'LADDA',288,setY,1,'#a0d0ff');
-  drawText(c,'FULLSKÄRM',362,setY,1,'#a0d0ff');
-  drawTextC(c,'K: LÄGE   M: MUSIK   S: SFX   L: LADDA   F: FULLSKÄRM   H: HJÄLP',CW/2,286,1,'#607060');
+  drawText(c,'LADDA',152,setY,1,'#a0d0ff');
+  drawText(c,'FULLSKÄRM',222,setY,1,'#a0d0ff');
+  drawText(c,'MUSIK',22,volY,1,AU.musicOn?'#a0ffa0':'#808080');
+  drawMenuVolumeBar(c,G.menuSettings.musicVol,AU.musicVol,AU.musicOn);
+  drawText(c,'SFX',242,volY,1,AU.sfxOn?'#a0ffa0':'#808080');
+  drawMenuVolumeBar(c,G.menuSettings.sfxVol,AU.sfxVol,AU.sfxOn);
+  drawTextC(c,'K: LÄGE   M/S: AV/PÅ   KLICKA REGLAGE FÖR VOLYM   L: LADDA   H: HJÄLP',CW/2,290,1,'#607060');
 }
 
 function drawBrief(c,tk){

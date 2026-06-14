@@ -37,6 +37,7 @@ webbläsare.
 - F: helskärm.
 - M: musik på/av.
 - S: ljudeffekter på/av.
+- I banmenyn: klicka på musik- och SFX-reglagen för att ändra volym.
 - K: byt spelläge i titel/meny/briefing.
 - `+` / `-`: ändra tempo innan en bana startas.
 

@@ -1,7 +1,7 @@
 // ----------------------------- LJUD ---------------------------------
 // Procedurell chiptune-motor. All musik är egenkomponerad.
 const AU={
-  ctx:null, master:null, musGain:null, on:true, musicOn:true, sfxOn:true, started:false,
+  ctx:null, master:null, musGain:null, sfxGain:null, on:true, musicOn:true, sfxOn:true, musicVol:1, sfxVol:1, started:false,
   weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, fxLast:{},
   init(){
     if(this.ctx) return;
@@ -9,7 +9,9 @@ const AU={
       this.ctx=new (window.AudioContext||window.webkitAudioContext)();
       this.master=this.ctx.createGain(); this.master.gain.value=0.5;
       this.master.connect(this.ctx.destination);
-      this.musGain=this.ctx.createGain(); this.musGain.gain.value=0.35;
+      this.sfxGain=this.ctx.createGain();
+      this.sfxGain.connect(this.master);
+      this.musGain=this.ctx.createGain();
       this.musGain.connect(this.master);
       // Separat explosionsbuss: explosionsljud behöver mycket transient/subbas
       // men ska inte kunna överstyra hela mixen eller krascha äldre/fake AudioContexts.
@@ -24,10 +26,31 @@ const AU={
         if(this.boomComp.release)this.boomComp.release.setValueAtTime(0.32,this.ctx.currentTime);
         this.boomGain.connect(this.boomComp); boomOut=this.boomComp;
       }
-      boomOut.connect(this.master);
+      boomOut.connect(this.sfxGain||this.master);
+      this.applyVolumes();
     }catch(e){ this.on=false }
   },
   now(){return this.ctx?this.ctx.currentTime:0},
+  sfxDest(){return this.sfxGain||this.master},
+  applyVolumes(){
+    const t=this.now();
+    const mv=0.35*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    const sv=clamp(Number.isFinite(this.sfxVol)?this.sfxVol:1,0,1);
+    if(this.musGain&&this.musGain.gain)this.gainRamp(this.musGain,this.musGain.gain,t,mv,'linear');
+    if(this.sfxGain&&this.sfxGain.gain)this.gainRamp(this.sfxGain,this.sfxGain.gain,t,sv,'linear');
+  },
+  setMusicVolume(v){
+    v=Number(v);
+    this.musicVol=Number.isFinite(v)?clamp(v,0,1):1;
+    this.applyVolumes();
+    return this.musicVol;
+  },
+  setSfxVolume(v){
+    v=Number(v);
+    this.sfxVol=Number.isFinite(v)?clamp(v,0,1):1;
+    this.applyVolumes();
+    return this.sfxVol;
+  },
   tone(f,dur,type,vol,slide,when,dest){
     if(!this.ctx||!this.on)return;
     if(dest!==this.musGain&&!this.sfxOn)return;
@@ -37,7 +60,7 @@ const AU={
     if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(20,f*slide),t+dur);
     g.gain.setValueAtTime(vol||0.1,t);
     g.gain.exponentialRampToValueAtTime(0.0008,t+dur);
-    o.connect(g); g.connect(dest||this.master);
+    o.connect(g); g.connect(dest||this.sfxDest());
     o.start(t); o.stop(t+dur+0.02);
   },
   padTone(f,dur,type,vol,when,dest){
@@ -54,7 +77,7 @@ const AU={
     else g.gain.exponentialRampToValueAtTime(Math.max(0.0008,vol||0.02),t+attack);
     g.gain.setValueAtTime(Math.max(0.0008,vol||0.02),end);
     g.gain.exponentialRampToValueAtTime(0.0008,t+dur);
-    o.connect(g); g.connect(dest||this.master);
+    o.connect(g); g.connect(dest||this.sfxDest());
     o.start(t); o.stop(t+dur+0.04);
   },
   noise(dur,vol,fq,slide,when,dest){
@@ -69,7 +92,7 @@ const AU={
     if(slide) f.frequency.exponentialRampToValueAtTime(Math.max(40,(fq||1200)*slide),t+dur);
     const g=this.ctx.createGain(); g.gain.setValueAtTime(vol||0.15,t);
     g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-    src.connect(f);f.connect(g);g.connect(dest||this.master);
+    src.connect(f);f.connect(g);g.connect(dest||this.sfxDest());
     src.start(t);
   },
   softNoise(dur,vol,fq,slide,when,opts){
@@ -78,7 +101,7 @@ const AU={
     // ligger numera som loopad bruskälla så den inte pulserar i vågor.
     if(!this.ctx||!this.on)return;
     opts=opts||{};
-    const dest=opts.dest||this.master;
+    const dest=opts.dest||this.sfxDest();
     if(dest!==this.musGain&&!this.sfxOn)return;
     const t=when||this.now();
     const n=Math.max(1,Math.floor(this.ctx.sampleRate*Math.max(0.01,dur)));
@@ -149,7 +172,7 @@ const AU={
     if(g.gain.linearRampToValueAtTime)g.gain.linearRampToValueAtTime(target,t+(opts.attack==null?0.9:opts.attack));
     else if(g.gain.exponentialRampToValueAtTime)g.gain.exponentialRampToValueAtTime(target,t+(opts.attack==null?0.9:opts.attack));
     else g.gain.setValueAtTime(target,t);
-    src.connect(f);f.connect(g);g.connect(opts.dest||this.master);
+    src.connect(f);f.connect(g);g.connect(opts.dest||this.sfxDest());
     src.start(t);
     return {src,gain:g};
   },
@@ -193,7 +216,7 @@ const AU={
   sClick(){this.tone(880,0.05,'square',0.06)},
   sAssign(){this.tone(660,0.06,'square',0.09);this.tone(990,0.07,'square',0.07,1,this.now()+0.05)},
   sLetsGo(){const t=this.now();[523,659,784,1047].forEach((f,i)=>this.tone(f,0.12,'square',0.08,1,t+i*0.09))},
-  boomDest(){return this.boomGain||this.master},
+  boomDest(){return this.boomGain||this.sfxDest()},
   makeDistortionCurve(amount){
     const n=256, curve=new Float32Array(n), k=amount||60;
     for(let i=0;i<n;i++){
