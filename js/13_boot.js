@@ -9,8 +9,9 @@ function loop(now){
   try{
     acc+=now-last;last=now;
     if(acc>500)acc=500;
-    while(acc>=TICK){
-      acc-=TICK;tickCount++;
+    const stepMs=(G.state==='PLAY'&&!G.paused&&G.tempoTickMs)?G.tempoTickMs():TICK;
+    while(acc>=stepMs){
+      acc-=stepMs;tickCount++;
       G.tick();
     }
     render();

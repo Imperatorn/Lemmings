@@ -205,7 +205,8 @@ function drawBrief(c,tk){
   drawTextC(c,'LÄGE: '+G.modeName()+(G.mode==='classic'?' - FÄRRE SLUMPHÄNDELSER':' - MER KAOS OCH BONUSAR'),CW/2,152,1,G.mode==='classic'?'#a0d0ff':'#ffd040');
   drawTextC(c,'MUSIK '+(AU.musicOn?'PÅ':'AV')+'  SFX '+(AU.sfxOn?'PÅ':'AV')+'  K/M/S ÄNDRAR  H HJÄLP',CW/2,166,1,'#8090a0');
   drawTextC(c,'VÄDER SLUMPAS VARJE FÖRSÖK: SOL, REGN/SKURAR/ÅSKA ELLER SNÖ',CW/2,178,1,'#80b8ff');
-  let infoY=190;
+  drawTextC(c,'TEMPO: '+G.tempoName()+'  +/- ÄNDRAR',CW/2,190,1,'#ffd080');
+  let infoY=202;
   if(L.night){
     drawTextC(c,'NATTBANA: FÖRSTA LEMMELN BÄR LYKTAN.',CW/2,infoY,1,'#9090ff');
     drawTextC(c,'OM DEN DÖR KAN EN ANNAN PLOCKA UPP DEN.',CW/2,infoY+12,1,'#9090ff');
@@ -216,7 +217,7 @@ function drawBrief(c,tk){
     drawTextC(c,'EXTRA LEMLAR KAN GE ÖVER 100% RÄDDAT.',CW/2,infoY+12,1,'#ffd040');
     infoY+=24;
   }
-  drawTextC(c,L.hint,CW/2,Math.min(infoY,L.night?226:216),1,'#40c040');
+  drawTextC(c,L.hint,CW/2,Math.min(infoY,L.night?226:228),1,'#40c040');
   if((tk>>4)&1)drawTextC(c,'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,236,2,'#ffd040');
 }
 

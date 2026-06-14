@@ -209,6 +209,8 @@ window.addEventListener('keydown',e=>{
   if(e.key==='k'||e.key==='K'){if(G.state==='MENU'||G.state==='BRIEF'||G.state==='TITLE'){G.toggleMode()}else G.toast('LÄGE ÄNDRAS I MENYN');e.preventDefault();return}
   if(e.key==='m'||e.key==='M'){G.toggleMusic();e.preventDefault();return}
   if(e.key==='s'||e.key==='S'){G.toggleSfx();e.preventDefault();return}
+  const tempoDir=(e.key==='+'||e.key==='='||e.code==='NumpadAdd')?1:((e.key==='-'||e.key==='_'||e.code==='NumpadSubtract')?-1:0);
+  if(tempoDir){G.adjustTempo(tempoDir);e.preventDefault();return}
   if(G.state==='PLAY'){
     if(G.isManualActive&&G.isManualActive()){
       if(e.key==='Control'){G.setManualKey('aim',true);e.preventDefault();return}

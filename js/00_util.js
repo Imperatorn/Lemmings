@@ -1,5 +1,10 @@
 // ------------------------------ UTIL --------------------------------
 const CW=480, CH=300, VW=480, VH=240, HUDY=240;
+const TEMPO_CFG=[
+  {name:'LÅNGSAMT',speed:0.75},
+  {name:'NORMALT',speed:1.00},
+  {name:'SNABBT',speed:1.25}
+];
 const TICK=62;            // ms per logik-steg (~16 fps, "chunkig" retrokänsla)
 const SPLAT_FALL=62;      // fallhöjd i pixlar som dödar
 const SILLY_JUMP_TICKS=Math.round(5000/TICK); // slump-hopp varar cirka 5 sekunder

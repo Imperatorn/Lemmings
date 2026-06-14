@@ -38,6 +38,7 @@ webbläsare.
 - M: musik på/av.
 - S: ljudeffekter på/av.
 - K: byt spelläge i titel/meny/briefing.
+- `+` / `-`: ändra tempo innan en bana startas.
 
 ## Skills
 

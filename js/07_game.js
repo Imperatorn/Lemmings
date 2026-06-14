@@ -72,7 +72,7 @@ const G={
   state:'TITLE', levelIdx:0, level:null, T:null,
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
-  timeT:0, levelTimeT:0, selSkill:'build', paused:false, nukeArm:0, nuked:false, mode:'chaos',
+  timeT:0, levelTimeT:0, selSkill:'build', paused:false, nukeArm:0, nuked:false, mode:'chaos', tempoIdx:1,
   lamp:null, cleared:new Array(LEVELS.length).fill(false),
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
@@ -138,6 +138,16 @@ const G={
 
   chaosConfig(){return MODE_CFG[this.mode]||MODE_CFG.chaos},
   modeName(){return this.chaosConfig().name},
+  tempoConfig(){return TEMPO_CFG[clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1)]||TEMPO_CFG[1]},
+  tempoName(){return this.tempoConfig().name},
+  tempoTickMs(){return TICK/Math.max(0.25,this.tempoConfig().speed||1)},
+  adjustTempo(dir){
+    if(this.state==='PLAY'){this.toast('TEMPO ÄNDRAS FÖRE BANA');AU.sShrug();return false}
+    const old=this.tempoIdx|0;
+    this.tempoIdx=clamp(old+(dir>0?1:-1),0,TEMPO_CFG.length-1);
+    if(this.tempoIdx===old){AU.sShrug();this.toast('TEMPO: '+this.tempoName());return false}
+    this.savePrefs();AU.sClick();this.toast('TEMPO: '+this.tempoName());return true;
+  },
   weatherName(){return (WEATHER_CFG[this.weatherKind]&&WEATHER_CFG[this.weatherKind].name)||'VÄDER'},
   weatherShort(){return (WEATHER_CFG[this.weatherKind]&&WEATHER_CFG[this.weatherKind].short)||'VÄDER'},
   rand(){ if(!this.levelRng)this.levelRng=rndSeed(this.levelSeed||1337); return this.levelRng(); },
@@ -231,13 +241,14 @@ const G={
     if(Array.isArray(p.cleared))this.cleared=this.cleared.map((_,i)=>!!p.cleared[i]);
     if(typeof p.musicOn==='boolean')AU.musicOn=p.musicOn;
     if(typeof p.sfxOn==='boolean')AU.sfxOn=p.sfxOn;
+    if(Number.isFinite(p.tempoIdx))this.tempoIdx=clamp(p.tempoIdx|0,0,TEMPO_CFG.length-1);
     if(Number.isFinite(p.lastLevelIdx))this.levelIdx=clamp(p.lastLevelIdx|0,0,LEVELS.length-1);
     this.menuChapter=menuChapterForLevel(this.levelIdx);
     if(Number.isFinite(p.playCount))this.playCount=p.playCount>>>0;
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.cleared=this.cleared.slice();p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
