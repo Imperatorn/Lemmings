@@ -299,6 +299,16 @@ const G={
     }
     return null;
   },
+  lemmingLiquidHazard(l){
+    if(!l)return null;
+    const z=this.liquidAt(l.x,l.y,0);
+    if(!z)return null;
+    const visibleSurfaceY=z.y+2;
+    const contactDepth=Math.round(l.y-visibleSurfaceY);
+    const sc=Math.max(1,l.scale||1);
+    const killDepth=z.lava?2:Math.max(3,Math.round(10*sc*0.25));
+    return contactDepth>=killDepth?z:null;
+  },
   visibleLiquidAtX(x,pad){
     if(!this.T)return false;
     const p=Math.max(0,pad||0), xx=Math.round(x);
@@ -1026,7 +1036,7 @@ const G={
     return true;
   },
   checkLiquid(l){
-    const z=this.liquidAt(l.x,l.y,0);
+    const z=this.lemmingLiquidHazard(l);
     if(z){
       if(l.state!=='DROWN'&&l.state!=='BURN'){
         if(z.lava)l.kill('burn');
