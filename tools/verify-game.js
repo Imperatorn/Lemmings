@@ -168,6 +168,28 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
   if (!AU.PAT[musicKind]) throw new Error(`${L.name}: missing music pattern ${musicKind}`);
   if (!G.T || G.T.W !== L.W) throw new Error(`${L.name}: terrain was not built`);
 
+  for (const road of (G.decor || []).filter(d => d && d.t === 'road')) {
+    const rx0 = Math.round(road.x - 44);
+    const rx1 = Math.round(road.x + (road.w || 220) + 44);
+    for (const z of L.water || []) {
+      const wx0 = Math.round(z.x);
+      const wx1 = Math.round(z.x + z.w);
+      const ox0 = Math.max(rx0, wx0);
+      const ox1 = Math.min(rx1, wx1);
+      if (ox0 >= ox1) continue;
+      let unsupported = false;
+      for (let x = ox0; x < ox1; x += 8) {
+        if (!G.T.solid(x, road.y) && !G.T.solid(x, road.y + 10)) {
+          unsupported = true;
+          break;
+        }
+      }
+      if (unsupported) {
+        throw new Error(`${L.name}: road decor overlaps open liquid at x=${ox0}-${ox1}`);
+      }
+    }
+  }
+
   const sx = Math.round(L.hatch.x);
   const sy = Math.round(L.hatch.y + 6);
   if (G.T.solid(sx, sy)) throw new Error(`${L.name}: hatch spawn is blocked`);

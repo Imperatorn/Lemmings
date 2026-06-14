@@ -416,6 +416,6 @@ const LEVELS=[
     D.tree(150,190,1.15);D.tree(245,190,0.9);D.bush(70,129);D.bush(520,169);D.mush(545,169);D.marker(615,129,'BONUS');
     D.torch(585,130);D.torch(845,150);D.crystal(884,150);D.marker(585,205,'LOOT');
     D.pyramid(1140,175,0.95);D.mummy(1135,174,130,0.15);D.cactus(1175,175,0.9);D.rock(1215,175,0.9);D.marker(1274,159,'LOOT');
-    D.streetlamp(1545,185);D.cityscape(1510,185,190,92);D.subway(1525,185,145);D.road(1500,226,345);D.taxi(1520,226,310,1,0.42);
+    D.streetlamp(1545,185);D.cityscape(1510,185,190,92);D.subway(1525,185,145);D.road(1544,226,301);D.taxi(1560,226,270,1,0.42);
     D.sign(1760,104,'MÅL');D.marker(1580,205,'LOOT');D.bush(1685,154);D.mush(1710,154); } }
 ];
