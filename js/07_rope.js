@@ -148,7 +148,7 @@ Object.assign(G,{
   },
   findClimbableRope(l){
     if(!l||!l.alive()||l.ropeCooldown>0||!this.ropes||this.ropes.length===0)return null;
-    if(!(l.state==='WALK'||l.state==='FALL'))return null;
+    if(!(l.state==='WALK'||l.state==='FALL'||l.state==='SWIM'))return null;
     let best=null,bestScore=Infinity;
     for(const rope of this.ropes){
       if(!rope.active)continue;

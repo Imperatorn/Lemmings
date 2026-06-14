@@ -355,6 +355,20 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!lem.startRopeClimb(rope, 0) || lem.state !== 'ROPE' || lem.swimRing) {
     throw new Error('Swim ring lemming did not switch cleanly into rope climbing');
   }
+  const secondSwimmer = new Lemming(rope.x1, rope.y1);
+  secondSwimmer.state = 'SWIM';
+  secondSwimmer.swimRing = true;
+  secondSwimmer.fishRingTried = true;
+  secondSwimmer.ropeCooldown = 0;
+  G.lems = [lem, secondSwimmer];
+  if (!G.findClimbableRope(secondSwimmer)) {
+    throw new Error('Second swim ring lemming could not find an existing rope from water');
+  }
+  secondSwimmer.swim(G.T);
+  if (secondSwimmer.state !== 'ROPE' || secondSwimmer.ropeId !== rope.id || secondSwimmer.swimRing) {
+    throw new Error('Second swim ring lemming did not grab the existing rope from water');
+  }
+  G.lems = [lem];
   lem.state = 'SWIM';
   lem.swimRing = true;
   lem.climber = true;

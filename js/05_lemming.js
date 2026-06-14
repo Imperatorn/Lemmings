@@ -183,6 +183,9 @@ class Lemming{
     const targetY=z.y+5+Math.sin(this.anim*0.22)*1.1;
     this.y+=clamp(Math.round(targetY-this.y),-1,1);
 
+    const climbRope=G.findClimbableRope(this);
+    if(climbRope){this.startRopeClimb(climbRope.rope,climbRope.t);return}
+
     const wallX=this.x+this.dir;
     const wallAhead=T.solid(wallX,this.y-2)||T.solid(wallX,this.y-8);
     if(wallAhead){
