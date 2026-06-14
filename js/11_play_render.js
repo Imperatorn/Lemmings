@@ -154,7 +154,7 @@ function render(){
     // Skarp spelmarkör. Använd bara integer-snäppade fillRect-pixlar:
     // strokeRect på fractional mouse-coordinates blev ibland anti-aliased/suddigt
     // när canvasen skalades i browsern.
-    if(G.my<VH){
+    if(G.my<VH&&!(G.cutsceneActive&&G.cutsceneActive())){
       const cx=Math.round(G.mx), cy=Math.round(G.my);
       const col=G.hoverLem?'#40ff40':'#ffffff';
       ctx.fillStyle='rgba(0,0,0,0.55)';
@@ -177,5 +177,6 @@ function render(){
   }
   updateCanvasCursor();
   drawHelpOverlay(ctx);
+  if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,tickCount);
   if(GAME_ERROR)drawErrorOverlay(ctx,GAME_ERROR);
 }

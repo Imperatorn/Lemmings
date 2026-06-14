@@ -191,6 +191,7 @@ function drawMenu(c,tk){
     mode:{x:18,y:setY-4,w:120,h:14},
     load:{x:146,y:setY-4,w:62,h:14},
     fs:{x:216,y:setY-4,w:100,h:14},
+    cutscenes:{x:324,y:setY-4,w:136,h:14},
     music:{x:18,y:volY-4,w:44,h:14},
     musicVol:{x:66,y:volY-4,w:154,h:14},
     sfx:{x:238,y:volY-4,w:34,h:14},
@@ -202,6 +203,7 @@ function drawMenu(c,tk){
   drawText(c,'LÄGE: '+G.modeName(),22,setY,1,'#ffd040');
   drawText(c,'LADDA',152,setY,1,'#a0d0ff');
   drawText(c,'FULLSKÄRM',222,setY,1,'#a0d0ff');
+  drawText(c,'FILMER: '+(G.cutscenesOn===false?'AV':'PÅ'),330,setY,1,G.cutscenesOn===false?'#808080':'#d8a8ff');
   drawText(c,'MUSIK',22,volY,1,AU.musicOn?'#a0ffa0':'#808080');
   drawMenuVolumeBar(c,G.menuSettings.musicVol,AU.musicVol,AU.musicOn);
   drawText(c,'SFX',242,volY,1,AU.sfxOn?'#a0ffa0':'#808080');

@@ -17,12 +17,13 @@ Behall laddningsordningen i `LEMMEL_fixed_v44.html`:
 10. `07_save_state.js` - spara/ladda-metoder for `G`
 11. `07_manual_control.js` - direktstyrning och manual-skill helpers
 12. `07_living_world.js` - levande varld-effekter som svamp, mumier och meteorer
-13. `08_render.js` - varlds- och figur-rendering
-14. `09_hud.js` - HUD och knappar
-15. `10_screens.js` - titel, meny, briefing och overlays
-16. `11_play_render.js` - huvudrendering for spelvyn
-17. `12_input.js` - mus, touch och tangentbord
-18. `13_boot.js` - initiering och huvudloop
+13. `07_cutscenes.js` - cutscene-API, tidslinjer och overlayrendering
+14. `08_render.js` - varlds- och figur-rendering
+15. `09_hud.js` - HUD och knappar
+16. `10_screens.js` - titel, meny, briefing och overlays
+17. `11_play_render.js` - huvudrendering for spelvyn
+18. `12_input.js` - mus, touch och tangentbord
+19. `13_boot.js` - initiering och huvudloop
 
 Om en fil flyttas tidigare kan den sakna globala bindningar fran filerna ovanfor.
 
@@ -41,6 +42,9 @@ bygger alla banor och gor en render-/save-smoketest.
   brutna till tillaggsfiler som monterar metoder pa `G`: rep i `07_rope.js`,
   save/load i `07_save_state.js`, direktstyrning i `07_manual_control.js` och
   levande varld-effekter i `07_living_world.js`.
+- Cutscenes monteras i `07_cutscenes.js`. Anvand `G.registerCutscene(...)` for
+  ateranvandbara scener och `G.playCutscene(spec)` for engangsscener. `mode:
+  'box'` ritar i en ruta och `mode: 'fullscreen'` tacker hela canvasen.
 - Om du lagger till en ny `G`-metod som maste finnas efter script-splitten,
   uppdatera `requiredRuntimeMethods` i `tools/verify-game.js`.
 - `debug.html` ska ladda samma relevanta runtime-script men inte `13_boot.js`.

@@ -24,7 +24,7 @@ function updateCanvasCursor(){
   // I spelvärlden ritar vi egen markeringsruta. I HUD/menyer ska användaren se
   // vanlig muspekare så knapparna går att pricka utan att pekaren försvinner.
   if(!cvs||!cvs.style)return;
-  const showNative=(G.state!=='PLAY'||G.my>=HUDY||G.showHelp||G.paused||GAME_ERROR);
+  const showNative=(G.cutsceneActive&&G.cutsceneActive())||G.state!=='PLAY'||G.my>=HUDY||G.showHelp||G.paused||GAME_ERROR;
   cvs.style.cursor=showNative?'default':'none';
 }
 function refreshPointer(p){
@@ -52,11 +52,13 @@ function pressAt(p){
   refreshPointer(p);
   AU.init();
   if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
+  if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'click');return}
   if(G.state==='TITLE'){G.state='MENU';AU.sClick();AU.startMusic('menu');return}
   if(G.state==='MENU'){
     if(G.menuSettings)for(const k in G.menuSettings){const r=G.menuSettings[k];
       if(p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h){
         if(k==='mode')G.toggleMode();
+        else if(k==='cutscenes')G.toggleCutscenes();
         else if(k==='music')G.toggleMusic();
         else if(k==='musicVol')G.setMusicVolume((p.x-r.x)/Math.max(1,r.w));
         else if(k==='sfx')G.toggleSfx();
@@ -107,6 +109,7 @@ function rightClickAt(p){
   refreshPointer(p);
   AU.init();
   if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
+  if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'context');return}
   if(G.state==='PLAY'&&p.y<VH){
     const wp=G.screenToWorld(p);
     G.toggleManualControlAt(wp.x,wp.y);
@@ -114,7 +117,7 @@ function rightClickAt(p){
 }
 const ACTIVE_POINTERS=new Map();
 let DRAG=null,PINCH=null;
-function playWorldPoint(p){return G.state==='PLAY'&&p.y<VH}
+function playWorldPoint(p){return !(G.cutsceneActive&&G.cutsceneActive())&&G.state==='PLAY'&&p.y<VH}
 function startPointerAction(id,p,kind){
   refreshPointer(p);
   ACTIVE_POINTERS.set(id,{x:p.x,y:p.y,world:playWorldPoint(p),kind:kind||'pointer'});
@@ -151,6 +154,7 @@ function bindInput(){
   cvs.addEventListener('contextmenu',e=>{e.preventDefault();});
   cvs.addEventListener('wheel',e=>{
     const p=canvasPos(e);refreshPointer(p);
+    if(G.cutsceneActive&&G.cutsceneActive()){e.preventDefault();return}
     if(playWorldPoint(p)){
       e.preventDefault();
       G.zoomStep(e.deltaY<0?1:-1,p);
@@ -214,8 +218,9 @@ function bindInput(){
 }
 bindInput();
 window.addEventListener('keydown',e=>{
-  if(e.key==='h'||e.key==='H'){G.toggleHelp();e.preventDefault();return}
   if(e.key==='f'||e.key==='F'){toggleFullscreen();e.preventDefault();return}
+  if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneKey(e.key);e.preventDefault();return}
+  if(e.key==='h'||e.key==='H'){G.toggleHelp();e.preventDefault();return}
   if(e.key==='k'||e.key==='K'){if(G.state==='MENU'||G.state==='BRIEF'||G.state==='TITLE'){G.toggleMode()}else G.toast('LÄGE ÄNDRAS I MENYN');e.preventDefault();return}
   if(e.key==='m'||e.key==='M'){G.toggleMusic();e.preventDefault();return}
   if(e.key==='s'||e.key==='S'){G.toggleSfx();e.preventDefault();return}
@@ -262,6 +267,7 @@ window.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('keyup',e=>{
+  if(G.cutsceneActive&&G.cutsceneActive()){e.preventDefault();return}
   if(G.state==='PLAY'&&G.isManualActive&&G.isManualActive()){
     if(e.key==='ArrowLeft'){G.setManualKey('left',false);e.preventDefault();return}
     if(e.key==='ArrowRight'){G.setManualKey('right',false);e.preventDefault();return}

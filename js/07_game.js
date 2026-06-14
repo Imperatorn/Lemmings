@@ -79,7 +79,7 @@ const G={
   state:'TITLE', levelIdx:0, level:null, T:null,
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
-  timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1,
+  timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1, cutscenesOn:true,
   lamp:null, cleared:new Array(LEVELS.length).fill(false),
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
@@ -249,6 +249,7 @@ const G={
     if(Array.isArray(p.cleared))this.cleared=this.cleared.map((_,i)=>!!p.cleared[i]);
     if(typeof p.musicOn==='boolean')AU.musicOn=p.musicOn;
     if(typeof p.sfxOn==='boolean')AU.sfxOn=p.sfxOn;
+    if(typeof p.cutscenesOn==='boolean')this.cutscenesOn=p.cutscenesOn;
     if(Number.isFinite(p.musicVol))AU.setMusicVolume(p.musicVol);
     if(Number.isFinite(p.sfxVol))AU.setSfxVolume(p.sfxVol);
     if(Number.isFinite(p.tempoIdx))this.tempoIdx=clamp(p.tempoIdx|0,0,TEMPO_CFG.length-1);
@@ -258,10 +259,18 @@ const G={
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
+  toggleCutscenes(){
+    this.cutscenesOn=this.cutscenesOn===false;
+    if(!this.cutscenesOn&&this.clearCutscene)this.clearCutscene('disabled');
+    this.toast('CUTSCENES '+(this.cutscenesOn?'PÅ':'AV'));
+    this.savePrefs();
+    AU.sClick();
+    return this.cutscenesOn;
+  },
   toggleMusic(){
     AU.musicOn=!AU.musicOn;
     if(!AU.musicOn)AU.stopMusic();
@@ -367,6 +376,7 @@ const G={
     return !!(L&&(L.night||L.cave));
   },
   goToMenu(){
+    if(this.clearCutscene)this.clearCutscene('menu');
     this.clearRopeAim();
     this.paused=false;
     this.menuChapter=menuChapterForLevel(this.levelIdx);
@@ -377,6 +387,7 @@ const G={
     this.savePrefs();
   },
   restartCurrentLevel(){
+    if(this.clearCutscene)this.clearCutscene('restart');
     this.clearRopeAim();
     this.paused=false;
     AU.stopMusic();
@@ -456,6 +467,7 @@ const G={
   },
 
   startLevel(idx){
+    if(this.clearCutscene)this.clearCutscene('level-start');
     AU.stopWeather();
     this.levelIdx=idx;
     this.levelSeed=this.makeLevelSeed(idx);
@@ -2560,6 +2572,7 @@ const G={
 
   // ---- logik-tick ----
   tick(){
+    if(this.updateCutscene&&this.updateCutscene())return;
     if(this.state!=='PLAY'||this.paused)return;
     const L=this.level,T=this.T;
     this.doorT++;this.weatherT++;

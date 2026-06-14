@@ -81,10 +81,12 @@
       drawText(ctx,(G.level.name||'NIVA').slice(0,34),70,248,1,'#dce8ff');
       drawText(ctx,'LEM '+G.lems.length+'  CAM '+Math.round(G.cam),8,266,1,'#94a4ba');
       drawText(ctx,DBG.running?'KOR':'PAUS',365,266,1,DBG.running?'#78dd86':'#ffd166');
+      if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
     }else{
       ctx.fillStyle='#05070d';ctx.fillRect(0,0,CW,CH);
       drawTextC(ctx,'LEMMEL DEBUG',CW/2,104,2,'#63d0ff');
       drawTextC(ctx,'STARTA EN NIVA FOR ATT VISA SPELET',CW/2,144,1,'#94a4ba');
+      if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
     }
   }
 
@@ -353,6 +355,18 @@
     finishAnimationSetup('Animation: räddningslucka öppnas och fångade lemlar släpps.');
   }
 
+  function setupCutsceneAnimation(mode){
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    G.playCutscene(G.makeCutscenePreviewSpec(mode));
+    finishAnimationSetup(mode==='fullscreen'?'Cutscene: fullskarmsoverlay.':'Cutscene: ruta ovanpa spelvyn.');
+  }
+
+  function setupFishRingCutsceneAnimation(){
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    G.playCutscene(G.makeFishRingCutsceneSpec('fullscreen'));
+    finishAnimationSetup('Cutscene: fisken ger en badring i nara pixelart.');
+  }
+
   function setupSkillAnimation(k){
     if(k==='rope')return setupRopeAnimation();
     const l=firstLiveLemming();
@@ -404,6 +418,7 @@
     if(action==='animPackageFall')return setupPackageFallAnimation();
     if(action==='animWaterfall')return setupWaterfallAnimation();
     if(action==='animFishRing')return setupFishRingAnimation();
+    if(action==='animFishRingCutscene')return setupFishRingCutsceneAnimation();
     if(action==='animFishRingRope')return setupFishRingRopeAnimation();
     if(action==='animMeteor')return setupMeteorAnimation();
     if(action==='animMega')return setupMegaAnimation();
@@ -411,6 +426,8 @@
     if(action==='animTrollMushroom')return setupTrollMushroomAnimation();
     if(action==='animBanana')return setupBananaAnimation();
     if(action==='animRescue')return setupRescueAnimation();
+    if(action==='animCutsceneBox')return setupCutsceneAnimation('box');
+    if(action==='animCutsceneFull')return setupCutsceneAnimation('fullscreen');
     if(action==='animClimb')return setupSkillAnimation('climb');
     if(action==='animFloat')return setupSkillAnimation('float');
     if(action==='animBomb')return setupSkillAnimation('bomb');

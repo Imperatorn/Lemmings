@@ -14,7 +14,7 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL_fixed_v44.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js','js/07_cutscenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
@@ -31,13 +31,16 @@ if (debugHtml) {
   }
   const debugGameIdx = debugScripts.indexOf('js/07_game.js');
   const debugRopeIdx = debugScripts.indexOf('js/07_rope.js');
+  const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
+  const debugCutsceneIdx = debugScripts.indexOf('js/07_cutscenes.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugPageIdx <= debugRopeIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugLivingIdx <= debugRopeIdx || debugCutsceneIdx <= debugLivingIdx || debugPageIdx <= debugCutsceneIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
     'animFishRing','animFishRingRope','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
-    'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
+    'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka',
+    'animCutsceneBox','animCutsceneFull','animFishRingCutscene'
   ];
   for (const action of requiredDebugActions) {
     if (!debugHtml.includes(`data-action="${action}"`)) {
@@ -45,7 +48,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing']) {
+  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','setupCutsceneAnimation','setupFishRingCutsceneAnimation']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
@@ -150,12 +153,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,WCTX,menuChapters};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,WCTX,menuChapters};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, WCTX, menuChapters} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, WCTX, menuChapters} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -165,6 +168,9 @@ const requiredRuntimeMethods = [
   'setMusicVolume','setSfxVolume',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
+  'registerCutscene','cutsceneById','playCutscene','stopCutscene','clearCutscene',
+  'advanceCutscene','updateCutscene','cutsceneActive','cutsceneRect','currentCutsceneShot',
+  'handleCutsceneInput','handleCutsceneKey','makeCutscenePreviewSpec','makeFishRingCutsceneSpec','toggleCutscenes',
   'hitDecorTargetAt',
   'findNearbyRingFish','tryFishSwimRing',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
@@ -190,6 +196,73 @@ G.setMusicVolume(0.42);
 G.setSfxVolume(0.37);
 if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) {
   throw new Error('Audio volume setters failed');
+}
+if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCutsceneOverlay');
+{
+  const prevState = G.state;
+  const prevPaused = G.paused;
+  const prevCutscene = G.cutscene;
+  const prevDoor = G.doorT;
+  const prevManual = G.manual;
+  const prevRopeAim = G.ropeAim;
+  const prevCutscenesOn = G.cutscenesOn;
+  G.state = 'PLAY';
+  G.paused = false;
+  G.doorT = 123;
+  G.cutscene = null;
+  G.cutscenesOn = true;
+  G.manual = {keys:{left:true,right:true,down:true,run:true,aim:true}};
+  const scene = G.playCutscene({
+    id:'verify-cutscene-box',
+    mode:'box',
+    pauseGame:true,
+    shots:[
+      {duration:3,title:'VERIFY',text:'BOX'},
+      {duration:3,title:'VERIFY',text:'NEXT'}
+    ]
+  });
+  if (!scene || !G.cutsceneActive() || G.currentCutsceneShot().text[0] !== 'BOX') {
+    throw new Error('Box cutscene did not start');
+  }
+  const box = G.cutsceneRect('box');
+  if (box.full || box.w >= 480 || box.h >= 300) throw new Error('Box cutscene rect is not boxed');
+  G.tick();
+  if (G.doorT !== 123) throw new Error('Cutscene did not stop gameplay tick');
+  drawCutsceneOverlay(WCTX, 1);
+  G.handleCutsceneInput({x:240,y:120}, 'click');
+  if (!G.cutsceneActive() || G.cutscene.shotIdx !== 1) throw new Error('Cutscene click did not advance to next shot');
+  G.handleCutsceneKey('Escape');
+  if (G.cutsceneActive()) throw new Error('Cutscene escape did not skip');
+  G.playCutscene(G.makeCutscenePreviewSpec('fullscreen'));
+  const full = G.cutsceneRect('fullscreen');
+  if (!full.full || full.x !== 0 || full.y !== 0 || full.w !== 480 || full.h !== 300) {
+    throw new Error('Fullscreen cutscene rect is wrong');
+  }
+  drawCutsceneOverlay(WCTX, 2);
+  G.clearCutscene('verify');
+  G.cutscenesOn = false;
+  const skippedScene = G.playCutscene({id:'verify-disabled-cutscene',mode:'box',shots:[{duration:3,text:'SKIP'}]});
+  if (skippedScene || G.cutsceneActive()) throw new Error('Disabled cutscenes preference did not skip playback');
+  const forcedScene = G.playCutscene({id:'verify-forced-cutscene',mode:'box',respectPrefs:false,shots:[{duration:3,text:'FORCE'}]});
+  if (!forcedScene || !G.cutsceneActive()) throw new Error('Forced cutscene did not ignore disabled preference');
+  G.clearCutscene('verify-forced');
+  G.cutscenesOn = true;
+  const fishScene = G.playCutscene(G.makeFishRingCutsceneSpec('fullscreen'));
+  if (!fishScene || !G.cutsceneActive() || fishScene.id !== 'fish-ring-closeup') {
+    throw new Error('Fish ring cutscene did not start');
+  }
+  if (G.currentCutsceneShot().duration < 50 || G.currentCutsceneShot().duration > 70) {
+    throw new Error('Fish ring cutscene should be around 3-4 seconds long');
+  }
+  drawCutsceneOverlay(WCTX, 3);
+  G.clearCutscene('verify-fish-ring');
+  G.state = prevState;
+  G.paused = prevPaused;
+  G.cutscene = prevCutscene;
+  G.doorT = prevDoor;
+  G.manual = prevManual;
+  G.ropeAim = prevRopeAim;
+  G.cutscenesOn = prevCutscenesOn;
 }
 {
   const prevLevel = G.level;
@@ -388,7 +461,7 @@ if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) 
 }
 G.state = 'MENU';
 drawMenu(WCTX, 1);
-if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol) {
+if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol || !G.menuSettings.cutscenes) {
   throw new Error('Menu volume controls were not created');
 }
 

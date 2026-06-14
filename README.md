@@ -38,6 +38,7 @@ webbläsare.
 - M: musik på/av.
 - S: ljudeffekter på/av.
 - I banmenyn: klicka på musik- och SFX-reglagen för att ändra volym.
+- I banmenyn: klicka på FILMER-knappen för att slå på/av cutscenes.
 - K: byt spelläge i titel/meny/briefing.
 - `+` / `-`: ändra tempo innan en bana startas.
 
@@ -133,6 +134,7 @@ js/07_game.js           spelmotor, state, events och huvudflöde
 js/07_save_state.js     spara/ladda-logik för spelstate
 js/07_manual_control.js direktstyrning, sikte och manual-skill helpers
 js/07_living_world.js   svamp, mumier, meteorer och andra levande värld-effekter
+js/07_cutscenes.js      cutscene-API, tidslinjer och overlayrendering
 js/08_render.js         rendering av värld, figurer, dekor och väder
 js/09_hud.js            HUD, knappar och minikarta
 js/10_screens.js        titel, meny, briefing, resultat och hjälp
@@ -172,6 +174,11 @@ Det här är de viktigaste sakerna att känna till innan du fortsätter utveckla
   avsedd för snabb test av animationer, ljud, väder, paket, flygplanskrasch,
   skills och specialfall som fisk/badring. När en ny synlig mekanik läggs till
   bör den helst få en debugknapp.
+- Cutscenes ligger i `js/07_cutscenes.js`. Använd `G.registerCutscene(...)`
+  för återanvändbara scener eller `G.playCutscene(spec)` för en engångsscen.
+  Modulen stöder `mode: 'box'` och `mode: 'fullscreen'` och stoppar gameplay
+  när `pauseGame` inte satts till `false`. Spelarens menyval `FILMER` sparas
+  som `cutscenesOn` och respekteras av `G.playCutscene(...)` som standard.
 - `tools/verify-game.js` är projektets viktigaste skyddsnät. Lägg till små
   objektiva tester där det går, särskilt för regler som annars lätt glöms bort:
   stöd för dekor, nivågeometri, specialskills, scriptordning och debugknappar.
