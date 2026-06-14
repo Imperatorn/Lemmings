@@ -34,7 +34,7 @@ const LEVELS=[
     P.disc(400,216,12); P.disc(250,213,8); },
   decor(D){ D.mush(330,209);D.mush(520,209);D.bush(200,149);D.bush(560,149); } },
 
-{ name:'HETT UNDER FOTTERNA', theme:'hell', night:false, W:1000,
+{ name:'HETT UNDER FÖTTERNA', theme:'hell', night:false, W:1000,
   lem:12, save:7, rate:45, time:300,
   skills:{climb:0,float:2,bomb:2,block:4,build:6,bash:4,mine:0,dig:0,baz:2,jet:0},
   hatch:{x:90,y:140}, exit:{x:920,y:189},
