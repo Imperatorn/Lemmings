@@ -137,46 +137,43 @@
   }
   function drawCutsceneWallClimber(c,x,y,sc,p,tk){
     x=Math.round(x);y=Math.round(y);sc=Math.max(1,Math.round(sc||1));
-    const step=((p*10)|0)&1;
-    const reach=step?1:-1;
+    const stepIdx=Math.min(3,Math.floor(clamp(p,0,0.999)*4));
+    const reach=(stepIdx&1)?1:-1;
     c.fillStyle='rgba(0,0,0,0.24)';
     c.fillRect(x-14*sc,y+29*sc,30*sc,3*sc);
 
+    // Bakifran: inga ansiktsdetaljer, bara nacke/har och rygg mot kameran.
     c.fillStyle='#f0c090';
-    c.fillRect(x+8*sc,y-(18+reach*3)*sc,6*sc,18*sc);
-    c.fillRect(x+12*sc,y-(23+reach*3)*sc,8*sc,5*sc);
-    c.fillRect(x-14*sc,y-(8-reach*4)*sc,6*sc,16*sc);
-    c.fillRect(x-18*sc,y-(12-reach*4)*sc,8*sc,5*sc);
+    c.fillRect(x+8*sc,y-(19+reach*5)*sc,6*sc,20*sc);
+    c.fillRect(x+13*sc,y-(25+reach*5)*sc,9*sc,5*sc);
+    c.fillRect(x-14*sc,y-(10-reach*5)*sc,6*sc,17*sc);
+    c.fillRect(x-19*sc,y-(15-reach*5)*sc,9*sc,5*sc);
 
     c.fillStyle='#5bc0ff';
-    c.fillRect(x-8*sc,y+2*sc,18*sc,22*sc);
+    c.fillRect(x-9*sc,y+1*sc,20*sc,24*sc);
     c.fillStyle='#87dcff';
-    c.fillRect(x-5*sc,y+4*sc,7*sc,17*sc);
+    c.fillRect(x-6*sc,y+3*sc,5*sc,19*sc);
+    c.fillStyle='#2878ad';
+    c.fillRect(x+5*sc,y+3*sc,4*sc,19*sc);
     c.fillStyle='#203040';
-    c.fillRect(x-7*sc,y+21*sc,6*sc,12*sc);
-    c.fillRect(x+4*sc,y+21*sc,6*sc,12*sc);
+    c.fillRect(x-8*sc,y+22*sc,6*sc,12*sc);
+    c.fillRect(x+5*sc,y+22*sc,6*sc,12*sc);
     c.fillStyle='#142030';
-    c.fillRect(x-9*sc,y+(30+reach*2)*sc,10*sc,4*sc);
-    c.fillRect(x+3*sc,y+(28-reach*2)*sc,10*sc,4*sc);
+    c.fillRect(x-10*sc,y+(31+reach*2)*sc,11*sc,4*sc);
+    c.fillRect(x+3*sc,y+(29-reach*2)*sc,11*sc,4*sc);
 
     c.fillStyle='#f0c090';
-    c.fillRect(x-10*sc,y-20*sc,20*sc,20*sc);
-    c.fillRect(x-5*sc,y-1*sc,12*sc,7*sc);
+    c.fillRect(x-5*sc,y-2*sc,12*sc,7*sc);
+    c.fillRect(x-10*sc,y-20*sc,20*sc,18*sc);
+    c.fillStyle='#d8a078';
+    c.fillRect(x-8*sc,y-7*sc,16*sc,5*sc);
     c.fillStyle='#ffe0b8';
-    c.fillRect(x-6*sc,y-16*sc,10*sc,9*sc);
+    c.fillRect(x-5*sc,y-16*sc,10*sc,8*sc);
     c.fillStyle='#266f32';
-    c.fillRect(x-12*sc,y-24*sc,24*sc,6*sc);
+    c.fillRect(x-12*sc,y-23*sc,24*sc,6*sc);
     c.fillRect(x-8*sc,y-29*sc,16*sc,6*sc);
     c.fillStyle='#42b848';
     c.fillRect(x-8*sc,y-27*sc,8*sc,4*sc);
-    c.fillStyle='#101018';
-    c.fillRect(x-4*sc,y-13*sc,3*sc,3*sc);
-    c.fillRect(x+5*sc,y-13*sc,3*sc,3*sc);
-    c.fillStyle='#ffffff';
-    c.fillRect(x-3*sc,y-13*sc,1*sc,1*sc);
-    c.fillRect(x+6*sc,y-13*sc,1*sc,1*sc);
-    c.fillStyle='#9c5c38';
-    c.fillRect(x-3*sc,y-5*sc,9*sc,2*sc);
 
     if(p<0.24){
       drawCutsceneSwimRing(c,x+1*sc,y+21*sc,Math.max(2,Math.round(sc*0.54)),1-p/0.24);
@@ -256,49 +253,78 @@
   }
   function drawWaterClimbCutscene(c,r,p,cs,tk){
     c.fillStyle='#07111d';c.fillRect(r.x,r.y,r.w,r.h);
-    const waterY=r.y+Math.round(r.h*0.76);
-    c.fillStyle='#10243a';c.fillRect(r.x,r.y,r.w,waterY-r.y);
-    c.fillStyle='#0b5a78';c.fillRect(r.x,waterY,r.w,r.h-waterY);
-
-    const wallRight=r.x+r.w+18;
-    const edgeAt=y=>{
-      const t=clamp((y-r.y)/Math.max(1,r.h),0,1);
-      return r.x+Math.round(r.w*(0.60-0.16*t));
+    const topY=r.y+46;
+    const waterY=r.y+Math.round(r.h*0.82);
+    const cx=r.x+Math.round(r.w*0.52);
+    const topL=cx-118, topR=cx+126;
+    const botL=r.x+68, botR=r.x+r.w-60;
+    const wallAt=y=>{
+      const t=clamp((y-topY)/Math.max(1,waterY-topY),0,1);
+      return {
+        t,
+        left:Math.round(topL+(botL-topL)*t),
+        right:Math.round(topR+(botR-topR)*t)
+      };
     };
-    for(let y=r.y;y<r.y+r.h;y+=6){
-      const t=clamp((y-r.y)/Math.max(1,r.h),0,1);
-      const left=edgeAt(y);
-      c.fillStyle=t>0.72?'#354050':(t>0.38?'#2d3747':'#232d3b');
-      c.fillRect(left,y,wallRight-left,6);
+
+    c.fillStyle='#10243a';c.fillRect(r.x,r.y,r.w,waterY-r.y);
+    c.fillStyle='#08111c';c.fillRect(r.x,r.y,r.w,topY-18-r.y);
+    const topEdge=wallAt(topY);
+    const ledgeL=topEdge.left-22,ledgeR=topEdge.right+22,ledgeW=ledgeR-ledgeL;
+    c.fillStyle='#102218';c.fillRect(ledgeL,topY-26,ledgeW,15);
+    c.fillStyle='#4f6a2d';c.fillRect(ledgeL+4,topY-31,ledgeW-8,6);
+    c.fillStyle='#7ea947';
+    for(let x=ledgeL+8;x<ledgeR-8;x+=22)c.fillRect(x,topY-35-((x+tk)&3),12,4);
+    c.fillStyle='#251a13';c.fillRect(ledgeL,topY-11,ledgeW,11);
+    c.fillStyle='#6a4930';c.fillRect(topEdge.left-12,topY-6,topEdge.right-topEdge.left+24,7);
+    c.fillStyle='#d0b070';c.fillRect(topEdge.left+4,topY-1,topEdge.right-topEdge.left-8,3);
+
+    c.fillStyle='#111a27';c.fillRect(r.x,topY+2,r.w,waterY-topY);
+    for(let y=topY;y<waterY+8;y+=6){
+      const b=wallAt(y), w=b.right-b.left;
+      const shade=0.20+b.t*0.12+(((y>>3)&1)?0.03:0);
+      c.fillStyle=shade>0.30?'#3a4556':(shade>0.25?'#303b4c':'#263140');
+      c.fillRect(b.left,y,w,6);
       if(((y+tk)>>3)&1){
-        c.fillStyle='rgba(255,255,255,0.08)';
-        c.fillRect(left+6,y+1,Math.max(8,wallRight-left-28),1);
+        c.fillStyle='rgba(255,255,255,0.07)';
+        c.fillRect(b.left+Math.round(w*0.10),y+1,Math.round(w*0.72),1);
       }
     }
-    c.fillStyle='#182232';
-    for(let y=r.y+12;y<r.y+r.h;y+=28){
-      const left=edgeAt(y);
-      c.fillRect(left,y,wallRight-left,2);
+    c.fillStyle='#182130';
+    for(let y=topY+12;y<waterY;y+=24){
+      const b=wallAt(y), w=b.right-b.left;
+      c.fillRect(b.left+Math.round(w*0.06),y,Math.round(w*0.88),2);
+      for(let x=b.left+Math.round(w*0.18)+((y>>1)%19);x<b.right-Math.round(w*0.12);x+=Math.max(18,Math.round(w*0.18))){
+        c.fillRect(x,y+1,2,14);
+      }
     }
-    for(let y=r.y+8;y<r.y+r.h;y+=22){
-      const left=edgeAt(y);
-      for(let x=left+16+((y>>1)%18);x<wallRight;x+=42)c.fillRect(x,y,2,16);
-    }
-    c.fillStyle='#566276';
-    for(let y=r.y+18;y<waterY;y+=35){
-      const left=edgeAt(y);
-      c.fillRect(left+7,y,10,3);
-      c.fillRect(left+28,y+10,7,2);
+    c.fillStyle='#6c788a';
+    for(let y=topY+22;y<waterY-28;y+=38){
+      const b=wallAt(y), w=b.right-b.left;
+      c.fillRect(b.left+Math.round(w*0.22),y,12,3);
+      c.fillRect(b.left+Math.round(w*0.63),y+13,14,3);
+      c.fillRect(b.left+Math.round(w*0.45),y+25,9,3);
     }
 
-    const climb=clamp((p-0.05)/0.78,0,1);
-    const climbEase=climb*climb*(3-2*climb);
-    const lemY=waterY+28-(waterY-r.y-74)*climbEase+Math.sin(tk*0.18)*2;
-    const lemX=edgeAt(lemY)+30+Math.sin(tk*0.11)*2;
-    const sc=Math.round(5-climbEase*1.4);
+    const climb=clamp((p-0.08)/0.86,0,1);
+    const stepCount=4;
+    const rawStep=clamp(climb*stepCount,0,stepCount-0.001);
+    const stepIdx=Math.floor(rawStep);
+    const stepP=rawStep-stepIdx;
+    const stepEase=stepP*stepP*(3-2*stepP);
+    const climbEase=(stepIdx+stepEase)/stepCount;
+    const startY=waterY-14;
+    const endY=topY+72;
+    const lemY=startY+(endY-startY)*climbEase+Math.sin(tk*0.18)*2;
+    const lemBounds=wallAt(lemY);
+    const lemX=Math.round((lemBounds.left+lemBounds.right)/2)+Math.round(Math.sin(tk*0.11)*1);
+    const sc=2;
 
+    c.fillStyle='#0b5a78';c.fillRect(r.x,waterY,r.w,r.h-waterY);
     c.fillStyle='#64d8ff';
     for(let x=r.x-20;x<r.x+r.w+28;x+=34)c.fillRect(x+Math.round(Math.sin(tk*0.12)*4),waterY+8+((x+tk)&7),24,3);
+    c.fillStyle='#b8f8ff';
+    for(let x=r.x+16;x<r.x+r.w;x+=58)c.fillRect(x-Math.round(Math.sin(tk*0.16)*3),waterY+1,34,2);
     c.fillStyle='#d8fbff';
     for(let i=0;i<16;i++){
       const bp=(p*1.25+i*0.11)%1;
@@ -316,9 +342,9 @@
     }
 
     c.save();
-    c.globalAlpha=0.55;
+    c.globalAlpha=0.36;
     c.fillStyle='#050913';
-    c.fillRect(edgeAt(lemY)+6,lemY-32,44,70);
+    c.fillRect(lemX-12,lemY-18,25,39);
     c.restore();
     drawCutsceneWallClimber(c,lemX,lemY,sc,climb,tk);
 
@@ -326,7 +352,7 @@
       c.fillStyle='#b7f2ff';
       for(let i=0;i<8;i++){
         const yy=lemY+10+i*8;
-        c.fillRect(edgeAt(yy)+18+(i%2)*9,yy,2,5);
+        c.fillRect(lemX-9+(i%2)*18,yy,1,4);
       }
     }
   }
@@ -457,7 +483,7 @@
       skippable:true,
       advanceOnInput:false,
       shots:[{
-        duration:Math.round(3400/TICK),
+        duration:Math.round(3900/TICK),
         title:'UPP UR VATTNET',
         text:['LEMMELN FAR GREPP OCH KLATTRAR UPPFOR VAGGEN.'],
         draw:drawWaterClimbCutscene

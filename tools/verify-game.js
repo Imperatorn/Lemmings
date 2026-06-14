@@ -290,7 +290,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!waterClimbScene || !G.cutsceneActive() || waterClimbScene.id !== 'water-climb-closeup') {
     throw new Error('Water climb cutscene did not start');
   }
-  if (G.currentCutsceneShot().duration < 48 || G.currentCutsceneShot().duration > 64) {
+  if (G.currentCutsceneShot().duration < 52 || G.currentCutsceneShot().duration > 72) {
     throw new Error('Water climb cutscene should be around 3-4 seconds long');
   }
   drawCutsceneOverlay(WCTX, 5);
