@@ -38,8 +38,12 @@ const THEMES={
       return c; } },
   forest:{ sky:['#000400','#001200'], brick:'#8a6a3a',
     px(x,y,dTop){ const n=hash2(x,y);
-      if(dTop<3) return n<0.5?[30,92,30]:[42,122,42];
+      if(dTop<3) return n<0.38?[24,78,28]:(n<0.76?[36,112,38]:[58,146,52]);
       let c=n<0.5?[58,42,24]:(n<0.85?[44,32,18]:[70,52,30]);
+      const root=Math.abs(Math.sin(x*0.055+y*0.115+Math.sin(y*0.041)*2.0));
+      if(dTop>5&&dTop<46&&root<0.045&&hash2(x>>2,y>>2)>0.42)c=[92,54,28];
+      else if(dTop>12&&dTop<64&&n>0.965)c=[94,72,44];
+      if(dTop>58)c=[c[0]*0.72|0,c[1]*0.70|0,c[2]*0.68|0];
       return c; } },
   cave:{ sky:['#02050a','#070b10'], brick:'#8c929a',
     px(x,y,dTop){ const n=hash2(x,y), seam=((x+(y>>1))&31)===0||((y+(x>>2))&37)===0;
@@ -49,6 +53,21 @@ const THEMES={
       if(seam)c=[Math.max(28,c[0]-24),Math.max(30,c[1]-24),Math.max(34,c[2]-24)];
       if(dTop<2)c=[Math.min(155,c[0]+44),Math.min(162,c[1]+44),Math.min(172,c[2]+46)];
       if(dTop>70)c=[c[0]*0.72|0,c[1]*0.72|0,c[2]*0.74|0];
+      return c; } },
+  rock:{ sky:['#08111f','#31475e'], brick:'#7b858e',
+    px(x,y,dTop){ const n=hash2(x,y);
+      const strata=Math.sin(y*0.18+x*0.035)+Math.sin(y*0.055-x*0.08)*0.7;
+      const crack=Math.abs(Math.sin(x*0.115+y*0.045+Math.sin(y*0.03)*1.8));
+      let c=strata<-0.55?[50,55,62]:(strata<0.15?[64,71,80]:(strata<0.75?[82,91,102]:[102,112,124]));
+      if(crack<0.055)c=[28,32,38];
+      else if(crack<0.105)c=[42,48,56];
+      if(n>0.955)c=[128,138,150];          // ljusa mineralflisor
+      if(((x*3+y)&63)===0)c=[38,48,58];    // små sprickpunkter
+      if(dTop<2){
+        c=[Math.min(170,c[0]+44),Math.min(182,c[1]+46),Math.min(194,c[2]+50)];
+        if(hash2(x*7,19)>0.86)c=n<0.5?[70,118,76]:[56,96,66]; // lav/mossa på klippkanten
+      }
+      if(dTop>55)c=[c[0]*0.72|0,c[1]*0.74|0,c[2]*0.78|0];
       return c; } },
   desert:{ sky:['#2a1730','#f2a84f'], brick:'#d8a85a',
     px(x,y,dTop){ const n=hash2(x,y), ripple=Math.sin(x*0.18+y*0.035)*0.5+0.5;

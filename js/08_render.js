@@ -301,6 +301,19 @@ function drawRootSegment(c,x0,y0,x1,y1,col,w){
   }
 }
 
+function rootAnchorSupported(x,y){
+  const T=(typeof G!=='undefined'&&G&&G.T)?G.T:null;
+  if(!T)return true;
+  x=Math.round(x);y=Math.round(y);
+  for(let yy=y-2;yy<=y+2;yy++){
+    if(yy<0||yy>=T.H)continue;
+    for(let xx=x-3;xx<=x+3;xx++){
+      if(xx>=0&&xx<T.W&&T.solid(xx,yy))return true;
+    }
+  }
+  return false;
+}
+
 function drawDecor(c,dec,cam,tk){
   const x=dec.x-cam;
   const pad=120+(dec.w||0)+((dec.s||1)>1?70*(dec.s||1):0);
@@ -406,10 +419,21 @@ function drawDecor(c,dec,cam,tk){
       break}
     case 'rock':{
       const s=dec.s||1,px=Math.round(x),py=Math.round(dec.y);
-      c.fillStyle='#876f55';c.fillRect(px-Math.round(8*s),py-Math.round(5*s),Math.round(16*s),Math.round(5*s));
-      c.fillStyle='#a89070';c.fillRect(px-Math.round(5*s),py-Math.round(8*s),Math.round(9*s),Math.round(4*s));
-      c.fillStyle='#5a4838';c.fillRect(px+Math.round(2*s),py-Math.round(4*s),Math.max(1,Math.round(4*s)),Math.max(1,Math.round(2*s)));
-      c.fillStyle='#d0bc98';c.fillRect(px-Math.round(4*s),py-Math.round(7*s),Math.max(1,Math.round(2*s)),1);
+      const key=G.level?terrainThemeKeyAt(G.level,dec.x,dec.y):'';
+      const grey=key==='rock'||key==='cave'||key==='marble';
+      c.fillStyle=grey?'#5f6972':'#876f55';c.fillRect(px-Math.round(8*s),py-Math.round(5*s),Math.round(16*s),Math.round(5*s));
+      c.fillStyle=grey?'#87939e':'#a89070';c.fillRect(px-Math.round(5*s),py-Math.round(8*s),Math.round(9*s),Math.round(4*s));
+      c.fillStyle=grey?'#37404a':'#5a4838';c.fillRect(px+Math.round(2*s),py-Math.round(4*s),Math.max(1,Math.round(4*s)),Math.max(1,Math.round(2*s)));
+      c.fillStyle=grey?'#c5d0d8':'#d0bc98';c.fillRect(px-Math.round(4*s),py-Math.round(7*s),Math.max(1,Math.round(2*s)),1);
+      break}
+    case 'rail':{
+      const w=dec.w||90,px=Math.round(x),py=Math.round(dec.y);
+      c.fillStyle='#3e4650';c.fillRect(px,py-12,w,2);
+      c.fillStyle='#6f7b86';c.fillRect(px,py-14,w,2);
+      c.fillStyle='#2c333b';
+      for(let i=4;i<w;i+=18)c.fillRect(px+i,py-13,3,13);
+      c.fillStyle='#909ba6';
+      for(let i=5;i<w;i+=18)c.fillRect(px+i,py-12,1,10);
       break}
     case 'cityscape':{
       const w=dec.w||180,h=dec.h||95,px=Math.round(x),py=Math.round(dec.y);
@@ -557,6 +581,7 @@ function drawDecor(c,dec,cam,tk){
       for(let i=0;i<count;i++){
         const seed=(dec.x|0)*0.017+(dec.y|0)*0.031+i*1.71+(dec.v||0)*8;
         const sx=Math.round(px-w/2+(i+0.5)*w/count+(hash2(i+dec.x,dec.y)-0.5)*10);
+        if(!rootAnchorSupported(sx+cam,py))continue;
         const len=h*(0.48+hash2(i+7,dec.x)*0.54);
         const lean=(hash2(i+13,dec.y)-0.5)*h*0.55;
         let lx=sx,ly=py;
@@ -1085,6 +1110,17 @@ function drawBg(c,L,cam,tk){
     for(let i=0;i<5;i++){
       const x=((i*165-cam*0.18)%(VW+210)+VW+210)%(VW+210)-110;
       c.beginPath();c.arc(x,214+hash2(i,6)*14,85+hash2(i,9)*45,3.2,6.2);c.fill();
+    }
+    c.globalAlpha=1;
+  }else if(L.theme==='rock'){
+    c.globalAlpha=0.24;
+    for(let i=0;i<7;i++){
+      const x=((i*145+hash2(i,71)*70-cam*0.16)%(VW+180)+VW+180)%(VW+180)-90;
+      const h=50+hash2(i,73)*80, w=88+hash2(i,79)*58;
+      c.fillStyle=i%2?'#182635':'#213346';
+      c.beginPath();c.moveTo(x-w*0.5,VH);c.lineTo(x,VH-h);c.lineTo(x+w*0.5,VH);c.fill();
+      c.fillStyle='rgba(210,225,238,0.16)';
+      c.beginPath();c.moveTo(x,VH-h);c.lineTo(x+w*0.16,VH-h+18);c.lineTo(x-w*0.05,VH-h+25);c.fill();
     }
     c.globalAlpha=1;
   }else if(L.theme==='city'){

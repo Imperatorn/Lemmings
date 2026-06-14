@@ -175,6 +175,22 @@ G.setSfxVolume(0.37);
 if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) {
   throw new Error('Audio volume setters failed');
 }
+{
+  const prevLevel = G.level;
+  const prevLems = G.lems;
+  const prevLamp = G.lamp;
+  const exitLem = {id:9001,x:96,y:200,scale:2,state:'WALK',dead:false,alive(){return !this.dead}};
+  G.level = {exit:{x:100,y:200}};
+  G.lems = [exitLem];
+  G.lamp = null;
+  G.checkExit(exitLem);
+  if (exitLem.state !== 'EXITING' || exitLem.x !== 100) {
+    throw new Error('Scaled lemming exit is not centered on goal');
+  }
+  G.level = prevLevel;
+  G.lems = prevLems;
+  G.lamp = prevLamp;
+}
 G.state = 'MENU';
 drawMenu(WCTX, 1);
 if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol) {
@@ -182,6 +198,17 @@ if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol) {
 }
 
 const levelNames = new Set();
+function rootDecorHasSupport(T, x, y) {
+  x = Math.round(x); y = Math.round(y);
+  for (let yy = y - 2; yy <= y + 2; yy++) {
+    if (yy < 0 || yy >= T.H) continue;
+    for (let xx = x - 4; xx <= x + 4; xx++) {
+      if (xx >= 0 && xx < T.W && T.solid(xx, yy)) return true;
+    }
+  }
+  return false;
+}
+
 for (let idx = 0; idx < LEVELS.length; idx++) {
   const L = LEVELS[idx];
   if (levelNames.has(L.name)) throw new Error(`Duplicate level name: ${L.name}`);
@@ -198,6 +225,26 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
   }
   if (L.name === 'BAZOOKA-SKOLAN' && !decorTypes.has('target')) {
     throw new Error(`${L.name}: expected practice targets in decor`);
+  }
+  if (L.name === 'JETPACK-KLIPPAN' && L.theme !== 'rock') {
+    throw new Error(`${L.name}: expected rock theme`);
+  }
+  if (L.name === 'MÖRK SKOG') {
+    const roots = (G.decor || []).filter(d => d && d.t === 'root');
+    if (roots.length < 3) throw new Error(`${L.name}: expected forest floor root details`);
+  }
+  if (L.name === 'SKOGSRAVINEN') {
+    const ravine = (L.water || []).find(z => z && !z.lava && z.w >= 160);
+    if (!ravine) throw new Error(`${L.name}: expected a wider ravine water zone`);
+    const mid = Math.round(ravine.x + ravine.w / 2);
+    if (G.T.solid(mid, 170) || G.T.solid(mid, 206) || G.T.solid(mid, 226)) {
+      throw new Error(`${L.name}: ravine center should be open`);
+    }
+  }
+  for (const root of (G.decor || []).filter(d => d && d.t === 'root')) {
+    if (!rootDecorHasSupport(G.T, root.x, root.y)) {
+      throw new Error(`${L.name}: root decor at ${root.x},${root.y} is not attached to terrain`);
+    }
   }
 
   for (const road of (G.decor || []).filter(d => d && d.t === 'road')) {

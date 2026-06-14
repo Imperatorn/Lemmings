@@ -58,6 +58,7 @@ const LEVELS=[
     P.rect(740,160,24,40);
     P.ramp(640,200,60,14,1); },
   decor(D){ D.waterfall(500,54,156,28);D.tree(180,200,1.2);D.tree(380,200,0.9);D.tree(620,200,1.4);D.tree(860,200,1.0);
+    D.root(185,200,96,26);D.root(382,200,76,22);D.root(625,200,116,30);D.root(858,200,88,24);
     D.torch(470,200);D.torch(530,200);D.torch(665,200);D.torch(740,160);
     D.mush(300,199);D.mush(560,199);D.bush(80,199);D.bush(960,199); } },
 
@@ -73,7 +74,7 @@ const LEVELS=[
   decor(D){ D.target(313,128);D.target(533,128);D.target(733,128);
     D.crystal(180,194);D.crystal(420,194);D.crystal(650,194);D.crystal(870,194); } },
 
-{ name:'JETPACK-KLIPPAN', theme:'marble', night:false, W:1000,
+{ name:'JETPACK-KLIPPAN', theme:'rock', night:false, W:1000,
   lem:12, save:8, rate:45, time:360,
   skills:{climb:0,float:4,bomb:2,block:2,build:4,bash:0,mine:0,dig:0,baz:0,jet:15},
   hatch:{x:90,y:130}, exit:{x:900,y:109},
@@ -82,7 +83,8 @@ const LEVELS=[
   build(P){ P.rect(0,180,400,60); P.rect(400,110,600,130);
     P.erase.rect(650,110,30,60);
     P.disc(500,40,22); P.disc(820,30,18); },
-  decor(D){ D.crystal(200,179);D.mush(560,109);D.bush(760,109);D.mush(950,109); } },
+  decor(D){ D.rock(165,180,1.15);D.rock(310,180,0.9);D.rock(535,109,1.1);D.rock(820,109,1.25);D.rock(958,109,0.85);
+    D.bush(570,109);D.bush(760,109);D.mush(940,109); } },
 
 { name:'MARMORGROTTAN', theme:'marble', night:false, W:1100,
   lem:12, save:8, rate:45, time:360,
@@ -131,14 +133,16 @@ const LEVELS=[
   lem:14, save:9, rate:42, time:420,
   skills:{climb:2,float:3,bomb:2,block:2,build:7,downbuild:4,bash:3,mine:1,dig:3,baz:0,jet:1,rope:3},
   hatch:{x:80,y:120}, exit:{x:1110,y:159},
-  water:[{x:410,w:80,y:218,lava:false}],
+  water:[{x:374,w:170,y:224,lava:false}],
   hint:'EN RAVIN, EN DAMM OCH EN HÖG SLUTPLATÅ. REP OCH NEDBYGGARE HJÄLPER MYCKET.',
-  build(P){ P.rect(0,180,230,60); P.ramp(230,215,90,35,-1);
-    P.rect(320,215,240,25); P.erase.rect(410,215,80,25);
-    P.rect(560,190,170,50); P.ramp(730,190,85,28,1);
+  build(P){ P.rect(0,180,230,60); P.ramp(230,205,90,25,-1);
+    P.rect(320,205,44,35); P.disc(356,205,14);
+    P.rect(550,190,180,50); P.disc(552,190,16);
+    P.erase.rect(365,152,185,88); P.erase.disc(438,205,54);
+    P.ramp(730,190,85,28,1);
     P.rect(850,160,350,80); P.rect(940,120,20,40); P.disc(250,183,16); },
-  decor(D){ D.waterfall(450,42,176,34);D.tree(150,180,1.1);D.tree(520,215,0.9);D.tree(900,160,1.2);
-    D.bush(330,214);D.bush(700,189);D.mush(1020,159); } },
+  decor(D){ D.waterfall(458,30,194,42);D.tree(150,180,1.1);D.tree(342,205,0.75);D.tree(580,190,0.95);D.tree(900,160,1.2);
+    D.root(575,190,70,26);D.bush(330,204);D.bush(700,189);D.mush(1020,159); } },
 
 { name:'SNÖKANTEN', theme:'crystal', night:false, W:1100,
   lem:12, save:8, rate:45, time:390,
@@ -150,7 +154,8 @@ const LEVELS=[
     P.rect(545,175,220,65); P.rect(820,200,280,40);
     P.disc(215,92,16); P.disc(470,120,20); P.disc(720,150,18);
     P.ramp(760,200,60,25,1); },
-  decor(D){ D.crystal(160,114);D.crystal(365,144);D.crystal(620,174);D.crystal(930,199); } },
+  decor(D){ D.crystal(160,114);D.crystal(248,114);D.crystal(365,144);D.crystal(500,144);D.crystal(620,174);D.crystal(760,199);D.crystal(930,199);
+    D.stal(245,115,14,true);D.stal(500,145,16,true);D.stal(765,200,18,true); } },
 
 { name:'LAVAPORTARNA', theme:'hell', night:false, W:1300,
   lem:16, save:10, rate:40, time:420,
@@ -161,7 +166,8 @@ const LEVELS=[
   build(P){ P.rect(0,190,1300,50); P.erase.rect(240,190,50,50);P.erase.rect(540,190,60,50);P.erase.rect(860,190,50,50);
     P.rect(360,112,24,78);P.rect(680,98,24,92);P.rect(990,126,26,64);
     P.rect(1050,170,250,70);P.rect(160,86,18,42);P.rect(760,78,18,52); },
-  decor(D){ D.torch(170,128);D.torch(770,130);D.torch(1080,170);D.chain(430,0);D.chain(930,0); } },
+  decor(D){ D.torch(170,128);D.torch(360,112);D.torch(680,98);D.torch(770,130);D.torch(990,126);D.torch(1080,170);
+    D.chain(245,0);D.chain(430,0);D.chain(545,0);D.chain(860,0);D.chain(930,0); } },
 
 { name:'REP ÖVER DJUPET', theme:'marble', night:false, W:1200,
   lem:14, save:9, rate:42, time:420,
@@ -171,7 +177,8 @@ const LEVELS=[
   hint:'DJUPET ÄR FÖR BRETT FÖR EN ENKEL BRO. SKJUT REPET MOT HÖGRA KANTEN.',
   build(P){ P.rect(0,150,300,90); P.rect(420,220,280,20); P.rect(820,120,380,120);
     P.ramp(300,220,120,70,-1); P.rect(665,160,24,60); P.disc(520,218,24); P.disc(930,92,20); },
-  decor(D){ D.mush(140,149);D.crystal(500,219);D.bush(865,119);D.mush(1030,119); } },
+  decor(D){ D.chain(338,0);D.chain(742,0);D.rock(300,149,0.9);D.rock(820,119,1.1);
+    D.mush(140,149);D.crystal(500,219);D.crystal(665,159);D.bush(865,119);D.mush(1030,119); } },
 
 { name:'UNDER RÖTTERNA', theme:'forest', night:true, W:1250,
   lem:15, save:10, rate:42, time:450,
@@ -186,7 +193,7 @@ const LEVELS=[
     P.erase.rect(565,150,260,30); P.erase.rect(825,185,425,30);
     P.erase.rect(690,185,50,55); P.rect(360,140,18,40); P.rect(610,180,20,60); P.disc(930,185,22); },
   decor(D){ D.tree(160,160,1.2);D.tree(450,180,1.0);D.tree(780,150,1.3);
-    D.root(150,160,165,35);D.root(450,180,185,34);D.root(780,150,190,44);D.root(1030,185,210,32);
+    D.root(150,160,165,35);D.root(450,180,185,34);D.root(780,150,190,44);D.root(1030,185,210,32);D.root(610,180,120,24);
     D.torch(360,180);D.torch(590,180);D.torch(690,185);D.torch(930,185);D.torch(1160,215);
     D.mush(330,209);D.bush(1030,214); } },
 
@@ -200,7 +207,8 @@ const LEVELS=[
     P.rect(790,175,210,65); P.rect(1080,150,220,90);
     P.rect(405,82,20,78); P.rect(650,62,22,63); P.rect(920,110,22,65);
     P.disc(210,154,18); P.disc(760,95,24); P.disc(1120,120,18); },
-  decor(D){ D.crystal(180,199);D.crystal(360,159);D.crystal(610,124);D.crystal(880,174);D.crystal(1180,149); } },
+  decor(D){ D.crystal(180,199);D.crystal(360,159);D.crystal(470,159);D.crystal(610,124);D.crystal(730,124);D.crystal(880,174);D.crystal(990,174);D.crystal(1180,149);
+    D.stal(405,160,18,true);D.stal(650,125,20,true);D.stal(920,175,16,true); } },
 
 { name:'DUBBLA DAMMAR', theme:'dirt', night:false, W:1300,
   lem:15, save:10, rate:42, time:420,
@@ -211,7 +219,8 @@ const LEVELS=[
   build(P){ P.rect(0,185,285,55); P.rect(455,160,230,80); P.rect(920,190,380,50);
     P.ramp(285,205,55,20,-1); P.ramp(860,190,80,30,1);
     P.disc(575,130,18); P.rect(1010,150,24,40); },
-  decor(D){ D.waterfall(370,56,156,34);D.waterfall(805,62,150,34);D.bush(120,184);D.mush(520,159);D.bush(650,159);D.mush(980,189);D.bush(1160,189); } },
+  decor(D){ D.waterfall(370,56,156,34);D.waterfall(805,62,150,34);D.rock(300,184,0.9);D.rock(875,189,1.0);
+    D.bush(120,184);D.mush(520,159);D.bush(650,159);D.mush(980,189);D.bush(1160,189);D.mush(760,159); } },
 
 { name:'MÅNSKENSMUREN', theme:'hell', night:true, W:1400,
   lem:18, save:11, rate:38, time:480,
@@ -222,7 +231,8 @@ const LEVELS=[
   build(P){ P.rect(0,195,1400,45); P.erase.rect(470,195,45,45);P.erase.rect(740,195,45,45);
     P.rect(260,130,30,65); P.rect(545,100,30,95); P.rect(880,120,30,75);
     P.rect(1120,160,280,80); P.rect(120,90,18,45);P.rect(1020,80,18,55); },
-  decor(D){ D.torch(130,135);D.torch(260,130);D.torch(470,195);D.torch(545,100);D.torch(740,195);D.torch(880,120);D.torch(1120,160);D.chain(340,0);D.chain(650,0);D.chain(980,0);D.torch(1200,160); } },
+  decor(D){ D.torch(130,135);D.torch(260,130);D.torch(470,195);D.torch(545,100);D.torch(740,195);D.torch(880,120);D.torch(1120,160);D.torch(1200,160);
+    D.chain(210,0);D.chain(340,0);D.chain(650,0);D.chain(815,0);D.chain(980,0);D.chain(1250,0); } },
 
 { name:'BALKONGERNA', theme:'marble', night:false, W:1300,
   lem:16, save:11, rate:40, time:450,
@@ -232,7 +242,8 @@ const LEVELS=[
   hint:'BALKONGERNA LIGGER LÄGRE OCH LÄGRE. BYGG NED OCH LÄGG REP DÄR FLOCKEN FASTNAR.',
   build(P){ P.rect(0,115,230,125); P.rect(285,145,230,95); P.rect(565,175,240,65); P.rect(865,205,435,35);
     P.rect(230,82,18,33); P.rect(515,112,18,33); P.rect(805,142,18,33); P.disc(420,116,20); P.disc(990,175,24); },
-  decor(D){ D.mush(150,114);D.crystal(350,144);D.bush(640,174);D.mush(955,204);D.bush(1160,204); } },
+  decor(D){ D.rail(28,115,175);D.rail(310,145,170);D.rail(595,175,180);D.rail(900,205,270);
+    D.mush(150,114);D.crystal(350,144);D.crystal(735,174);D.bush(640,174);D.mush(955,204);D.bush(1160,204); } },
 
 { name:'KAOSKARTAN', theme:'dirt', night:false, W:1600,
   lem:22, save:14, rate:36, time:540,
@@ -246,8 +257,8 @@ const LEVELS=[
     P.rect(1000,120,26,120); P.rect(1070,190,260,50); P.erase.rect(1225,190,70,50);
     P.rect(1380,140,220,100); P.ramp(1330,190,80,50,1);
     P.disc(250,166,26);P.disc(760,140,24);P.disc(1160,156,28);P.rect(1450,92,20,48); },
-  decor(D){ D.bush(170,189);D.mush(455,204);D.crystal(760,169);D.torch(1010,120);D.bush(1110,189);
-    D.mush(1360,170);D.bush(1490,139);D.mush(1560,139); } },
+  decor(D){ D.waterfall(535,62,148,24);D.bush(170,189);D.mush(455,204);D.rock(660,204,0.95);D.crystal(760,169);D.torch(1010,120);D.bush(1110,189);
+    D.rock(1215,189,0.9);D.mush(1360,170);D.bush(1490,139);D.mush(1560,139); } },
 
 { name:'STENGROTTANS SKEN', theme:'cave', night:true, cave:true, W:1200,
   lem:14, save:9, rate:42, time:420,

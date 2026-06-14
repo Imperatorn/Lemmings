@@ -82,6 +82,31 @@ Miljöer som används:
 Det finns även bonusmål i vissa banor, till exempel fångade lemlar som kan
 släppas fria med knappar.
 
+## Ban- och grafikdesign
+
+När banor eller dekor ändras ska det visuella stödja banans namn, tema och
+spelidé. Det här är de designregler vi har sett tydliga exempel på i spelet:
+
+- Banans namn ska synas i banan. En ravinbana ska ha en tydlig ravin, en
+  marmorgrotta ska visa marmor och en bana under rötterna ska ha rötter som
+  känns förankrade i marken.
+- Byt inte gameplay-geometri när ändringen bara gäller material eller stil. Om
+  en bana bygger på en vägg, ett gap eller en platå ska den formen bevaras.
+- Dekor ska vara fysiskt rimlig. Rötter ska sitta i mark, skyltar ska stå på
+  något, pyramider och stenar ska inte sväva och fordon ska inte klippas på ett
+  sätt som ser oavsiktligt ut.
+- Otydliga pixelart-detaljer ska förenklas, flyttas eller tas bort. En detalj
+  som inte läses som det den föreställer gör banan mindre polerad.
+- All grafik, väder och alla effekter ska hålla samma retro/DOS-känsla. Undvik
+  animationer eller former som ser för moderna, mjuka eller stilmässigt
+  avvikande ut.
+- Objekt som påverkas av terräng ska bete sig logiskt när terrängen ändras.
+  Rep, facklor, figurer och dekor får inte bli kvar svävande när deras stöd
+  sprängs eller grävs bort.
+- Lägg gärna objektiva designregler i `tools/verify-game.js` när de går att
+  testa, till exempel att en viss bana har en öppen ravin eller att root-dekor
+  sitter i terräng.
+
 ## Projektstruktur
 
 ```text

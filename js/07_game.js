@@ -54,6 +54,7 @@ function createLevelDecorApi(game){
     stal:(x,y,h,up)=>add({t:'stal',x,y,h:h||18,up:up!==false}),
     root:(x,y,w,h)=>add({t:'root',x,y,w:w||120,h:h||38,v:RND()}),
     target:(x,y)=>add({t:'target',x,y,v:RND()}),
+    rail:(x,y,w)=>add({t:'rail',x,y,w:w||90,v:RND()}),
     waterfall:(x,y,h,w)=>add({t:'waterfall',x,y,h:h||130,w:w||28,v:RND()}),
     cactus:(x,y,s)=>add({t:'cactus',x,y,s:s||1,v:RND()}),
     rock:(x,y,s)=>add({t:'rock',x,y,s:s||1,v:RND()}),
@@ -164,6 +165,7 @@ const G={
     if(L.theme==='forest')return r<0.50?'rain':(r<0.68?'snow':'sun');
     if(L.theme==='hell')return r<0.68?'sun':(r<0.88?'rain':'snow');
     if(L.theme==='marble')return r<0.46?'sun':(r<0.72?'snow':'rain');
+    if(L.theme==='rock')return r<0.52?'sun':(r<0.78?'rain':'snow');
     return r<0.45?'sun':(r<0.73?'rain':'snow');
   },
   normalizeWeatherForLevel(kind,L){
@@ -733,7 +735,7 @@ const G={
     const key=terrainThemeKeyAt(this.level,x,y);
     const dustCols={
       dirt:['#d8c0a0','#b89068'],forest:['#8a6a3a','#5c4228'],desert:['#e8bf72','#c9904e'],
-      city:['#b8bec6','#7c838c'],cave:['#9aa2ad','#666f7a'],crystal:['#c8f0ff','#86c6e0'],
+      city:['#b8bec6','#7c838c'],cave:['#9aa2ad','#666f7a'],rock:['#a8b2bd','#68727e'],crystal:['#c8f0ff','#86c6e0'],
       marble:['#dce4eb','#8f9aa8'],hell:['#c07052','#6a3028']
     }[key]||['#d8c0a0','#b89068'];
     const n=Math.round((3+power*7)*sc);
@@ -945,6 +947,7 @@ const G={
     const e=this.level.exit;
     if(Math.abs(l.x-e.x)<5&&l.y>=e.y-10&&Math.abs(l.y-e.y)<12&&(l.state==='WALK'||l.state==='SHRUG'||l.state==='MANUAL')){
       this.prepareFinalLampExit(l);
+      l.x=e.x;
       l.state='EXITING';l.busyT=0;
       if(!(this.lamp&&this.lamp.exitingWith===l.id))this.dropLampIfCarrier(l,true);
     }
