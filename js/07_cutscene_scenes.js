@@ -137,7 +137,7 @@
   }
   function drawDolphinRescueCutscene(c,r,p,cs,tk){
     c.fillStyle='#061425';c.fillRect(r.x,r.y,r.w,r.h);
-    const waterY=r.y+Math.round(r.h*0.62);
+    const waterY=r.y+Math.round(r.h*0.66);
     c.fillStyle='#0e2742';c.fillRect(r.x,r.y,r.w,waterY-r.y);
     c.fillStyle='#084f76';c.fillRect(r.x,waterY,r.w,r.h-waterY);
     c.fillStyle='#0d8fbb';
@@ -145,39 +145,60 @@
     c.fillStyle='#a8f0ff';
     for(let x=r.x+12;x<r.x+r.w;x+=58)c.fillRect(x-Math.round(Math.sin(tk*0.18)*2),waterY+1,30,2);
 
-    const leap=clamp((p-0.10)/0.52,0,1);
-    const land=clamp((p-0.66)/0.22,0,1);
-    const joy=clamp((p-0.70)/0.20,0,1);
-    const arc=Math.sin(leap*Math.PI);
-    const dolphinX=r.x+70+leap*(r.w-160);
-    const dolphinY=waterY+20-arc*76+land*22;
-    const dir=leap<0.94?1:-1;
-    const lemX=dolphinX-4;
-    const lemY=dolphinY-42-arc*8;
+    const launch=clamp((p-0.08)/0.68,0,1);
+    const e=launch*launch*(3-2*launch);
+    const startX=r.x+Math.round(r.w*0.46);
+    const startY=waterY+76;
+    const exitX=r.x+Math.round(r.w*0.72);
+    const exitY=r.y-70;
+    const dolphinX=startX+(exitX-startX)*e+Math.sin(tk*0.10)*2;
+    const dolphinY=startY+(exitY-startY)*e;
+    const angle=-1.04+Math.sin(launch*Math.PI)*0.16;
+    const wake=clamp((p-0.08)/0.48,0,1);
+    const splash=clamp((p-0.04)/0.28,0,1);
+    const joy=clamp((p-0.42)/0.22,0,1);
+    const showRider=p>0.14&&dolphinY<waterY+34;
+    const lemX=dolphinX-Math.cos(angle)*18-Math.sin(angle)*34;
+    const lemY=dolphinY-Math.sin(angle)*18+Math.cos(angle)*34-48;
 
-    if(p<0.18){
+    if(p<0.22){
       c.fillStyle='#d8fbff';
-      for(let i=0;i<10;i++){
-        const a=i*0.63, d=8+p*90;
-        c.fillRect(r.x+78+Math.cos(a)*d,waterY+12+Math.sin(a)*d*0.35,2,2);
+      for(let i=0;i<16;i++){
+        const a=i*0.39, d=10+splash*68+(i%4)*3;
+        c.fillRect(startX+Math.cos(a)*d,waterY+12+Math.sin(a)*d*0.34,2+(i%2),2);
       }
     }
-    drawCutsceneDolphinClose(c,dolphinX,dolphinY,3,p,dir);
-    drawCutsceneLemClose(c,lemX,lemY,3,p>0.46,false,tk,joy);
-    if(p>0.58&&p<0.92){
-      const spray=clamp((p-0.58)/0.34,0,1);
-      c.save();c.globalAlpha=1-spray*0.65;c.fillStyle='#d8fbff';
-      for(let i=0;i<18;i++){
-        const a=i*0.35+0.4, d=12+spray*66+(i%4)*3;
-        c.fillRect(dolphinX-28+Math.cos(a)*d,dolphinY+18+Math.sin(a)*d*0.75,2+(i%2),2);
+    c.save();
+    c.globalAlpha=1-wake*0.45;
+    c.fillStyle='#b8f8ff';
+    for(let i=0;i<20;i++){
+      const t=i/19;
+      const x=startX+(dolphinX-startX)*t+Math.sin(tk*0.16+i)*5;
+      const y=waterY+8+(dolphinY-waterY)*t+Math.sin(t*5+tk*0.12)*4;
+      if(y>r.y&&y<r.y+r.h)c.fillRect(Math.round(x),Math.round(y),2+(i%3),2);
+    }
+    c.restore();
+    if(dolphinY<r.y+r.h+40){
+      c.save();
+      c.translate(dolphinX,dolphinY);
+      c.rotate(angle);
+      drawCutsceneDolphinClose(c,0,0,3.4,p,1);
+      c.restore();
+      if(showRider)drawCutsceneLemClose(c,lemX,lemY,3,true,false,tk,joy);
+    }
+    if(p>0.22&&p<0.72){
+      c.save();c.globalAlpha=1-wake*0.35;c.fillStyle='#d8fbff';
+      for(let i=0;i<22;i++){
+        const a=-2.4+i*0.22, d=18+wake*82+(i%5)*3;
+        c.fillRect(startX+Math.cos(a)*d*0.55,startY-18+Math.sin(a)*d,2+(i%2),2);
       }
       c.restore();
     }
-    if(p>0.72){
+    if(p>0.46&&p<0.86){
       c.fillStyle='#fff7b0';
-      for(let i=0;i<9;i++){
-        const a=i*0.7+tk*0.05, d=18+joy*42;
-        c.fillRect(Math.round(lemX+Math.cos(a)*d),Math.round(lemY-16+Math.sin(a)*d*0.70),i%2?3:5,i%2?3:5);
+      for(let i=0;i<8;i++){
+        const a=i*0.78+tk*0.05, d=16+joy*38;
+        c.fillRect(Math.round(lemX+Math.cos(a)*d),Math.round(lemY-18+Math.sin(a)*d*0.70),i%2?3:5,i%2?3:5);
       }
       if(((tk>>2)&1)===0)drawTextC(c,'RADDAD!',lemX+4,lemY-58,2,'#fff7b0');
     }
