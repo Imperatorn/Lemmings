@@ -25,6 +25,9 @@
     c.fillRect(x+5*sc,y+2*sc,3*sc,3*sc);
     c.restore();
   }
+  function cutsceneLemmingRingScale(sc){
+    return Math.max(2,Math.round(Math.max(1,sc||1)*0.72)+1);
+  }
   function makeCutsceneWorldContext(l,z,extra){
     const L=G.level||{};
     const x=l&&Number.isFinite(l.x)?Math.round(l.x+(l.dir||1)):0;
@@ -194,7 +197,7 @@
     c.fillRect(x-2*sc,y+6*sc,6*sc,3*sc);
     c.fillStyle='#f8b040';
     c.fillRect(x+9*sc,y-1*sc,4*sc,3*sc);
-    if(ringHeld)drawCutsceneSwimRing(c,x+18*sc,y+2*sc,Math.max(1,Math.round(sc*0.45)),0.95);
+    if(ringHeld)drawCutsceneSwimRing(c,x+18*sc,y+2*sc,Math.max(2,Math.round(sc*0.62)),0.95);
   }
   function drawCutsceneDolphinClose(c,x,y,sc,p,dir){
     x=Math.round(x);y=Math.round(y);sc=Math.max(1,sc||1);dir=dir||1;
@@ -225,7 +228,7 @@
     y+=bob;
     c.fillStyle='rgba(0,0,0,0.28)';
     c.fillRect(x-15*sc,y+29*sc,35*sc,3*sc);
-    if(ringOn)drawCutsceneSwimRing(c,x+1*sc,y+17*sc,Math.max(2,Math.round(sc*0.58)),1);
+    if(ringOn)drawCutsceneSwimRing(c,x+1*sc,y+17*sc,cutsceneLemmingRingScale(sc),1);
     c.fillStyle='#5bc0ff';
     c.fillRect(x-8*sc,y+7*sc,18*sc,19*sc);
     c.fillStyle='#87dcff';
@@ -326,7 +329,7 @@
     c.fillRect(x-8*sc,y-27*sc,8*sc,4*sc);
 
     if(fromWater&&p<0.24){
-      drawCutsceneSwimRing(c,x+1*sc,y+21*sc,Math.max(2,Math.round(sc*0.54)),1-p/0.24);
+      drawCutsceneSwimRing(c,x+1*sc,y+21*sc,cutsceneLemmingRingScale(sc),1-p/0.24);
     }
   }
   function waterClimbMaterial(key){
@@ -579,7 +582,7 @@
       const sx=fishX+54, sy=fishY+8;
       const tx=lemX+4, ty=lemY+70;
       const e=handoff*handoff*(3-2*handoff);
-      drawCutsceneSwimRing(c,sx+(tx-sx)*e,sy+(ty-sy)*e,2,1);
+      drawCutsceneSwimRing(c,sx+(tx-sx)*e,sy+(ty-sy)*e,2+Math.round((cutsceneLemmingRingScale(4)-2)*e),1);
     }
     if(p>0.56&&p<0.88){
       const burst=clamp((p-0.56)/0.32,0,1);
