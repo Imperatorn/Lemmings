@@ -134,10 +134,13 @@ function drawPlayWorld(c,L,cam,tk){
   c.restore();
 }
 
+function waterfallCaveActiveBounds(cave){
+  return cave&&cave.scene==='deep'&&(cave.deepBounds||cave.bounds)?(cave.deepBounds||cave.bounds):(cave&&cave.bounds||{});
+}
 function waterfallCaveLemmingScale(cave){
-  const b=cave&&cave.bounds||{};
+  const b=waterfallCaveActiveBounds(cave);
   const far=Number.isFinite(b.exitY)?b.exitY:218;
-  const near=Number.isFinite(b.maxY)?b.maxY:282;
+  const near=Number.isFinite(b.maxY)?b.maxY:304;
   const y=Number.isFinite(cave&&cave.lemY)?cave.lemY:232;
   const p=clamp((y-far)/Math.max(1,near-far),0,1);
   return 1.55+p*0.9;
@@ -189,9 +192,98 @@ function drawWaterfallCaveLemming(c,cave,lx,ly,scale){
   c.restore();
 }
 
+function drawLandsOfLoreCaveCover(c,tk){
+  const img=typeof ASSETS==='object'&&ASSETS?ASSETS.landsOfLoreCover:null;
+  const loaded=!!(img&&img.complete!==false&&(img.naturalWidth||img.width));
+  const x=132,y=18,w=216,h=270;
+  c.save();
+  c.globalAlpha=0.76;
+  c.fillStyle='#000000';
+  c.fillRect(0,0,CW,CH);
+  c.globalAlpha=1;
+  c.fillStyle='#0f0a07';c.fillRect(x-5,y-5,w+10,h+10);
+  c.fillStyle='#3a271b';c.fillRect(x-2,y-2,w+4,h+4);
+  if(loaded){
+    c.imageSmoothingEnabled=false;
+    c.drawImage(img,x,y,w,h);
+  }else{
+    c.fillStyle='#19120d';c.fillRect(x,y,w,h);
+    drawTextC(c,'LADDAR BILD',x+w/2,y+h/2-6,1,'#f0c060');
+  }
+  c.restore();
+}
+
+function drawWaterfallCaveDeepView(c,cave,tk){
+  const wf=cave.wf||{}, t=cave.t||0;
+  c.save();
+  c.fillStyle='#020407';
+  c.fillRect(0,0,CW,CH);
+  const ox=130,oy=30,ow=220,oh=116;
+  c.fillStyle='#07131d';
+  fillPixelPoly(c,[[ox,oy+oh],[ox+28,oy+36],[ox+76,oy+5],[ox+ow-78,oy+6],[ox+ow-28,oy+34],[ox+ow,oy+oh]]);
+  c.fillStyle='#1b3342';c.fillRect(ox+48,oy+18,ow-96,oh-20);
+  c.globalAlpha=0.20;
+  c.fillStyle='#8fd8ff';c.fillRect(ox+92,oy+4,36,oh+32);
+  for(let i=0;i<40;i+=4){
+    const sx=ox+94+i+Math.round(Math.sin((tk+t)*0.11+i)*2);
+    c.globalAlpha=0.18+0.16*hash2(i+251,wf.x||0);
+    c.fillStyle=i%8?'#70b8d0':'#d8f8ff';
+    c.fillRect(sx,oy+4,1+(i%3===0?1:0),oh+34);
+  }
+  c.globalAlpha=1;
+  c.fillStyle='#071018';
+  fillPixelPoly(c,[[0,0],[150,0],[ox+24,oy+72],[90,CH],[0,CH]]);
+  fillPixelPoly(c,[[CW,0],[330,0],[ox+ow-24,oy+72],[390,CH],[CW,CH]]);
+  c.fillStyle='#111b22';
+  fillPixelPoly(c,[[70,CH],[126,210],[188,184],[286,190],[360,CH]]);
+  c.fillStyle='#17262f';
+  for(let i=0;i<30;i++){
+    const x=70+Math.round(hash2(i+261,wf.x||0)*340);
+    const y=116+Math.round(hash2(i+263,wf.y||0)*150);
+    c.fillRect(x,y,18+Math.round(hash2(i+267,wf.x||0)*44),2+(i%4===0?2:0));
+  }
+  c.globalAlpha=0.32;
+  c.fillStyle='#5aa8c2';
+  for(let i=0;i<11;i++){
+    const px=150+Math.round(hash2(i+271,wf.x||0)*180);
+    const py=214+Math.round(hash2(i+273,wf.y||0)*42);
+    c.fillRect(px,py,20+Math.round(hash2(i+277,wf.x||0)*30),2);
+  }
+  c.globalAlpha=1;
+  const it=cave.deepItem||{x:246,y:252};
+  const ix=Math.round(it.x),iy=Math.round(it.y);
+  c.globalAlpha=0.42;c.fillStyle='#000000';c.fillRect(ix-20,iy+5,44,5);c.globalAlpha=1;
+  c.save();
+  c.translate(ix,iy);
+  c.rotate(-0.12);
+  c.fillStyle='#2b1710';c.fillRect(-15,-10,34,20);
+  c.fillStyle='#9a5124';c.fillRect(-13,-8,30,16);
+  c.fillStyle='#d0a052';c.fillRect(-12,-7,28,2);
+  c.fillStyle='#202544';c.fillRect(-11,-4,26,11);
+  c.fillStyle='#e8c070';c.fillRect(-9,-6,18,2);
+  c.fillStyle='#c0d8ff';c.fillRect(7,-3,5,6);
+  c.restore();
+  if(it.near||it.coverOpen){
+    c.globalAlpha=0.35+0.15*Math.sin((tk+t)*0.12);
+    c.fillStyle='#f0d080';
+    c.fillRect(ix-24,iy-18,52,26);
+    c.globalAlpha=1;
+  }
+  const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
+  const lemScale=waterfallCaveLemmingScale(cave);
+  c.globalAlpha=0.35;c.fillStyle='#000000';
+  c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
+  c.globalAlpha=1;
+  drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
+  if(it.coverOpen)drawLandsOfLoreCaveCover(c,tk+t);
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveView(c,tk){
   const cave=G.waterfallCave;
   if(!cave||!cave.active)return false;
+  if(cave.scene==='deep')return drawWaterfallCaveDeepView(c,cave,tk);
   const wf=cave.wf||{}, t=cave.t||0;
   c.save();
   c.fillStyle='#030508';
@@ -334,6 +426,13 @@ function drawWaterfallCaveView(c,tk){
   c.globalAlpha=1;
   c.fillStyle='#0b1118';
   fillPixelPoly(c,[[156,CH],[190,250],[232,238],[286,248],[330,CH]]);
+  c.fillStyle='#020508';
+  fillPixelPoly(c,[[196,CH],[212,266],[240,254],[270,266],[288,CH]]);
+  c.globalAlpha=0.34;
+  c.fillStyle='#4a7888';
+  c.fillRect(215,268,50,2);
+  c.fillRect(224,276,34,1);
+  c.globalAlpha=1;
   c.fillStyle='#67b8d8';
   for(let i=0;i<16;i++){
     const mx=208+Math.round(hash2(i+76,wf.x||0)*66);

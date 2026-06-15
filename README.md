@@ -123,6 +123,7 @@ spelidé. Det här är de designregler vi har sett tydliga exempel på i spelet:
 
 ```text
 LEMMEL.html             HTML-skalet som laddar spelet
+assets/                 bildassets, till exempel pixelart-versioner av uppladdade bilder
 js/00_util.js           canvas, konstanter, hjälpmetoder, prefs
 js/01_pixelfont.js      pixeltext
 js/02_audio.js          procedurella ljud och musik

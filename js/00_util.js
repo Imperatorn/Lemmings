@@ -45,6 +45,17 @@ WORLD_CV.width=VW;WORLD_CV.height=VH;
 const WCTX=WORLD_CV.getContext('2d');
 WCTX.imageSmoothingEnabled=false;
 
+function loadAssetImage(src){
+  try{
+    const img=new Image();
+    img.src=src;
+    return img;
+  }catch(_){return null}
+}
+const ASSETS={
+  landsOfLoreCover:loadAssetImage('assets/lands-of-lore-pixel.png')
+};
+
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
 function rndSeed(s){return function(){s|=0;s=(s+0x6D2B79F5)|0;let t=Math.imul(s^(s>>>15),1|s);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296}}
 function hash2(x,y){let h=(x*374761393+y*668265263)|0;h=(h^(h>>13))*1274126177|0;return ((h^(h>>16))>>>0)/4294967296}

@@ -68,6 +68,17 @@ const hudCode = fs.readFileSync(path.join(root, 'js/09_hud.js'), 'utf8');
 if (!hudCode.includes("'UTE '+G.out+'/'+L.lem")) {
   throw new Error('HUD active lemming counter must show active/total');
 }
+if (!fs.existsSync(path.join(root, 'assets/lands-of-lore-pixel.png'))) {
+  throw new Error('Missing Lands of Lore pixel-art asset');
+}
+const utilCode = fs.readFileSync(path.join(root, 'js/00_util.js'), 'utf8');
+if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
+  throw new Error('Lands of Lore pixel-art asset is not registered');
+}
+const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
+if (!playRenderCode.includes('ASSETS.landsOfLoreCover') || playRenderCode.includes('THE THRONE OF CHAOS')) {
+  throw new Error('Waterfall cave cover should use the image asset instead of the old hand-drawn cover');
+}
 
 function makeContext2d(){
   return {
@@ -574,8 +585,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (musicStopped !== musicStoppedBeforeCave + 1 || weatherStopped !== weatherStoppedBeforeCave + 1) {
     throw new Error(`Entering waterfall cave should stop level music and weather ambient, got music=${musicStopped - musicStoppedBeforeCave} weather=${weatherStopped - weatherStoppedBeforeCave}`);
   }
-  if (musicFadeDurations.length !== 1 || musicFadeDurations[0] < 0.49) {
-    throw new Error('Entering waterfall cave should fade music out over about half a second');
+  if (musicFadeDurations.length !== 1 || musicFadeDurations[0] < 0.99) {
+    throw new Error('Entering waterfall cave should fade music out over about one second');
   }
   G.tick();
   if (G.timeT !== oldTime || !G.waterfallCaveActive() || G.waterfallCave.t !== 1) {
@@ -595,7 +606,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!(nearScale > farScale && farScale > 1 && nearScale >= 2.3 && nearScale <= 2.6)) {
     throw new Error('Waterfall cave lemming scale does not grow toward the foreground');
   }
-  if (G.waterfallCave.bounds.exitY < 210 || G.waterfallCave.bounds.maxY < 280) {
+  if (G.waterfallCave.bounds.exitY < 210 || G.waterfallCave.bounds.maxY < 300) {
     throw new Error('Waterfall cave bounds should allow a lower exit edge and deeper cave movement');
   }
   const startCaveX = G.waterfallCave.lemX;
@@ -658,6 +669,52 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.tick();
   if (!G.waterfallCave.chest.opened || G.money !== afterChestMoney) {
     throw new Error('Waterfall cave chest did not reopen without awarding money again');
+  }
+  G.waterfallCave.chest.opened = false;
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCave.bounds.deepY + 1;
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'deep') {
+    throw new Error('Waterfall cave did not enter the deeper cave scene from the bottom');
+  }
+  if (typeof drawWaterfallCaveView !== 'function' || !drawWaterfallCaveView(WCTX, 17)) {
+    throw new Error('Deep waterfall cave view did not render');
+  }
+  const deepItem = G.waterfallCave.deepItem;
+  if (!deepItem) throw new Error('Deep waterfall cave is missing the game item');
+  G.waterfallCave.lemX = deepItem.x + 34;
+  G.waterfallCave.lemY = deepItem.y + 10;
+  G.tick();
+  if (!deepItem.coverOpen || !deepItem.near) {
+    throw new Error('Deep cave game cover did not open across a forgiving hitbox');
+  }
+  G.handleWaterfallCaveInput({x:240,y:150}, 'click');
+  if (deepItem.coverOpen || !deepItem.dismissedNear) {
+    throw new Error('Deep cave game cover did not close on click');
+  }
+  deepItem.dismissedNear = false;
+  deepItem.coverOpen = true;
+  G.handleWaterfallCaveKey('ArrowRight');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (!deepItem.coverOpen) {
+    throw new Error('Deep cave game cover should not close from a tiny movement while still near');
+  }
+  G.waterfallCave.lemX = deepItem.x + 70;
+  G.waterfallCave.lemY = deepItem.y;
+  G.tick();
+  if (deepItem.coverOpen) {
+    throw new Error('Deep cave game cover did not close when walking away');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCave.deepBounds.exitY + 1;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'main') {
+    throw new Error('Deep waterfall cave did not return to the main cave when walking back toward the water');
   }
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCave.bounds.exitY;
