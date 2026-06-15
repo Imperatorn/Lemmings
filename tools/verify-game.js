@@ -965,6 +965,76 @@ if (ropeLem.state !== 'FALL' || ropeLem.ropeId !== null || ropeLem.fall !== 0) {
   throw new Error('Lemming was not released when rope anchor disappeared');
 }
 
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevLems = G.lems;
+  const prevRockets = G.rockets;
+  const prevParts = G.parts;
+  const prevManual = G.manual;
+  const prevTrees = G.trees;
+  const prevDecor = G.decor;
+  const cleared = [];
+  const T = {
+    W: 320, H: 240,
+    solid(x, y){ return y >= 200 },
+    solidBox(){ return false },
+    clearDisc(x, y, r){ cleared.push({x, y, r}) },
+    clearRect(){}
+  };
+  G.level = {W:320, hatch:{x:20,y:180}, water:[]};
+  G.T = T;
+  G.lems = [];
+  G.rockets = [];
+  G.parts = [];
+  G.trees = [];
+  G.decor = [];
+  G.manual = {used:false, active:false, lemId:null, keys:{left:false,right:false,down:false,run:false,aim:false}, aimAngle:0};
+
+  const bazLem = new Lemming(160, 199);
+  bazLem.state = 'WALK';
+  bazLem.dir = -1;
+  G.lems = [bazLem];
+  if (!G.applySkill(bazLem, 'baz', bazLem.x + 80, bazLem.y - 10)) {
+    throw new Error('Bazooka skill could not be applied to direction test lemming');
+  }
+  for (let i = 0; i < 4; i++) bazLem.update(T);
+  if (bazLem.dir !== -1 || !G.rockets[0] || G.rockets[0].vx >= 0) {
+    throw new Error('Regular bazooka should fire in the lemming walking direction');
+  }
+
+  const flameLem = new Lemming(160, 199);
+  flameLem.state = 'WALK';
+  flameLem.dir = 1;
+  G.lems = [flameLem];
+  if (!G.applySkill(flameLem, 'flame', flameLem.x - 80, flameLem.y - 10)) {
+    throw new Error('Flamethrower skill could not be applied to direction test lemming');
+  }
+  flameLem.update(T);
+  flameLem.update(T);
+  if (flameLem.dir !== 1 || !cleared.length || cleared.some(p => p.x <= flameLem.x)) {
+    throw new Error('Regular flamethrower should fire in the lemming walking direction');
+  }
+
+  const manualLem = new Lemming(160, 199);
+  manualLem.state = 'MANUAL';
+  manualLem.dir = 1;
+  G.lems = [manualLem];
+  G.manual = {used:true, active:true, lemId:manualLem.id, keys:{left:false,right:false,down:false,run:false,aim:true}, aimAngle:Math.PI};
+  if (!G.applySkill(manualLem, 'baz', manualLem.x + 80, manualLem.y - 10) || manualLem.dir !== -1 || !Number.isFinite(manualLem.manualAimAngle)) {
+    throw new Error('Manual bazooka aim should still control firing direction');
+  }
+
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.lems = prevLems;
+  G.rockets = prevRockets;
+  G.parts = prevParts;
+  G.manual = prevManual;
+  G.trees = prevTrees;
+  G.decor = prevDecor;
+}
+
 const bazookaSchoolIdx = LEVELS.findIndex(L => L.name === 'BAZOOKA-SKOLAN');
 if (bazookaSchoolIdx < 0) throw new Error('Missing BAZOOKA-SKOLAN');
 G.startLevel(bazookaSchoolIdx);

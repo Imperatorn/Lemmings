@@ -1269,30 +1269,6 @@ const G={
     }
     return false;
   },
-  wallScore(l,dir){
-    if(!this.T)return 0;
-    // Poäng för närliggande vägg/berg framför/bakom lemmeln. Används för
-    // action-skills så att en lemmel som precis vänt vid en vägg fortfarande
-    // skjuter/flyger mot väggen i stället för bort från den.
-    for(let dx=4;dx<=38;dx++){
-      for(let dy=-15;dy<=-2;dy+=2){
-        if(this.T.solid(l.x+dir*dx,l.y+dy))return 39-dx;
-      }
-    }
-    return 0;
-  },
-  aimActionSkill(l,k,wx,wy){
-    if(k!=='baz'&&k!=='jet'&&k!=='flame')return;
-    if(Math.abs(wx-l.x)>5){
-      l.dir=wx>l.x?1:-1;
-      return;
-    }
-    const left=this.wallScore(l,-1),right=this.wallScore(l,1);
-    if(Math.max(left,right)>=6&&Math.abs(left-right)>=3){
-      l.dir=right>left?1:-1;
-      return;
-    }
-  },
   applySkill(l,k,wx,wy){
     if(!this.canApplySkill(l,k))return false;
     const originalDir=l.dir||1;
@@ -1303,7 +1279,6 @@ const G={
       l.dir=Math.cos(manualAim)>=0?1:-1;
     }else{
       l.manualAimAngle=null;
-      if(k!=='jet')this.aimActionSkill(l,k,wx==null?l.x:wx,wy==null?l.y-6:wy);
     }
     switch(k){
       case 'climb': l.climber=true; return true;
