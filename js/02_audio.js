@@ -228,9 +228,11 @@ const AU={
     this.stopWaterfallCave(0.05);
     if(!this.ctx||!this.on||!this.sfxOn)return;
     const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[]});
-    const body=this.loopNoise(5.8,0.018,520,{type:'lowpass',smooth:0.86,attack:0.8});
-    const spray=this.loopNoise(4.6,0.0065,2200,{type:'bandpass',q:0.55,smooth:0.62,attack:1.0});
+    const body=this.loopNoise(6.4,0.015,460,{type:'lowpass',smooth:0.90,attack:0.9});
+    const wash=this.loopNoise(5.6,0.009,880,{type:'bandpass',q:0.38,smooth:0.88,attack:1.2});
+    const spray=this.loopNoise(4.8,0.0052,2400,{type:'bandpass',q:0.50,smooth:0.68,attack:1.1});
     if(body)bank.loopNodes.push(body);
+    if(wash)bank.loopNodes.push(wash);
     if(spray)bank.loopNodes.push(spray);
   },
   // --- effekter ---
@@ -944,10 +946,24 @@ const AU={
   startMusic(kind){
     this.stopMusic();
     if(!this.ctx||!this.on||!this.musicOn)return;
+    this.applyVolumes();
     this.mus.kind=kind; this.mus.step=0; this.mus.next=this.now()+0.1;
     this.mus.timer=setInterval(()=>this.pump(),50);
   },
   stopMusic(){ if(this.mus.timer){clearInterval(this.mus.timer);this.mus.timer=null} },
+  silenceMusicForWaterfallCave(fade){
+    this.stopMusic();
+    if(!this.musGain||!this.musGain.gain)return;
+    const t=this.now(), stopDelay=fade==null?0.18:fade;
+    const p=this.musGain.gain;
+    try{
+      if(p.cancelScheduledValues)p.cancelScheduledValues(t);
+      if(p.setValueAtTime)p.setValueAtTime(Math.max(0.00005,p.value||0.0001),t);
+      if(p.linearRampToValueAtTime)p.linearRampToValueAtTime(0.00005,t+stopDelay);
+      else if(p.exponentialRampToValueAtTime)p.exponentialRampToValueAtTime(0.00005,t+stopDelay);
+      else p.value=0.00005;
+    }catch(_){try{p.value=0.00005}catch(__){}}
+  },
   pump(){
     if(!this.ctx)return;
     const P=this.PAT[this.mus.kind], stepDur=60/P.bpm/2;

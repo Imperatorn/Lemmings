@@ -135,6 +135,11 @@ Object.assign(G,{
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
       exitCam:this.cam,exitViewY:this.viewY,exitZoom:this.viewZoom
     };
+    this.waterfallCaveResumeMusic=!!AU.musicOn;
+    this.waterfallCaveResumeWeather=this.weatherKind||null;
+    if(AU.silenceMusicForWaterfallCave)AU.silenceMusicForWaterfallCave(0.18);
+    else if(AU.stopMusic)AU.stopMusic();
+    if(AU.stopWeather)AU.stopWeather();
     if(AU.startWaterfallCave)AU.startWaterfallCave();
     this.toast('BAKOM VATTENFALLET - PILARNA STYR',120);
     AU.sClick();
@@ -146,10 +151,19 @@ Object.assign(G,{
     this.waterfallCave=null;
     this.waterfallCaveExitNeedsUpRelease=reason==='walkout';
     if(AU.stopWaterfallCave)AU.stopWaterfallCave();
+    const resumeMusic=!!this.waterfallCaveResumeMusic;
+    const resumeWeather=this.waterfallCaveResumeWeather;
+    this.waterfallCaveResumeMusic=false;
+    this.waterfallCaveResumeWeather=null;
+    if(reason!=='silent'&&resumeWeather&&AU.sfxOn&&AU.startWeather)this.startWeatherAfterWaterfallCave(resumeWeather);
+    if(reason!=='silent'&&resumeMusic&&AU.musicOn&&AU.startMusic&&this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
     if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
     if(this.manual)this.manual.jumpQueued=null;
     if(reason!=='silent')this.toast('UTE UR GROTTVY');
     return true;
+  },
+  startWeatherAfterWaterfallCave(kind){
+    if(this.state==='PLAY'&&this.level&&AU.startWeather)AU.startWeather(kind||this.weatherKind);
   },
   updateWaterfallCave(){
     if(!this.waterfallCaveActive())return false;

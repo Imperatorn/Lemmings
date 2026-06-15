@@ -54,6 +54,8 @@ Object.assign(G,{
     if(!Object.prototype.hasOwnProperty.call(fields,'trollUsed'))this.trollUsed=!!fields.nuked;
     if(!this.waterfallCaveLooted||typeof this.waterfallCaveLooted!=='object')this.waterfallCaveLooted={};
     this.waterfallCaveExitNeedsUpRelease=false;
+    this.waterfallCaveResumeMusic=false;
+    this.waterfallCaveResumeWeather=null;
     this.money=Math.max(0,this.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus?this.normalizePendingSkillBonus(this.pendingSkillBonus):{};
     if(this.selSkill==='nuke')this.selSkill=null;

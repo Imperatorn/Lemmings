@@ -256,6 +256,19 @@ function drawWaterfallCaveView(c,tk){
   c.fillStyle='#05080d';
   fillPixelPoly(c,[[0,0],[95,0],[ox+34,oy+46],[ox,oy+oh],[0,CH]]);
   fillPixelPoly(c,[[CW,0],[CW-95,0],[ox+ow-34,oy+46],[ox+ow,oy+oh],[CW,CH]]);
+  c.fillStyle='#17222b';
+  for(let i=0;i<13;i++){
+    const x=102+Math.round(hash2(i+91,wf.x||0)*274);
+    const h=10+Math.round(hash2(i+93,wf.y||0)*24);
+    const w=4+(i%3);
+    fillPixelPoly(c,[[x-w,oy+2],[x+w,oy+1],[x+Math.round(w/2),oy+8+h],[x-1,oy+13+h]]);
+  }
+  c.fillStyle='#071018';
+  for(let i=0;i<10;i++){
+    const x=118+Math.round(hash2(i+119,wf.y||0)*236);
+    const h=8+Math.round(hash2(i+123,wf.x||0)*18);
+    fillPixelPoly(c,[[x-5,CH],[x-1,CH-h],[x+3,CH-h-3],[x+8,CH]]);
+  }
   c.fillStyle='#1f2b34';
   for(let i=0;i<34;i++){
     const side=i&1?-1:1;
@@ -263,12 +276,45 @@ function drawWaterfallCaveView(c,tk){
     const ry=Math.round(hash2(i+3,23)*CH);
     c.fillRect(rx,ry,18+Math.round(hash2(i+5,29)*42),2+(i%3===0?2:0));
   }
+  c.fillStyle='#314553';
+  for(let i=0;i<18;i++){
+    const side=i&1?-1:1;
+    const rx=side<0?76+Math.round(hash2(i+131,wf.x||0)*70):334+Math.round(hash2(i+133,wf.y||0)*68);
+    const ry=54+Math.round(hash2(i+137,wf.x||0)*168);
+    c.fillRect(rx,ry,10+Math.round(hash2(i+139,wf.y||0)*22),1);
+  }
+  c.globalAlpha=0.70;
+  for(let i=0;i<16;i++){
+    const side=i&1?-1:1;
+    const rx=side<0?90+Math.round(hash2(i+151,wf.x||0)*92):298+Math.round(hash2(i+153,wf.y||0)*92);
+    const ry=72+Math.round(hash2(i+157,wf.x||0)*132);
+    c.fillStyle=i%3?'#6d8b9e':'#82c7d8';
+    c.fillRect(rx,ry,2,1);
+    if(i%4===0)c.fillRect(rx+1,ry-1,1,3);
+  }
+  c.globalAlpha=1;
   c.fillStyle='#2b3a44';
   for(let i=0;i<18;i++){
     const rx=62+Math.round(hash2(i+44,wf.x||0)*(CW-124));
     const ry=222+Math.round(hash2(i+55,wf.y||0)*40);
     c.fillRect(rx,ry,18+Math.round(hash2(i+66,wf.x||0)*34),4);
   }
+  c.globalAlpha=0.32;
+  c.fillStyle='#78cde8';
+  for(let i=0;i<7;i++){
+    const px=168+Math.round(hash2(i+165,wf.x||0)*142);
+    const py=244+Math.round(hash2(i+171,wf.y||0)*28);
+    c.fillRect(px,py,16+Math.round(hash2(i+173,wf.x||0)*24),2);
+    if(i&1)c.fillRect(px+4,py-1,8,1);
+  }
+  c.globalAlpha=0.18;
+  c.fillStyle='#dff8ff';
+  for(let i=0;i<10;i++){
+    const mx=Math.round(wx-18+hash2(i+177,wf.x||0)*(waterW+36));
+    const my=oy+oh-26+Math.round(Math.sin((tk+t)*0.08+i*1.7)*5);
+    c.fillRect(mx,my,10+Math.round(hash2(i+179,wf.y||0)*18),1);
+  }
+  c.globalAlpha=1;
   c.fillStyle='#0b1118';
   fillPixelPoly(c,[[156,CH],[190,250],[232,238],[286,248],[330,CH]]);
   c.fillStyle='#67b8d8';

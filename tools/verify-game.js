@@ -230,7 +230,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -239,7 +239,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','silenceMusicForWaterfallCave']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -528,12 +528,25 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
 {
   const prevStartWaterfall = AU.startWaterfallCave;
   const prevStopWaterfall = AU.stopWaterfallCave;
+  const prevStartMusic = AU.startMusic;
+  const prevStopMusic = AU.stopMusic;
+  const prevStartWeather = AU.startWeather;
+  const prevStopWeather = AU.stopWeather;
+  const prevMusicOn = AU.musicOn;
+  const prevSfxOn = AU.sfxOn;
   const prevMoney = G.money;
   const prevPendingSkillBonus = G.pendingSkillBonus;
   const prevWaterfallLooted = G.waterfallCaveLooted;
-  let started = 0, stopped = 0;
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0;
+  const musicStarted = [], weatherStarted = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
+  AU.startMusic = kind => { musicStarted.push(kind); };
+  AU.stopMusic = () => { musicStopped++; };
+  AU.startWeather = kind => { weatherStarted.push(kind); };
+  AU.stopWeather = () => { weatherStopped++; };
+  AU.musicOn = true;
+  AU.sfxOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
   if (waterfallIdx < 0) throw new Error('Missing waterfall cave fixture level');
   G.startLevel(waterfallIdx);
@@ -545,12 +558,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.lems = [caveLem];
   G.manual = {used:true, active:true, lemId:caveLem.id, lampOn:false, keys:{left:false,right:false,down:false,run:false,aim:false}, jumpQueued:{super:false}, aimAngle:0};
   const oldTime = G.timeT;
+  const musicStoppedBeforeCave = musicStopped;
+  const weatherStoppedBeforeCave = weatherStopped;
   if (!G.findWaterfallCaveEntrance(caveLem)) throw new Error('Manual lemming did not find waterfall cave entrance');
   if (!G.tryEnterWaterfallCaveFromManual() || !G.waterfallCaveActive()) {
     throw new Error('Manual up near a waterfall did not enter the waterfall cave');
   }
   if (G.manual.jumpQueued || caveLem.fall !== 0 || caveLem.manualVy !== 0 || started !== 1) {
     throw new Error('Entering waterfall cave did not clear manual jump/fall state or start audio');
+  }
+  if (musicStopped !== musicStoppedBeforeCave + 1 || weatherStopped !== weatherStoppedBeforeCave + 1) {
+    throw new Error(`Entering waterfall cave should stop level music and weather ambient, got music=${musicStopped - musicStoppedBeforeCave} weather=${weatherStopped - weatherStoppedBeforeCave}`);
   }
   G.tick();
   if (G.timeT !== oldTime || !G.waterfallCaveActive() || G.waterfallCave.t !== 1) {
@@ -643,6 +661,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.waterfallCaveActive() || stopped < 1) {
     throw new Error('Waterfall cave did not exit when walking up to the water');
   }
+  if (musicStarted.length < 2 || weatherStarted.length < 2) {
+    throw new Error('Leaving waterfall cave should resume level music and weather ambient');
+  }
   if (!G.waterfallCaveEntryBlocked()) {
     throw new Error('Waterfall cave should block immediate re-entry until ArrowUp is released');
   }
@@ -656,9 +677,20 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.tryEnterWaterfallCaveFromManual() || !G.waterfallCaveActive()) {
     throw new Error('Waterfall cave did not allow re-entry after ArrowUp was released');
   }
+  const musicBeforeSilentExit = musicStarted.length;
+  const weatherBeforeSilentExit = weatherStarted.length;
   G.exitWaterfallCave('silent');
+  if (musicStarted.length !== musicBeforeSilentExit || weatherStarted.length !== weatherBeforeSilentExit) {
+    throw new Error('Silent waterfall cave exit should not restart music or weather');
+  }
   AU.startWaterfallCave = prevStartWaterfall;
   AU.stopWaterfallCave = prevStopWaterfall;
+  AU.startMusic = prevStartMusic;
+  AU.stopMusic = prevStopMusic;
+  AU.startWeather = prevStartWeather;
+  AU.stopWeather = prevStopWeather;
+  AU.musicOn = prevMusicOn;
+  AU.sfxOn = prevSfxOn;
   G.money = prevMoney;
   G.pendingSkillBonus = prevPendingSkillBonus;
   G.waterfallCaveLooted = prevWaterfallLooted;
