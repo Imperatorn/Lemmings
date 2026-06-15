@@ -2422,15 +2422,15 @@ const G={
       this.debris(surf.x,surf.y,Math.round(5*sc));
       return true;
     }
-    const dentR=Math.max(4,Math.round(4+sc*2));
-    if(this.T.clearDisc)this.T.clearDisc(surf.x,surf.y+Math.round(3*sc),dentR);
     this.debris(surf.x,surf.y,Math.round(4*sc));
+    const buriedPx=Math.max(1,Math.round(sc));
     this.settledTrollRockSeq=(this.settledTrollRockSeq||0)+1;
     const rock={
       id:this.settledTrollRockSeq,
       x:surf.x,
-      y:surf.y-Math.round(2*sc),
+      y:surf.y-buriedPx,
       groundY:surf.y,
+      buriedPx,
       scale:sc,
       spin:(r.spin||0)&3,
       settled:true

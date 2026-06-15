@@ -751,11 +751,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.planes = [];
   G.liquidCache = null;
   G.updateTrollRocks();
-  if (G.trollRocks.length !== 0 || G.settledTrollRocks.length !== 1 || !cleared.length) {
+  if (G.trollRocks.length !== 0 || G.settledTrollRocks.length !== 1) {
     throw new Error('Troll rock did not settle into regular ground');
+  }
+  if (cleared.length !== 0) {
+    throw new Error('Settled troll rock should not carve a visible hole below itself');
   }
   if (!G.settledTrollRocks[0].settled || G.settledTrollRocks[0].groundY !== 199) {
     throw new Error('Settled troll rock did not store a stable surface');
+  }
+  if (!(G.settledTrollRocks[0].buriedPx > 0) || G.settledTrollRocks[0].y >= G.settledTrollRocks[0].groundY) {
+    throw new Error('Settled troll rock was not marked as pressed into the ground');
   }
   G.level = prevLevel;
   G.T = prevTerrain;

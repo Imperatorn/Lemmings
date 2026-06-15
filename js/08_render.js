@@ -1330,11 +1330,25 @@ function drawSettledTrollRock(c,r,cam,tk){
   const x=Math.round(r.x-cam),y=Math.round(r.y);
   const sc=Math.max(1,r&&r.scale||1);
   if(x<-25*sc||x>VW+25*sc||y<-25*sc||y>VH+25*sc)return;
-  c.globalAlpha=0.32;
-  c.fillStyle='#12100e';
-  c.fillRect(x-Math.round(5*sc),y+Math.round(3*sc),Math.round(10*sc),Math.max(1,Math.round(2*sc)));
+  const groundY=Math.round(r.groundY==null?y+Math.round(2*sc):r.groundY);
+  const phase=(r.spin||0)&3;
+  const maxY=groundY+1;
+  const rct=(xx,yy,w,h,col)=>{
+    let px=x+Math.round(xx*sc),py=y+Math.round(yy*sc);
+    const pw=Math.max(1,Math.round(w*sc));
+    let ph=Math.max(1,Math.round(h*sc));
+    if(py>=maxY)return;
+    if(py+ph>maxY)ph=maxY-py;
+    c.fillStyle=col;c.fillRect(px,py,pw,ph);
+  };
+  rct(-3,-2,6,5,'#5a5148');
+  rct(-2,-3,4,2,'#7a7064');
+  rct(1-(phase&1),1,2,1,'#302820');
+  rct(-2+(phase===2?1:0),-2,1,1,'#b0a090');
+  c.globalAlpha=0.45;
+  c.fillStyle='#17120f';
+  c.fillRect(x-Math.round(4*sc),groundY,Math.round(8*sc),Math.max(1,Math.round(sc)));
   c.globalAlpha=1;
-  drawTrollRock(c,r,cam,tk);
 }
 
 
