@@ -100,6 +100,9 @@ if (caveRenderCode.includes('#f0d080')) {
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingFireLight') || caveRenderCode.includes('function flameLayer') || caveRenderCode.includes('fireX-72') || caveRenderCode.includes('fireX-50')) {
   throw new Error('Campfire cave render should use pixel-frame fire and lemming side-lighting instead of old rectangular light panels');
 }
+if (!caveRenderCode.includes('drawWaterfallCaveLemmingShadow') || caveRenderCode.includes('fillRect(x-54,y+13,108,8)') || caveRenderCode.includes('fillRect(lx-Math.round(8*lemScale)')) {
+  throw new Error('Campfire cave shadows should avoid the old hard rectangular shadow blocks');
+}
 if (!caveRenderCode.includes('const fallH=oh+8') || caveRenderCode.includes('oh+32')) {
   throw new Error('Deep waterfall cave opening should not drop the waterfall too far down');
 }

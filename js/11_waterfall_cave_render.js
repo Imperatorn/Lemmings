@@ -58,6 +58,27 @@ function drawWaterfallCaveLemming(c,cave,lx,ly,scale){
   c.restore();
 }
 
+function drawWaterfallCaveLemmingShadow(c,lx,ly,scale,alpha){
+  const a=alpha==null?0.30:alpha;
+  const w=Math.max(12,Math.round(12*scale));
+  const h=Math.max(2,Math.round(1.6*scale));
+  const y=Math.round(ly+1);
+  c.save();
+  c.fillStyle='#000000';
+  c.globalAlpha=a*0.72;
+  fillPixelPoly(c,[
+    [lx-Math.round(w*0.44),y+h],
+    [lx-Math.round(w*0.30),y],
+    [lx+Math.round(w*0.30),y],
+    [lx+Math.round(w*0.44),y+h],
+    [lx+Math.round(w*0.32),y+h+1],
+    [lx-Math.round(w*0.32),y+h+1]
+  ]);
+  c.globalAlpha=a*0.36;
+  c.fillRect(lx-Math.round(w*0.22),y-1,Math.round(w*0.44),1);
+  c.restore();
+}
+
 function drawLandsOfLoreCaveCover(c,cave,tk){
   const img=typeof ASSETS==='object'&&ASSETS?ASSETS.landsOfLoreCover:null;
   const loaded=!!(img&&img.complete!==false&&(img.naturalWidth||img.width));
@@ -168,9 +189,7 @@ function drawWaterfallCaveDeepView(c,cave,tk){
   c.restore();
   const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
   const lemScale=waterfallCaveLemmingScale(cave);
-  c.globalAlpha=0.35;c.fillStyle='#000000';
-  c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
-  c.globalAlpha=1;
+  drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.32);
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
   if(it.coverOpen)drawLandsOfLoreCaveCover(c,cave,tk+t);
   c.restore();
@@ -214,7 +233,6 @@ function drawWaterfallCaveCampfire(c,x,y,tk){
   c.fillStyle='#c1642d';
   fillPixelPoly(c,[[x-62,y+28],[x-38,y-6],[x+16,y-24],[x+58,y-2],[x+72,y+24],[x+32,y+36],[x-48,y+36]]);
   c.globalAlpha=1;
-  c.globalAlpha=0.38;c.fillStyle='#000000';c.fillRect(x-54,y+13,108,8);c.globalAlpha=1;
   c.fillStyle='#263038';
   for(let i=0;i<12;i++){
     const a=i*Math.PI*2/12;
@@ -314,9 +332,7 @@ function drawWaterfallCaveCampView(c,cave,tk){
   drawWaterfallCaveCampfire(c,fireX,fireY,tk+t);
   const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
   const lemScale=waterfallCaveLemmingScale(cave);
-  c.globalAlpha=0.36;c.fillStyle='#000000';
-  c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
-  c.globalAlpha=1;
+  drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.30);
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
   drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,lemScale,fireX);
   c.restore();
@@ -545,10 +561,7 @@ function drawWaterfallCaveView(c,tk){
       c.fillRect(x-1,y-7,2,3);
     }
   }
-  c.globalAlpha=0.35;
-  c.fillStyle='#000000';
-  c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
-  c.globalAlpha=1;
+  drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.30);
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
   drawTextC(c,'PENGAR '+Math.max(0,G.money|0),58,284,1,'#ffd866');
   c.restore();
