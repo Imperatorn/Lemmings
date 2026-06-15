@@ -481,6 +481,13 @@ const AU={
     this.softNoise(0.30,0.052,1800,2.2,t+0.035,{type:'bandpass',q:0.55,smooth:0.26,attack:0.025,release:0.16});
     this.tone(120,0.18,'sawtooth',0.050,1.65,t+0.01);
   },
+  sMissileLaunch(){
+    const t=this.now();
+    this.softNoise(0.10,0.060,900,1.85,t,{type:'lowpass',smooth:0.42,attack:0.004,release:0.060});
+    this.softNoise(0.34,0.042,2600,2.1,t+0.018,{type:'bandpass',q:0.72,smooth:0.18,attack:0.010,release:0.18});
+    this.tone(180,0.10,'sawtooth',0.040,1.42,t+0.006);
+    this.tone(360,0.055,'triangle',0.026,1.18,t+0.055);
+  },
   sJet(){
     const t=this.now();
     this.softNoise(0.30,0.090,520,3.4,t,{type:'lowpass',smooth:0.48,attack:0.006,release:0.15});

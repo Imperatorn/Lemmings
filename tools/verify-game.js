@@ -223,6 +223,7 @@ const requiredRuntimeMethods = [
   'initLevelRescues','openRescue','releaseRescueLemming','updateLevelRescues',
   'canUseSupplyPlanes',
   'rebindAmbientFishZones',
+  'findMonkeyById','pickMonkeyMissilePlane','launchPlaneMissileAtMonkey','updateRockets',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
@@ -238,7 +239,7 @@ for (const name of requiredRuntimeMethods) {
 for (const name of ['setMusicVolume','setSfxVolume','applyVolumes']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
-for (const name of ['sLemShiver','sLemWarmSigh']) {
+for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU lemming warmth sfx method: ${name}`);
 }
 {
@@ -265,6 +266,67 @@ for (const name of ['sLemShiver','sLemWarmSigh']) {
   G.parts = prevParts;
   G.toasts = prevToasts;
   AU.sSaved = prevSavedSfx;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevRockets = G.rockets;
+  const prevMonkeys = G.monkeys;
+  const prevPlanes = G.planes;
+  const prevParts = G.parts;
+  const prevFlashes = G.flashes;
+  const prevToasts = G.toasts;
+  const prevMonkeyEvents = G.monkeyEvents;
+  const prevMonkeyT = G.monkeyT;
+  const prevMonkeySeq = G.monkeySeq;
+  const prevMissileSfx = AU.sMissileLaunch;
+  const prevBazookaExplosion = AU.sBazookaExplosion;
+  const prevLemmingExplosion = AU.sLemmingExplosion;
+  let launched = false, exploded = false;
+  G.level = {W:300, hatch:{x:20,y:180}, water:[]};
+  G.T = {W:300,H:240,solidBox(){return false}};
+  G.rockets = [];
+  G.monkeys = [{id:1,x:160,y:80,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360}];
+  G.planes = [{x:80,y:45,vx:1,targetX:140,kind:'skill',skill:'build',dropped:false}];
+  G.parts = [];
+  G.flashes = [];
+  G.toasts = [];
+  G.monkeyEvents = 1;
+  G.monkeyT = 0;
+  G.monkeySeq = 1;
+  AU.sMissileLaunch = () => { launched = true; };
+  AU.sBazookaExplosion = () => { exploded = true; };
+  AU.sLemmingExplosion = () => {};
+  if (!G.bombMonkeyAt(160,80) || !launched || G.monkeys[0].gone) {
+    throw new Error('Bombing a monkey while a plane is active should launch a missile instead of exploding immediately');
+  }
+  if (G.rockets.length !== 1 || G.rockets[0].kind !== 'monkeyMissile' || G.rockets[0].targetMonkeyId !== 1) {
+    throw new Error('Monkey bomb did not create a plane missile targeting the monkey');
+  }
+  for (let i = 0; i < 40 && !G.monkeys[0].gone; i++) G.updateRockets();
+  if (!G.monkeys[0].gone || G.rockets.length !== 0 || !exploded) {
+    throw new Error('Plane missile did not explode the targeted monkey');
+  }
+  G.rockets = [];
+  G.monkeys = [{id:2,x:120,y:70,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360}];
+  G.planes = [];
+  if (!G.bombMonkeyAt(120,70) || !G.monkeys[0].gone || G.rockets.length !== 0) {
+    throw new Error('Bombing a monkey without an active plane should keep the direct fallback');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.rockets = prevRockets;
+  G.monkeys = prevMonkeys;
+  G.planes = prevPlanes;
+  G.parts = prevParts;
+  G.flashes = prevFlashes;
+  G.toasts = prevToasts;
+  G.monkeyEvents = prevMonkeyEvents;
+  G.monkeyT = prevMonkeyT;
+  G.monkeySeq = prevMonkeySeq;
+  AU.sMissileLaunch = prevMissileSfx;
+  AU.sBazookaExplosion = prevBazookaExplosion;
+  AU.sLemmingExplosion = prevLemmingExplosion;
 }
 if (!AU.PAT || !AU.PAT.menu || !Array.isArray(AU.PAT.menu.mel) || !Array.isArray(AU.PAT.menu.bass)) {
   throw new Error('Missing menu music pattern');

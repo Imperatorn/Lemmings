@@ -1010,6 +1010,10 @@ function drawSupplyPlane(c,a,cam,tk){
   // Propeller/nosblink.
   r(18,-1,2,2,'#303038');
   if((tk>>1)&1){r(20,-8,1,16,'#cfd8e8')}else{r(15,-1,10,1,'#cfd8e8')}
+  if(a.missileFlashT>0){
+    r(-2,8,5,2,'#ffd040');
+    r(-5,10,10,2,((tk>>1)&1)?'#ff7020':'#ff3020');
+  }
   // Hängande paket före släpp.
   if(!a.dropped){
     r(-4,7,1,5,'#dddddd');
@@ -1325,6 +1329,20 @@ function drawThrownBanana(c,b,cam,tk){
   const x=Math.round(b.x-cam),y=Math.round(b.y);
   if(x<-25||x>VW+25||y<-25||y>VH+25)return;
   drawBananaShape(c,x-2,y-2,tk+(b.spin||0),1);
+}
+function drawMonkeyMissile(c,r,cam,tk){
+  const x=Math.round(r.x-cam),y=Math.round(r.y);
+  if(x<-35||x>VW+35||y<-35||y>VH+35)return;
+  const a=Math.atan2(r.vy||0,r.vx||1);
+  c.save();
+  c.translate(x,y);
+  c.rotate(a);
+  c.fillStyle='#d8d8e8';c.fillRect(-5,-2,10,4);
+  c.fillStyle='#f0f8ff';c.fillRect(1,-1,4,2);
+  c.fillStyle='#808898';c.fillRect(-4,-4,3,2);c.fillRect(-4,2,3,2);
+  c.fillStyle=((tk>>1)&1)?'#ffd040':'#ff7020';c.fillRect(-9,-2,4,4);
+  c.fillStyle='#ff3020';c.fillRect(-12,-1,3,2);
+  c.restore();
 }
 function drawTrollRock(c,r,cam,tk){
   const x=Math.round(r.x-cam),y=Math.round(r.y);

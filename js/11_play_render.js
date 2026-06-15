@@ -46,6 +46,7 @@ function drawPlayWorld(c,L,cam,tk){
   }
   // raketer
   for(const r of G.rockets){
+    if(r.kind==='monkeyMissile'){drawMonkeyMissile(c,r,cam,tk);continue}
     const rd=r.dir||Math.sign(r.vx)||1;
     const sc=Math.max(1,r.scale||1),rw=Math.round(5*sc),rh=Math.max(2,Math.round(2*sc));
     c.fillStyle='#ccc';c.fillRect(r.x-cam-Math.round(2*sc),r.y-Math.round(sc),rw,rh);

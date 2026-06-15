@@ -83,7 +83,7 @@ const G={
   lamp:null, cleared:new Array(LEVELS.length).fill(false),
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
-  monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null,
+  monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0,
   trollT:0, trollEvents:0, trollMax:0, trollLastX:null,
   treeT:0, treeEvents:0, treeMax:0, treeLastX:null,
   jumpT:0, jumpEvents:0, jumpMax:0, megaBoom:null, megaArmed:null, eventLockT:0, shakeT:0, shakePow:0,
@@ -520,7 +520,7 @@ const G={
     this.monkeyT=Math.round((18+this.rand()*22)*1000/TICK);
     this.monkeyEvents=0;
     this.monkeyMax=darkNoCreatures?0:Math.max(0,Math.min(cfg.monkeyCap,Math.floor(L.time/130)+1));
-    this.monkeyLastX=null;
+    this.monkeyLastX=null;this.monkeySeq=0;
     this.trollT=Math.round((34+this.rand()*42)*TROLL_EVENT_SLOWDOWN*1000/TICK);
     this.trollEvents=0;
     this.trollMax=darkNoCreatures?0:Math.max(0,Math.min(cfg.trollCap||0,(this.levelIdx<10?1:Math.floor(L.time/210)+1)));
@@ -1814,6 +1814,7 @@ const G={
       for(const a of this.planes){
         if(a.wrecked){this.updateWreckedSupplyPlane(a);continue}
         if(a.crashing){this.updateCrashingSupplyPlane(a);continue}
+        if(a.missileFlashT>0)a.missileFlashT--;
         a.x+=a.vx;
         if(a.x>this.cam-120&&a.x<this.cam+this.viewW()+120)AU.sPlane();
         if(!a.dropped&&((a.vx>0&&a.x>=a.targetX)||(a.vx<0&&a.x<=a.targetX))){
@@ -1909,6 +1910,7 @@ const G={
     }
     throwSchedule.sort((a,b)=>a-b);
     this.monkeys.push({
+      id:(this.monkeySeq=(this.monkeySeq||0)+1),
       x:startX,y,dir,vx:dir*speed,age:0,throwSchedule,throwIndex:0,
       bananaCount,travelFrames,endX:dir>0?L.W+78:-78
     });
@@ -2011,6 +2013,38 @@ const G={
     }
     return best;
   },
+  findMonkeyById(id){
+    return (this.monkeys||[]).find(m=>m&&!m.gone&&m.id===id)||null;
+  },
+  pickMonkeyMissilePlane(m){
+    if(!m)return null;
+    let best=null,bestScore=Infinity;
+    for(const a of this.planes||[]){
+      if(!a||a.crashing||a.wrecked)continue;
+      const dx=Math.abs(a.x-m.x),dy=Math.abs(a.y-m.y);
+      const score=dx+dy*0.65+(a.dropped?22:0);
+      if(score<bestScore){best=a;bestScore=score}
+    }
+    return best;
+  },
+  launchPlaneMissileAtMonkey(m){
+    if(!m||m.gone)return false;
+    const a=this.pickMonkeyMissilePlane(m);
+    if(!a)return false;
+    if(!m.id)m.id=(this.monkeySeq=(this.monkeySeq||0)+1);
+    const sx=a.x,sy=a.y+8;
+    const dx=m.x-sx,dy=(m.y-3)-sy,dist=Math.max(1,Math.hypot(dx,dy));
+    const speed=7.2;
+    this.rockets.push({
+      kind:'monkeyMissile',x:sx,y:sy,vx:dx/dist*speed,vy:dy/dist*speed,g:0,
+      life:Math.max(28,Math.ceil(dist/speed)+24),dir:dx>=0?1:-1,scale:1,
+      targetMonkeyId:m.id,speed,hit:false
+    });
+    a.missileFlashT=8;
+    this.toast('MISSIL AVFYRAD MOT APAN!');
+    if(AU.sMissileLaunch)AU.sMissileLaunch();else AU.sBazooka();
+    return true;
+  },
   dismissMonkey(m,kind,x,y){
     if(!m||m.gone)return false;
     const px=x==null?m.x:x, py=y==null?m.y:clamp(y,12,VH-8);
@@ -2024,12 +2058,14 @@ const G={
         col:RND()<0.45?'#8a512c':(RND()<0.70?'#c58b55':'#ffd040'),glow:RND()<0.25});
     }
     if(kind==='rock'){AU.sPop();this.toast('TROLLET SKRÄMDE BORT APAN!')}
+    else if(kind==='missile'){AU.sBazookaExplosion();this.toast('MISSILEN SPRÄNGDE APAN!')}
     else{AU.sLemmingExplosion();this.toast('APAN SPRÄNGD - DEN KOMMER TILLBAKA SENARE')}
     return true;
   },
   bombMonkeyAt(wx,wy){
     const m=this.findMonkeyTarget(wx,wy);
     if(!m)return false;
+    if(this.launchPlaneMissileAtMonkey(m))return true;
     return this.dismissMonkey(m,'bomb',wx,wy);
   },
   updateMonkeyEvents(){
@@ -2081,6 +2117,68 @@ const G={
       }
     }
     this.bananas=this.bananas.filter(b=>!b.hit);
+  },
+  updateRockets(){
+    const T=this.T,L=this.level;
+    if(!T||!L)return;
+    for(const r of this.rockets||[]){
+      r.life--;
+      if(r.kind==='monkeyMissile'){
+        const speed=r.speed||7.2;
+        const steer=()=>{
+          const m=this.findMonkeyById(r.targetMonkeyId);
+          if(!m)return null;
+          const tx=m.x,ty=m.y-3;
+          const dx=tx-r.x,dy=ty-r.y,dist=Math.max(1,Math.hypot(dx,dy));
+          r.vx=r.vx*0.64+(dx/dist)*speed*0.36;
+          r.vy=r.vy*0.64+(dy/dist)*speed*0.36;
+          const v=Math.max(0.1,Math.hypot(r.vx,r.vy));
+          r.vx=r.vx/v*speed;r.vy=r.vy/v*speed;
+          r.dir=r.vx>=0?1:-1;
+          return m;
+        };
+        let m=steer();
+        if(!m){r.hit=true;continue}
+        const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
+        for(let i=0;i<steps&&!r.hit;i++){
+          r.x+=r.vx/steps;r.y+=r.vy/steps;
+          m=this.findMonkeyById(r.targetMonkeyId);
+          if(!m){r.hit=true;break}
+          if(Math.hypot(m.x-r.x,(m.y-3)-r.y)<=8){
+            this.dismissMonkey(m,'missile',r.x,r.y);
+            r.hit=true;
+          }else if(T.solidBox&&T.solidBox(r.x,r.y,2)){
+            this.explode(r.x,r.y,18,true,'bazooka');
+            r.hit=true;
+          }
+          if(!r.hit&&(r.x<2||r.x>L.W-2||r.y<-20||r.y>T.H+20||r.life<=0))r.hit=true;
+        }
+        if(!r.hit&&this.parts.length<400){
+          this.parts.push({x:r.x-r.vx*0.35,y:r.y-r.vy*0.35,vx:-r.vx*0.035,vy:-r.vy*0.035,life:7,g:0,col:'#ffb040',glow:true});
+        }
+        continue;
+      }
+      r.vy+=(r.g||0);
+      const rScale=Math.max(1,r.scale||1),hitR=Math.max(2,Math.round(2*rScale));
+      const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
+      for(let i=0;i<steps&&!r.hit;i++){
+        r.x+=r.vx/steps;r.y+=r.vy/steps;
+        if(this.hitDecorTargetAt(r.x,r.y,Math.max(10,hitR+7))){
+          r.hit=true;
+        }else if(this.isInGoalZone(r.x,r.y,2)){
+          this.goalSpark(r.x,r.y);
+          r.hit=true;
+        }else if(T.solidBox(r.x,r.y,hitR)){
+          if(this.isInGoalZone(r.x,r.y,24*rScale))this.goalSpark(r.x,r.y);
+          else this.explode(r.x,r.y,30*rScale,true,'bazooka');
+          r.hit=true;
+        }
+        if(!r.hit&&(r.x<2||r.x>L.W-2||r.y<0||r.y>T.H+20||r.life<=0))r.hit=true;
+      }
+      if(!r.hit&&this.parts.length<400)
+        this.parts.push({x:r.x-(r.dir||Math.sign(r.vx))*3,y:r.y,vx:0,vy:-0.2,life:7,g:0,col:'#aaaaaa'});
+    }
+    this.rockets=(this.rockets||[]).filter(r=>!r.hit);
   },
 
 
@@ -2890,30 +2988,7 @@ const G={
     this.updateMeteors();
     this.updateHooksAndRopes();
     this.updateCaveDrips();
-    // raketer
-    for(const r of this.rockets){
-      r.life--;
-      r.vy+=(r.g||0);
-      const rScale=Math.max(1,r.scale||1),hitR=Math.max(2,Math.round(2*rScale));
-      const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
-      for(let i=0;i<steps&&!r.hit;i++){
-        r.x+=r.vx/steps;r.y+=r.vy/steps;
-        if(this.hitDecorTargetAt(r.x,r.y,Math.max(10,hitR+7))){
-          r.hit=true;
-        }else if(this.isInGoalZone(r.x,r.y,2)){
-          this.goalSpark(r.x,r.y);
-          r.hit=true;
-        }else if(this.T.solidBox(r.x,r.y,hitR)){
-          if(this.isInGoalZone(r.x,r.y,24*rScale))this.goalSpark(r.x,r.y);
-          else this.explode(r.x,r.y,30*rScale,true,'bazooka');
-          r.hit=true;
-        }
-        if(!r.hit&&(r.x<2||r.x>L.W-2||r.y<0||r.y>T.H+20||r.life<=0))r.hit=true;
-      }
-      if(!r.hit&&this.parts.length<400)
-        this.parts.push({x:r.x-(r.dir||Math.sign(r.vx))*3,y:r.y,vx:0,vy:-0.2,life:7,g:0,col:'#aaaaaa'});
-    }
-    this.rockets=this.rockets.filter(r=>!r.hit);
+    this.updateRockets();
     this.updateDecorPhysics();
     // partiklar
     for(const p of this.parts){p.x+=p.vx;p.y+=p.vy;p.vy+=p.g||0;p.life--}
