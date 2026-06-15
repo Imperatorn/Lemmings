@@ -1300,17 +1300,19 @@ function drawMeteors(c,cam,tk){
 
 function drawSkyBird(c,x,y,tk,seed){
   x=Math.round(x);y=Math.round(y);
-  const phase=tk*0.045+seed*0.73;
-  const wing=Math.round(Math.sin(phase)*2);
-  const tail=wing>0?1:0;
-  c.fillRect(x+6,y,3,1);
-  c.fillRect(x+8,y-1,1,1);
-  c.fillRect(x+4,y+tail,2,1);
-  c.fillRect(x,y+wing,5,1);
-  c.fillRect(x+9,y-wing,5,1);
-  if(Math.abs(wing)>=2){
-    c.fillRect(x+1,y+wing+(wing>0?1:-1),3,1);
-    c.fillRect(x+10,y-wing+(wing>0?-1:1),3,1);
+  const frame=((Math.floor(tk/18+seed*1.7)%4)+4)%4;
+  c.fillRect(x+6,y,4,1);
+  c.fillRect(x+9,y-1,1,1);
+  c.fillRect(x+4,y,2,1);
+  if(frame===0){
+    c.fillRect(x+4,y-1,2,1);c.fillRect(x+2,y-2,3,1);c.fillRect(x,y-3,3,1);
+    c.fillRect(x+10,y-1,2,1);c.fillRect(x+11,y-2,3,1);c.fillRect(x+13,y-3,3,1);
+  }else if(frame===2){
+    c.fillRect(x+4,y+1,2,1);c.fillRect(x+2,y+2,3,1);c.fillRect(x,y+3,3,1);
+    c.fillRect(x+10,y+1,2,1);c.fillRect(x+11,y+2,3,1);c.fillRect(x+13,y+3,3,1);
+  }else{
+    c.fillRect(x,y-1,5,1);c.fillRect(x+1,y,4,1);
+    c.fillRect(x+10,y-1,5,1);c.fillRect(x+10,y,4,1);
   }
 }
 
