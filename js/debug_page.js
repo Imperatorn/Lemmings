@@ -478,6 +478,18 @@
       const t=G.spawnTroll({entry:{x,y:G.trollGroundY(x),dir:x<G.level.W/2?1:-1}});
       renderDebug();setStatus(t?'Troll spawnat nära kameran.':'Troll är avstängt på mörka/grottnivåer.',t?'ok':'warn');return;
     }
+    if(action==='spawnMushroom'){
+      const x=clamp(Math.round(G.cam+VW/2),8,G.level.W-8);
+      const y=groundYAt(x);
+      G.decor.push({t:'mush',x,y,v:RND()});
+      renderDebug();setStatus('Svamp spawnad vid kamerans mitt.','ok');return;
+    }
+    if(action==='spawnTree'){
+      const x=clamp(Math.round(G.cam+VW/2),42,G.level.W-42);
+      const baseY=G.findTreeGroundY?G.findTreeGroundY(x):groundYAt(x);
+      const tree=G.spawnGrowingTreeAt?G.spawnGrowingTreeAt(x,baseY,'DEBUG: TRAD VAXER!'):null;
+      renderDebug();setStatus(tree?'Trad skapat vid kamerans mitt.':'Kunde inte skapa trad har.',tree?'ok':'warn');return;
+    }
   }
 
   function makeButton(label,fn,cls){
