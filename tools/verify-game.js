@@ -244,7 +244,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -690,12 +690,22 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.waterfallCave.lemX = deepItem.x + 34;
   G.waterfallCave.lemY = deepItem.y + 10;
   G.tick();
+  if (deepItem.coverOpen || deepItem.near) {
+    throw new Error('Deep cave game cover opens before the lemmel reaches the item');
+  }
+  G.waterfallCave.lemX = deepItem.x + 18;
+  G.waterfallCave.lemY = deepItem.y + 8;
+  G.tick();
   if (!deepItem.coverOpen || !deepItem.near) {
-    throw new Error('Deep cave game cover did not open across a forgiving hitbox');
+    throw new Error('Deep cave game cover did not open near the item');
   }
   G.handleWaterfallCaveInput({x:240,y:150}, 'click');
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'back') {
+    throw new Error('Deep cave game cover did not flip when clicking the visible cover');
+  }
+  G.handleWaterfallCaveInput({x:20,y:20}, 'click');
   if (deepItem.coverOpen || !deepItem.dismissedNear) {
-    throw new Error('Deep cave game cover did not close on click');
+    throw new Error('Deep cave game cover did not close on an outside click');
   }
   G.waterfallCave.lemX = deepItem.x - 72;
   G.waterfallCave.lemY = deepItem.y;
@@ -723,9 +733,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Deep cave game cover did not arm closing after movement key release');
   }
   G.handleWaterfallCaveKey('ArrowRight');
-  if (deepItem.coverOpen || G.waterfallCave.keys.right) {
-    throw new Error('Deep cave game cover should close and consume the first movement key after release');
+  if (deepItem.coverOpen || !G.waterfallCave.keys.right) {
+    throw new Error('Deep cave game cover should close and begin movement on the first movement key after release');
   }
+  G.handleWaterfallCaveKeyUp('ArrowRight');
   G.waterfallCave.lemX = deepItem.x + 70;
   G.waterfallCave.lemY = deepItem.y;
   G.tick();
@@ -737,6 +748,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.tick();
   if (!deepItem.coverOpen || deepItem.coverSide !== 'front') {
     throw new Error('Deep cave game cover did not reopen on a later visit');
+  }
+  G.handleWaterfallCaveKey('v');
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'back') {
+    throw new Error('Deep cave game cover did not flip with the V key');
+  }
+  G.handleWaterfallCaveKey('v');
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'front') {
+    throw new Error('Deep cave game cover did not flip back with the V key');
   }
   G.handleWaterfallCaveKey('Enter');
   if (!deepItem.coverOpen || deepItem.coverSide !== 'back') {

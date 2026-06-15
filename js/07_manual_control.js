@@ -178,6 +178,22 @@ Object.assign(G,{
     it.coverCloseArmed=false;
     return true;
   },
+  setWaterfallCaveMoveKey(cave,key,value){
+    const k=cave.keys||(cave.keys={});
+    if(key==='ArrowLeft')k.left=value;
+    else if(key==='ArrowRight')k.right=value;
+    else if(key==='ArrowUp')k.up=value;
+    else if(key==='ArrowDown')k.down=value;
+    return key==='ArrowLeft'||key==='ArrowRight'||key==='ArrowUp'||key==='ArrowDown';
+  },
+  toggleWaterfallCaveDeepItemCover(it){
+    if(!it||!it.coverOpen)return false;
+    it.coverSide=it.coverSide==='back'?'front':'back';
+    return true;
+  },
+  waterfallCaveCoverRect(){
+    return {x:150,y:30,w:180,h:225};
+  },
   updateWaterfallCave(){
     if(!this.waterfallCaveActive())return false;
     const cave=this.waterfallCave;
@@ -227,10 +243,14 @@ Object.assign(G,{
     if(cave.scene==='deep'){
       const it=cave.deepItem||(cave.deepItem={x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front'});
       const ix=Math.abs((cave.lemX||0)-it.x),iy=Math.abs((cave.lemY||0)-it.y);
-      const near=(ix/46)*(ix/46)+(iy/34)*(iy/34)<=1;
-      const far=(ix/62)*(ix/62)+(iy/48)*(iy/48)>1;
+      const near=(ix/30)*(ix/30)+(iy/20)*(iy/20)<=1;
+      const leftResetZone=(ix/38)*(ix/38)+(iy/26)*(iy/26)>=1;
       it.near=near;
-      if(far){it.dismissedNear=false;if(it.coverOpen)it.coverOpen=false;it.coverCloseArmed=false}
+      if(leftResetZone){
+        it.dismissedNear=false;
+        if(it.coverOpen)it.coverOpen=false;
+        it.coverCloseArmed=false;
+      }
       if(it.near&&!it.dismissedNear&&!it.coverOpen){
         it.coverOpen=true;
         it.coverCloseArmed=!this.waterfallCaveMovementHeld(cave);
@@ -250,7 +270,12 @@ Object.assign(G,{
   handleWaterfallCaveInput(p,kind){
     if(!this.waterfallCaveActive())return false;
     const it=this.waterfallCave.deepItem;
-    if(it&&it.coverOpen){this.closeWaterfallCaveDeepItem(it);return true}
+    if(it&&it.coverOpen){
+      const r=this.waterfallCaveCoverRect();
+      if(p&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h)this.toggleWaterfallCaveDeepItemCover(it);
+      else this.closeWaterfallCaveDeepItem(it);
+      return true;
+    }
     if(kind==='silent')this.exitWaterfallCave('silent');
     return true;
   },
@@ -259,8 +284,8 @@ Object.assign(G,{
     const cave=this.waterfallCave;
     const it=cave.deepItem;
     if(it&&it.coverOpen){
-      if(key===' '||key==='Enter'){
-        it.coverSide=it.coverSide==='back'?'front':'back';
+      if(key===' '||key==='Spacebar'||key==='Enter'||key==='v'||key==='V'){
+        this.toggleWaterfallCaveDeepItemCover(it);
         return true;
       }
       if(key==='Escape'){
@@ -269,27 +294,20 @@ Object.assign(G,{
       }
       if(it.coverCloseArmed){
         this.closeWaterfallCaveDeepItem(it);
+        if(this.setWaterfallCaveMoveKey(cave,key,true))return true;
         return true;
       }
       return true;
     }
-    const k=cave.keys||(cave.keys={});
-    if(key==='ArrowLeft')k.left=true;
-    else if(key==='ArrowRight')k.right=true;
-    else if(key==='ArrowUp')k.up=true;
-    else if(key==='ArrowDown')k.down=true;
-    else if(key==='Escape'){
+    if(this.setWaterfallCaveMoveKey(cave,key,true))return true;
+    if(key==='Escape'){
       this.exitWaterfallCave('key');
     }
     return true;
   },
   handleWaterfallCaveKeyUp(key){
     if(!this.waterfallCaveActive())return false;
-    const k=this.waterfallCave.keys||(this.waterfallCave.keys={});
-    if(key==='ArrowLeft')k.left=false;
-    else if(key==='ArrowRight')k.right=false;
-    else if(key==='ArrowUp')k.up=false;
-    else if(key==='ArrowDown')k.down=false;
+    this.setWaterfallCaveMoveKey(this.waterfallCave,key,false);
     const it=this.waterfallCave.deepItem;
     if(it&&it.coverOpen&&!it.coverCloseArmed&&!this.waterfallCaveMovementHeld(this.waterfallCave))it.coverCloseArmed=true;
     this.releaseWaterfallCaveEntryBlock(key);
