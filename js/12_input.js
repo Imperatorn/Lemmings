@@ -24,7 +24,7 @@ function updateCanvasCursor(){
   // I spelvärlden ritar vi egen markeringsruta. I HUD/menyer ska användaren se
   // vanlig muspekare så knapparna går att pricka utan att pekaren försvinner.
   if(!cvs||!cvs.style)return;
-  const showNative=(G.cutsceneActive&&G.cutsceneActive())||G.state!=='PLAY'||G.my>=HUDY||G.showHelp||G.paused||GAME_ERROR;
+  const showNative=(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive())||G.state!=='PLAY'||G.my>=HUDY||G.showHelp||G.paused||GAME_ERROR;
   cvs.style.cursor=showNative?'default':'none';
 }
 function refreshPointer(p){
@@ -52,6 +52,7 @@ function pressAt(p){
   refreshPointer(p);
   AU.init();
   if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
+  if(G.waterfallCaveActive&&G.waterfallCaveActive()){G.handleWaterfallCaveInput(p,'click');return}
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'click');return}
   if(G.state==='TITLE'){G.state='MENU';AU.sClick();AU.startMusic('menu');return}
   if(G.state==='MENU'){
@@ -109,6 +110,7 @@ function rightClickAt(p){
   refreshPointer(p);
   AU.init();
   if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
+  if(G.waterfallCaveActive&&G.waterfallCaveActive()){G.handleWaterfallCaveInput(p,'context');return}
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'context');return}
   if(G.state==='PLAY'&&p.y<VH){
     const wp=G.screenToWorld(p);
@@ -117,7 +119,7 @@ function rightClickAt(p){
 }
 const ACTIVE_POINTERS=new Map();
 let DRAG=null,PINCH=null;
-function playWorldPoint(p){return !(G.cutsceneActive&&G.cutsceneActive())&&G.state==='PLAY'&&p.y<VH}
+function playWorldPoint(p){return !(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive())&&G.state==='PLAY'&&p.y<VH}
 function startPointerAction(id,p,kind){
   refreshPointer(p);
   ACTIVE_POINTERS.set(id,{x:p.x,y:p.y,world:playWorldPoint(p),kind:kind||'pointer'});
@@ -219,6 +221,7 @@ function bindInput(){
 bindInput();
 window.addEventListener('keydown',e=>{
   if(e.key==='f'||e.key==='F'){toggleFullscreen();e.preventDefault();return}
+  if(G.waterfallCaveActive&&G.waterfallCaveActive()){G.handleWaterfallCaveKey(e.key);e.preventDefault();return}
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneKey(e.key);e.preventDefault();return}
   if(e.key==='h'||e.key==='H'){G.toggleHelp();e.preventDefault();return}
   if(e.key==='k'||e.key==='K'){if(G.state==='MENU'||G.state==='BRIEF'||G.state==='TITLE'){G.toggleMode()}else G.toast('LÄGE ÄNDRAS I MENYN');e.preventDefault();return}
@@ -234,7 +237,7 @@ window.addEventListener('keydown',e=>{
       if(e.key==='ArrowLeft'){if(!G.cancelManualSkillWithInput('left'))G.setManualKey('left',true);e.preventDefault();return}
       if(e.key==='ArrowRight'){if(!G.cancelManualSkillWithInput('right'))G.setManualKey('right',true);e.preventDefault();return}
       if(e.key==='ArrowDown'){G.setManualKey('down',true);e.preventDefault();return}
-      if(e.key==='ArrowUp'){if(!G.cancelManualSkillWithInput('up'))G.queueManualJump(G.manual&&G.manual.keys&&G.manual.keys.down);e.preventDefault();return}
+      if(e.key==='ArrowUp'){if(!G.tryEnterWaterfallCaveFromManual||!G.tryEnterWaterfallCaveFromManual())if(!G.cancelManualSkillWithInput('up'))G.queueManualJump(G.manual&&G.manual.keys&&G.manual.keys.down);e.preventDefault();return}
       if(e.key==='Shift'){G.setManualKey('run',true);e.preventDefault();return}
       if(e.key==='l'||e.key==='L'){G.toggleManualLamp();e.preventDefault();return}
     }
@@ -267,6 +270,7 @@ window.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('keyup',e=>{
+  if(G.waterfallCaveActive&&G.waterfallCaveActive()){e.preventDefault();return}
   if(G.cutsceneActive&&G.cutsceneActive()){e.preventDefault();return}
   if(G.state==='PLAY'&&G.isManualActive&&G.isManualActive()){
     if(e.key==='ArrowLeft'){G.setManualKey('left',false);e.preventDefault();return}

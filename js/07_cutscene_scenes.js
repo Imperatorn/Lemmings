@@ -39,6 +39,17 @@
       levelName:L&&L.name?String(L.name):''
     },extra||{});
   }
+  function shouldSuppressClimbCutscene(l,kind){
+    if(!l)return false;
+    const now=Number.isFinite(G.weatherT)?G.weatherT:0;
+    const prev=l.climbCutscene||null;
+    const px=Number.isFinite(l.x)?Math.round(l.x):0, py=Number.isFinite(l.y)?Math.round(l.y):0;
+    if(prev&&prev.kind===kind&&now-(prev.t||0)<Math.round(9000/TICK)&&Math.abs((prev.x||0)-px)<=18&&Math.abs((prev.y||0)-py)<=28){
+      return true;
+    }
+    l.climbCutscene={kind,x:px,y:py,t:now};
+    return false;
+  }
   function cutsceneWorldContext(cs){
     const ev=(cs&&cs.spec&&cs.spec.event)||{};
     const L=G.level||{};
@@ -712,6 +723,7 @@
   }
   function playWaterClimbCutscene(l,z,mode){
     if(G.cutsceneActive&&G.cutsceneActive())return null;
+    if(shouldSuppressClimbCutscene(l,'water'))return null;
     const spec=makeWaterClimbCutsceneSpec(mode||'fullscreen');
     spec.event=makeCutsceneWorldContext(l,z,{
       lemX:l&&Number.isFinite(l.x)?Math.round(l.x):null,
@@ -725,6 +737,7 @@
   }
   function playClimbCutscene(l,mode){
     if(G.cutsceneActive&&G.cutsceneActive())return null;
+    if(shouldSuppressClimbCutscene(l,'wall'))return null;
     const spec=makeClimbCutsceneSpec(mode||'fullscreen');
     spec.event=makeCutsceneWorldContext(l,null,{
       lemX:l&&Number.isFinite(l.x)?Math.round(l.x):null,

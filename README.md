@@ -202,6 +202,21 @@ Det här är de viktigaste sakerna att känna till innan du fortsätter utveckla
   `js/07_game.js`. Repet ska lossna om ankarmaterialet sprängs bort, och när en
   lemmel börjar klättra i rep ska tidigare sim-/fallskärmsliknande status inte
   ligga kvar och störa.
+- Apor, flygplan och missiler har ett särskilt flöde: om spelaren använder bomb
+  på en apa när ett flygplan är aktivt skjuter planet en missil mot apan. Finns
+  inget aktivt flygplan köas flygstöd till nästa flygplanspassage, och planet
+  kan då skjuta alla apor som finns under överflygningen. Grottbanor ska inte
+  skapa apor eller flygplan.
+- Trollstenar som landar på vanlig mark kan bli kvar som små hinder. De ska inte
+  landa på trappor, inte staplas för tätt, och lemlar ska alltid kunna ta sig
+  över dem med den korta `VAULT`-animationen i `js/05_lemming.js`.
+- Räddningsburar ska öppnas utan att ta bort terräng under buren. Buren bör
+  hänga en bit ovanför marken, knappen ska stå på stöd, och den öppna grafiken
+  ritas i `js/08_render.js`.
+- Det finns ett experimentellt radio-/taltest i `debug.html` under
+  `Ljudeffekter -> Radio`. Det använder webbläsarens Web Speech API och är bara
+  en prototyp; för konsekvent basröst/komradio i själva spelet bör man hellre
+  använda förgenererade ljudfiler via en riktig ljudasset-laddare.
 - Håll debugscener kontrollerade. Bygg gärna en liten temporär testplattform
   eller vägg i debugläget, men ändra inte nivådata bara för att en debuganimation
   ska fungera.

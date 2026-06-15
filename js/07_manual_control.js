@@ -88,6 +88,74 @@ Object.assign(G,{
     this.toast(this.manual.lampOn?'DIREKTLAMPA PÅ':'DIREKTLAMPA AV');
     return true;
   },
+  waterfallCaveActive(){return !!(this.waterfallCave&&this.waterfallCave.active)},
+  findWaterfallCaveEntrance(l){
+    if(!l||!l.alive||!l.alive()||!this.decor)return null;
+    const sc=Math.max(1,l.scale||1);
+    let best=null,bestScore=Infinity;
+    for(const wf of this.decor){
+      if(!wf||wf.t!=='waterfall'||wf.remove)continue;
+      const w=wf.w||28,h=wf.h||130,top=wf.y||0,base=top+h;
+      const dx=Math.abs(l.x-wf.x);
+      const inCurtain=dx<=w/2+10*sc&&l.y>=top+28&&l.y<=base+16*sc;
+      const atSplash=dx<=w/2+16*sc&&Math.abs(l.y-base)<=20*sc;
+      if(!inCurtain&&!atSplash)continue;
+      const score=dx+Math.abs(l.y-Math.min(base,l.y))*0.25;
+      if(score<bestScore){best=wf;bestScore=score}
+    }
+    return best;
+  },
+  tryEnterWaterfallCaveFromManual(){
+    if(!this.isManualActive()||this.waterfallCaveActive())return false;
+    const l=this.manualLem&&this.manualLem();
+    if(!l||!l.alive||!l.alive()||l.state!=='MANUAL')return false;
+    const wf=this.findWaterfallCaveEntrance(l);
+    return wf?this.enterWaterfallCave(l,wf):false;
+  },
+  enterWaterfallCave(l,wf){
+    if(!l||!wf)return false;
+    if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
+    if(this.manual)this.manual.jumpQueued=null;
+    l.manualVy=0;l.fall=0;l.jumpT=0;l.jumpVy=0;l.manualMoving=false;
+    this.clearRopeAim();
+    this.waterfallCave={
+      active:true,t:0,lemId:l.id,
+      wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
+      exitCam:this.cam,exitViewY:this.viewY,exitZoom:this.viewZoom
+    };
+    if(AU.startWaterfallCave)AU.startWaterfallCave();
+    this.toast('BAKOM VATTENFALLET - NED/ESC/ENTER: UT',120);
+    AU.sClick();
+    return true;
+  },
+  exitWaterfallCave(reason){
+    if(!this.waterfallCaveActive())return false;
+    this.waterfallCave.active=false;
+    this.waterfallCave=null;
+    if(AU.stopWaterfallCave)AU.stopWaterfallCave();
+    if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
+    if(this.manual)this.manual.jumpQueued=null;
+    if(reason!=='silent')this.toast('UTE UR GROTTVY');
+    return true;
+  },
+  updateWaterfallCave(){
+    if(!this.waterfallCaveActive())return false;
+    this.waterfallCave.t++;
+    return true;
+  },
+  handleWaterfallCaveInput(p,kind){
+    if(!this.waterfallCaveActive())return false;
+    this.exitWaterfallCave(kind==='silent'?'silent':'input');
+    return true;
+  },
+  handleWaterfallCaveKey(key){
+    if(!this.waterfallCaveActive())return false;
+    if(key==='Escape'||key==='Enter'||key===' '||key==='ArrowDown'||key==='ArrowUp'){
+      this.exitWaterfallCave('key');
+      return true;
+    }
+    return true;
+  },
   updateManualState(){
     const m=this.manual;
     if(!m||!m.active)return;

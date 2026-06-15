@@ -38,7 +38,9 @@ Object.assign(G,{
   restoreSaveState(s){
     if(!s||s.v!==1||!LEVELS[s.levelIdx]){this.toast('SPARLÄGET GÅR INTE ATT LADDA');return false}
     if(this.clearCutscene)this.clearCutscene('restore');
+    if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     AU.stopMusic();AU.stopWeather();
+    if(AU.stopWaterfallCave)AU.stopWaterfallCave();
     this.levelIdx=s.levelIdx|0;
     this.levelSeed=s.levelSeed>>>0;
     this.levelRng=rndSeed(this.levelSeed||1337);

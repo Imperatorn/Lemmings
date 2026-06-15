@@ -134,6 +134,98 @@ function drawPlayWorld(c,L,cam,tk){
   c.restore();
 }
 
+function drawWaterfallCaveView(c,tk){
+  const cave=G.waterfallCave;
+  if(!cave||!cave.active)return false;
+  const wf=cave.wf||{}, t=cave.t||0;
+  c.save();
+  c.fillStyle='#030508';
+  c.fillRect(0,0,CW,CH);
+
+  const ox=88,oy=28,ow=304,oh=194;
+  const skyA=G.level&&G.level.night?'#071226':'#234766';
+  const skyB=G.level&&G.level.night?'#10213a':'#79a8c8';
+  for(let y=0;y<oh;y+=4){
+    c.fillStyle=y<oh*0.45?skyA:skyB;
+    c.fillRect(ox,oy+y,ow,4);
+  }
+  c.fillStyle=G.level&&G.level.theme==='desert'?'#c58a45':'#233a35';
+  fillPixelPoly(c,[[ox,oy+154],[ox+70,oy+112],[ox+138,oy+144],[ox+214,oy+98],[ox+ow,oy+148],[ox+ow,oy+oh],[ox,oy+oh]]);
+  c.fillStyle=G.level&&G.level.theme==='city'?'#222936':'#122516';
+  for(let i=0;i<12;i++){
+    const tx=ox+18+i*24+Math.round(hash2(i,wf.x||0)*9);
+    const th=12+Math.round(hash2(i+8,wf.y||0)*22);
+    if(G.level&&G.level.theme==='city'){
+      c.fillRect(tx,oy+150-th,16,th);
+      c.fillStyle='#e8d080';
+      if(i%2)c.fillRect(tx+5,oy+153-th,3,4);
+      c.fillStyle='#222936';
+    }else{
+      c.fillRect(tx,oy+150-th,4,th);
+      c.fillRect(tx-7,oy+151-th,18,5);
+      c.fillRect(tx-5,oy+146-th,14,5);
+    }
+  }
+
+  const waterW=72,wx=ox+ow/2-waterW/2,wy=oy-8,wh=oh+34;
+  c.globalAlpha=0.36;
+  c.fillStyle='#b8efff';
+  c.fillRect(wx,wy,waterW,wh);
+  for(let i=0;i<waterW;i+=4){
+    const sx=Math.round(wx+i+Math.sin((tk+t)*0.13+i*0.49+(wf.v||0)*9)*3);
+    const phase=((tk+t)*2+i*9)%22;
+    c.globalAlpha=0.34+0.24*hash2(i+13,wf.x||0);
+    c.fillStyle=i%8?'#7fc8e8':'#e8fbff';
+    for(let yy=wy+phase-22;yy<wy+wh;yy+=22){
+      const sy=Math.max(wy,Math.round(yy)),sh=Math.min(13,wy+wh-sy);
+      if(sh>0)c.fillRect(sx,sy,2,sh);
+    }
+  }
+  c.globalAlpha=0.25;
+  c.fillStyle='#ffffff';
+  for(let i=0;i<24;i++){
+    const mx=wx+Math.round(hash2(i+31,wf.x||0)*waterW);
+    const my=oy+oh-14+Math.round(Math.sin((tk+t)*0.12+i)*6);
+    c.fillRect(mx,my,2+(i%3),1);
+  }
+  c.globalAlpha=1;
+
+  c.fillStyle='#111821';
+  c.fillRect(0,0,CW,oy+6);
+  c.fillRect(0,0,ox+10,CH);
+  c.fillRect(ox+ow-10,0,CW-(ox+ow-10),CH);
+  c.fillRect(0,oy+oh,CW,CH-oy-oh);
+  fillPixelPoly(c,[[ox,oy+oh],[ox+10,oy+80],[ox+34,oy+40],[ox+88,oy+5],[ox+70,oy+92],[ox+54,oy+oh]]);
+  fillPixelPoly(c,[[ox+ow,oy+oh],[ox+ow-10,oy+82],[ox+ow-34,oy+42],[ox+ow-90,oy+5],[ox+ow-70,oy+92],[ox+ow-54,oy+oh]]);
+  fillPixelPoly(c,[[ox+58,oy+8],[ox+118,oy-2],[ox+ow-118,oy-1],[ox+ow-56,oy+8],[ox+ow-82,oy+30],[ox+82,oy+30]]);
+  c.fillStyle='#05080d';
+  fillPixelPoly(c,[[0,0],[95,0],[ox+34,oy+46],[ox,oy+oh],[0,CH]]);
+  fillPixelPoly(c,[[CW,0],[CW-95,0],[ox+ow-34,oy+46],[ox+ow,oy+oh],[CW,CH]]);
+  c.fillStyle='#1f2b34';
+  for(let i=0;i<34;i++){
+    const side=i&1?-1:1;
+    const rx=side<0?Math.round(hash2(i,17)*120):CW-Math.round(hash2(i,19)*120);
+    const ry=Math.round(hash2(i+3,23)*CH);
+    c.fillRect(rx,ry,18+Math.round(hash2(i+5,29)*42),2+(i%3===0?2:0));
+  }
+  c.fillStyle='#2b3a44';
+  for(let i=0;i<18;i++){
+    const rx=62+Math.round(hash2(i+44,wf.x||0)*(CW-124));
+    const ry=222+Math.round(hash2(i+55,wf.y||0)*40);
+    c.fillRect(rx,ry,18+Math.round(hash2(i+66,wf.x||0)*34),4);
+  }
+  c.fillStyle='#0b1118';
+  fillPixelPoly(c,[[156,CH],[190,250],[232,238],[286,248],[330,CH]]);
+  c.fillStyle='#67b8d8';
+  for(let i=0;i<16;i++){
+    const mx=208+Math.round(hash2(i+76,wf.x||0)*66);
+    const my=235+Math.round(hash2(i+81,wf.y||0)*28);
+    c.fillRect(mx,my,2,1);
+  }
+  c.restore();
+  return true;
+}
+
 function render(){
   ctx.clearRect(0,0,CW,CH);
   if(G.state==='TITLE'){drawTitle(ctx,tickCount)}
@@ -150,13 +242,18 @@ function render(){
     ctx.imageSmoothingEnabled=false;
     ctx.drawImage(WORLD_CV,0,sy,sw,sh,0,0,VW,VH);
     // meddelanden och HUD ligger stabilt ovanpå medan själva banan skakar/zoomar.
-    drawToastStack(ctx);
-    drawHUD(ctx,tickCount);
-    if(G.paused)drawPauseOverlay(ctx);
+    if(G.waterfallCaveActive&&G.waterfallCaveActive()){
+      drawWaterfallCaveView(ctx,tickCount);
+      drawToastStack(ctx);
+    }else{
+      drawToastStack(ctx);
+      drawHUD(ctx,tickCount);
+      if(G.paused)drawPauseOverlay(ctx);
+    }
     // Skarp spelmarkör. Använd bara integer-snäppade fillRect-pixlar:
     // strokeRect på fractional mouse-coordinates blev ibland anti-aliased/suddigt
     // när canvasen skalades i browsern.
-    if(G.my<VH&&!(G.cutsceneActive&&G.cutsceneActive())){
+    if(G.my<VH&&!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive())){
       const cx=Math.round(G.mx), cy=Math.round(G.my);
       const col=G.hoverLem?'#40ff40':'#ffffff';
       ctx.fillStyle='rgba(0,0,0,0.55)';

@@ -3,7 +3,7 @@
 const MUSIC_GAIN_BASE=0.50;
 const AU={
   ctx:null, master:null, musGain:null, sfxGain:null, on:true, musicOn:true, sfxOn:true, musicVol:1, sfxVol:1, started:false,
-  weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, fxLast:{},
+  weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, waterfallCave:{loopNodes:[]}, fxLast:{},
   init(){
     if(this.ctx) return;
     try{
@@ -205,6 +205,33 @@ const AU={
     this.clearWeatherLoops(0.05);
     const wind=this.loopNoise(5.2,0.010,620,{type:'lowpass',smooth:0.82,attack:1.4});
     if(wind)this.weather.loopNodes.push(wind);
+  },
+  stopWaterfallCave(fade){
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[]});
+    const t=this.now(), stopDelay=fade==null?0.35:fade;
+    for(const n of bank.loopNodes||[]){
+      try{
+        if(n.gain&&n.gain.gain){
+          const p=n.gain.gain;
+          if(p.cancelScheduledValues)p.cancelScheduledValues(t);
+          if(p.setValueAtTime)p.setValueAtTime(Math.max(0.00005,p.value||0.0001),t);
+          if(p.linearRampToValueAtTime)p.linearRampToValueAtTime(0.00005,t+stopDelay);
+          else if(p.exponentialRampToValueAtTime)p.exponentialRampToValueAtTime(0.00005,t+stopDelay);
+        }
+        if(n.src&&n.src.stop)n.src.stop(t+stopDelay+0.08);
+      }catch(_){}
+    }
+    bank.loopNodes=[];
+  },
+  startWaterfallCave(){
+    this.init();
+    this.stopWaterfallCave(0.05);
+    if(!this.ctx||!this.on||!this.sfxOn)return;
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[]});
+    const body=this.loopNoise(5.8,0.018,520,{type:'lowpass',smooth:0.86,attack:0.8});
+    const spray=this.loopNoise(4.6,0.0065,2200,{type:'bandpass',q:0.55,smooth:0.62,attack:1.0});
+    if(body)bank.loopNodes.push(body);
+    if(spray)bank.loopNodes.push(spray);
   },
   // --- effekter ---
   rateFx(name,gap){

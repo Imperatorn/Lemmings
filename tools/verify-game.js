@@ -39,7 +39,7 @@ if (debugHtml) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
-    'animFishRing','animFishRingRope','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
+    'animFishRing','animFishRingRope','animWaterfallCave','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
     'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
   ];
   requiredDebugActions.push('spawnMushroom','spawnTree');
@@ -60,7 +60,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree']) {
+  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
@@ -188,12 +188,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -230,6 +230,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
+  'waterfallCaveActive','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
   'updateRandomJumpEvents','updateLemmingChatter','updateWaterfallHeadSplashes'
@@ -237,7 +238,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -524,6 +525,43 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.cutscenesOn = prevCutscenesOn;
 }
 {
+  const prevStartWaterfall = AU.startWaterfallCave;
+  const prevStopWaterfall = AU.stopWaterfallCave;
+  let started = 0, stopped = 0;
+  AU.startWaterfallCave = () => { started++; };
+  AU.stopWaterfallCave = () => { stopped++; };
+  const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
+  if (waterfallIdx < 0) throw new Error('Missing waterfall cave fixture level');
+  G.startLevel(waterfallIdx);
+  const wf = (G.decor || []).find(d => d && d.t === 'waterfall');
+  if (!wf) throw new Error('Waterfall cave fixture is missing waterfall decor');
+  const caveLem = new Lemming(wf.x, wf.y + wf.h - 6);
+  caveLem.state = 'MANUAL';
+  caveLem.fall = 12;
+  G.lems = [caveLem];
+  G.manual = {used:true, active:true, lemId:caveLem.id, lampOn:false, keys:{left:false,right:false,down:false,run:false,aim:false}, jumpQueued:{super:false}, aimAngle:0};
+  const oldTime = G.timeT;
+  if (!G.findWaterfallCaveEntrance(caveLem)) throw new Error('Manual lemming did not find waterfall cave entrance');
+  if (!G.tryEnterWaterfallCaveFromManual() || !G.waterfallCaveActive()) {
+    throw new Error('Manual up near a waterfall did not enter the waterfall cave');
+  }
+  if (G.manual.jumpQueued || caveLem.fall !== 0 || caveLem.manualVy !== 0 || started !== 1) {
+    throw new Error('Entering waterfall cave did not clear manual jump/fall state or start audio');
+  }
+  G.tick();
+  if (G.timeT !== oldTime || !G.waterfallCaveActive() || G.waterfallCave.t !== 1) {
+    throw new Error('Waterfall cave should block gameplay ticking while it is active');
+  }
+  if (typeof drawWaterfallCaveView !== 'function' || !drawWaterfallCaveView(WCTX, 9)) {
+    throw new Error('Waterfall cave view did not render');
+  }
+  if (!G.handleWaterfallCaveKey('ArrowDown') || G.waterfallCaveActive() || stopped < 1) {
+    throw new Error('Waterfall cave did not exit on ArrowDown');
+  }
+  AU.startWaterfallCave = prevStartWaterfall;
+  AU.stopWaterfallCave = prevStopWaterfall;
+}
+{
   const prevLevel = G.level;
   const prevTerrain = G.T;
   const prevLems = G.lems;
@@ -607,6 +645,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Water climb cutscene did not inherit night/weather context');
   }
   G.clearCutscene('verify-water-climb-event');
+  lem.state = 'SWIM';
+  lem.swimRing = true;
+  lem.climber = true;
+  lem.x = 149;
+  lem.y = 125;
+  lem.dir = 1;
+  lem.swim(G.T);
+  if (G.cutsceneActive()) {
+    throw new Error('Water climb cutscene restarted immediately for the same lemming and wall');
+  }
   G.ropes = [];
   G.cutscene = null;
   const wallLem = new Lemming(149, 125);
@@ -628,6 +676,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Wall climb cutscene did not inherit night/weather context');
   }
   G.clearCutscene('verify-wall-climb-event');
+  wallLem.state = 'WALK';
+  wallLem.x = 149;
+  wallLem.y = 125;
+  wallLem.dir = 1;
+  wallLem.walk(G.T);
+  if (G.cutsceneActive()) {
+    throw new Error('Wall climb cutscene restarted immediately for the same lemming and wall');
+  }
   G.ambientFish = [];
   G.cutscene = null;
   const hiddenWaterLem = new Lemming(20, water.y + 8);

@@ -135,6 +135,11 @@
       WCTX.clearRect(0,0,VW,VH);
       drawPlayWorld(WCTX,G.level,G.cam|0,DBG.tick++);
       ctx.drawImage(WORLD_CV,0,0);
+      if(G.waterfallCaveActive&&G.waterfallCaveActive()){
+        drawWaterfallCaveView(ctx,DBG.tick);
+        drawToastStack(ctx);
+        return;
+      }
       ctx.fillStyle='#05070d';ctx.fillRect(0,HUDY,CW,CH-HUDY);
       drawText(ctx,'DEBUG',8,248,1,'#63d0ff');
       drawText(ctx,(G.level.name||'NIVA').slice(0,34),70,248,1,'#dce8ff');
@@ -307,6 +312,23 @@
     finishAnimationSetup('Animation: lemming går genom vattenfall och får skvätt på huvudet.');
   }
 
+  function setupWaterfallCaveAnimation(){
+    if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
+    clearDebugActors();
+    const x=worldCenterX();
+    const l=firstLiveLemming();
+    resetDebugLemming(l,x,groundYAt(x));
+    l.state='MANUAL';l.dir=1;
+    G.lems=[l];G.out=1;
+    G.manual={used:true,active:true,lemId:l.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    G.decor=G.decor.filter(d=>!d||d.t!=='waterfall');
+    const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
+    G.decor.push(wf);
+    focusWorldX(l.x);
+    if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte oppna vattenfallsgrottan.','warn');return}
+    finishAnimationSetup('Animation: direktstyrd lemming gar in bakom vattenfallet.');
+  }
+
   function setupFishRingAnimation(){
     if(!ensureWaterLevelForFishRing()){setStatus('Ingen vattenbana hittades för badringstest.','warn');return}
     clearDebugActors();
@@ -466,6 +488,7 @@
     if(action==='animTrollPlane')return setupTrollPlaneAnimation();
     if(action==='animPackageFall')return setupPackageFallAnimation();
     if(action==='animWaterfall')return setupWaterfallAnimation();
+    if(action==='animWaterfallCave')return setupWaterfallCaveAnimation();
     if(action==='animFishRing')return setupFishRingAnimation();
     if(action==='animFishRingRope')return setupFishRingRopeAnimation();
     if(action==='animMeteor')return setupMeteorAnimation();

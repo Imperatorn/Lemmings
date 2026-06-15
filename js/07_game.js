@@ -289,14 +289,15 @@ const G={
   },
   toggleSfx(){
     AU.sfxOn=!AU.sfxOn;
-    if(!AU.sfxOn)AU.stopWeather();
-    else {AU.sClick();if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind)}
+    if(!AU.sfxOn){AU.stopWeather();if(AU.stopWaterfallCave)AU.stopWaterfallCave()}
+    else {AU.sClick();if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind);if(this.waterfallCaveActive&&this.waterfallCaveActive()&&AU.startWaterfallCave)AU.startWaterfallCave()}
     this.toast('SFX '+(AU.sfxOn?'PÅ':'AV'));this.savePrefs();
   },
   setSfxVolume(v){
     AU.sfxOn=true;
     AU.setSfxVolume(v);
     if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind);
+    if(this.waterfallCaveActive&&this.waterfallCaveActive()&&AU.startWaterfallCave)AU.startWaterfallCave();
     this.toast('SFX-VOLYM '+Math.round(AU.sfxVol*100)+'%');
     this.savePrefs();
     AU.sClick();
@@ -377,6 +378,7 @@ const G={
   },
   goToMenu(){
     if(this.clearCutscene)this.clearCutscene('menu');
+    if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     this.clearRopeAim();
     this.paused=false;
     this.menuChapter=menuChapterForLevel(this.levelIdx);
@@ -388,6 +390,7 @@ const G={
   },
   restartCurrentLevel(){
     if(this.clearCutscene)this.clearCutscene('restart');
+    if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     this.clearRopeAim();
     this.paused=false;
     AU.stopMusic();
@@ -475,6 +478,7 @@ const G={
 
   startLevel(idx){
     if(this.clearCutscene)this.clearCutscene('level-start');
+    if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     AU.stopWeather();
     this.levelIdx=idx;
     this.levelSeed=this.makeLevelSeed(idx);
@@ -2982,6 +2986,7 @@ const G={
 
   // ---- logik-tick ----
   tick(){
+    if(this.updateWaterfallCave&&this.updateWaterfallCave())return;
     if(this.updateCutscene&&this.updateCutscene())return;
     if(this.state!=='PLAY'||this.paused)return;
     const L=this.level,T=this.T;
