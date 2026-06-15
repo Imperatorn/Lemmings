@@ -177,19 +177,41 @@ function drawWaterfallCaveDeepView(c,cave,tk){
 }
 
 function drawWaterfallCaveCampfire(c,x,y,tk){
-  const f=0.5+0.5*Math.sin(tk*0.16)+0.18*Math.sin(tk*0.37);
+  const frame=(Math.floor(tk/10)%4+4)%4;
+  const frames=[
+    {
+      outer:[[-20,7,42,5],[-18,2,36,5],[-15,-3,30,5],[-12,-8,24,5],[-9,-13,18,5],[-6,-18,13,5],[-3,-24,8,6]],
+      mid:[[-13,8,26,5],[-11,2,22,5],[-8,-4,17,6],[-5,-10,12,6],[-2,-17,7,7]],
+      core:[[-5,8,11,6],[-4,1,9,7],[-2,-6,6,8],[0,-14,4,7]],
+      sparks:[[-17,-18,2,1],[15,-25,1,2],[-2,-34,2,1]]
+    },
+    {
+      outer:[[-21,7,41,5],[-17,2,35,5],[-13,-3,28,5],[-10,-9,22,6],[-7,-15,15,6],[-4,-22,9,7],[-1,-30,5,7]],
+      mid:[[-14,8,27,5],[-10,3,21,5],[-7,-4,16,6],[-4,-12,11,7],[-1,-20,6,7]],
+      core:[[-5,8,10,6],[-3,1,8,7],[-1,-7,6,8],[1,-16,3,7]],
+      sparks:[[-21,-12,1,2],[12,-20,2,1],[4,-36,1,2]]
+    },
+    {
+      outer:[[-20,7,42,5],[-19,2,37,5],[-16,-4,31,6],[-12,-10,25,6],[-10,-16,18,6],[-7,-22,13,6],[-5,-28,8,7]],
+      mid:[[-13,8,26,5],[-12,2,22,6],[-9,-5,17,6],[-6,-12,13,7],[-4,-20,8,7]],
+      core:[[-5,8,11,6],[-4,1,8,7],[-3,-8,7,8],[-2,-17,5,7]],
+      sparks:[[-14,-23,1,1],[18,-17,1,2],[0,-39,2,1]]
+    },
+    {
+      outer:[[-21,7,43,5],[-18,1,36,6],[-15,-4,29,6],[-11,-11,23,7],[-8,-18,16,6],[-5,-24,10,7],[-2,-32,6,7]],
+      mid:[[-14,8,28,5],[-11,2,22,6],[-8,-5,17,7],[-5,-13,12,7],[-2,-22,7,7]],
+      core:[[-5,8,11,6],[-4,0,9,8],[-2,-9,6,8],[0,-18,4,7]],
+      sparks:[[-19,-15,2,1],[16,-23,1,1],[5,-32,2,1]]
+    }
+  ];
+  const f=frames[frame];
   c.save();
-  c.globalAlpha=0.34+0.06*f;
-  let g=null;
-  try{
-    g=c.createRadialGradient(x,y-14,6,x,y-12,136);
-    g.addColorStop(0,'rgba(255,212,116,0.70)');
-    g.addColorStop(0.32,'rgba(224,116,48,0.30)');
-    g.addColorStop(0.70,'rgba(96,42,22,0.12)');
-    g.addColorStop(1,'rgba(0,0,0,0)');
-    c.fillStyle=g;
-  }catch(_){c.fillStyle='rgba(255,150,60,0.22)'}
-  c.fillRect(0,0,CW,CH);
+  c.globalAlpha=0.12;
+  c.fillStyle='#7a3a1c';
+  fillPixelPoly(c,[[x-94,y+38],[x-74,y+4],[x-28,y-20],[x+42,y-24],[x+92,y+8],[x+106,y+34],[x+54,y+48],[x-70,y+48]]);
+  c.globalAlpha=0.14;
+  c.fillStyle='#c1642d';
+  fillPixelPoly(c,[[x-62,y+28],[x-38,y-6],[x+16,y-24],[x+58,y-2],[x+72,y+24],[x+32,y+36],[x-48,y+36]]);
   c.globalAlpha=1;
   c.globalAlpha=0.38;c.fillStyle='#000000';c.fillRect(x-54,y+13,108,8);c.globalAlpha=1;
   c.fillStyle='#263038';
@@ -204,35 +226,43 @@ function drawWaterfallCaveCampfire(c,x,y,tk){
   fillPixelPoly(c,[[x-26,y+18],[x+2,y+9],[x+30,y+15],[x+25,y+20],[x-28,y+23]]);
   c.fillStyle='#2a1710';c.fillRect(x-27,y+14,8,4);c.fillRect(x+18,y+13,8,4);
 
-  function flameLayer(col,w,h,phase,alpha,step){
+  function drawRects(rects,col,alpha){
     c.globalAlpha=alpha;
     c.fillStyle=col;
-    for(let row=0;row<h;row+=step||3){
-      const q=row/Math.max(1,h), taper=1-q;
-      const sway=Math.sin(tk*0.10+row*0.24+phase)*Math.round(5*taper);
-      const breathe=0.90+0.08*Math.sin(tk*0.13+phase)+0.05*Math.sin(row*0.41+tk*0.07);
-      const half=Math.max(1,Math.round(w*taper*breathe));
-      const cy=y+8-row;
-      const cx=x+Math.round(sway);
-      c.fillRect(cx-half,cy,half*2,3);
-      if(half>5&&row%6===0)c.fillRect(cx-half+2,cy-1,half*2-4,1);
-    }
+    for(const r of rects)c.fillRect(x+r[0],y+r[1],r[2],r[3]);
   }
-  flameLayer('#9f2c17',19,39,0.2,0.88,3);
-  flameLayer('#d85720',15,34,1.4,0.92,3);
-  flameLayer('#ff9a30',10,27,2.5,0.96,3);
-  flameLayer('#ffe08a',5,19,3.1,0.90,3);
-  c.globalAlpha=0.55;
-  c.fillStyle='#fff0b0';
-  c.fillRect(x-3,y-10+Math.round(Math.sin(tk*0.11)*2),6,8);
-  c.globalAlpha=0.62;
-  c.fillStyle='#ffd27a';
-  for(let i=0;i<8;i++){
-    const sx=x-24+Math.round(hash2(i+421,Math.floor(tk/8))*48);
-    const sy=y-20-Math.round(((tk*0.34+i*13)%30));
-    if(((i+Math.floor(tk/10))&1)===0)c.fillRect(sx,sy,1+(i%4===0?1:0),1);
-  }
+  drawRects(f.outer,'#9f2c17',0.94);
+  drawRects(f.mid,'#f06a22',0.98);
+  drawRects(f.core,'#ffd36b',0.98);
+  drawRects(f.sparks,'#ffd27a',0.58);
   c.globalAlpha=1;
+  c.restore();
+}
+
+function drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,scale,fireX){
+  const dx=(fireX-lx), dist=Math.abs(dx);
+  const strength=clamp(1-dist/175,0,1);
+  if(strength<=0)return;
+  const side=dx>=0?1:-1;
+  c.save();
+  c.translate(lx,ly);
+  c.scale(scale,scale);
+  c.globalAlpha=0.28+0.22*strength;
+  c.fillStyle='#ffb35a';
+  if(side>0){
+    c.fillRect(1,-10,2,2);
+    c.fillRect(1,-8,2,2);
+    c.fillRect(1,-6,2,4);
+    c.fillRect(2,-2,1,2);
+  }else{
+    c.fillRect(-3,-10,2,2);
+    c.fillRect(-3,-8,2,2);
+    c.fillRect(-3,-6,2,4);
+    c.fillRect(-3,-2,1,2);
+  }
+  c.globalAlpha=0.18+0.18*strength;
+  c.fillStyle='#ffe08a';
+  c.fillRect(side>0?2:-3,-8,1,2);
   c.restore();
 }
 
@@ -274,21 +304,16 @@ function drawWaterfallCaveCampView(c,cave,tk){
     c.fillRect(x,y,10+Math.round(hash2(i+529,wf.x||0)*26),1);
   }
   c.globalAlpha=1;
-  const fireX=318,fireY=244;
+  const fire=cave.campFire||{x:318,y:244};
+  const fireX=Math.round(fire.x||318),fireY=Math.round(fire.y||244);
   drawWaterfallCaveCampfire(c,fireX,fireY,tk+t);
-  c.globalAlpha=0.18;
-  c.fillStyle='#d87936';
-  c.fillRect(fireX-72,fireY-54,130,44);
-  c.globalAlpha=0.14;
-  c.fillStyle='#ffd080';
-  c.fillRect(fireX-50,fireY-38,92,24);
-  c.globalAlpha=1;
   const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
   const lemScale=waterfallCaveLemmingScale(cave);
   c.globalAlpha=0.36;c.fillStyle='#000000';
   c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
   c.globalAlpha=1;
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
+  drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,lemScale,fireX);
   c.restore();
   return true;
 }
@@ -524,4 +549,3 @@ function drawWaterfallCaveView(c,tk){
   c.restore();
   return true;
 }
-

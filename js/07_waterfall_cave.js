@@ -67,6 +67,7 @@ Object.assign(G,{
       bounds:{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298},
       deepBounds:{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276},
       campBounds:{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182},
+      campFire:{x:318,y:244,rx:54,ry:30},
       deepItem:{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},
       chest:{x:342,y:226,coins:3,opened:false,collected:looted,near:false,glowT:0,lootKey},
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
@@ -138,6 +139,15 @@ Object.assign(G,{
   waterfallCaveCoverRect(){
     return {x:150,y:30,w:180,h:225};
   },
+  waterfallCaveCampFire(cave){
+    return (cave&&cave.campFire)||{x:318,y:244,rx:54,ry:30};
+  },
+  waterfallCaveCampFireBlocked(cave,x,y){
+    const f=this.waterfallCaveCampFire(cave);
+    const dx=(x-(f.x||318))/Math.max(1,f.rx||54);
+    const dy=(y-((f.y||244)+8))/Math.max(1,f.ry||30);
+    return dx*dx+dy*dy<1;
+  },
   updateWaterfallCave(){
     if(!this.waterfallCaveActive())return false;
     const cave=this.waterfallCave;
@@ -146,6 +156,7 @@ Object.assign(G,{
     cave.bounds=cave.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298};
     cave.deepBounds=cave.deepBounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276};
     cave.campBounds=cave.campBounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182};
+    cave.campFire=cave.campFire||{x:318,y:244,rx:54,ry:30};
     if(!cave.scene)cave.scene='main';
     const b=cave.scene==='camp'?cave.campBounds:(cave.scene==='deep'?cave.deepBounds:cave.bounds);
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
@@ -156,8 +167,20 @@ Object.assign(G,{
       const inv=Math.hypot(dx,dy)>1?1/Math.hypot(dx,dy):1;
       dx*=inv;dy*=inv;
       const sp=1.55;
-      cave.lemX=clamp((cave.lemX==null?240:cave.lemX)+dx*sp,b.minX,b.maxX);
-      cave.lemY=clamp((cave.lemY==null?210:cave.lemY)+dy*sp,b.minY,b.maxY);
+      const oldX=cave.lemX==null?240:cave.lemX, oldY=cave.lemY==null?210:cave.lemY;
+      let nextX=clamp(oldX+dx*sp,b.minX,b.maxX);
+      let nextY=clamp(oldY+dy*sp,b.minY,b.maxY);
+      if(cave.scene==='camp'&&this.waterfallCaveCampFireBlocked(cave,nextX,nextY)){
+        const tryX=clamp(oldX+dx*sp,b.minX,b.maxX), tryY=oldY;
+        if(!this.waterfallCaveCampFireBlocked(cave,tryX,tryY)){nextX=tryX;nextY=tryY}
+        else{
+          const altX=oldX, altY=clamp(oldY+dy*sp,b.minY,b.maxY);
+          if(!this.waterfallCaveCampFireBlocked(cave,altX,altY)){nextX=altX;nextY=altY}
+          else{nextX=oldX;nextY=oldY}
+        }
+      }
+      cave.lemX=nextX;
+      cave.lemY=nextY;
       if(dx){cave.dir=dx>0?1:-1;cave.facing=dx>0?'right':'left'}
       else cave.facing=dy<0?'back':'front';
       cave.walking=true;
