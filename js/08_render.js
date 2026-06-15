@@ -368,16 +368,13 @@ function waterfallBackdropPalette(key){
 }
 
 function drawWaterfallPine(c,x,y,s,pal){
-  const px=Math.round(x),py=Math.round(y),sc=Math.max(0.75,s);
-  c.fillStyle=pal.trunk;
-  c.fillRect(px-1,py-Math.round(15*sc),2,Math.round(15*sc));
+  const px=Math.round(x),py=Math.round(y),sc=Math.max(0.55,s);
+  const hw=Math.max(4,Math.round(7*sc)), h=Math.max(7,Math.round(12*sc));
   c.fillStyle=pal.pineDark;
-  for(let r=0;r<3;r++){
-    const cy=py-Math.round((24-r*7)*sc), hw=Math.round((11-r*2)*sc), th=Math.round(14*sc);
-    fillPixelPoly(c,[[px,cy-th],[px-hw,cy],[px+hw,cy]]);
-  }
+  fillPixelPoly(c,[[px,py-h],[px-hw,py+1],[px+hw,py+1]]);
+  fillPixelPoly(c,[[px,py-h+5],[px-Math.max(3,hw-2),py+5],[px+Math.max(3,hw-2),py+5]]);
   c.fillStyle=pal.pineLight;
-  c.fillRect(px-2,py-Math.round(28*sc),2,Math.max(1,Math.round(9*sc)));
+  c.fillRect(px-1,py-h+3,1,Math.max(3,Math.round(7*sc)));
 }
 
 function drawWaterfallBackdrop(c,dec,px,py,w,h,left,base){
@@ -391,6 +388,10 @@ function drawWaterfallBackdrop(c,dec,px,py,w,h,left,base){
   const outerL=innerL-wall-Math.round(w*0.8), outerR=innerR+wall+Math.round(w*0.8);
   const topY=Math.max(8,py-22);
   const farTop=Math.max(4,py-58);
+  const ledgeY=Math.max(7,py-12);
+  const capReach=Math.max(26,Math.round(w*0.9));
+  const capLeftOuter=innerL-capReach, capRightOuter=innerR+capReach;
+  const capLeftInner=left-6, capRightInner=left+w+6;
   c.globalAlpha=0.17;
   c.fillStyle=pal.far;
   fillPixelPoly(c,[
@@ -399,11 +400,16 @@ function drawWaterfallBackdrop(c,dec,px,py,w,h,left,base){
     [px+Math.round(span*0.28),farTop+24],[px+span-8,py+92],[px+span+34,ridgeBase]
   ]);
   if(key!=='cave'&&key!=='hell'&&key!=='city'){
-    c.globalAlpha=0.34;
-    for(let i=0;i<8;i++){
-      const sx=outerL+16+i*Math.max(18,Math.round((outerR-outerL)/8));
-      const sy=topY+2+Math.round(hash2(i+11,dec.x|0)*10);
-      drawWaterfallPine(c,sx,sy,0.85+hash2(i+3,dec.x|0)*0.55,pal);
+    c.globalAlpha=0.26;
+    const treeLedges=[[capLeftOuter+8,capLeftInner-3],[capRightInner+3,capRightOuter-8]];
+    for(let s=0;s<treeLedges.length;s++){
+      const a=treeLedges[s][0],b=treeLedges[s][1];
+      const n=Math.max(2,Math.min(4,Math.round((b-a)/30)));
+      for(let i=0;i<n;i++){
+        const sx=a+(i+0.5)*((b-a)/n)+(hash2(i+s*17,dec.x|0)-0.5)*5;
+        const sy=ledgeY+1+Math.round(hash2(i+s*23,dec.y|0)*2);
+        drawWaterfallPine(c,sx,sy,0.55+hash2(i+s*31,dec.x|0)*0.25,pal);
+      }
     }
   }
   c.globalAlpha=0.70;
@@ -430,20 +436,19 @@ function drawWaterfallBackdrop(c,dec,px,py,w,h,left,base){
   c.fillStyle=pal.rockLight;
   fillPixelPoly(c,[[outerL+28,py+76],[outerL+42,py+40],[innerL-22,topY+14],[innerL-30,py+54],[outerL+46,ridgeBase]]);
   fillPixelPoly(c,[[innerR+24,py+35],[outerR-44,py+48],[outerR-34,ridgeBase],[innerR+15,ridgeBase],[innerR+12,py+78]]);
-  const ledgeY=Math.max(7,py-12);
   c.globalAlpha=0.62;
   c.fillStyle=pal.capDark;
   fillPixelPoly(c,[
-    [outerL+20,ledgeY+7],[outerL+40,ledgeY+2],[innerL-18,ledgeY-2],
-    [left-6,ledgeY+1],[left-3,ledgeY+5],[innerL-14,ledgeY+8],[outerL+32,ledgeY+10]
+    [capLeftOuter,ledgeY+9],[capLeftOuter+8,ledgeY+4],[innerL-18,ledgeY-2],
+    [capLeftInner,ledgeY+1],[capLeftInner+3,ledgeY+5],[innerL-14,ledgeY+8],[capLeftOuter+8,ledgeY+10]
   ]);
   fillPixelPoly(c,[
-    [left+w+3,ledgeY+5],[left+w+6,ledgeY+1],[innerR+18,ledgeY-2],
-    [outerR-40,ledgeY+2],[outerR-20,ledgeY+7],[outerR-32,ledgeY+10],[innerR+14,ledgeY+8]
+    [capRightInner-3,ledgeY+5],[capRightInner,ledgeY+1],[innerR+18,ledgeY-2],
+    [capRightOuter-8,ledgeY+4],[capRightOuter,ledgeY+9],[capRightOuter-8,ledgeY+10],[innerR+14,ledgeY+8]
   ]);
   c.globalAlpha=0.82;
   c.fillStyle=pal.capLight;
-  const ledges=[[outerL+30,left-5],[left+w+5,outerR-30]];
+  const ledges=[[capLeftOuter+7,capLeftInner-1],[capRightInner+1,capRightOuter-7]];
   for(let s=0;s<ledges.length;s++){
     const a=ledges[s][0],b=ledges[s][1],n=Math.max(5,Math.min(13,Math.round((b-a)/8)));
     for(let i=0;i<n;i++){
@@ -1496,12 +1501,10 @@ function drawSunMood(c,sx,sy,mood){
     c.fillRect(x-7,y-3,4,1);
     c.fillRect(x+3,y-3,4,1);
     c.fillStyle='#5a2f12';
-    c.fillRect(x-5,y+5,5,1);
-    c.fillRect(x,y+6,5,1);
-    c.fillRect(x+4,y+5,2,1);
-    c.fillStyle='#ffe080';
-    c.fillRect(x-2,y+5,2,1);
-    c.fillRect(x+1,y+6,2,1);
+    c.fillRect(x-5,y+4,2,1);
+    c.fillRect(x-3,y+5,5,1);
+    c.fillRect(x+2,y+4,3,1);
+    c.fillRect(x+5,y+3,1,1);
   }
   c.restore();
 }

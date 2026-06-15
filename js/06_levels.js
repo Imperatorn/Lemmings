@@ -27,7 +27,7 @@ const LEVELS=[
   hatch:{x:110,y:100}, exit:{x:600,y:209},
   water:[],
   loot:[{x:400,y:196,skill:'build'}],
-  rescues:[{button:{x:55,y:149},release:{x:260,y:145},open:{x:253,y:150,w:14,h:30},count:2,dir:1}],
+  rescues:[{button:{x:55,y:149},release:{x:260,y:126},open:{x:253,y:150,w:14,h:30},count:2,dir:1}],
   hint:'UNDER ERA FÖTTER FINNS EN GROTTA. VÄND EN LEMMEL OM DU VILL NÅ BONUSKNAPPEN.',
   build(P){ P.rect(0,150,800,30); P.rect(0,210,800,30);
     P.ramp(120,210,40,14,1); P.ramp(680,210,40,14,-1);
@@ -91,7 +91,7 @@ const LEVELS=[
   skills:{climb:2,float:2,bomb:2,block:2,build:4,bash:5,mine:2,dig:0,baz:0,jet:0},
   hatch:{x:90,y:150}, exit:{x:1000,y:199},
   water:[{x:700,w:40,y:212,lava:false}],
-  rescues:[{button:{x:420,y:134},release:{x:360,y:132},open:{x:354,y:136,w:14,h:64},count:2,dir:1}],
+  rescues:[{button:{x:420,y:134},release:{x:360,y:112},open:{x:354,y:136,w:14,h:64},count:2,dir:1}],
   hint:'SLÅ EN TUNNEL GENOM KULLEN. BONUSKNAPPEN KRÄVER EN LEMMEL SOM TAR HÖJD.',
   build(P){ P.rect(0,200,1100,40);
     P.disc(420,205,70);
@@ -413,7 +413,7 @@ const LEVELS=[
   water:[{x:360,w:120,y:212,lava:false},{x:980,w:105,y:212,lava:true},{x:1380,w:120,y:214,lava:false}],
   materialZones:[{x:480,w:500,theme:'cave'},{x:980,w:520,theme:'desert'},{x:1500,w:400,theme:'city'}],
   loot:[{x:585,y:205,skill:'rope'},{x:1274,y:159,skill:'flame'},{x:1580,y:205,skill:'baz'}],
-  rescues:[{button:{x:615,y:129},release:{x:815,y:126},open:{x:704,y:132,w:28,h:38},count:3,dir:1}],
+  rescues:[{button:{x:615,y:129},release:{x:815,y:104},open:{x:704,y:132,w:28,h:38},count:3,dir:1}],
   hint:'SISTA PROVET: VATTEN, LAVA, RUINER, REP, LOOT OCH BONUSLEMLAR. PLANERA VÄGEN OCH RÄDDA FLER ÄN KRAVET.',
   build(P){ P.rect(0,130,260,20); P.rect(0,190,360,50); P.ramp(260,190,100,60,1);
     P.erase.rect(360,190,120,50);

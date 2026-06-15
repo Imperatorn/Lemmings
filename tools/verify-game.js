@@ -805,6 +805,16 @@ function rootDecorHasSupport(T, x, y) {
   return false;
 }
 
+function firstSolidBelow(T, x, y, maxDy) {
+  x = Math.round(x); y = Math.round(y);
+  for (let dy = 1; dy <= maxDy; dy++) {
+    const yy = y + dy;
+    if (yy >= T.H) break;
+    if (T.solid(x, yy)) return dy;
+  }
+  return Infinity;
+}
+
 for (let idx = 0; idx < LEVELS.length; idx++) {
   const L = LEVELS[idx];
   if (levelNames.has(L.name)) throw new Error(`Duplicate level name: ${L.name}`);
@@ -856,6 +866,18 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
       if (torch.x >= z.x - 4 && torch.x <= z.x + z.w + 4) {
         throw new Error(`${L.name}: torch at ${torch.x},${torch.y} is over ${z.lava ? 'lava' : 'water'}`);
       }
+    }
+  }
+  for (const rescue of G.rescues || []) {
+    const cageDrop = firstSolidBelow(G.T, rescue.releaseX, rescue.releaseY, 90);
+    if (cageDrop < 16) {
+      throw new Error(`${L.name}: rescue cage at ${rescue.releaseX},${rescue.releaseY} should hang above the floor`);
+    }
+    if (!Number.isFinite(cageDrop)) {
+      throw new Error(`${L.name}: rescue cage at ${rescue.releaseX},${rescue.releaseY} has no nearby landing`);
+    }
+    if (!Number.isFinite(firstSolidBelow(G.T, rescue.buttonX, rescue.buttonY, 12))) {
+      throw new Error(`${L.name}: rescue button at ${rescue.buttonX},${rescue.buttonY} is not grounded`);
     }
   }
   for (const d of (G.decor || []).filter(d => d && (d.t === 'mush' || d.t === 'rock'))) {
