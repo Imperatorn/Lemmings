@@ -47,7 +47,8 @@
       night:ev.night!=null?!!ev.night:!!L.night,
       cave:ev.cave!=null?!!ev.cave:!!L.cave,
       weatherKind:ev.weatherKind||(G.weatherKind||(L.cave?'cave':(L.night?'rain':'sun'))),
-      levelName:ev.levelName||((L&&L.name)?String(L.name):'')
+      levelName:ev.levelName||((L&&L.name)?String(L.name):''),
+      fromWater:ev.fromWater!==false
     };
   }
   function rescueTextIndex(kind,ev,count){
@@ -86,7 +87,11 @@
         {title:'VATTNET EXPLODERAR',text:['DELFINEN BRYTER YTAN OCH BAR LEMMELN MOT KANTEN.']}
       ];
     }else{
-      pool=[
+      pool=ev.fromWater===false?[
+        {title:'UPPFOR VAGGEN',text:['LEMMELN SOKER FAST GREPP OCH BORJAR KLATTRA.']},
+        {title:'KLATTERTAG',text:['HAND FOR HAND TAR SIG LEMMELN UPPAT.']},
+        {title:'MOT TOPPEN',text:['VAGGEN HALLER, OCH LEMMELN KLATTRAR VIDARE.']}
+      ]:[
         {title:'GREPP I VAGGEN',text:['LEMMELN FANGAR EN KANT OCH BORJAR KLATTRA.']},
         {title:'UPP UR VATTNET',text:['ETT STEG I TAGET TAR SIG LEMMELN MOT TOPPEN.']},
         {title:'NARA LAND',text:['VAGGEN HALLER, OCH LEMMELN KLATTRAR VIDARE.']}
@@ -259,7 +264,7 @@
       c.fillRect(x+10*sc,y+8*sc,7*sc,5*sc);
     }
   }
-  function drawCutsceneWallClimber(c,x,y,sc,p,tk){
+  function drawCutsceneWallClimber(c,x,y,sc,p,tk,fromWater){
     x=Math.round(x);y=Math.round(y);sc=Math.max(1,Math.round(sc||1));
     const stepIdx=Math.min(3,Math.floor(clamp(p,0,0.999)*4));
     const reach=(stepIdx&1)?1:-1;
@@ -299,7 +304,7 @@
     c.fillStyle='#42b848';
     c.fillRect(x-8*sc,y-27*sc,8*sc,4*sc);
 
-    if(p<0.24){
+    if(fromWater&&p<0.24){
       drawCutsceneSwimRing(c,x+1*sc,y+21*sc,Math.max(2,Math.round(sc*0.54)),1-p/0.24);
     }
   }
@@ -411,6 +416,7 @@
   function drawWaterClimbCutscene(c,r,p,cs,tk){
     const ctx=cutsceneWorldContext(cs);
     const mat=waterClimbMaterial(ctx.themeKey);
+    const fromWater=ctx.fromWater!==false;
     c.fillStyle=mat.bg;c.fillRect(r.x,r.y,r.w,r.h);
     const topY=r.y+46;
     const waterY=r.y+Math.round(r.h*0.82);
@@ -479,18 +485,27 @@
     const lemX=Math.round((lemBounds.left+lemBounds.right)/2)+Math.round(Math.sin(tk*0.11)*1);
     const sc=2;
 
-    c.fillStyle=mat.water;c.fillRect(r.x,waterY,r.w,r.h-waterY);
-    c.fillStyle=mat.wave;
-    for(let x=r.x-20;x<r.x+r.w+28;x+=34)c.fillRect(x+Math.round(Math.sin(tk*0.12)*4),waterY+8+((x+tk)&7),24,3);
-    c.fillStyle='#b8f8ff';
-    for(let x=r.x+16;x<r.x+r.w;x+=58)c.fillRect(x-Math.round(Math.sin(tk*0.16)*3),waterY+1,34,2);
-    c.fillStyle=mat.foam;
-    for(let i=0;i<16;i++){
-      const bp=(p*1.25+i*0.11)%1;
-      const bx=r.x+34+i*28+Math.sin(tk*0.13+i)*5;
-      c.fillRect(Math.round(bx),Math.round(waterY+46-bp*96),2+(i%3),2+(i%2));
+    if(fromWater){
+      c.fillStyle=mat.water;c.fillRect(r.x,waterY,r.w,r.h-waterY);
+      c.fillStyle=mat.wave;
+      for(let x=r.x-20;x<r.x+r.w+28;x+=34)c.fillRect(x+Math.round(Math.sin(tk*0.12)*4),waterY+8+((x+tk)&7),24,3);
+      c.fillStyle='#b8f8ff';
+      for(let x=r.x+16;x<r.x+r.w;x+=58)c.fillRect(x-Math.round(Math.sin(tk*0.16)*3),waterY+1,34,2);
+      c.fillStyle=mat.foam;
+      for(let i=0;i<16;i++){
+        const bp=(p*1.25+i*0.11)%1;
+        const bx=r.x+34+i*28+Math.sin(tk*0.13+i)*5;
+        c.fillRect(Math.round(bx),Math.round(waterY+46-bp*96),2+(i%3),2+(i%2));
+      }
+    }else{
+      const b=wallAt(waterY-2);
+      c.fillStyle=mat.ledgeDark;c.fillRect(r.x,waterY-2,r.w,r.h-waterY+2);
+      c.fillStyle=mat.ledgeFace;c.fillRect(b.left-18,waterY-8,b.right-b.left+36,10);
+      c.fillStyle=mat.ledgeLip;c.fillRect(b.left+8,waterY-11,b.right-b.left-16,3);
+      c.fillStyle=mat.detail;
+      for(let x=b.left+20;x<b.right-20;x+=44)c.fillRect(x,waterY-4,18,2);
     }
-    if(p<0.30){
+    if(fromWater&&p<0.30){
       const splash=clamp(p/0.30,0,1);
       c.save();c.globalAlpha=1-splash*0.4;c.fillStyle=mat.foam;
       for(let i=0;i<18;i++){
@@ -505,9 +520,9 @@
     c.fillStyle='#050913';
     c.fillRect(lemX-12,lemY-18,25,39);
     c.restore();
-    drawCutsceneWallClimber(c,lemX,lemY,sc,climb,tk);
+    drawCutsceneWallClimber(c,lemX,lemY,sc,climb,tk,fromWater);
 
-    if(p>0.62){
+    if(fromWater&&p>0.62){
       c.fillStyle=mat.foam;
       for(let i=0;i<8;i++){
         const yy=lemY+10+i*8;
@@ -651,6 +666,20 @@
       }]
     };
   }
+  function makeClimbCutsceneSpec(mode){
+    const spec=makeWaterClimbCutsceneSpec(mode);
+    spec.id='wall-climb-closeup';
+    spec.label='Klattrar pa vagg';
+    spec.group='Skills';
+    spec.order=35;
+    spec.title='UPPFOR VAGGEN';
+    spec.event={fromWater:false};
+    if(spec.shots&&spec.shots[0]){
+      spec.shots[0].title='UPPFOR VAGGEN';
+      spec.shots[0].text=['LEMMELN TAR SIG UPPFOR VAGGEN.'];
+    }
+    return spec;
+  }
   function playFishRingCutscene(l,fish,z,mode){
     if(G.cutsceneActive&&G.cutsceneActive())return null;
     const spec=makeFishRingCutsceneSpec(mode||'fullscreen');
@@ -660,6 +689,7 @@
       fishX:fish&&Number.isFinite(fish.x)?Math.round(fish.x):null,
       fishY:fish&&Number.isFinite(fish.y)?Math.round(fish.y):null,
       waterY:z&&Number.isFinite(z.y)?Math.round(z.y):null,
+      fromWater:true,
       rescueOnly:!!(fish&&fish.rescueOnly)
     });
     applyRescueCutsceneText(spec,'fish');
@@ -674,7 +704,8 @@
       waterX:Number.isFinite(sx)?Math.round(sx):null,
       waterY:Number.isFinite(sy)?Math.round(sy):null,
       shoreX:spot&&Number.isFinite(spot.x)?Math.round(spot.x):null,
-      shoreY:spot&&Number.isFinite(spot.y)?Math.round(spot.y):null
+      shoreY:spot&&Number.isFinite(spot.y)?Math.round(spot.y):null,
+      fromWater:true
     });
     applyRescueCutsceneText(spec,'dolphin');
     return G.playCutscene(spec,{respectPrefs:true});
@@ -686,7 +717,20 @@
       lemX:l&&Number.isFinite(l.x)?Math.round(l.x):null,
       lemY:l&&Number.isFinite(l.y)?Math.round(l.y):null,
       dir:l&&Number.isFinite(l.dir)?Math.round(l.dir):null,
-      waterY:z&&Number.isFinite(z.y)?Math.round(z.y):null
+      waterY:z&&Number.isFinite(z.y)?Math.round(z.y):null,
+      fromWater:true
+    });
+    applyRescueCutsceneText(spec,'climb');
+    return G.playCutscene(spec,{respectPrefs:true});
+  }
+  function playClimbCutscene(l,mode){
+    if(G.cutsceneActive&&G.cutsceneActive())return null;
+    const spec=makeClimbCutsceneSpec(mode||'fullscreen');
+    spec.event=makeCutsceneWorldContext(l,null,{
+      lemX:l&&Number.isFinite(l.x)?Math.round(l.x):null,
+      lemY:l&&Number.isFinite(l.y)?Math.round(l.y):null,
+      dir:l&&Number.isFinite(l.dir)?Math.round(l.dir):null,
+      fromWater:false
     });
     applyRescueCutsceneText(spec,'climb');
     return G.playCutscene(spec,{respectPrefs:true});
@@ -697,10 +741,12 @@
     makeFishRingCutsceneSpec,
     makeDolphinRescueCutsceneSpec,
     makeWaterClimbCutsceneSpec,
+    makeClimbCutsceneSpec,
     applyRescueCutsceneText,
     playFishRingCutscene,
     playDolphinRescueCutscene,
-    playWaterClimbCutscene
+    playWaterClimbCutscene,
+    playClimbCutscene
   });
 
   G.registerCutscene(makeCutscenePreviewSpec('box'));
@@ -708,4 +754,5 @@
   G.registerCutscene(makeFishRingCutsceneSpec('fullscreen'));
   G.registerCutscene(makeDolphinRescueCutsceneSpec('fullscreen'));
   G.registerCutscene(makeWaterClimbCutsceneSpec('fullscreen'));
+  G.registerCutscene(makeClimbCutsceneSpec('fullscreen'));
 })();

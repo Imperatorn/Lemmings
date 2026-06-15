@@ -521,27 +521,42 @@
     let spec=null,label='';
     if(kind==='waterClimb'&&G.makeWaterClimbCutsceneSpec){
       spec=G.makeWaterClimbCutsceneSpec(mode);
-      spec.event=Object.assign(ctx,{lemX:x,lemY:waterY+6,dir:1,waterY});
+      spec.event=Object.assign(ctx,{lemX:x,lemY:waterY+6,dir:1,waterY,fromWater:true});
       label='Klattrar ur vatten';
+    }else if(kind==='climb'&&G.makeClimbCutsceneSpec){
+      spec=G.makeClimbCutsceneSpec(mode);
+      spec.event=Object.assign(ctx,{lemX:x,lemY:waterY-8,dir:1,waterY,fromWater:false});
+      label='Klattrar pa vagg';
     }else if(kind==='fishRing'&&G.makeFishRingCutsceneSpec){
       spec=G.makeFishRingCutsceneSpec(mode);
-      spec.event=Object.assign(ctx,{lemX:x+18,lemY:waterY+8,fishX:x-34,fishY:waterY+12,waterY});
+      spec.event=Object.assign(ctx,{lemX:x+18,lemY:waterY+8,fishX:x-34,fishY:waterY+12,waterY,fromWater:true});
       label='Fisk ger badring';
     }else if(kind==='dolphin'&&G.makeDolphinRescueCutsceneSpec){
       spec=G.makeDolphinRescueCutsceneSpec(mode);
-      spec.event=Object.assign(ctx,{lemX:x+52,lemY:waterY-8,waterX:x-36,waterY:waterY+10,shoreX:x+82,shoreY:waterY-20});
+      spec.event=Object.assign(ctx,{lemX:x+52,lemY:waterY-8,waterX:x-36,waterY:waterY+10,shoreX:x+82,shoreY:waterY-20,fromWater:true});
       label='Delfinraddning';
     }
     if(!spec){setStatus('Cutscene-variant saknas: '+kind,'warn');return}
-    if(G.applyRescueCutsceneText)G.applyRescueCutsceneText(spec,kind==='fishRing'?'fish':(kind==='waterClimb'?'climb':'dolphin'));
+    const textKind=kind==='fishRing'?'fish':(kind==='dolphin'?'dolphin':'climb');
+    if(G.applyRescueCutsceneText)G.applyRescueCutsceneText(spec,textKind);
     if(ctx.weatherKind==='rain')G.thunderFlash=Math.max(G.thunderFlash||0,8);
     const cs=G.playCutscene(spec,{respectPrefs:false});
     if(!cs){setStatus('Kunde inte starta cutscene-variant: '+kind,'warn');return}
     finishAnimationSetup('Cutscene: '+label+' - '+ctx.themeKey+', '+(ctx.cave?'grotta':(ctx.night?'natt':'dag'))+', '+ctx.weatherKind+'.');
   }
 
+  function debugRescueKindForCutsceneId(id){
+    if(id==='water-climb-closeup')return 'waterClimb';
+    if(id==='wall-climb-closeup')return 'climb';
+    if(id==='fish-ring-closeup')return 'fishRing';
+    if(id==='dolphin-rescue-closeup')return 'dolphin';
+    return null;
+  }
+
   function playDebugCutscene(id,label){
     if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    const rescueKind=debugRescueKindForCutsceneId(id);
+    if(rescueKind){playDebugRescueCutscene(rescueKind);return}
     if(!G.cutsceneById||!G.cutsceneById(id)){setStatus('Cutscene saknas: '+id,'warn');return}
     const cs=G.playCutscene(id,{respectPrefs:false});
     if(!cs){setStatus('Kunde inte starta cutscene: '+id,'warn');return}

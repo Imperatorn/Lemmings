@@ -136,7 +136,11 @@ class Lemming{
       let up=0;
       while(T.solid(nx,ny)&&up<7){ny--;up++}
       if(up>=7){                   // vägg
-        if(this.climber){this.state='CLIMB';this.busyT=0;return}
+        if(this.climber){
+          this.state='CLIMB';this.busyT=0;
+          if(G.playClimbCutscene)G.playClimbCutscene(this,'fullscreen');
+          return;
+        }
         this.dir*=-1;return;
       }
     }else{                         // marken sjunker?

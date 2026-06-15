@@ -53,13 +53,13 @@ if (debugHtml) {
   for (const id of ['cutsceneMode','cutsceneLight','cutsceneWeather','cutsceneMaterial']) {
     if (!debugHtml.includes(`id="${id}"`)) throw new Error(`debug.html is missing ${id}`);
   }
-  for (const action of ['waterClimb','fishRing','dolphin']) {
+  for (const action of ['waterClimb','climb','fishRing','dolphin']) {
     if (!debugHtml.includes(`data-cutscene-test="${action}"`)) {
       throw new Error(`debug.html is missing cutscene variant action: ${action}`);
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','playDebugCutscene','playDebugRescueCutscene','debugCutsceneWorldContext']) {
+  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
@@ -100,6 +100,25 @@ function makeContext2d(){
     createLinearGradient(){return {addColorStop(){}}},
     createRadialGradient(){return {addColorStop(){}}}
   };
+}
+
+function makeRecordingContext2d(){
+  const c = makeContext2d();
+  const fillStyles = [];
+  const strokeStyles = [];
+  c.fillStyles = fillStyles;
+  c.strokeStyles = strokeStyles;
+  c._fillStyle = c.fillStyle;
+  c._strokeStyle = c.strokeStyle;
+  Object.defineProperty(c, 'fillStyle', {
+    get(){return this._fillStyle},
+    set(v){this._fillStyle = v; fillStyles.push(String(v))}
+  });
+  Object.defineProperty(c, 'strokeStyle', {
+    get(){return this._strokeStyle},
+    set(v){this._strokeStyle = v; strokeStyles.push(String(v))}
+  });
+  return c;
 }
 
 function makeCanvas(){
@@ -191,7 +210,8 @@ const requiredRuntimeMethods = [
   'applyRescueCutsceneText',
   'makeFishRingCutsceneSpec','playFishRingCutscene',
   'makeDolphinRescueCutsceneSpec','playDolphinRescueCutscene',
-  'makeWaterClimbCutsceneSpec','playWaterClimbCutscene','toggleCutscenes',
+  'makeWaterClimbCutsceneSpec','playWaterClimbCutscene',
+  'makeClimbCutsceneSpec','playClimbCutscene','toggleCutscenes',
   'hitDecorTargetAt',
   'findNearbyRingFish','makeRescueRingFish','tryFishSwimRing',
   'rescueToastText',
@@ -225,7 +245,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
 {
   const registeredCutscenes = G.cutsceneList({debug:true});
   const registeredIds = new Set(registeredCutscenes.map(s => s.id));
-  for (const id of ['cutscene-preview-box','cutscene-preview-fullscreen','fish-ring-closeup','dolphin-rescue-closeup','water-climb-closeup']) {
+  for (const id of ['cutscene-preview-box','cutscene-preview-fullscreen','fish-ring-closeup','dolphin-rescue-closeup','water-climb-closeup','wall-climb-closeup']) {
     if (!registeredIds.has(id)) throw new Error(`Cutscene registry is missing debug scene: ${id}`);
   }
   const fishMeta = registeredCutscenes.find(s => s.id === 'fish-ring-closeup');
@@ -320,6 +340,29 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   drawCutsceneOverlay(WCTX, 5);
   G.clearCutscene('verify-water-climb');
+  const climbScene = G.playCutscene(G.makeClimbCutsceneSpec('fullscreen'));
+  if (!climbScene || !G.cutsceneActive() || climbScene.id !== 'wall-climb-closeup') {
+    throw new Error('Wall climb cutscene did not start');
+  }
+  if (G.currentCutsceneShot().duration < minGameplayCutsceneTicks || G.currentCutsceneShot().duration > maxGameplayCutsceneTicks) {
+    throw new Error('Wall climb cutscene should be at most 3 seconds long');
+  }
+  drawCutsceneOverlay(WCTX, 6);
+  G.clearCutscene('verify-wall-climb');
+  const desertSpec = G.makeWaterClimbCutsceneSpec('fullscreen');
+  desertSpec.event = {themeKey:'desert', fromWater:true, lemX:140, lemY:130, waterY:120};
+  const desertCtx = makeRecordingContext2d();
+  desertSpec.shots[0].draw(desertCtx, {x:0,y:0,w:480,h:300}, 0.5, {spec:desertSpec}, 7);
+  if (!desertCtx.fillStyles.includes('#9a6131') || !desertCtx.fillStyles.includes('#b87938')) {
+    throw new Error('Water climb cutscene did not render the selected desert material');
+  }
+  const crystalSpec = G.makeClimbCutsceneSpec('fullscreen');
+  crystalSpec.event = {themeKey:'crystal', fromWater:false, lemX:140, lemY:130, waterY:120};
+  const crystalCtx = makeRecordingContext2d();
+  crystalSpec.shots[0].draw(crystalCtx, {x:0,y:0,w:480,h:300}, 0.5, {spec:crystalSpec}, 8);
+  if (!crystalCtx.fillStyles.includes('#5ea4cc') || !crystalCtx.fillStyles.includes('#6cb6d8')) {
+    throw new Error('Wall climb cutscene did not render the selected crystal material');
+  }
   G.state = prevState;
   G.paused = prevPaused;
   G.cutscene = prevCutscene;
@@ -412,6 +455,27 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Water climb cutscene did not inherit night/weather context');
   }
   G.clearCutscene('verify-water-climb-event');
+  G.ropes = [];
+  G.cutscene = null;
+  const wallLem = new Lemming(149, 125);
+  wallLem.state = 'WALK';
+  wallLem.climber = true;
+  wallLem.dir = 1;
+  G.lems = [wallLem];
+  wallLem.walk(G.T);
+  if (wallLem.state !== 'CLIMB') {
+    throw new Error('Regular climber lemming did not start climbing at a wall');
+  }
+  if (!G.cutsceneActive() || !G.cutscene || G.cutscene.id !== 'wall-climb-closeup') {
+    throw new Error('Regular climbing transition did not start the wall climb cutscene');
+  }
+  if (!G.cutscene.spec || !G.cutscene.spec.event || G.cutscene.spec.event.fromWater !== false || G.cutscene.spec.event.themeKey !== 'desert') {
+    throw new Error('Wall climb cutscene did not inherit dry wall material context');
+  }
+  if (G.cutscene.spec.event.night !== true || G.cutscene.spec.event.weatherKind !== 'snow') {
+    throw new Error('Wall climb cutscene did not inherit night/weather context');
+  }
+  G.clearCutscene('verify-wall-climb-event');
   G.ambientFish = [];
   G.cutscene = null;
   const hiddenWaterLem = new Lemming(20, water.y + 8);
