@@ -124,13 +124,14 @@ function drawWaterfallCaveDeepView(c,cave,tk){
   c.fillStyle='#07131d';
   fillPixelPoly(c,[[ox,oy+oh],[ox+28,oy+36],[ox+76,oy+5],[ox+ow-78,oy+6],[ox+ow-28,oy+34],[ox+ow,oy+oh]]);
   c.fillStyle='#1b3342';c.fillRect(ox+48,oy+18,ow-96,oh-20);
-  c.globalAlpha=0.20;
-  c.fillStyle='#8fd8ff';c.fillRect(ox+92,oy+4,36,oh+32);
+  const fallH=oh+8;
+  c.globalAlpha=0.18;
+  c.fillStyle='#8fd8ff';c.fillRect(ox+92,oy+4,36,fallH);
   for(let i=0;i<40;i+=4){
     const sx=ox+94+i+Math.round(Math.sin((tk+t)*0.11+i)*2);
     c.globalAlpha=0.18+0.16*hash2(i+251,wf.x||0);
     c.fillStyle=i%8?'#70b8d0':'#d8f8ff';
-    c.fillRect(sx,oy+4,1+(i%3===0?1:0),oh+34);
+    c.fillRect(sx,oy+4,1+(i%3===0?1:0),fallH+2);
   }
   c.globalAlpha=1;
   c.fillStyle='#071018';
@@ -241,28 +242,30 @@ function drawWaterfallCaveCampfire(c,x,y,tk){
 
 function drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,scale,fireX){
   const dx=(fireX-lx), dist=Math.abs(dx);
-  const strength=clamp(1-dist/175,0,1);
+  const strength=clamp(1-dist/160,0,1);
   if(strength<=0)return;
   const side=dx>=0?1:-1;
   c.save();
   c.translate(lx,ly);
   c.scale(scale,scale);
-  c.globalAlpha=0.28+0.22*strength;
-  c.fillStyle='#ffb35a';
+  c.globalAlpha=0.12+0.16*strength;
+  c.fillStyle='#ffd080';
   if(side>0){
-    c.fillRect(1,-10,2,2);
-    c.fillRect(1,-8,2,2);
-    c.fillRect(1,-6,2,4);
-    c.fillRect(2,-2,1,2);
+    c.fillRect(1,-10,2,1);
+    c.fillRect(2,-9,1,2);
+    c.fillRect(2,-7,1,1);
+    c.fillRect(2,-6,1,4);
+    c.fillRect(2,-2,1,1);
   }else{
-    c.fillRect(-3,-10,2,2);
-    c.fillRect(-3,-8,2,2);
-    c.fillRect(-3,-6,2,4);
-    c.fillRect(-3,-2,1,2);
+    c.fillRect(-3,-10,2,1);
+    c.fillRect(-3,-9,1,2);
+    c.fillRect(-3,-7,1,1);
+    c.fillRect(-3,-6,1,4);
+    c.fillRect(-3,-2,1,1);
   }
-  c.globalAlpha=0.18+0.18*strength;
-  c.fillStyle='#ffe08a';
-  c.fillRect(side>0?2:-3,-8,1,2);
+  c.globalAlpha=0.10+0.12*strength;
+  c.fillStyle='#ff9a3a';
+  c.fillRect(side>0?2:-3,-6,1,3);
   c.restore();
 }
 
