@@ -14,6 +14,9 @@
   ];
   const WEATHER=[['sun','Sol/fåglar'],['rain','Regn'],['snow','Snö'],['cave','Dropp'],['stop','Stoppa väder']];
   const SFX_GROUPS=[
+    ['Radio',[
+      ['Mission accomplished',()=>playRadioSpeechTest('Mission accomplished')]
+    ]],
     ['UI',[
       ['Klick',()=>AU.sClick()],['Jingle vinst',()=>AU.jingle(true)],['Jingle förlust',()=>AU.jingle(false)]
     ]],
@@ -62,6 +65,62 @@
     for(let i=0;i<7;i++){
       setTimeout(()=>{AU.fxLast={};fn()},i*95);
     }
+  }
+
+  function radioClickBurst(start,tail){
+    const t=start==null?AU.now():start;
+    AU.softNoise(0.15,0.026,2750,0.82,t,{type:'bandpass',q:1.55,smooth:0.20,attack:0.003,release:0.080});
+    AU.softNoise(0.08,0.018,5600,0.64,t+0.018,{type:'highpass',q:0.6,smooth:0.16,attack:0.002,release:0.040});
+    AU.tone(tail?620:760,0.055,'square',0.032,1,t+0.010);
+    AU.tone(tail?430:980,0.065,'square',0.024,1,t+0.068);
+    if(!tail)AU.tone(360,0.040,'triangle',0.018,1,t+0.128);
+  }
+
+  function radioStaticBed(start,dur){
+    const t=start==null?AU.now():start;
+    const d=Math.max(0.6,dur||1.35);
+    AU.softNoise(d,0.010,2450,0.95,t,{type:'bandpass',q:0.72,smooth:0.58,attack:0.030,release:0.160});
+    AU.softNoise(d,0.006,6200,0.96,t+0.018,{type:'highpass',q:0.45,smooth:0.34,attack:0.035,release:0.180});
+    for(let i=0;i<7;i++){
+      const dt=t+0.12+i*0.18+RND()*0.035;
+      AU.softNoise(0.035,0.007,3600+RND()*2200,0.72,dt,{type:'bandpass',q:1.4,smooth:0.08,attack:0.002,release:0.026});
+    }
+  }
+
+  function pickRadioVoice(){
+    const synth=window.speechSynthesis;
+    const voices=synth&&synth.getVoices?synth.getVoices():[];
+    const maleName=/(david|mark|guy|george|daniel|alex|fred|tom|matthew|aaron|liam|ryan|male)/i;
+    return voices.find(v=>/^en[-_]?US/i.test(v.lang)&&maleName.test(v.name))||
+      voices.find(v=>/^en/i.test(v.lang)&&maleName.test(v.name))||
+      voices.find(v=>/^en/i.test(v.lang))||null;
+  }
+
+  function playRadioSpeechTest(text){
+    const synth=window.speechSynthesis;
+    const Utterance=window.SpeechSynthesisUtterance;
+    if(!synth||!Utterance)throw new Error('Web Speech API saknas i den har webblasaren.');
+    const line=String(text||'Mission accomplished');
+    radioClickBurst(AU.now(),false);
+    synth.cancel();
+    const voice=pickRadioVoice();
+    let finished=false;
+    const finish=()=>{
+      if(finished)return;
+      finished=true;
+      radioClickBurst(AU.now()+0.025,true);
+    };
+    const u=new Utterance(line.replace(/\s+/g,' ').trim());
+    u.lang='en-US';
+    u.rate=0.78;
+    u.pitch=0;
+    u.volume=clamp((AU.sfxVol==null?1:AU.sfxVol)*0.88,0,1);
+    if(voice)u.voice=voice;
+    u.onend=finish;
+    u.onerror=finish;
+    radioStaticBed(AU.now()+0.10,2.15);
+    setTimeout(()=>synth.speak(u),130);
+    setTimeout(finish,2800);
   }
 
   function setStatus(msg,kind){
