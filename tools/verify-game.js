@@ -79,6 +79,9 @@ const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 
 if (!playRenderCode.includes('ASSETS.landsOfLoreCover') || playRenderCode.includes('THE THRONE OF CHAOS')) {
   throw new Error('Waterfall cave cover should use the image asset instead of the old hand-drawn cover');
 }
+if (playRenderCode.includes('#f0d080')) {
+  throw new Error('Deep cave game item should not render the old yellow hitbox highlight');
+}
 
 function makeContext2d(){
   return {
@@ -241,7 +244,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -694,13 +697,34 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (deepItem.coverOpen || !deepItem.dismissedNear) {
     throw new Error('Deep cave game cover did not close on click');
   }
-  deepItem.dismissedNear = false;
-  deepItem.coverOpen = true;
+  G.waterfallCave.lemX = deepItem.x - 72;
+  G.waterfallCave.lemY = deepItem.y;
+  G.tick();
+  if (deepItem.dismissedNear) {
+    throw new Error('Deep cave game item did not reset after walking away');
+  }
+  G.handleWaterfallCaveKey('ArrowRight');
+  for (let i = 0; i < 40 && !deepItem.coverOpen; i++) G.tick();
+  if (!deepItem.coverOpen || deepItem.coverCloseArmed) {
+    throw new Error('Deep cave game cover should open unarmed while arrival movement is still held');
+  }
+  const heldCoverX = G.waterfallCave.lemX;
+  G.tick();
+  if (!deepItem.coverOpen || G.waterfallCave.lemX !== heldCoverX) {
+    throw new Error('Deep cave game cover should stay open and freeze arrival movement until key release');
+  }
   G.handleWaterfallCaveKey('ArrowRight');
   G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowRight');
   if (!deepItem.coverOpen) {
-    throw new Error('Deep cave game cover should not close from a tiny movement while still near');
+    throw new Error('Deep cave game cover closed before the arrival key was released');
+  }
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (!deepItem.coverCloseArmed) {
+    throw new Error('Deep cave game cover did not arm closing after movement key release');
+  }
+  G.handleWaterfallCaveKey('ArrowRight');
+  if (deepItem.coverOpen || G.waterfallCave.keys.right) {
+    throw new Error('Deep cave game cover should close and consume the first movement key after release');
   }
   G.waterfallCave.lemX = deepItem.x + 70;
   G.waterfallCave.lemY = deepItem.y;
@@ -708,6 +732,21 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (deepItem.coverOpen) {
     throw new Error('Deep cave game cover did not close when walking away');
   }
+  G.waterfallCave.lemX = deepItem.x + 10;
+  G.waterfallCave.lemY = deepItem.y;
+  G.tick();
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'front') {
+    throw new Error('Deep cave game cover did not reopen on a later visit');
+  }
+  G.handleWaterfallCaveKey('Enter');
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'back') {
+    throw new Error('Deep cave game cover did not flip to the back side');
+  }
+  G.handleWaterfallCaveKey(' ');
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'front') {
+    throw new Error('Deep cave game cover did not flip back to the front side');
+  }
+  G.handleWaterfallCaveInput({x:240,y:150}, 'click');
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCave.deepBounds.exitY + 1;
   G.handleWaterfallCaveKey('ArrowUp');

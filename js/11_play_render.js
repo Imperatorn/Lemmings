@@ -192,24 +192,57 @@ function drawWaterfallCaveLemming(c,cave,lx,ly,scale){
   c.restore();
 }
 
-function drawLandsOfLoreCaveCover(c,tk){
+function drawLandsOfLoreCaveCover(c,cave,tk){
   const img=typeof ASSETS==='object'&&ASSETS?ASSETS.landsOfLoreCover:null;
   const loaded=!!(img&&img.complete!==false&&(img.naturalWidth||img.width));
-  const x=132,y=18,w=216,h=270;
+  const side=(cave&&cave.deepItem&&cave.deepItem.coverSide)||'front';
+  const x=150,y=30,w=180,h=225;
   c.save();
-  c.globalAlpha=0.76;
+  c.globalAlpha=0.66;
   c.fillStyle='#000000';
   c.fillRect(0,0,CW,CH);
   c.globalAlpha=1;
-  c.fillStyle='#0f0a07';c.fillRect(x-5,y-5,w+10,h+10);
-  c.fillStyle='#3a271b';c.fillRect(x-2,y-2,w+4,h+4);
-  if(loaded){
+  c.globalAlpha=0.42;
+  c.fillStyle='#6ea8b4';
+  c.fillRect(x+18,y+h+20,w-36,2);
+  c.fillRect(x+40,y+h+30,w-80,2);
+  c.globalAlpha=1;
+  c.fillStyle='#07090b';
+  fillPixelPoly(c,[[x-34,y+h+30],[x-18,y+h+8],[x+w+16,y+h+8],[x+w+34,y+h+30]]);
+  c.fillStyle='#16120f';
+  fillPixelPoly(c,[[x-22,y+h+24],[x-10,y+h+12],[x+w+8,y+h+12],[x+w+22,y+h+24]]);
+  c.fillStyle='#0f0a07';c.fillRect(x-6,y-6,w+12,h+12);
+  c.fillStyle='#3a271b';c.fillRect(x-3,y-3,w+6,h+6);
+  c.fillStyle='#1a1511';c.fillRect(x,y,w,h);
+  if(side==='back'){
+    c.fillStyle='#4c3422';c.fillRect(x+5,y+5,w-10,h-10);
+    c.fillStyle='#d6bf8a';c.fillRect(x+11,y+12,w-22,h-24);
+    c.fillStyle='#b58b58';c.fillRect(x+11,y+12,w-22,4);
+    c.fillStyle='#6d472a';c.fillRect(x+14,y+19,w-28,2);
+    c.fillStyle='#3b2b20';
+    c.font='8px sans-serif';
+    c.textAlign='left';
+    c.textBaseline='top';
+    const lines=[
+      'Utvecklat av Johan Forsberg.',
+      'Tilldelat Valdemar, Tage och Elis.',
+      '',
+      'Betatestare:',
+      'Micke och Calle'
+    ];
+    for(let i=0;i<lines.length;i++)c.fillText(lines[i],x+16,y+40+i*18);
+    c.fillStyle='#725034';c.fillRect(x+18,y+h-28,w-36,2);
+  }else if(loaded){
     c.imageSmoothingEnabled=false;
     c.drawImage(img,x,y,w,h);
   }else{
-    c.fillStyle='#19120d';c.fillRect(x,y,w,h);
     drawTextC(c,'LADDAR BILD',x+w/2,y+h/2-6,1,'#f0c060');
   }
+  c.globalAlpha=0.18;
+  c.fillStyle='#8fd8ff';c.fillRect(x+w+8,y+20,2,h-26);
+  c.globalAlpha=0.25;
+  c.fillStyle='#000000';
+  c.fillRect(0,0,CW,16);c.fillRect(0,CH-24,CW,24);c.fillRect(0,0,40,CH);c.fillRect(CW-40,0,40,CH);
   c.restore();
 }
 
@@ -263,19 +296,13 @@ function drawWaterfallCaveDeepView(c,cave,tk){
   c.fillStyle='#e8c070';c.fillRect(-9,-6,18,2);
   c.fillStyle='#c0d8ff';c.fillRect(7,-3,5,6);
   c.restore();
-  if(it.near||it.coverOpen){
-    c.globalAlpha=0.35+0.15*Math.sin((tk+t)*0.12);
-    c.fillStyle='#f0d080';
-    c.fillRect(ix-24,iy-18,52,26);
-    c.globalAlpha=1;
-  }
   const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
   const lemScale=waterfallCaveLemmingScale(cave);
   c.globalAlpha=0.35;c.fillStyle='#000000';
   c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
   c.globalAlpha=1;
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
-  if(it.coverOpen)drawLandsOfLoreCaveCover(c,tk+t);
+  if(it.coverOpen)drawLandsOfLoreCaveCover(c,cave,tk+t);
   c.restore();
   return true;
 }
