@@ -278,22 +278,22 @@ const AU={
     const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
     if(bank.fireOn)return;
     bank.fireNodes=bank.fireNodes||[];
-    const ember=this.loopNoise(5.2,0.014,760,{type:'lowpass',smooth:0.82,attack:0.75});
-    const hiss=this.loopNoise(4.4,0.006,2600,{type:'bandpass',q:0.72,smooth:0.38,attack:0.9});
+    const ember=this.loopNoise(5.8,0.0105,520,{type:'lowpass',smooth:0.90,attack:1.0});
+    const hiss=this.loopNoise(4.9,0.0032,1450,{type:'bandpass',q:0.45,smooth:0.62,attack:1.2});
     if(ember)bank.fireNodes.push(ember);
     if(hiss)bank.fireNodes.push(hiss);
     bank.fireOn=true;
-    bank.nextFireCrackle=this.now()+0.35+Math.random()*0.75;
+    bank.nextFireCrackle=this.now()+0.65+Math.random()*1.25;
   },
   updateWaterfallCaveCampfire(){
     const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
     if(!bank.fireOn||!this.ctx||!this.on||!this.sfxOn)return;
     const t=this.now();
     if(!bank.nextFireCrackle||t>=bank.nextFireCrackle){
-      this.softNoise(0.055,0.032+Math.random()*0.020,4300,0.46,t,{type:'bandpass',q:1.35,smooth:0.10,attack:0.002,release:0.040});
-      if(Math.random()<0.48)this.tone(900+Math.random()*850,0.035,'triangle',0.010,0.65,t+0.012);
-      if(Math.random()<0.22)this.softNoise(0.14,0.018,1300,0.72,t+0.035,{type:'lowpass',smooth:0.55,attack:0.006,release:0.070});
-      bank.nextFireCrackle=t+0.32+Math.random()*1.05;
+      this.softNoise(0.080,0.017+Math.random()*0.010,2100,0.58,t,{type:'bandpass',q:0.70,smooth:0.24,attack:0.006,release:0.065});
+      if(Math.random()<0.26)this.softNoise(0.16,0.010,780,0.70,t+0.035,{type:'lowpass',smooth:0.72,attack:0.018,release:0.10});
+      if(Math.random()<0.16)this.tone(430+Math.random()*160,0.045,'triangle',0.0045,0.72,t+0.018);
+      bank.nextFireCrackle=t+0.65+Math.random()*1.55;
     }
   },
   // --- effekter ---

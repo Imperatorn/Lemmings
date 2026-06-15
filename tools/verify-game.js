@@ -100,6 +100,16 @@ if (caveRenderCode.includes('#f0d080')) {
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingFireLight') || caveRenderCode.includes('function flameLayer') || caveRenderCode.includes('fireX-72') || caveRenderCode.includes('fireX-50')) {
   throw new Error('Campfire cave render should use pixel-frame fire and lemming side-lighting instead of old rectangular light panels');
 }
+if (!caveRenderCode.includes('const fallH=oh+8') || caveRenderCode.includes('oh+32')) {
+  throw new Error('Deep waterfall cave opening should not drop the waterfall too far down');
+}
+if (!caveRenderCode.includes('faceLit') || !caveRenderCode.includes("globalCompositeOperation='lighter'")) {
+  throw new Error('Campfire cave lemming should use subtle fire-side rim lighting');
+}
+const audioCode = fs.readFileSync(path.join(root, 'js/02_audio.js'), 'utf8');
+if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850') || !audioCode.includes('0.65+Math.random()*1.55')) {
+  throw new Error('Campfire audio should use softer, less sharp crackles');
+}
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');

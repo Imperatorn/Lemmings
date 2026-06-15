@@ -245,27 +245,29 @@ function drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,scale,fireX){
   const strength=clamp(1-dist/160,0,1);
   if(strength<=0)return;
   const side=dx>=0?1:-1;
+  const facing=(cave&&cave.facing)||'right';
+  const faceLit=(facing==='right'&&side>0)||(facing==='left'&&side<0);
+  const sx=side>0?1:-2, outer=side>0?2:-3;
   c.save();
   c.translate(lx,ly);
   c.scale(scale,scale);
-  c.globalAlpha=0.12+0.16*strength;
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.10+0.13*strength;
   c.fillStyle='#ffd080';
-  if(side>0){
-    c.fillRect(1,-10,2,1);
-    c.fillRect(2,-9,1,2);
-    c.fillRect(2,-7,1,1);
-    c.fillRect(2,-6,1,4);
-    c.fillRect(2,-2,1,1);
+  c.fillRect(sx,-10,1,2);
+  c.fillRect(sx,-6,1,4);
+  if(facing==='front'||facing==='back'){
+    c.fillRect(outer,-6,1,3);
+  }else if(faceLit){
+    c.fillRect(sx,-8,1,2);
   }else{
-    c.fillRect(-3,-10,2,1);
-    c.fillRect(-3,-9,1,2);
-    c.fillRect(-3,-7,1,1);
-    c.fillRect(-3,-6,1,4);
-    c.fillRect(-3,-2,1,1);
+    c.fillRect(sx,-8,1,1);
   }
-  c.globalAlpha=0.10+0.12*strength;
+  c.globalAlpha=0.08+0.10*strength;
   c.fillStyle='#ff9a3a';
-  c.fillRect(side>0?2:-3,-6,1,3);
+  c.fillRect(outer,-5,1,2);
+  c.fillRect(sx,-2,1,1);
+  c.globalCompositeOperation='source-over';
   c.restore();
 }
 
