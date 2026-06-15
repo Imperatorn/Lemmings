@@ -188,11 +188,13 @@ const requiredRuntimeMethods = [
   'registerCutscene','cutsceneById','cutsceneList','playCutscene','stopCutscene','clearCutscene',
   'advanceCutscene','updateCutscene','cutsceneActive','cutsceneRect','currentCutsceneShot',
   'handleCutsceneInput','handleCutsceneKey','makeCutscenePreviewSpec',
+  'applyRescueCutsceneText',
   'makeFishRingCutsceneSpec','playFishRingCutscene',
   'makeDolphinRescueCutsceneSpec','playDolphinRescueCutscene',
   'makeWaterClimbCutsceneSpec','playWaterClimbCutscene','toggleCutscenes',
   'hitDecorTargetAt',
-  'findNearbyRingFish','tryFishSwimRing',
+  'findNearbyRingFish','makeRescueRingFish','tryFishSwimRing',
+  'rescueToastText',
   'rebindAmbientFishZones',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
@@ -229,6 +231,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const fishMeta = registeredCutscenes.find(s => s.id === 'fish-ring-closeup');
   if (!fishMeta || fishMeta.group !== 'Raddningar' || !fishMeta.label) {
     throw new Error('Fish ring cutscene metadata is incomplete');
+  }
+  const fallbackFishSpec = G.makeFishRingCutsceneSpec('fullscreen');
+  fallbackFishSpec.event = {rescueOnly:true, levelName:'VERIFY', themeKey:'dirt', weatherKind:'rain', lemX:20, lemY:128};
+  G.applyRescueCutsceneText(fallbackFishSpec, 'fish');
+  if (!fallbackFishSpec.shots[0].text.join(' ').includes('FISK') || fallbackFishSpec.shots[0].title === 'FISKEN HJALPER TILL') {
+    throw new Error('Fallback fish cutscene text was not specialized');
+  }
+  if (typeof G.rescueToastText('dolphin', {x:80, y:120}) !== 'string' || !G.rescueToastText('climb', {x:80, y:120})) {
+    throw new Error('Rescue toast text helper is incomplete');
   }
 }
 {
@@ -401,6 +412,21 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Water climb cutscene did not inherit night/weather context');
   }
   G.clearCutscene('verify-water-climb-event');
+  G.ambientFish = [];
+  G.cutscene = null;
+  const hiddenWaterLem = new Lemming(20, water.y + 8);
+  hiddenWaterLem.state = 'FALL';
+  const hiddenLiquid = G.lemmingLiquidHazard(hiddenWaterLem);
+  if (!hiddenLiquid || G.findNearbyRingFish(hiddenWaterLem, hiddenLiquid)) {
+    throw new Error('Hidden-water fish rescue fixture is invalid');
+  }
+  if (!G.tryFishSwimRing(hiddenWaterLem, hiddenLiquid) || hiddenWaterLem.state !== 'SWIM' || !hiddenWaterLem.swimRing) {
+    throw new Error('Fish rescue did not work away from an ambient fish');
+  }
+  if (!G.cutsceneActive() || !G.cutscene || G.cutscene.id !== 'fish-ring-closeup') {
+    throw new Error('Fallback fish rescue did not start the fish ring cutscene');
+  }
+  G.clearCutscene('verify-fallback-fish-event');
   G.level = prevLevel;
   G.T = prevTerrain;
   G.lems = prevLems;

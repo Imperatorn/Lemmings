@@ -50,6 +50,63 @@
       levelName:ev.levelName||((L&&L.name)?String(L.name):'')
     };
   }
+  function rescueTextIndex(kind,ev,count){
+    if(count<=1)return 0;
+    const seed=[
+      kind,
+      ev&&ev.levelName,
+      ev&&ev.themeKey,
+      ev&&ev.weatherKind,
+      Math.round((ev&&ev.lemX)||0),
+      Math.round((ev&&ev.lemY)||0)
+    ].join('|');
+    return (typeof hashString==='function'?hashString(seed):seed.length)%count;
+  }
+  function rescueCutsceneText(kind,ev){
+    ev=ev||{};
+    const cave=!!ev.cave;
+    const night=!!ev.night;
+    const rain=ev.weatherKind==='rain';
+    const snow=ev.weatherKind==='snow';
+    let pool;
+    if(kind==='fish'){
+      pool=ev.rescueOnly?[
+        {title:'BADRING UR DJUPET',text:['UR VATTNET KOMMER EN FISK MED BADRING.']},
+        {title:'OVANTAD HJALP',text:['EN GLIMT UNDER YTAN - EN BADRING!']},
+        {title:'SISTA SEKUNDEN',text:['FISKEN RUSAR FRAM MED EN ROD BADRING.']}
+      ]:[
+        {title:'FISKEN HJALPER TILL',text:['PLASK! EN BADRING TILL LEMMELN.']},
+        {title:'SNABB FISK',text:['FISKEN KASTAR UT EN BADRING PRECIS I TID.']},
+        {title:'RADDNING I VATTNET',text:['EN LITEN FENA BLIR STOR HJALP.']}
+      ];
+    }else if(kind==='dolphin'){
+      pool=[
+        {title:'DELFINEN RADDAR',text:['DELFINEN TAR FART UNDERIFRAN OCH SKJUTER UPP LEMMELN.']},
+        {title:'UPP UR DJUPET',text:['ETT KRAFTIGT SPRANG LYFTER LEMMELN TILL LAND.']},
+        {title:'VATTNET EXPLODERAR',text:['DELFINEN BRYTER YTAN OCH BAR LEMMELN MOT KANTEN.']}
+      ];
+    }else{
+      pool=[
+        {title:'GREPP I VAGGEN',text:['LEMMELN FANGAR EN KANT OCH BORJAR KLATTRA.']},
+        {title:'UPP UR VATTNET',text:['ETT STEG I TAGET TAR SIG LEMMELN MOT TOPPEN.']},
+        {title:'NARA LAND',text:['VAGGEN HALLER, OCH LEMMELN KLATTRAR VIDARE.']}
+      ];
+    }
+    if(cave&&kind!=='dolphin')pool=pool.concat([{title:'I GROTTMORKRET',text:['DROPPAR FALLER MEDAN LEMMELN TAR SIG UPP.']}]);
+    else if(night)pool=pool.concat([{title:'RADDAD I NATTEN',text:[rain?'REGNET PISKAR, MEN HJALPEN KOMMER FRAM.':(snow?'SNON FALLER NAR LEMMELN RADDAS.':'MORKRET STOPPAR INTE RADDNINGEN.')]}]);
+    const pick=pool[rescueTextIndex(kind,ev,pool.length)]||pool[0];
+    return {title:pick.title,text:pick.text.slice()};
+  }
+  function applyRescueCutsceneText(spec,kind){
+    if(!spec)return spec;
+    const msg=rescueCutsceneText(kind,(spec&&spec.event)||{});
+    spec.title=msg.title;
+    if(spec.shots&&spec.shots[0]){
+      spec.shots[0].title=msg.title;
+      spec.shots[0].text=msg.text;
+    }
+    return spec;
+  }
   function drawCutsceneAtmosphere(c,r,cs,tk){
     const ctx=cutsceneWorldContext(cs);
     if(ctx.cave){
@@ -602,8 +659,10 @@
       lemY:l&&Number.isFinite(l.y)?Math.round(l.y):null,
       fishX:fish&&Number.isFinite(fish.x)?Math.round(fish.x):null,
       fishY:fish&&Number.isFinite(fish.y)?Math.round(fish.y):null,
-      waterY:z&&Number.isFinite(z.y)?Math.round(z.y):null
+      waterY:z&&Number.isFinite(z.y)?Math.round(z.y):null,
+      rescueOnly:!!(fish&&fish.rescueOnly)
     });
+    applyRescueCutsceneText(spec,'fish');
     return G.playCutscene(spec,{respectPrefs:true});
   }
   function playDolphinRescueCutscene(l,z,spot,sx,sy,mode){
@@ -617,6 +676,7 @@
       shoreX:spot&&Number.isFinite(spot.x)?Math.round(spot.x):null,
       shoreY:spot&&Number.isFinite(spot.y)?Math.round(spot.y):null
     });
+    applyRescueCutsceneText(spec,'dolphin');
     return G.playCutscene(spec,{respectPrefs:true});
   }
   function playWaterClimbCutscene(l,z,mode){
@@ -628,6 +688,7 @@
       dir:l&&Number.isFinite(l.dir)?Math.round(l.dir):null,
       waterY:z&&Number.isFinite(z.y)?Math.round(z.y):null
     });
+    applyRescueCutsceneText(spec,'climb');
     return G.playCutscene(spec,{respectPrefs:true});
   }
 
@@ -636,6 +697,7 @@
     makeFishRingCutsceneSpec,
     makeDolphinRescueCutsceneSpec,
     makeWaterClimbCutsceneSpec,
+    applyRescueCutsceneText,
     playFishRingCutscene,
     playDolphinRescueCutscene,
     playWaterClimbCutscene

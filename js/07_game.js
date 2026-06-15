@@ -1050,6 +1050,34 @@ const G={
     this.saved++;
     AU.sSaved();
   },
+  rescueToastText(kind,ctx){
+    ctx=ctx||{};
+    const pools={
+      fish:ctx.rescueOnly?[
+        'EN FISK KOM UPP MED EN BADRING!',
+        'BADRING UR DJUPET!',
+        'FISKEN KOM FRAM I SISTA SEKUNDEN!'
+      ]:[
+        'FISKEN KASTADE EN BADRING!',
+        'EN FISK GAV LEMMELN FLYTHJALP!',
+        'BADRING LEVERERAD AV FISK!'
+      ],
+      dolphin:[
+        'EN DELFIN SKJUTER UPP LEMMELN!',
+        'DELFINRADDNING VID VATTENKANTEN!',
+        'DELFINEN LYFTE LEMMELN TILL LAND!'
+      ],
+      climb:[
+        'LEMMELN FICK GREPP I VAGGEN!',
+        'UPP UR VATTNET - ETT STEG I TAGET!',
+        'LEMMELN KLATTRAR MOT FAST MARK!'
+      ]
+    };
+    const pool=pools[kind]||['RADDNING!'];
+    const seed=[kind,this.level&&this.level.name,Math.round(ctx.x||ctx.lemX||0),Math.round(ctx.y||ctx.lemY||0),ctx.rescueOnly?'rescue':''].join('|');
+    const idx=(typeof hashString==='function'?hashString(seed):seed.length)%pool.length;
+    return pool[idx];
+  },
   findWaterRescueSpot(l,z){
     if(!this.T||!this.level)return null;
     const leftDist=Math.abs(l.x-z.x), rightDist=Math.abs(l.x-(z.x+z.w));
@@ -1079,7 +1107,7 @@ const G={
     l.chute=false;l.soft=true;l.glide=spot.dir;
     this.dolphins.push({sx,sy,tx:spot.x,ty:spot.y-3,t:0,dur:34,dir:spot.dir});
     AU.sDolphin();
-    this.toast('EN DELFIN RÄDDADE EN LEMMEL!');
+    this.toast(this.rescueToastText('dolphin',{x:spot.x,y:spot.y}));
     for(let i=0;i<18;i++){
       const a=RND()*6.283,sp=0.45+RND()*1.4;
       this.parts.push({x:sx,y:sy-4,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.1,life:12+RND()*12,g:0.10,col:'#a0d0ff',glow:true});
@@ -1101,9 +1129,39 @@ const G={
     }
     return best;
   },
+  makeRescueRingFish(l,z){
+    if(!l||!z||z.lava)return null;
+    const source=z.source||z;
+    const zx=Number.isFinite(z.x)?z.x:(source.x||0);
+    const zw=Number.isFinite(z.w)?z.w:(source.w||0);
+    if(!(zw>0))return null;
+    const minX=zx+5, maxX=zx+zw-5;
+    const fy=clamp(Math.round(l.y),Math.round((z.y||0)+5),Math.round(Math.min(236,(z.y||0)+26)));
+    const dir=l.dir>=0?1:-1;
+    const offsets=[-dir*28,dir*28,-18,18,0];
+    let fx=clamp(Math.round(l.x-dir*24),minX,maxX);
+    for(const off of offsets){
+      const x=clamp(Math.round(l.x+off),minX,maxX);
+      if(!this.T||!this.T.solid(x,fy)){fx=x;break}
+    }
+    return {
+      zone:source,
+      zoneIdx:(this.level&&Array.isArray(this.level.water))?this.level.water.indexOf(source):-1,
+      x:fx,
+      y:fy,
+      baseY:fy,
+      dir:fx<l.x?1:-1,
+      p:0,
+      s:0,
+      spd:0,
+      size:1,
+      col:'#ffd060',
+      rescueOnly:true
+    };
+  },
   tryFishSwimRing(l,z){
     if(!l||!l.alive()||!z||z.lava||l.swimRing||l.fishRingTried)return false;
-    const fish=this.findNearbyRingFish(l,z);
+    const fish=this.findNearbyRingFish(l,z)||this.makeRescueRingFish(l,z);
     if(!fish)return false;
     l.fishRingTried=true;
     if(this.rand()>=FISH_RING_CHANCE)return false;
@@ -1114,7 +1172,7 @@ const G={
     fish.giftT=28;
     fish.dir=(fish.x<l.x)?1:-1;
     AU.sPop();
-    this.toast('EN FISK GAV EN LEMMEL EN BADRING!');
+    this.toast(this.rescueToastText('fish',{x:l.x,y:l.y,rescueOnly:!!fish.rescueOnly}));
     for(let i=0;i<18&&this.parts.length<MAX_PARTICLES;i++){
       const a=RND()*6.283,sp=0.35+RND()*1.15;
       this.parts.push({x:l.x+RND()*8-4,y:l.y-5+RND()*5,

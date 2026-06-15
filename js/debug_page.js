@@ -533,6 +533,7 @@
       label='Delfinraddning';
     }
     if(!spec){setStatus('Cutscene-variant saknas: '+kind,'warn');return}
+    if(G.applyRescueCutsceneText)G.applyRescueCutsceneText(spec,kind==='fishRing'?'fish':(kind==='waterClimb'?'climb':'dolphin'));
     if(ctx.weatherKind==='rain')G.thunderFlash=Math.max(G.thunderFlash||0,8);
     const cs=G.playCutscene(spec,{respectPrefs:false});
     if(!cs){setStatus('Kunde inte starta cutscene-variant: '+kind,'warn');return}
