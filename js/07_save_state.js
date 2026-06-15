@@ -53,6 +53,7 @@ Object.assign(G,{
     for(const k in fields)this[k]=jsonClone(fields[k]);
     if(!Object.prototype.hasOwnProperty.call(fields,'trollUsed'))this.trollUsed=!!fields.nuked;
     if(!this.waterfallCaveLooted||typeof this.waterfallCaveLooted!=='object')this.waterfallCaveLooted={};
+    this.waterfallCaveExitNeedsUpRelease=false;
     this.money=Math.max(0,this.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus?this.normalizePendingSkillBonus(this.pendingSkillBonus):{};
     if(this.selSkill==='nuke')this.selSkill=null;

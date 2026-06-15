@@ -50,6 +50,16 @@
     l.climbCutscene={kind,x:px,y:py,t:now};
     return false;
   }
+  function shouldPlayClimbCutscene(l,kind){
+    if(!l||!l.alive||!l.alive())return false;
+    if(G.cutsceneActive&&G.cutsceneActive())return false;
+    if(G.waterfallCaveActive&&G.waterfallCaveActive())return false;
+    if(l.skipClimbCutsceneT>0)return false;
+    if(l.state==='MANUAL')return false;
+    if(G.manual&&G.manual.active&&G.manual.lemId===l.id)return false;
+    if(kind==='wall'&&l.fall>0)return false;
+    return true;
+  }
   function cutsceneWorldContext(cs){
     const ev=(cs&&cs.spec&&cs.spec.event)||{};
     const L=G.level||{};
@@ -755,6 +765,7 @@
     makeDolphinRescueCutsceneSpec,
     makeWaterClimbCutsceneSpec,
     makeClimbCutsceneSpec,
+    shouldPlayClimbCutscene,
     applyRescueCutsceneText,
     playFishRingCutscene,
     playDolphinRescueCutscene,

@@ -34,6 +34,7 @@ Object.assign(G,{
     if(l&&l.alive&&l.alive()&&l.state==='MANUAL'){
       l.state=this.T&&(this.T.solid(l.x,l.y+1)||this.manualPlatformAt(l.x,l.y+1))?'WALK':'FALL';
       l.fall=0;l.manualVy=0;l.busyT=0;
+      l.skipClimbCutsceneT=Math.max(l.skipClimbCutsceneT||0,Math.round(1400/TICK));
     }
     m.active=false;m.lemId=null;m.keys={left:false,right:false,down:false,run:false,aim:false};m.jumpQueued=null;m.lampOn=false;
     if(reason!=='dead'&&reason!=='skill')this.toast('DIREKTSTYRNING AVSLUTAD');
@@ -89,6 +90,11 @@ Object.assign(G,{
     return true;
   },
   waterfallCaveActive(){return !!(this.waterfallCave&&this.waterfallCave.active)},
+  waterfallCaveEntryBlocked(){return !!this.waterfallCaveExitNeedsUpRelease},
+  releaseWaterfallCaveEntryBlock(key){
+    if(key==='ArrowUp')this.waterfallCaveExitNeedsUpRelease=false;
+    return !this.waterfallCaveExitNeedsUpRelease;
+  },
   findWaterfallCaveEntrance(l){
     if(!l||!l.alive||!l.alive()||!this.decor)return null;
     const sc=Math.max(1,l.scale||1);
@@ -107,6 +113,7 @@ Object.assign(G,{
   },
   tryEnterWaterfallCaveFromManual(){
     if(!this.isManualActive()||this.waterfallCaveActive())return false;
+    if(this.waterfallCaveEntryBlocked&&this.waterfallCaveEntryBlocked())return false;
     const l=this.manualLem&&this.manualLem();
     if(!l||!l.alive||!l.alive()||l.state!=='MANUAL')return false;
     const wf=this.findWaterfallCaveEntrance(l);
@@ -121,10 +128,10 @@ Object.assign(G,{
     const lootKey=this.waterfallCaveLootKey?this.waterfallCaveLootKey(wf):((this.levelIdx||0)+':'+Math.round(wf.x||0)+','+Math.round(wf.y||0));
     const looted=!!(this.waterfallCaveLooted&&this.waterfallCaveLooted[lootKey]);
     this.waterfallCave={
-      active:true,t:0,lemId:l.id,lemX:240,lemY:210,dir:l.dir||1,
+      active:true,t:0,lemId:l.id,lemX:240,lemY:232,dir:l.dir||1,facing:'front',walking:false,walkAnim:0,
       keys:{left:false,right:false,up:false,down:false},
-      bounds:{minX:112,maxX:370,minY:96,maxY:232,exitX0:184,exitX1:296,exitY:104},
-      chest:{x:342,y:219,coins:3,opened:looted,collected:looted,near:false,glowT:looted?16:0,lootKey},
+      bounds:{minX:102,maxX:386,minY:176,maxY:282,exitX0:184,exitX1:296,exitY:218},
+      chest:{x:342,y:226,coins:3,opened:false,collected:looted,near:false,glowT:0,lootKey},
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
       exitCam:this.cam,exitViewY:this.viewY,exitZoom:this.viewZoom
     };
@@ -137,6 +144,7 @@ Object.assign(G,{
     if(!this.waterfallCaveActive())return false;
     this.waterfallCave.active=false;
     this.waterfallCave=null;
+    this.waterfallCaveExitNeedsUpRelease=reason==='walkout';
     if(AU.stopWaterfallCave)AU.stopWaterfallCave();
     if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
     if(this.manual)this.manual.jumpQueued=null;
@@ -148,7 +156,7 @@ Object.assign(G,{
     const cave=this.waterfallCave;
     cave.t++;
     cave.keys=cave.keys||{};
-    cave.bounds=cave.bounds||{minX:112,maxX:370,minY:96,maxY:232,exitX0:184,exitX1:296,exitY:104};
+    cave.bounds=cave.bounds||{minX:102,maxX:386,minY:176,maxY:282,exitX0:184,exitX1:296,exitY:218};
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     if(dx||dy){
@@ -157,16 +165,22 @@ Object.assign(G,{
       const sp=1.55;
       cave.lemX=clamp((cave.lemX==null?240:cave.lemX)+dx*sp,cave.bounds.minX,cave.bounds.maxX);
       cave.lemY=clamp((cave.lemY==null?210:cave.lemY)+dy*sp,cave.bounds.minY,cave.bounds.maxY);
-      if(dx)cave.dir=dx>0?1:-1;
+      if(dx){cave.dir=dx>0?1:-1;cave.facing=dx>0?'right':'left'}
+      else cave.facing=dy<0?'back':'front';
+      cave.walking=true;
+      cave.walkAnim=(cave.walkAnim||0)+1;
+    }else{
+      cave.walking=false;
     }
     const ch=cave.chest;
     if(ch){
       const dist=Math.hypot((cave.lemX||0)-ch.x,(cave.lemY||0)-ch.y);
-      ch.near=dist<34;
-      ch.glowT=clamp((ch.glowT||0)+(ch.near?4:-2),0,70);
+      ch.near=dist<20;
+      ch.opened=!!ch.near;
+      ch.glowT=ch.opened?70:0;
       if(ch.near&&!ch.collected&&this.collectWaterfallCaveChest)this.collectWaterfallCaveChest(cave);
     }
-    if((cave.lemY||0)<=cave.bounds.exitY&&(cave.lemX||0)>=cave.bounds.exitX0&&(cave.lemX||0)<=cave.bounds.exitX1){
+    if(cave.keys.up&&(cave.lemY||0)<=cave.bounds.exitY&&(cave.lemX||0)>=cave.bounds.exitX0&&(cave.lemX||0)<=cave.bounds.exitX1){
       this.exitWaterfallCave('walkout');
     }
     return true;
@@ -195,6 +209,7 @@ Object.assign(G,{
     else if(key==='ArrowRight')k.right=false;
     else if(key==='ArrowUp')k.up=false;
     else if(key==='ArrowDown')k.down=false;
+    this.releaseWaterfallCaveEntryBlock(key);
     return true;
   },
   updateManualState(){

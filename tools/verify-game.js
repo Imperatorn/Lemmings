@@ -188,12 +188,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,waterfallCaveLemmingScale,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,waterfallCaveLemmingScale,drawWaterfallCaveLemming,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, waterfallCaveLemmingScale, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, waterfallCaveLemmingScale, drawWaterfallCaveLemming, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -216,7 +216,7 @@ const requiredRuntimeMethods = [
   'makeFishRingCutsceneSpec','playFishRingCutscene',
   'makeDolphinRescueCutsceneSpec','playDolphinRescueCutscene',
   'makeWaterClimbCutsceneSpec','playWaterClimbCutscene',
-  'makeClimbCutsceneSpec','playClimbCutscene','toggleCutscenes',
+  'makeClimbCutsceneSpec','playClimbCutscene','shouldPlayClimbCutscene','toggleCutscenes',
   'hitDecorTargetAt',
   'findNearbyRingFish','makeRescueRingFish','tryFishSwimRing',
   'rescueToastText',
@@ -230,7 +230,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -562,10 +562,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (typeof waterfallCaveLemmingScale !== 'function') {
     throw new Error('Waterfall cave lemming scale helper is missing');
   }
+  if (typeof drawWaterfallCaveLemming !== 'function') {
+    throw new Error('Waterfall cave lemming renderer is missing');
+  }
   const farScale = waterfallCaveLemmingScale(Object.assign({}, G.waterfallCave, {lemY:G.waterfallCave.bounds.exitY}));
   const nearScale = waterfallCaveLemmingScale(Object.assign({}, G.waterfallCave, {lemY:G.waterfallCave.bounds.maxY}));
-  if (!(nearScale > farScale && farScale > 1 && nearScale >= 3)) {
+  if (!(nearScale > farScale && farScale > 1 && nearScale >= 2.3 && nearScale <= 2.6)) {
     throw new Error('Waterfall cave lemming scale does not grow toward the foreground');
+  }
+  if (G.waterfallCave.bounds.exitY < 210 || G.waterfallCave.bounds.maxY < 280) {
+    throw new Error('Waterfall cave bounds should allow a lower exit edge and deeper cave movement');
   }
   const startCaveX = G.waterfallCave.lemX;
   if (!G.handleWaterfallCaveKey('ArrowRight')) throw new Error('Waterfall cave did not accept ArrowRight');
@@ -574,25 +580,83 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.lemX <= startCaveX) {
     throw new Error('Waterfall cave lemming did not move with arrow keys');
   }
+  const rightAnim = G.waterfallCave.walkAnim;
+  if (G.waterfallCave.facing !== 'right' || !G.waterfallCave.walking || rightAnim <= 0) {
+    throw new Error('Waterfall cave lemming did not face right and animate while walking right');
+  }
+  G.tick();
+  if (G.waterfallCave.walking || G.waterfallCave.walkAnim !== rightAnim) {
+    throw new Error('Waterfall cave lemming legs should stop animating when idle');
+  }
+  G.waterfallCave.lemX = G.waterfallCave.bounds.minX;
+  G.waterfallCave.lemY = 220;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  if (!G.waterfallCaveActive() || G.waterfallCave.facing !== 'back' || !G.waterfallCave.walking) {
+    throw new Error('Waterfall cave lemming should face away/back when walking up');
+  }
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  for (const facing of ['left','right','front','back']) {
+    drawWaterfallCaveLemming(WCTX, Object.assign({}, G.waterfallCave, {facing, walking:false}), 240, 210, 2.2);
+  }
+  G.handleWaterfallCaveKey('ArrowDown');
+  for (let i = 0; i < 18; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  if (!G.waterfallCaveActive() || G.waterfallCave.lemY <= 232) {
+    throw new Error('Waterfall cave lemming cannot walk deeper into the cave');
+  }
   const caveMoney = Math.max(0, G.money | 0);
   G.waterfallCave.lemX = G.waterfallCave.chest.x;
   G.waterfallCave.lemY = G.waterfallCave.chest.y;
   G.tick();
-  if (!G.waterfallCave.chest.opened || !G.waterfallCave.chest.collected || G.money !== caveMoney + G.waterfallCave.chest.coins) {
+  if (!G.waterfallCave.chest.opened || G.waterfallCave.chest.glowT !== 70 || !G.waterfallCave.chest.collected || G.money !== caveMoney + G.waterfallCave.chest.coins) {
     throw new Error('Waterfall cave chest did not open and award money when approached');
   }
   const afterChestMoney = G.money;
+  G.waterfallCave.lemX = G.waterfallCave.chest.x - 100;
+  G.waterfallCave.lemY = G.waterfallCave.chest.y;
   G.tick();
-  if (G.money !== afterChestMoney) {
-    throw new Error('Waterfall cave chest awarded money more than once');
+  if (G.waterfallCave.chest.opened || G.waterfallCave.chest.glowT !== 0) {
+    throw new Error('Waterfall cave chest should close and stop glowing when the lemming leaves it');
+  }
+  G.waterfallCave.lemX = G.waterfallCave.chest.x - 28;
+  G.waterfallCave.lemY = G.waterfallCave.chest.y;
+  G.tick();
+  if (G.waterfallCave.chest.opened || G.waterfallCave.chest.glowT !== 0) {
+    throw new Error('Waterfall cave chest should only open at close range');
+  }
+  G.waterfallCave.lemX = G.waterfallCave.chest.x;
+  G.waterfallCave.lemY = G.waterfallCave.chest.y;
+  G.tick();
+  if (!G.waterfallCave.chest.opened || G.money !== afterChestMoney) {
+    throw new Error('Waterfall cave chest did not reopen without awarding money again');
   }
   G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCave.bounds.exitY;
+  G.tick();
+  if (!G.waterfallCaveActive()) {
+    throw new Error('Waterfall cave should not exit from edge position without active upward input');
+  }
   G.waterfallCave.lemY = G.waterfallCave.bounds.exitY + 1;
   G.handleWaterfallCaveKey('ArrowUp');
   G.tick();
   if (G.waterfallCaveActive() || stopped < 1) {
     throw new Error('Waterfall cave did not exit when walking up to the water');
   }
+  if (!G.waterfallCaveEntryBlocked()) {
+    throw new Error('Waterfall cave should block immediate re-entry until ArrowUp is released');
+  }
+  if (G.tryEnterWaterfallCaveFromManual() || G.waterfallCaveActive()) {
+    throw new Error('Waterfall cave re-entered while ArrowUp was still held after exit');
+  }
+  G.releaseWaterfallCaveEntryBlock('ArrowUp');
+  if (G.waterfallCaveEntryBlocked()) {
+    throw new Error('Waterfall cave re-entry block did not clear on ArrowUp release');
+  }
+  if (!G.tryEnterWaterfallCaveFromManual() || !G.waterfallCaveActive()) {
+    throw new Error('Waterfall cave did not allow re-entry after ArrowUp was released');
+  }
+  G.exitWaterfallCave('silent');
   AU.startWaterfallCave = prevStartWaterfall;
   AU.stopWaterfallCave = prevStopWaterfall;
   G.money = prevMoney;
@@ -650,6 +714,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevCache = G.liquidCache;
   const prevCutscene = G.cutscene;
   const prevCutscenesOn = G.cutscenesOn;
+  const prevManual = G.manual;
   const prevWeatherKind = G.weatherKind;
   const water = {x:80, y:120, w:90, lava:false};
   G.level = {W:240, theme:'dirt', night:true, materialZones:[{x:120,w:120,theme:'desert'}], hatch:{x:20,y:80}, exit:{x:220,y:180}, water:[water]};
@@ -761,6 +826,30 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.cutsceneActive()) {
     throw new Error('Wall climb cutscene restarted immediately for the same lemming and wall');
   }
+  G.cutscene = null;
+  G.manual = {used:true, active:true, lemId:wallLem.id, keys:{left:false,right:false,down:false,run:false,aim:false}};
+  const manualWallLem = new Lemming(149, 125);
+  manualWallLem.state = 'WALK';
+  manualWallLem.climber = true;
+  manualWallLem.dir = 1;
+  G.manual.lemId = manualWallLem.id;
+  G.lems = [manualWallLem];
+  manualWallLem.walk(G.T);
+  if (manualWallLem.state !== 'CLIMB' || G.cutsceneActive()) {
+    throw new Error('Manual-controlled climber should climb without starting wall climb cutscene');
+  }
+  G.manual = {used:false, active:false, lemId:null, keys:{}};
+  G.cutscene = null;
+  const recentManualLem = new Lemming(149, 125);
+  recentManualLem.state = 'WALK';
+  recentManualLem.climber = true;
+  recentManualLem.dir = 1;
+  recentManualLem.skipClimbCutsceneT = 3;
+  G.lems = [recentManualLem];
+  recentManualLem.walk(G.T);
+  if (recentManualLem.state !== 'CLIMB' || G.cutsceneActive()) {
+    throw new Error('Recently manual-controlled climber should climb without starting wall climb cutscene');
+  }
   G.ambientFish = [];
   G.cutscene = null;
   const hiddenWaterLem = new Lemming(20, water.y + 8);
@@ -787,6 +876,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.liquidCache = prevCache;
   G.cutscene = prevCutscene;
   G.cutscenesOn = prevCutscenesOn;
+  G.manual = prevManual;
   G.weatherKind = prevWeatherKind;
 }
 {

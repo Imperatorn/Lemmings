@@ -12,7 +12,7 @@ class Lemming{
     this.jetT=0;this.jetBlockedT=0;this.afterBazState=null;
     this.jumpT=0;this.jumpVy=0;this.manualVy=0;this.ropeId=null;this.ropeT=0;this.ropeCooldown=0;
     this.vaultRockId=null;this.vaultDur=0;this.vaultStartX=0;this.vaultStartY=0;this.vaultEndX=0;this.vaultEndY=0;this.vaultRockScale=1;
-    this.scale=1;this.manualMoving=false;this.climbCutscene=null;
+    this.scale=1;this.manualMoving=false;this.climbCutscene=null;this.skipClimbCutsceneT=0;
     this.anim=Math.floor(RND()*4);this.dead=false;
   }
   alive(){return !this.dead&&this.state!=='SPLAT'&&this.state!=='DROWN'&&this.state!=='BURN'&&this.state!=='EXITING'}
@@ -28,6 +28,7 @@ class Lemming{
   update(T){
     this.anim++;
     if(this.ropeCooldown>0)this.ropeCooldown--;
+    if(this.skipClimbCutsceneT>0)this.skipClimbCutsceneT--;
     // bombnedräkning pågår oavsett tillstånd
     if(this.bombT>0){
       this.bombT--;
@@ -142,7 +143,7 @@ class Lemming{
       if(up>=7){                   // vägg
         if(this.climber){
           this.state='CLIMB';this.busyT=0;
-          if(G.playClimbCutscene)G.playClimbCutscene(this,'fullscreen');
+          if(G.shouldPlayClimbCutscene&&G.shouldPlayClimbCutscene(this,'wall')&&G.playClimbCutscene)G.playClimbCutscene(this,'fullscreen');
           return;
         }
         this.dir*=-1;return;
@@ -201,7 +202,7 @@ class Lemming{
         this.swimRing=false;this.fishRingTried=false;
         this.state='CLIMB';this.busyT=0;this.fall=0;
         if(G.rescueToastText)G.toast(G.rescueToastText('climb',{x:this.x,y:this.y}));
-        if(G.playWaterClimbCutscene)G.playWaterClimbCutscene(this,z,'fullscreen');
+        if(G.shouldPlayClimbCutscene&&G.shouldPlayClimbCutscene(this,'water')&&G.playWaterClimbCutscene)G.playWaterClimbCutscene(this,z,'fullscreen');
         return;
       }
       this.dir*=-1;

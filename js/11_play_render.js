@@ -136,11 +136,57 @@ function drawPlayWorld(c,L,cam,tk){
 
 function waterfallCaveLemmingScale(cave){
   const b=cave&&cave.bounds||{};
-  const far=Number.isFinite(b.exitY)?b.exitY:104;
-  const near=Number.isFinite(b.maxY)?b.maxY:232;
-  const y=Number.isFinite(cave&&cave.lemY)?cave.lemY:210;
+  const far=Number.isFinite(b.exitY)?b.exitY:218;
+  const near=Number.isFinite(b.maxY)?b.maxY:282;
+  const y=Number.isFinite(cave&&cave.lemY)?cave.lemY:232;
   const p=clamp((y-far)/Math.max(1,near-far),0,1);
-  return 1.55+p*1.55;
+  return 1.55+p*0.9;
+}
+
+function drawWaterfallCaveLemming(c,cave,lx,ly,scale){
+  const facing=(cave&&cave.facing)||((cave&&cave.dir||1)>0?'right':'left');
+  const walking=!!(cave&&cave.walking);
+  const colors=typeof COL==='object'&&COL?COL:{hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb'};
+  const hair=colors.hair,skin=colors.skin,body=colors.body,leg=colors.leg,dark='#102040';
+  const walkPhase=walking?(((cave.walkAnim||0)>>1)&3):0;
+  c.save();
+  c.translate(lx,ly);
+  c.scale(scale,scale);
+  function p(x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h)}
+  function drawWalkLegs(){
+    if(!walking||walkPhase===0){p(-2,-2,2,2,leg);p(1,-2,2,2,leg)}
+    else if(walkPhase===1){p(-3,-1,2,1,leg);p(-2,-2,2,1,leg);p(1,-2,2,2,leg)}
+    else if(walkPhase===2){p(-1,-2,2,2,leg);p(0,-2,1,2,leg)}
+    else{p(-2,-2,2,2,leg);p(2,-1,2,1,leg);p(1,-2,2,1,leg)}
+  }
+  function drawDepthLegs(){
+    const a=walking?walkPhase&1:0;
+    p(-2,-2+a,1,2,leg);
+    p(1,-2+(walking&&!a?1:0),1,2,leg);
+    if(walking){p(-1,-1+a,1,1,leg);p(0,-1+(a?0:1),1,1,leg)}
+  }
+  if(facing==='left'||facing==='right'){
+    const d=facing==='right'?1:-1;
+    drawWalkLegs();
+    p(-2,-6,4,4,body);
+    p(-1+(d>0?0:-1)+1,-8,2,2,skin);
+    p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
+    p(d>0?1:-2,-8,1,1,dark);
+  }else if(facing==='back'){
+    drawDepthLegs();
+    p(-2,-6,4,4,body);
+    p(-3,-6,1,3,skin);p(2,-6,1,3,skin);
+    p(-2,-10,4,2,hair);p(-2,-8,4,2,hair);
+    p(-1,-11,2,1,hair);
+  }else{
+    drawDepthLegs();
+    p(-2,-6,4,4,body);
+    p(-3,-6,1,3,skin);p(2,-6,1,3,skin);
+    p(-2,-8,4,2,skin);
+    p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
+    p(-1,-8,1,1,dark);p(1,-8,1,1,dark);
+  }
+  c.restore();
 }
 
 function drawWaterfallCaveView(c,tk){
@@ -231,7 +277,7 @@ function drawWaterfallCaveView(c,tk){
     const my=235+Math.round(hash2(i+81,wf.y||0)*28);
     c.fillRect(mx,my,2,1);
   }
-  const b=cave.bounds||{}, exitY=Math.round(b.exitY||104);
+  const b=cave.bounds||{}, exitY=Math.round(b.exitY||218);
   c.globalAlpha=0.45;
   c.fillStyle='#7fc8e8';
   c.fillRect(Math.round(b.exitX0||184),exitY,Math.round((b.exitX1||296)-(b.exitX0||184)),2);
@@ -246,21 +292,21 @@ function drawWaterfallCaveView(c,tk){
   const lemScale=waterfallCaveLemmingScale(cave);
   const ch=cave.chest;
   if(ch){
-    const glow=clamp((ch.glowT||0)/70,0,1);
+    const glow=ch.opened?1:0;
     if(glow>0){
-      c.globalAlpha=0.08+glow*0.16;
+      c.globalAlpha=0.24;
       c.fillStyle='#ffcf66';
       c.fillRect(0,0,CW,CH);
-      c.globalAlpha=0.18+glow*0.32;
+      c.globalAlpha=0.48;
       fillPixelPoly(c,[
-        [Math.round(ch.x-19),Math.round(ch.y-15)],
-        [lx-Math.round(8*lemScale),ly-Math.round(22*lemScale)],
-        [lx+Math.round(8*lemScale),ly-Math.round(22*lemScale)],
-        [Math.round(ch.x+19),Math.round(ch.y-15)]
+        [Math.round(ch.x-20),Math.round(ch.y-15)],
+        [Math.round(ch.x-58),Math.round(ch.y-78)],
+        [Math.round(ch.x+34),Math.round(ch.y-88)],
+        [Math.round(ch.x+22),Math.round(ch.y-15)]
       ]);
-      c.globalAlpha=0.16+glow*0.20;
+      c.globalAlpha=0.36;
       c.fillStyle='#ffe090';
-      c.fillRect(Math.round(ch.x-46),Math.round(ch.y-42),92,46);
+      c.fillRect(Math.round(ch.x-52),Math.round(ch.y-74),96,66);
       c.globalAlpha=1;
     }
     const x=Math.round(ch.x),y=Math.round(ch.y),open=!!ch.opened;
@@ -297,7 +343,7 @@ function drawWaterfallCaveView(c,tk){
   c.fillStyle='#000000';
   c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
   c.globalAlpha=1;
-  drawLemming(c,{state:'WALK',dir:cave.dir||1,anim:(tk+t)|0,scale:lemScale,alive(){return true}},lx,ly);
+  drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
   drawTextC(c,'PENGAR '+Math.max(0,G.money|0),58,284,1,'#ffd866');
   c.restore();
   return true;

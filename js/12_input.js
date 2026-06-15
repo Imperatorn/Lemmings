@@ -240,7 +240,11 @@ window.addEventListener('keydown',e=>{
       if(e.key==='ArrowLeft'){if(!G.cancelManualSkillWithInput('left'))G.setManualKey('left',true);e.preventDefault();return}
       if(e.key==='ArrowRight'){if(!G.cancelManualSkillWithInput('right'))G.setManualKey('right',true);e.preventDefault();return}
       if(e.key==='ArrowDown'){G.setManualKey('down',true);e.preventDefault();return}
-      if(e.key==='ArrowUp'){if(!G.tryEnterWaterfallCaveFromManual||!G.tryEnterWaterfallCaveFromManual())if(!G.cancelManualSkillWithInput('up'))G.queueManualJump(G.manual&&G.manual.keys&&G.manual.keys.down);e.preventDefault();return}
+      if(e.key==='ArrowUp'){
+        if(G.waterfallCaveEntryBlocked&&G.waterfallCaveEntryBlocked()){e.preventDefault();return}
+        if(!G.tryEnterWaterfallCaveFromManual||!G.tryEnterWaterfallCaveFromManual())if(!G.cancelManualSkillWithInput('up'))G.queueManualJump(G.manual&&G.manual.keys&&G.manual.keys.down);
+        e.preventDefault();return;
+      }
       if(e.key==='Shift'){G.setManualKey('run',true);e.preventDefault();return}
       if(e.key==='l'||e.key==='L'){G.toggleManualLamp();e.preventDefault();return}
     }
@@ -273,6 +277,7 @@ window.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('keyup',e=>{
+  if(e.key==='ArrowUp'&&G.releaseWaterfallCaveEntryBlock)G.releaseWaterfallCaveEntryBlock(e.key);
   if(G.waterfallCaveActive&&G.waterfallCaveActive()){if(G.handleWaterfallCaveKeyUp)G.handleWaterfallCaveKeyUp(e.key);e.preventDefault();return}
   if(G.cutsceneActive&&G.cutsceneActive()){e.preventDefault();return}
   if(G.state==='PLAY'&&G.isManualActive&&G.isManualActive()){
