@@ -14,13 +14,18 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
   if (i > 0 && idx <= scripts.indexOf(runtimeScripts[i - 1])) {
     throw new Error(`Script order is wrong around ${runtimeScripts[i]}`);
   }
+}
+const waterfallRenderIdx = scripts.indexOf('js/11_waterfall_cave_render.js');
+const playRenderIdx = scripts.indexOf('js/11_play_render.js');
+if (waterfallRenderIdx < 0 || playRenderIdx < 0 || waterfallRenderIdx >= playRenderIdx) {
+  throw new Error('Waterfall cave render script must load before js/11_play_render.js');
 }
 
 if (debugHtml) {
@@ -31,11 +36,15 @@ if (debugHtml) {
   }
   const debugGameIdx = debugScripts.indexOf('js/07_game.js');
   const debugRopeIdx = debugScripts.indexOf('js/07_rope.js');
+  const debugManualIdx = debugScripts.indexOf('js/07_manual_control.js');
+  const debugWaterfallIdx = debugScripts.indexOf('js/07_waterfall_cave.js');
   const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
   const debugCutsceneIdx = debugScripts.indexOf('js/07_cutscenes.js');
   const debugCutsceneScenesIdx = debugScripts.indexOf('js/07_cutscene_scenes.js');
+  const debugWaterfallRenderIdx = debugScripts.indexOf('js/11_waterfall_cave_render.js');
+  const debugPlayRenderIdx = debugScripts.indexOf('js/11_play_render.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugLivingIdx <= debugRopeIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugPageIdx <= debugCutsceneScenesIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallIdx <= debugManualIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
@@ -75,12 +84,22 @@ const utilCode = fs.readFileSync(path.join(root, 'js/00_util.js'), 'utf8');
 if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
   throw new Error('Lands of Lore pixel-art asset is not registered');
 }
-const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
-if (!playRenderCode.includes('ASSETS.landsOfLoreCover') || playRenderCode.includes('THE THRONE OF CHAOS')) {
+const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
+const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
+const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
+if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
+  throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
+}
+const caveRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
+if (!caveRenderCode.includes('ASSETS.landsOfLoreCover') || caveRenderCode.includes('THE THRONE OF CHAOS')) {
   throw new Error('Waterfall cave cover should use the image asset instead of the old hand-drawn cover');
 }
-if (playRenderCode.includes('#f0d080')) {
+if (caveRenderCode.includes('#f0d080')) {
   throw new Error('Deep cave game item should not render the old yellow hitbox highlight');
+}
+const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || playRenderCode.includes('function drawWaterfallCaveView')) {
+  throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 
 function makeContext2d(){

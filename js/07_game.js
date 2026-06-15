@@ -308,29 +308,6 @@ const G={
     if(applied)this.savePrefs();
     return applied;
   },
-  waterfallCaveLootKey(wf){
-    wf=wf&&wf.wf?wf.wf:wf;
-    return (this.levelIdx||0)+':'+Math.round(wf&&wf.x||0)+','+Math.round(wf&&wf.y||0);
-  },
-  collectWaterfallCaveChest(cave){
-    cave=cave||this.waterfallCave;
-    const ch=cave&&cave.chest;
-    if(!ch||ch.collected)return false;
-    const key=ch.lootKey||this.waterfallCaveLootKey(cave);
-    this.waterfallCaveLooted=this.waterfallCaveLooted||{};
-    if(this.waterfallCaveLooted[key]){
-      ch.opened=true;ch.collected=true;
-      return false;
-    }
-    this.waterfallCaveLooted[key]=true;
-    ch.opened=true;ch.collected=true;ch.glowT=Math.max(ch.glowT||0,70);
-    const coins=Math.max(1,Math.round(ch.coins||3));
-    this.money=Math.max(0,this.money|0)+coins;
-    this.savePrefs();
-    this.toast('SKATTKISTA: +'+coins+' PENGAR',140);
-    if(AU.sSaved)AU.sSaved();else AU.sClick();
-    return true;
-  },
   loadPrefs(){
     const p=loadPersisted();
     if(p.mode==='classic'||p.mode==='chaos')this.mode=p.mode;

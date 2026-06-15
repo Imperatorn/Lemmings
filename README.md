@@ -134,12 +134,14 @@ js/06_levels.js         banor
 js/07_game.js           spelmotor, state, events och huvudflöde
 js/07_save_state.js     spara/ladda-logik för spelstate
 js/07_manual_control.js direktstyrning, sikte och manual-skill helpers
+js/07_waterfall_cave.js vattenfallsgrottans state, input, scenbyten och loot
 js/07_living_world.js   svamp, mumier, meteorer och andra levande värld-effekter
 js/07_cutscenes.js      cutscene-API, tidslinjer och overlayrendering
 js/07_cutscene_scenes.js registrerade cutscene-scener och pixelart-innehåll
 js/08_render.js         rendering av värld, figurer, dekor och väder
 js/09_hud.js            HUD, knappar och minikarta
 js/10_screens.js        titel, meny, briefing, resultat och hjälp
+js/11_waterfall_cave_render.js rendering för vattenfallsgrottans scener
 js/11_play_render.js    huvudrendering för spelvyn
 js/12_input.js          mus, touch och tangentbord
 js/13_boot.js           initiering och huvudloop
