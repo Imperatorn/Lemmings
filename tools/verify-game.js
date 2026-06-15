@@ -882,6 +882,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (lem.state !== 'WALK' || lem.x <= 124) {
     throw new Error('Lemming did not finish past the settled troll rock');
   }
+  if (lem.x > 126) {
+    throw new Error('Lemming vault lands too far past the settled troll rock');
+  }
   G.level = prevLevel;
   G.T = prevTerrain;
   G.lems = prevLems;

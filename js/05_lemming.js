@@ -343,7 +343,8 @@ class Lemming{
     this.vaultDur=Math.max(10,Math.round(12+rs*2));
     this.vaultStartX=this.x;
     this.vaultStartY=this.y;
-    this.vaultEndX=clamp(Math.round(rock.x+dir*(7*rs+6*sc)),3,maxX);
+    const clearPastRock=Math.max(6,Math.round(5*rs+2*sc));
+    this.vaultEndX=clamp(Math.round(rock.x+dir*clearPastRock),3,maxX);
     this.vaultEndY=rock.groundY==null?this.y:rock.groundY;
     this.vaultRockScale=rs;
     this.fall=0;this.chute=false;this.soft=false;
