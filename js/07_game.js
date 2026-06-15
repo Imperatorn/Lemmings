@@ -87,7 +87,7 @@ const G={
   trollT:0, trollEvents:0, trollMax:0, trollLastX:null,
   treeT:0, treeEvents:0, treeMax:0, treeLastX:null,
   jumpT:0, jumpEvents:0, jumpMax:0, megaBoom:null, megaArmed:null, eventLockT:0, shakeT:0, shakePow:0,
-  weatherKind:'sun', weatherT:0, thunderT:0, thunderFlash:0, thunderX:0, thunderPath:null,
+  weatherKind:'sun', weatherT:0, thunderT:0, thunderFlash:0, thunderX:0, thunderPath:null, sunSurpriseT:0,
   levelSeed:0, levelRng:null, playCount:0, ropeAim:null, ropeSeq:1, lemTalkT:0,
   manual:{used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0},
   viewZoom:1, viewY:0, zoomLevels:[1,1.35,1.7,2.1],
@@ -494,7 +494,7 @@ const G={
     if(L.decor)L.decor(D);
     // status
     this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
-    this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;
+    this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;this.sunSurpriseT=0;
     this.meteorT=(L.night&&!L.cave)?Math.round((18+this.rand()*34)*1000/TICK):0;
     this.cam=clamp(L.hatch.x-160,0,this.maxCamFor(L));
     this.clampView();
@@ -1670,6 +1670,7 @@ const G={
     a.vy=0.35+this.rand()*0.25;
     a.crashT=0;
     a.spin=0;
+    this.sunSurpriseT=Math.max(this.sunSurpriseT||0,Math.round(2000/TICK));
     this.flashes.push({x,y,r:46,t:10,maxT:10});
     for(let i=0;i<22&&this.parts.length<MAX_PARTICLES;i++)this.crashPlaneSmoke(x,y,true);
     this.shakeT=Math.max(this.shakeT,8);this.shakePow=Math.max(this.shakePow,4);
@@ -2722,6 +2723,7 @@ const G={
     if(this.state!=='PLAY'||this.paused)return;
     const L=this.level,T=this.T;
     this.doorT++;this.weatherT++;
+    if(this.sunSurpriseT>0)this.sunSurpriseT--;
     this.updateThunder();
     this.updateToasts();
     // spawn

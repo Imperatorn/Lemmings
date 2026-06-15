@@ -340,9 +340,153 @@ function rootAnchorSupported(x,y){
   return false;
 }
 
+function fillPixelPoly(c,pts){
+  if(!pts.length)return;
+  c.beginPath();
+  c.moveTo(Math.round(pts[0][0]),Math.round(pts[0][1]));
+  for(let i=1;i<pts.length;i++)c.lineTo(Math.round(pts[i][0]),Math.round(pts[i][1]));
+  c.closePath();c.fill();
+}
+
+function waterfallBackdropPalette(key){
+  if(key==='desert')return {
+    far:'#3a302c',rockDark:'#4a3b34',rockMid:'#76685d',rockLight:'#a89278',crack:'#211915',
+    capDark:'#6f7436',capLight:'#a2aa55',pineDark:'#303d2c',pineLight:'#556a3f',trunk:'#3d2a1d'
+  };
+  if(key==='hell')return {
+    far:'#241018',rockDark:'#3d2022',rockMid:'#66403b',rockLight:'#9c6652',crack:'#17090c',
+    capDark:'#4a2e24',capLight:'#9a5638',pineDark:'#241a18',pineLight:'#4a2a24',trunk:'#2b1713'
+  };
+  if(key==='cave'||key==='rock'||key==='marble'||key==='city'||key==='crystal'||key==='glass')return {
+    far:'#121b26',rockDark:'#25303a',rockMid:'#56616c',rockLight:'#87909a',crack:'#0d131b',
+    capDark:'#3c5142',capLight:'#78936a',pineDark:'#13261d',pineLight:'#2f513b',trunk:'#2d241c'
+  };
+  return {
+    far:'#142131',rockDark:'#27323b',rockMid:'#5b646b',rockLight:'#9aa098',crack:'#111922',
+    capDark:'#255226',capLight:'#63a848',pineDark:'#0b2a15',pineLight:'#275e2c',trunk:'#3b2416'
+  };
+}
+
+function drawWaterfallPine(c,x,y,s,pal){
+  const px=Math.round(x),py=Math.round(y),sc=Math.max(0.75,s);
+  c.fillStyle=pal.trunk;
+  c.fillRect(px-1,py-Math.round(15*sc),2,Math.round(15*sc));
+  c.fillStyle=pal.pineDark;
+  for(let r=0;r<3;r++){
+    const cy=py-Math.round((24-r*7)*sc), hw=Math.round((11-r*2)*sc), th=Math.round(14*sc);
+    fillPixelPoly(c,[[px,cy-th],[px-hw,cy],[px+hw,cy]]);
+  }
+  c.fillStyle=pal.pineLight;
+  c.fillRect(px-2,py-Math.round(28*sc),2,Math.max(1,Math.round(9*sc)));
+}
+
+function drawWaterfallBackdrop(c,dec,px,py,w,h,left,base){
+  const key=G.level?terrainThemeKeyAt(G.level,dec.x,dec.y):'dirt';
+  const pal=waterfallBackdropPalette(key);
+  const ridgeBase=Math.min(VH,base+22);
+  const span=Math.max(96,Math.round(w*4.6));
+  const gap=Math.max(8,Math.round(w*0.24));
+  const wall=Math.max(38,Math.round(w*1.55));
+  const innerL=left-gap, innerR=left+w+gap;
+  const outerL=innerL-wall-Math.round(w*0.8), outerR=innerR+wall+Math.round(w*0.8);
+  const topY=Math.max(8,py-22);
+  const farTop=Math.max(4,py-58);
+  c.globalAlpha=0.17;
+  c.fillStyle=pal.far;
+  fillPixelPoly(c,[
+    [px-span-30,ridgeBase],[px-span+14,py+95],[px-Math.round(span*0.62),py+38],
+    [px-Math.round(span*0.38),farTop+16],[px-Math.round(span*0.08),farTop],
+    [px+Math.round(span*0.28),farTop+24],[px+span-8,py+92],[px+span+34,ridgeBase]
+  ]);
+  if(key!=='cave'&&key!=='hell'&&key!=='city'){
+    c.globalAlpha=0.34;
+    for(let i=0;i<8;i++){
+      const sx=outerL+16+i*Math.max(18,Math.round((outerR-outerL)/8));
+      const sy=topY+2+Math.round(hash2(i+11,dec.x|0)*10);
+      drawWaterfallPine(c,sx,sy,0.85+hash2(i+3,dec.x|0)*0.55,pal);
+    }
+  }
+  c.globalAlpha=0.70;
+  c.fillStyle=pal.rockDark;
+  fillPixelPoly(c,[
+    [outerL,ridgeBase],[outerL+8,py+84],[outerL+26,py+34],[innerL-16,topY+4],
+    [innerL-5,py+18],[innerL-3,ridgeBase]
+  ]);
+  fillPixelPoly(c,[
+    [innerR+3,ridgeBase],[innerR+5,py+20],[innerR+17,topY+7],[outerR-26,py+36],
+    [outerR-9,py+86],[outerR,ridgeBase]
+  ]);
+  c.globalAlpha=0.62;
+  c.fillStyle=pal.rockMid;
+  fillPixelPoly(c,[
+    [outerL+10,ridgeBase],[outerL+20,py+82],[outerL+42,py+38],[innerL-18,topY+9],
+    [innerL-8,py+22],[innerL-10,ridgeBase]
+  ]);
+  fillPixelPoly(c,[
+    [innerR+10,ridgeBase],[innerR+9,py+22],[innerR+22,topY+8],[outerR-42,py+42],
+    [outerR-18,py+83],[outerR-8,ridgeBase]
+  ]);
+  c.globalAlpha=0.44;
+  c.fillStyle=pal.rockLight;
+  fillPixelPoly(c,[[outerL+28,py+76],[outerL+42,py+40],[innerL-22,topY+14],[innerL-30,py+54],[outerL+46,ridgeBase]]);
+  fillPixelPoly(c,[[innerR+24,py+35],[outerR-44,py+48],[outerR-34,ridgeBase],[innerR+15,ridgeBase],[innerR+12,py+78]]);
+  const ledgeY=Math.max(7,py-12);
+  c.globalAlpha=0.62;
+  c.fillStyle=pal.capDark;
+  fillPixelPoly(c,[
+    [outerL+20,ledgeY+7],[outerL+40,ledgeY+2],[innerL-18,ledgeY-2],
+    [left-6,ledgeY+1],[left-3,ledgeY+5],[innerL-14,ledgeY+8],[outerL+32,ledgeY+10]
+  ]);
+  fillPixelPoly(c,[
+    [left+w+3,ledgeY+5],[left+w+6,ledgeY+1],[innerR+18,ledgeY-2],
+    [outerR-40,ledgeY+2],[outerR-20,ledgeY+7],[outerR-32,ledgeY+10],[innerR+14,ledgeY+8]
+  ]);
+  c.globalAlpha=0.82;
+  c.fillStyle=pal.capLight;
+  const ledges=[[outerL+30,left-5],[left+w+5,outerR-30]];
+  for(let s=0;s<ledges.length;s++){
+    const a=ledges[s][0],b=ledges[s][1],n=Math.max(5,Math.min(13,Math.round((b-a)/8)));
+    for(let i=0;i<n;i++){
+      const tx=Math.round(a+(i+0.35)*((b-a)/n)+hash2(i+s*19,dec.x|0)*3);
+      const ty=ledgeY-2+Math.round(hash2(i+s*23,dec.y|0)*3);
+      c.fillRect(tx,ty,4,2);
+      if(hash2(i+s*29+37,dec.x|0)>0.62)c.fillRect(tx+1,ty-3,1,3);
+    }
+  }
+  c.fillRect(left-7,ledgeY-1,5,2);
+  c.fillRect(left+w+2,ledgeY-1,5,2);
+  c.globalAlpha=0.32;
+  c.fillStyle=pal.crack;
+  for(let i=0;i<16;i++){
+    const side=i&1?-1:1;
+    const cx=side<0?outerL+26+hash2(i,dec.x|0)*(innerL-outerL-34):innerR+12+hash2(i,dec.x|0)*(outerR-innerR-28);
+    const cy=py+12+hash2(i+5,dec.y|0)*(h*0.72);
+    const len=7+Math.round(hash2(i+13,dec.x|0)*16);
+    c.fillRect(Math.round(cx),Math.round(cy),len,1+(i%3===0?1:0));
+  }
+  c.globalAlpha=0.66;
+  c.fillStyle=pal.crack;
+  fillPixelPoly(c,[
+    [left-11,py+1],[left-8,py-9],[left+5,py-13],[left+w-4,py-13],
+    [left+w+10,py-7],[left+w+8,py+2],[left+w+2,py+4],[left-7,py+4]
+  ]);
+  c.globalAlpha=0.46;
+  c.fillStyle=pal.rockLight;
+  c.fillRect(left-2,py-10,w+4,2);
+  c.globalAlpha=0.44;
+  c.fillStyle=pal.rockMid;
+  for(let i=0;i<7;i++){
+    const bx=(i<4?innerL-24:innerR+12)+Math.round(hash2(i+19,dec.x|0)*24);
+    const by=base-5-Math.round(hash2(i+29,dec.y|0)*12);
+    c.fillRect(bx,by,12+Math.round(hash2(i+31,dec.x|0)*12),5+Math.round(hash2(i+37,dec.y|0)*5));
+    c.fillStyle=i%2?pal.rockDark:pal.rockLight;
+  }
+  c.globalAlpha=1;
+}
+
 function drawDecor(c,dec,cam,tk){
   const x=dec.x-cam;
-  const pad=120+(dec.w||0)+((dec.s||1)>1?70*(dec.s||1):0);
+  const pad=(dec.t==='waterfall'?260:120)+(dec.w||0)+((dec.s||1)>1?70*(dec.s||1):0);
   if(x<-pad||x>VW+pad)return;
   switch(dec.t){
     case 'torch':{
@@ -405,14 +549,15 @@ function drawDecor(c,dec,cam,tk){
       const w=dec.w||28,h=dec.h||130,px=Math.round(x),py=Math.round(dec.y);
       const left=px-Math.round(w/2), base=py+h;
       c.save();
-      c.globalAlpha=0.24;
+      drawWaterfallBackdrop(c,dec,px,py,w,h,left,base);
+      c.globalAlpha=0.16;
       c.fillStyle='#062438';c.fillRect(left-5,py-2,w+10,h+5);
-      c.globalAlpha=0.34;
+      c.globalAlpha=0.42;
       c.fillStyle='#255f78';c.fillRect(left-3,py,w+6,h);
       for(let i=0;i<w;i+=3){
         const sx=left+i+Math.round(Math.sin(tk*0.10+i*0.7+dec.v*8)*2);
         const phase=(tk*2.45+i*11+(dec.v*40|0))%18;
-        c.globalAlpha=0.34+0.16*hash2(i+17,dec.x|0);
+        c.globalAlpha=0.40+0.18*hash2(i+17,dec.x|0);
         c.fillStyle=i%2?'#7fc8e8':'#b8efff';
         for(let yy=py+phase-18;yy<base;yy+=18){
           const sy=Math.max(py,Math.round(yy)), sh=Math.min(10,base-sy);
@@ -1316,6 +1461,51 @@ function drawSkyBird(c,x,y,tk,seed){
   }
 }
 
+function sunPlaneMood(cam){
+  if((G.sunSurpriseT||0)>0)return 'surprise';
+  for(const a of G.planes||[]){
+    if(!a||a.crashing||a.wrecked)continue;
+    const x=a.x-cam;
+    if(x>-32&&x<VW+32)return 'cool';
+  }
+  return 'normal';
+}
+
+function drawSunMood(c,sx,sy,mood){
+  if(mood==='normal')return;
+  const x=Math.round(sx),y=Math.round(sy);
+  c.save();
+  c.globalAlpha=0.92;
+  if(mood==='surprise'){
+    c.fillStyle='#4a2a10';
+    c.fillRect(x-7,y-4,3,4);
+    c.fillRect(x+5,y-4,3,4);
+    c.fillRect(x-3,y+6,7,6);
+    c.fillStyle='#ffd850';
+    c.fillRect(x-1,y+8,3,2);
+  }else{
+    c.fillStyle='#15191f';
+    c.fillRect(x-9,y-5,7,1);
+    c.fillRect(x+2,y-5,7,1);
+    c.fillRect(x-9,y-4,8,4);
+    c.fillRect(x+1,y-4,8,4);
+    c.fillRect(x-2,y-3,4,1);
+    c.fillRect(x-11,y-3,2,1);
+    c.fillRect(x+9,y-3,2,1);
+    c.fillStyle='#303a46';
+    c.fillRect(x-7,y-3,4,1);
+    c.fillRect(x+3,y-3,4,1);
+    c.fillStyle='#5a2f12';
+    c.fillRect(x-5,y+5,5,1);
+    c.fillRect(x,y+6,5,1);
+    c.fillRect(x+4,y+5,2,1);
+    c.fillStyle='#ffe080';
+    c.fillRect(x-2,y+5,2,1);
+    c.fillRect(x+1,y+6,2,1);
+  }
+  c.restore();
+}
+
 function drawWeatherBack(c,L,cam,tk){
   const k=G.weatherKind;
   if(!k||!G.level)return;
@@ -1329,6 +1519,7 @@ function drawWeatherBack(c,L,cam,tk){
     for(let y=-8;y<=8;y+=2)for(let x=-8;x<=8;x+=2)if(x*x+y*y<78)c.fillRect(Math.round(sx+x),Math.round(sy+y),2,2);
     c.globalAlpha=0.55;c.fillStyle='#fff0a0';
     for(let i=0;i<8;i++){const a=i*Math.PI/4+tk*0.01;const x=sx+Math.cos(a)*18,y=sy+Math.sin(a)*14;c.fillRect(Math.round(x),Math.round(y),Math.abs(Math.cos(a))>0.7?8:2,Math.abs(Math.sin(a))>0.7?7:2)}
+    drawSunMood(c,sx,sy,sunPlaneMood(cam));
     c.globalAlpha=0.65;c.fillStyle='#d8e8ff';
     for(let i=0;i<4;i++){
       const bx=((hash2(i+11,G.levelSeed&4095)*L.W-cam*0.18+tk*0.12*(i+1))%(VW+80)+VW+80)%(VW+80)-40;

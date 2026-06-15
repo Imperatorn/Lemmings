@@ -712,6 +712,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevFlashes = G.flashes;
   const prevToasts = G.toasts;
   const prevRand = G.rand;
+  const prevSunSurprise = G.sunSurpriseT;
   G.level = {W:320, hatch:{x:20,y:180}, water:[]};
   G.T = {W:320, H:240, solid:(x,y)=>y>=210, solidBox:(x,y,r)=>y+(r||0)>=210};
   G.planes = [{x:150,y:42,vx:1.4,targetX:190,kind:'skill',skill:'baz',dropped:false}];
@@ -721,6 +722,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.flashes = [];
   G.toasts = [];
   G.rand = () => 0.35;
+  G.sunSurpriseT = 0;
   const troll = {x:100,y:200,scale:2,dir:1,rockT:1,chewT:0,rageT:0};
   if (!G.pickSupplyPlaneForTroll(troll)) throw new Error('Giant troll did not target supply plane');
   if (!G.tryTrollThrowAtMonkey(troll) || !G.trollRocks[0] || G.trollRocks[0].scale !== 2) {
@@ -729,6 +731,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const plane = G.planes[0];
   if (!G.damageSupplyPlane(plane, plane.x, plane.y) || !plane.crashing) {
     throw new Error('Supply plane did not enter crashing state');
+  }
+  if (G.sunSurpriseT !== Math.round(2000 / TICK)) {
+    throw new Error('Supply plane crash did not trigger the sun surprise timer');
   }
   if (!G.finishSupplyPlaneCrash(plane) || !plane.wrecked || G.packages.length !== 3) {
     throw new Error('Supply plane crash did not create a wreck with three packages');
@@ -750,6 +755,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.flashes = prevFlashes;
   G.toasts = prevToasts;
   G.rand = prevRand;
+  G.sunSurpriseT = prevSunSurprise;
 }
 {
   const caveIdx = LEVELS.findIndex(L => L && L.cave);
