@@ -83,7 +83,7 @@ const G={
   lamp:null, cleared:new Array(LEVELS.length).fill(false),
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
-  monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0,
+  monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0, monkeyAirSupportPending:false, monkeyAirSupportTargetX:null,
   trollT:0, trollEvents:0, trollMax:0, trollLastX:null,
   treeT:0, treeEvents:0, treeMax:0, treeLastX:null,
   jumpT:0, jumpEvents:0, jumpMax:0, megaBoom:null, megaArmed:null, eventLockT:0, shakeT:0, shakePow:0,
@@ -520,7 +520,7 @@ const G={
     this.monkeyT=Math.round((18+this.rand()*22)*1000/TICK);
     this.monkeyEvents=0;
     this.monkeyMax=darkNoCreatures?0:Math.max(0,Math.min(cfg.monkeyCap,Math.floor(L.time/130)+1));
-    this.monkeyLastX=null;this.monkeySeq=0;
+    this.monkeyLastX=null;this.monkeySeq=0;this.monkeyAirSupportPending=false;this.monkeyAirSupportTargetX=null;
     this.trollT=Math.round((34+this.rand()*42)*TROLL_EVENT_SLOWDOWN*1000/TICK);
     this.trollEvents=0;
     this.trollMax=darkNoCreatures?0:Math.max(0,Math.min(cfg.trollCap||0,(this.levelIdx<10?1:Math.floor(L.time/210)+1)));
@@ -1583,7 +1583,9 @@ const G={
     if(!this.canUseSupplyPlanes())return null;
     payload=payload||this.pickSupplyPayload();
     if(payload&&payload.kind==='mega')this.supplyMegaDropped=true;
+    const support=!!(payload&&payload.monkeyAirSupport)||!!this.monkeyAirSupportPending;
     const dir=this.rand()<0.5?1:-1;
+    if(support&&targetX==null&&this.monkeyAirSupportTargetX!=null)targetX=this.monkeyAirSupportTargetX;
     targetX=targetX==null?this.pickSupplyDropX():targetX;
     const plane={
       x:dir>0?-55:this.level.W+55,
@@ -1592,10 +1594,16 @@ const G={
       targetX,
       kind:payload.kind,
       skill:payload.skill,
-      dropped:false
+      dropped:support&&payload.kind==='support',
+      monkeyAirSupport:support,
+      monkeyMissileCooldown:0
     };
+    if(support){
+      this.monkeyAirSupportPending=false;
+      this.monkeyAirSupportTargetX=null;
+    }
     this.planes.push(plane);
-    this.toast('FLYGPLAN MED PAKET!');
+    this.toast(support&&payload.kind==='support'?'LUFTSTÖD INKOMMANDE!':'FLYGPLAN MED PAKET!');
     return plane;
   },
   supplyPlaneHitScore(a,wx,wy,scale){
@@ -1816,6 +1824,7 @@ const G={
         if(a.crashing){this.updateCrashingSupplyPlane(a);continue}
         if(a.missileFlashT>0)a.missileFlashT--;
         a.x+=a.vx;
+        this.updateMonkeyAirSupportPlane(a);
         if(a.x>this.cam-120&&a.x<this.cam+this.viewW()+120)AU.sPlane();
         if(!a.dropped&&((a.vx>0&&a.x>=a.targetX)||(a.vx<0&&a.x<=a.targetX))){
           this.packages.push({x:a.x,y:a.y+10,vx:a.vx*0.05,vy:0,kind:a.kind||((a.skill==='tree')?'tree':((a.skill==='mega')?'mega':'skill')),skill:a.skill,landed:false,opened:false,openT:0,picked:false,landX:null,landY:null,treeBaseY:null});
@@ -2016,6 +2025,9 @@ const G={
   findMonkeyById(id){
     return (this.monkeys||[]).find(m=>m&&!m.gone&&m.id===id)||null;
   },
+  monkeyHasIncomingMissile(m){
+    return !!(m&&(this.rockets||[]).some(r=>r&&!r.hit&&r.kind==='monkeyMissile'&&r.targetMonkeyId===m.id));
+  },
   pickMonkeyMissilePlane(m){
     if(!m)return null;
     let best=null,bestScore=Infinity;
@@ -2027,11 +2039,43 @@ const G={
     }
     return best;
   },
-  launchPlaneMissileAtMonkey(m){
+  queueMonkeyAirSupport(m){
     if(!m||m.gone)return false;
-    const a=this.pickMonkeyMissilePlane(m);
-    if(!a)return false;
+    if(!this.canUseSupplyPlanes()){
+      this.toast('INGET FLYGPLAN KAN KOMMA HÄR');
+      AU.sShrug();
+      return false;
+    }
+    this.monkeyAirSupportPending=true;
+    this.monkeyAirSupportTargetX=Math.round(m.x);
+    const alreadyQueued=(this.queuedEvents||[]).some(q=>q&&q.kind==='supplyPlane'&&q.data&&q.data.payload&&q.data.payload.monkeyAirSupport);
+    if(!alreadyQueued){
+      const targetX=clamp(Math.round(m.x),20,(this.level&&this.level.W||m.x)-20);
+      this.queueDirectedEvent('supplyPlane',Math.round(1200/TICK),{
+        payload:{kind:'support',skill:null,monkeyAirSupport:true},
+        targetX,x:targetX,y:m.y-24,label:'LUFTSTÖD SNART'
+      },true);
+    }
+    this.toast('LUFTSTÖD INKALLAT - NÄSTA FLYGPLAN SKJUTER APOR!');
+    return true;
+  },
+  requestMonkeyAirSupport(m){
+    if(!m||m.gone)return false;
     if(!m.id)m.id=(this.monkeySeq=(this.monkeySeq||0)+1);
+    const a=this.pickMonkeyMissilePlane(m);
+    if(a){
+      a.monkeyAirSupport=true;
+      a.monkeyMissileCooldown=Math.min(a.monkeyMissileCooldown||0,4);
+      return this.launchPlaneMissileAtMonkey(m,a)||true;
+    }
+    return this.queueMonkeyAirSupport(m);
+  },
+  launchPlaneMissileAtMonkey(m,plane){
+    if(!m||m.gone)return false;
+    if(!m.id)m.id=(this.monkeySeq=(this.monkeySeq||0)+1);
+    if(this.monkeyHasIncomingMissile(m))return true;
+    const a=plane||this.pickMonkeyMissilePlane(m);
+    if(!a)return false;
     const sx=a.x,sy=a.y+8;
     const dx=m.x-sx,dy=(m.y-3)-sy,dist=Math.max(1,Math.hypot(dx,dy));
     const speed=7.2;
@@ -2044,6 +2088,24 @@ const G={
     this.toast('MISSIL AVFYRAD MOT APAN!');
     if(AU.sMissileLaunch)AU.sMissileLaunch();else AU.sBazooka();
     return true;
+  },
+  updateMonkeyAirSupportPlane(a){
+    if(!a||!a.monkeyAirSupport||a.crashing||a.wrecked)return false;
+    if(a.monkeyMissileCooldown>0){a.monkeyMissileCooldown--;return false}
+    let best=null,bestScore=Infinity;
+    for(const m of this.monkeys||[]){
+      if(!m||m.gone)continue;
+      if(!m.id)m.id=(this.monkeySeq=(this.monkeySeq||0)+1);
+      if(this.monkeyHasIncomingMissile(m))continue;
+      const score=Math.abs(m.x-a.x)+Math.abs(m.y-a.y)*0.35;
+      if(score<bestScore){best=m;bestScore=score}
+    }
+    if(!best)return false;
+    if(this.launchPlaneMissileAtMonkey(best,a)){
+      a.monkeyMissileCooldown=8;
+      return true;
+    }
+    return false;
   },
   dismissMonkey(m,kind,x,y){
     if(!m||m.gone)return false;
@@ -2065,8 +2127,7 @@ const G={
   bombMonkeyAt(wx,wy){
     const m=this.findMonkeyTarget(wx,wy);
     if(!m)return false;
-    if(this.launchPlaneMissileAtMonkey(m))return true;
-    return this.dismissMonkey(m,'bomb',wx,wy);
+    return this.requestMonkeyAirSupport(m);
   },
   updateMonkeyEvents(){
     if(this.isDarkLevel()){
@@ -2118,65 +2179,67 @@ const G={
     }
     this.bananas=this.bananas.filter(b=>!b.hit);
   },
+  steerMonkeyMissile(r){
+    const m=this.findMonkeyById(r.targetMonkeyId);
+    if(!m)return null;
+    const speed=r.speed||7.2;
+    const dx=m.x-r.x,dy=(m.y-3)-r.y,dist=Math.max(1,Math.hypot(dx,dy));
+    r.vx=r.vx*0.64+(dx/dist)*speed*0.36;
+    r.vy=r.vy*0.64+(dy/dist)*speed*0.36;
+    const v=Math.max(0.1,Math.hypot(r.vx,r.vy));
+    r.vx=r.vx/v*speed;r.vy=r.vy/v*speed;
+    r.dir=r.vx>=0?1:-1;
+    return m;
+  },
+  updateMonkeyMissile(r,T,L){
+    let m=this.steerMonkeyMissile(r);
+    if(!m){r.hit=true;return}
+    const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
+    for(let i=0;i<steps&&!r.hit;i++){
+      r.x+=r.vx/steps;r.y+=r.vy/steps;
+      m=this.findMonkeyById(r.targetMonkeyId);
+      if(!m){r.hit=true;break}
+      if(Math.hypot(m.x-r.x,(m.y-3)-r.y)<=8){
+        this.dismissMonkey(m,'missile',r.x,r.y);
+        r.hit=true;
+      }else if(T.solidBox&&T.solidBox(r.x,r.y,2)){
+        this.explode(r.x,r.y,18,true,'bazooka');
+        r.hit=true;
+      }
+      if(!r.hit&&(r.x<2||r.x>L.W-2||r.y<-20||r.y>T.H+20||r.life<=0))r.hit=true;
+    }
+    if(!r.hit&&this.parts.length<400){
+      this.parts.push({x:r.x-r.vx*0.35,y:r.y-r.vy*0.35,vx:-r.vx*0.035,vy:-r.vy*0.035,life:7,g:0,col:'#ffb040',glow:true});
+    }
+  },
+  updateBazookaRocket(r,T,L){
+    r.vy+=(r.g||0);
+    const rScale=Math.max(1,r.scale||1),hitR=Math.max(2,Math.round(2*rScale));
+    const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
+    for(let i=0;i<steps&&!r.hit;i++){
+      r.x+=r.vx/steps;r.y+=r.vy/steps;
+      if(this.hitDecorTargetAt(r.x,r.y,Math.max(10,hitR+7))){
+        r.hit=true;
+      }else if(this.isInGoalZone(r.x,r.y,2)){
+        this.goalSpark(r.x,r.y);
+        r.hit=true;
+      }else if(T.solidBox(r.x,r.y,hitR)){
+        if(this.isInGoalZone(r.x,r.y,24*rScale))this.goalSpark(r.x,r.y);
+        else this.explode(r.x,r.y,30*rScale,true,'bazooka');
+        r.hit=true;
+      }
+      if(!r.hit&&(r.x<2||r.x>L.W-2||r.y<0||r.y>T.H+20||r.life<=0))r.hit=true;
+    }
+    if(!r.hit&&this.parts.length<400)
+      this.parts.push({x:r.x-(r.dir||Math.sign(r.vx))*3,y:r.y,vx:0,vy:-0.2,life:7,g:0,col:'#aaaaaa'});
+  },
   updateRockets(){
     const T=this.T,L=this.level;
     if(!T||!L)return;
     for(const r of this.rockets||[]){
       r.life--;
-      if(r.kind==='monkeyMissile'){
-        const speed=r.speed||7.2;
-        const steer=()=>{
-          const m=this.findMonkeyById(r.targetMonkeyId);
-          if(!m)return null;
-          const tx=m.x,ty=m.y-3;
-          const dx=tx-r.x,dy=ty-r.y,dist=Math.max(1,Math.hypot(dx,dy));
-          r.vx=r.vx*0.64+(dx/dist)*speed*0.36;
-          r.vy=r.vy*0.64+(dy/dist)*speed*0.36;
-          const v=Math.max(0.1,Math.hypot(r.vx,r.vy));
-          r.vx=r.vx/v*speed;r.vy=r.vy/v*speed;
-          r.dir=r.vx>=0?1:-1;
-          return m;
-        };
-        let m=steer();
-        if(!m){r.hit=true;continue}
-        const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
-        for(let i=0;i<steps&&!r.hit;i++){
-          r.x+=r.vx/steps;r.y+=r.vy/steps;
-          m=this.findMonkeyById(r.targetMonkeyId);
-          if(!m){r.hit=true;break}
-          if(Math.hypot(m.x-r.x,(m.y-3)-r.y)<=8){
-            this.dismissMonkey(m,'missile',r.x,r.y);
-            r.hit=true;
-          }else if(T.solidBox&&T.solidBox(r.x,r.y,2)){
-            this.explode(r.x,r.y,18,true,'bazooka');
-            r.hit=true;
-          }
-          if(!r.hit&&(r.x<2||r.x>L.W-2||r.y<-20||r.y>T.H+20||r.life<=0))r.hit=true;
-        }
-        if(!r.hit&&this.parts.length<400){
-          this.parts.push({x:r.x-r.vx*0.35,y:r.y-r.vy*0.35,vx:-r.vx*0.035,vy:-r.vy*0.035,life:7,g:0,col:'#ffb040',glow:true});
-        }
-        continue;
-      }
-      r.vy+=(r.g||0);
-      const rScale=Math.max(1,r.scale||1),hitR=Math.max(2,Math.round(2*rScale));
-      const steps=Math.max(1,Math.ceil(Math.max(Math.abs(r.vx),Math.abs(r.vy))));
-      for(let i=0;i<steps&&!r.hit;i++){
-        r.x+=r.vx/steps;r.y+=r.vy/steps;
-        if(this.hitDecorTargetAt(r.x,r.y,Math.max(10,hitR+7))){
-          r.hit=true;
-        }else if(this.isInGoalZone(r.x,r.y,2)){
-          this.goalSpark(r.x,r.y);
-          r.hit=true;
-        }else if(T.solidBox(r.x,r.y,hitR)){
-          if(this.isInGoalZone(r.x,r.y,24*rScale))this.goalSpark(r.x,r.y);
-          else this.explode(r.x,r.y,30*rScale,true,'bazooka');
-          r.hit=true;
-        }
-        if(!r.hit&&(r.x<2||r.x>L.W-2||r.y<0||r.y>T.H+20||r.life<=0))r.hit=true;
-      }
-      if(!r.hit&&this.parts.length<400)
-        this.parts.push({x:r.x-(r.dir||Math.sign(r.vx))*3,y:r.y,vx:0,vy:-0.2,life:7,g:0,col:'#aaaaaa'});
+      if(r.kind==='monkeyMissile')this.updateMonkeyMissile(r,T,L);
+      else this.updateBazookaRocket(r,T,L);
     }
     this.rockets=(this.rockets||[]).filter(r=>!r.hit);
   },

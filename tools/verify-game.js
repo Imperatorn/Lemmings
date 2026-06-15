@@ -223,7 +223,8 @@ const requiredRuntimeMethods = [
   'initLevelRescues','openRescue','releaseRescueLemming','updateLevelRescues',
   'canUseSupplyPlanes',
   'rebindAmbientFishZones',
-  'findMonkeyById','pickMonkeyMissilePlane','launchPlaneMissileAtMonkey','updateRockets',
+  'findMonkeyById','monkeyHasIncomingMissile','pickMonkeyMissilePlane','queueMonkeyAirSupport','requestMonkeyAirSupport','launchPlaneMissileAtMonkey','updateMonkeyAirSupportPlane',
+  'steerMonkeyMissile','updateMonkeyMissile','updateBazookaRocket','updateRockets',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
@@ -273,12 +274,21 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevRockets = G.rockets;
   const prevMonkeys = G.monkeys;
   const prevPlanes = G.planes;
+  const prevPackages = G.packages;
   const prevParts = G.parts;
   const prevFlashes = G.flashes;
   const prevToasts = G.toasts;
+  const prevQueued = G.queuedEvents;
+  const prevWarnings = G.warnings;
+  const prevEventLock = G.eventLockT;
   const prevMonkeyEvents = G.monkeyEvents;
   const prevMonkeyT = G.monkeyT;
   const prevMonkeySeq = G.monkeySeq;
+  const prevAirSupportPending = G.monkeyAirSupportPending;
+  const prevAirSupportTarget = G.monkeyAirSupportTargetX;
+  const prevSupplyT = G.supplyT;
+  const prevSupplyDrops = G.supplyDrops;
+  const prevSupplyMax = G.supplyMax;
   const prevMissileSfx = AU.sMissileLaunch;
   const prevBazookaExplosion = AU.sBazookaExplosion;
   const prevLemmingExplosion = AU.sLemmingExplosion;
@@ -286,14 +296,26 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.level = {W:300, hatch:{x:20,y:180}, water:[]};
   G.T = {W:300,H:240,solidBox(){return false}};
   G.rockets = [];
-  G.monkeys = [{id:1,x:160,y:80,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360}];
+  G.monkeys = [
+    {id:1,x:160,y:80,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360},
+    {id:2,x:210,y:72,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360}
+  ];
   G.planes = [{x:80,y:45,vx:1,targetX:140,kind:'skill',skill:'build',dropped:false}];
+  G.packages = [];
   G.parts = [];
   G.flashes = [];
   G.toasts = [];
-  G.monkeyEvents = 1;
+  G.queuedEvents = [];
+  G.warnings = [];
+  G.eventLockT = 0;
+  G.monkeyEvents = 2;
   G.monkeyT = 0;
-  G.monkeySeq = 1;
+  G.monkeySeq = 2;
+  G.monkeyAirSupportPending = false;
+  G.monkeyAirSupportTargetX = null;
+  G.supplyT = 999;
+  G.supplyDrops = 0;
+  G.supplyMax = 0;
   AU.sMissileLaunch = () => { launched = true; };
   AU.sBazookaExplosion = () => { exploded = true; };
   AU.sLemmingExplosion = () => {};
@@ -303,27 +325,62 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   if (G.rockets.length !== 1 || G.rockets[0].kind !== 'monkeyMissile' || G.rockets[0].targetMonkeyId !== 1) {
     throw new Error('Monkey bomb did not create a plane missile targeting the monkey');
   }
-  for (let i = 0; i < 40 && !G.monkeys[0].gone; i++) G.updateRockets();
-  if (!G.monkeys[0].gone || G.rockets.length !== 0 || !exploded) {
-    throw new Error('Plane missile did not explode the targeted monkey');
+  for (let i = 0; i < 80 && G.monkeys.some(m => !m.gone); i++) {
+    G.updateSupplyDrops();
+    G.updateRockets();
   }
+  if (G.monkeys.some(m => !m.gone) || G.rockets.length !== 0 || !exploded) {
+    throw new Error('Air-support plane did not missile all monkeys during its flyover');
+  }
+  launched = false;
+  exploded = false;
   G.rockets = [];
-  G.monkeys = [{id:2,x:120,y:70,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360}];
+  G.monkeys = [
+    {id:3,x:120,y:70,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360},
+    {id:4,x:190,y:82,dir:1,vx:0,age:0,throwSchedule:[],throwIndex:0,bananaCount:0,travelFrames:100,endX:360}
+  ];
   G.planes = [];
-  if (!G.bombMonkeyAt(120,70) || !G.monkeys[0].gone || G.rockets.length !== 0) {
-    throw new Error('Bombing a monkey without an active plane should keep the direct fallback');
+  G.queuedEvents = [];
+  G.warnings = [];
+  G.eventLockT = 0;
+  if (!G.bombMonkeyAt(120,70) || G.monkeys.some(m => m.gone) || G.rockets.length !== 0) {
+    throw new Error('Bombing a monkey without an active plane should queue air support instead of exploding immediately');
+  }
+  const supportEvent = G.queuedEvents.find(q => q.kind === 'supplyPlane' && q.data && q.data.payload && q.data.payload.monkeyAirSupport);
+  if (!supportEvent || !G.monkeyAirSupportPending) {
+    throw new Error('Bombing a monkey without an active plane did not queue future air support');
+  }
+  G.executeQueuedEvent(supportEvent);
+  if (!G.planes[0] || !G.planes[0].monkeyAirSupport || !G.planes[0].dropped) {
+    throw new Error('Queued monkey air support did not spawn a support plane');
+  }
+  for (let i = 0; i < 120 && G.monkeys.some(m => !m.gone); i++) {
+    G.updateSupplyDrops();
+    G.updateRockets();
+  }
+  if (G.monkeys.some(m => !m.gone)) {
+    throw new Error('Future support plane did not missile all monkeys during its flyover');
   }
   G.level = prevLevel;
   G.T = prevTerrain;
   G.rockets = prevRockets;
   G.monkeys = prevMonkeys;
   G.planes = prevPlanes;
+  G.packages = prevPackages;
   G.parts = prevParts;
   G.flashes = prevFlashes;
   G.toasts = prevToasts;
+  G.queuedEvents = prevQueued;
+  G.warnings = prevWarnings;
+  G.eventLockT = prevEventLock;
   G.monkeyEvents = prevMonkeyEvents;
   G.monkeyT = prevMonkeyT;
   G.monkeySeq = prevMonkeySeq;
+  G.monkeyAirSupportPending = prevAirSupportPending;
+  G.monkeyAirSupportTargetX = prevAirSupportTarget;
+  G.supplyT = prevSupplyT;
+  G.supplyDrops = prevSupplyDrops;
+  G.supplyMax = prevSupplyMax;
   AU.sMissileLaunch = prevMissileSfx;
   AU.sBazookaExplosion = prevBazookaExplosion;
   AU.sLemmingExplosion = prevLemmingExplosion;
