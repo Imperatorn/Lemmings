@@ -1355,7 +1355,7 @@ const G={
     if(!l){this.toast('KLICKA PÅ EN LEMMEL');AU.sShrug();return false}
     const y=this.trollGroundY(l.x,l.y);
     const t=this.makeTroll(l.x,y,l.dir||1,Math.max(1,l.scale||1),{playerMade:true});
-    if(!t){this.toast('TROLLFORVANDLING MISSLYCKADES');AU.sShrug();return false}
+    if(!t){this.toast('TROLLFÖRVANDLING MISSLYCKADES');AU.sShrug();return false}
     if(this.manual&&this.manual.active&&this.manual.lemId===l.id)this.stopManualControl('dead');
     this.dropLampIfCarrier(l);
     l.dead=true;
@@ -2149,7 +2149,34 @@ const G={
       cuts.push({x:x2,y:t.y-22*sc,r:Math.round(6*sc)},{x:x2+d*2*sc,y:t.y-15*sc,r:Math.round(7*sc)},{x:x2,y:t.y-8*sc,r:Math.round(7*sc)},{x:x2+d*sc,y:t.y-2*sc,r:Math.round(5*sc)});
     }
     for(const c of cuts)this.T.clearDisc(c.x,c.y,c.r);
+    if(finishing)this.clearTrollWallHeadroom(t);
     this.debris(x,t.y-12*sc,Math.round((finishing?10:6)*sc));
+  },
+  clearTrollWallHeadroom(t){
+    if(!t||!this.T)return 0;
+    const sc=this.trollScale(t);
+    const d=t.dir>=0?1:-1;
+    const minX=Math.round(d>0?t.x+2*sc:t.x-36*sc);
+    const maxX=Math.round(d>0?t.x+36*sc:t.x-2*sc);
+    const y0=Math.round(t.y-36*sc);
+    const y1=Math.round(t.y-24*sc);
+    const air0=Math.round(t.y-23*sc);
+    const air1=Math.round(t.y-8*sc);
+    let cleared=0;
+    for(let x=Math.max(1,minX);x<=Math.min(this.T.W-2,maxX);x++){
+      let openBelow=false, solidAbove=false;
+      for(let y=air0;y<=air1;y+=Math.max(1,Math.round(3*sc))){
+        if(!this.T.solid(x,y)){openBelow=true;break}
+      }
+      if(!openBelow)continue;
+      for(let y=y0;y<=y1;y++){
+        if(this.T.solid(x,y)){solidAbove=true;break}
+      }
+      if(!solidAbove)continue;
+      this.T.clearRect(x,y0,1,y1-y0+1);
+      cleared++;
+    }
+    return cleared;
   },
   clearTrollWallMouth(t){
     if(!t||!this.T)return;
@@ -2164,6 +2191,7 @@ const G={
     this.T.clearDisc(t.x+d*7*sc,t.y-20*sc,Math.round(8*sc));
     this.T.clearDisc(t.x+d*9*sc,t.y-11*sc,Math.round(9*sc));
     this.T.clearDisc(t.x+d*8*sc,t.y-3*sc,Math.round(7*sc));
+    this.clearTrollWallHeadroom(t);
     this.debris(t.x+d*10*sc,t.y-12*sc,Math.round(8*sc));
   },
   startTrollWallRage(t){

@@ -50,8 +50,16 @@ if (debugHtml) {
   if (!debugHtml.includes('id="cutsceneButtons"')) {
     throw new Error('debug.html is missing the dynamic cutscene button container');
   }
+  for (const id of ['cutsceneMode','cutsceneLight','cutsceneWeather','cutsceneMaterial']) {
+    if (!debugHtml.includes(`id="${id}"`)) throw new Error(`debug.html is missing ${id}`);
+  }
+  for (const action of ['waterClimb','fishRing','dolphin']) {
+    if (!debugHtml.includes(`data-cutscene-test="${action}"`)) {
+      throw new Error(`debug.html is missing cutscene variant action: ${action}`);
+    }
+  }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','playDebugCutscene']) {
+  for (const token of ['setupFishRingAnimation','setupFishRingRopeAnimation','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','playDebugCutscene','playDebugRescueCutscene','debugCutsceneWorldContext']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
@@ -188,6 +196,7 @@ const requiredRuntimeMethods = [
   'rebindAmbientFishZones',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
+  'clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -539,6 +548,21 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.megaArmed = prevMegaArmed;
   G.trollEvents = prevTrollEvents;
   G.trollMax = prevTrollMax;
+}
+{
+  G.startLevel(0);
+  G.T.clearRect(0, 0, G.T.W, G.T.H);
+  const wallTroll = {x:100, y:200, dir:1, scale:1};
+  G.T.setRect(102, 165, 34, 36, 1);
+  if (!G.T.solid(110, 168)) throw new Error('Troll headroom fixture was not solid before clearing');
+  G.parts = [];
+  G.clearTrollWallMouth(wallTroll);
+  if (G.T.solid(110, 168)) {
+    throw new Error('Troll wall clearing left a low ceiling lip above the tunnel');
+  }
+  if (G.T.solid(110, 176)) {
+    throw new Error('Troll wall clearing did not open the main tunnel');
+  }
 }
 {
   const prevDecor = G.decor;

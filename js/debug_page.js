@@ -263,8 +263,9 @@
     const l=resetDebugLemming(new Lemming(x,y),x,y);
     l.state='FALL';l.fall=12;l.climber=true;l.dir=1;
     G.lems=[l];G.out=1;
+    const zoneIdx=(G.level.water||[]).indexOf(z);
     G.ambientFish=(G.ambientFish||[]).filter(f=>f&&f.zone!==z);
-    G.ambientFish.push({zone:z,x:x-10,y:z.y+12,baseY:z.y+12,dir:1,p:0,s:0.045,spd:0.05,size:2,col:'#ffd060',giftT:0});
+    G.ambientFish.push({zone:z,zoneIdx,x:x-10,y:z.y+12,baseY:z.y+12,dir:1,p:0,s:0.045,spd:0.05,size:2,col:'#ffd060',giftT:0});
     const oldRand=G.rand;
     G.rand=()=>0.0;
     const liquid=G.lemmingLiquidHazard(l);
@@ -290,8 +291,9 @@
     const l=resetDebugLemming(new Lemming(x,y),x,y);
     l.state='FALL';l.fall=12;l.dir=1;
     G.lems=[l];G.out=1;G.skills.rope=Math.max(G.skills.rope||0,9);
+    const zoneIdx=(G.level.water||[]).indexOf(z);
     G.ambientFish=(G.ambientFish||[]).filter(f=>f&&f.zone!==z);
-    G.ambientFish.push({zone:z,x:x-12,y:z.y+12,baseY:z.y+12,dir:1,p:0,s:0.045,spd:0.05,size:2,col:'#ffd060',giftT:0});
+    G.ambientFish.push({zone:z,zoneIdx,x:x-12,y:z.y+12,baseY:z.y+12,dir:1,p:0,s:0.045,spd:0.05,size:2,col:'#ffd060',giftT:0});
     const oldRand=G.rand;
     G.rand=()=>0.0;
     G.tryFishSwimRing(l,G.lemmingLiquidHazard(l));
@@ -486,6 +488,57 @@
     return b;
   }
 
+  function cutsceneOption(id,fallback){
+    const el=$(id);
+    return el&&el.value?el.value:fallback;
+  }
+
+  function debugCutsceneWorldContext(){
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    const L=G.level||{};
+    const light=cutsceneOption('cutsceneLight','level');
+    const weather=cutsceneOption('cutsceneWeather','level');
+    const material=cutsceneOption('cutsceneMaterial','level');
+    const cave=light==='cave'?true:(light==='day'||light==='night'?false:!!L.cave);
+    const night=light==='night'?true:(light==='day'||light==='cave'?false:!!L.night);
+    const weatherKind=weather==='level'?(G.weatherKind||(cave?'cave':(night?'rain':'sun'))):weather;
+    return {
+      themeKey:material==='level'?(L.theme||'dirt'):material,
+      night,
+      cave,
+      weatherKind,
+      levelName:'DEBUG CUTSCENE'
+    };
+  }
+
+  function playDebugRescueCutscene(kind){
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    audioReady();
+    const mode=cutsceneOption('cutsceneMode','fullscreen');
+    const ctx=debugCutsceneWorldContext();
+    const x=worldCenterX();
+    const waterY=Math.min(196,Math.max(132,groundYAt(x)-22));
+    let spec=null,label='';
+    if(kind==='waterClimb'&&G.makeWaterClimbCutsceneSpec){
+      spec=G.makeWaterClimbCutsceneSpec(mode);
+      spec.event=Object.assign(ctx,{lemX:x,lemY:waterY+6,dir:1,waterY});
+      label='Klattrar ur vatten';
+    }else if(kind==='fishRing'&&G.makeFishRingCutsceneSpec){
+      spec=G.makeFishRingCutsceneSpec(mode);
+      spec.event=Object.assign(ctx,{lemX:x+18,lemY:waterY+8,fishX:x-34,fishY:waterY+12,waterY});
+      label='Fisk ger badring';
+    }else if(kind==='dolphin'&&G.makeDolphinRescueCutsceneSpec){
+      spec=G.makeDolphinRescueCutsceneSpec(mode);
+      spec.event=Object.assign(ctx,{lemX:x+52,lemY:waterY-8,waterX:x-36,waterY:waterY+10,shoreX:x+82,shoreY:waterY-20});
+      label='Delfinraddning';
+    }
+    if(!spec){setStatus('Cutscene-variant saknas: '+kind,'warn');return}
+    if(ctx.weatherKind==='rain')G.thunderFlash=Math.max(G.thunderFlash||0,8);
+    const cs=G.playCutscene(spec,{respectPrefs:false});
+    if(!cs){setStatus('Kunde inte starta cutscene-variant: '+kind,'warn');return}
+    finishAnimationSetup('Cutscene: '+label+' - '+ctx.themeKey+', '+(ctx.cave?'grotta':(ctx.night?'natt':'dag'))+', '+ctx.weatherKind+'.');
+  }
+
   function playDebugCutscene(id,label){
     if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
     if(!G.cutsceneById||!G.cutsceneById(id)){setStatus('Cutscene saknas: '+id,'warn');return}
@@ -576,6 +629,7 @@
     $('stepBtn').addEventListener('click',tickOnce);
     $('resetBtn').addEventListener('click',startSelectedLevel);
     document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>doAction(b.dataset.action)));
+    document.querySelectorAll('[data-cutscene-test]').forEach(b=>b.addEventListener('click',()=>playDebugRescueCutscene(b.dataset.cutsceneTest)));
 
     for(const id of ['musicVol','sfxVol']){
       const label=$(id+'Label');
