@@ -1496,7 +1496,7 @@ const G={
     if(!r||r.opened)return false;
     r.opened=true;
     r.releaseT=1;
-    if(this.T)this.T.clearRect(r.openX,r.openY,r.openW,r.openH);
+    // Buren är visuell: öppningen ska inte gräva bort material under fångarna.
     this.toast('LUCKAN ÖPPNADES - FÅNGADE LEMLAR FRIA!');
     AU.sSaved();
     for(let i=0;i<14&&this.parts.length<MAX_PARTICLES;i++){

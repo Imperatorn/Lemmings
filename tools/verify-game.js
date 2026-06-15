@@ -220,6 +220,7 @@ const requiredRuntimeMethods = [
   'hitDecorTargetAt',
   'findNearbyRingFish','makeRescueRingFish','tryFishSwimRing',
   'rescueToastText',
+  'initLevelRescues','openRescue','releaseRescueLemming','updateLevelRescues',
   'canUseSupplyPlanes',
   'rebindAmbientFishZones',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
@@ -239,6 +240,31 @@ for (const name of ['setMusicVolume','setSfxVolume','applyVolumes']) {
 }
 for (const name of ['sLemShiver','sLemWarmSigh']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU lemming warmth sfx method: ${name}`);
+}
+{
+  const prevT = G.T;
+  const prevParts = G.parts;
+  const prevToasts = G.toasts;
+  const prevSavedSfx = AU.sSaved;
+  let terrainCleared = false;
+  G.T = {
+    clearRect(){terrainCleared = true},
+    clearDisc(){terrainCleared = true}
+  };
+  G.parts = [];
+  G.toasts = [];
+  AU.sSaved = () => {};
+  const rescue = {buttonX:40,buttonY:120,openX:80,openY:150,openW:14,openH:30,opened:false,releaseT:0};
+  if (!G.openRescue(rescue) || !rescue.opened || rescue.releaseT !== 1) {
+    throw new Error('Rescue cage did not open and schedule release');
+  }
+  if (terrainCleared) {
+    throw new Error('Opening a rescue cage should not clear terrain below it');
+  }
+  G.T = prevT;
+  G.parts = prevParts;
+  G.toasts = prevToasts;
+  AU.sSaved = prevSavedSfx;
 }
 if (!AU.PAT || !AU.PAT.menu || !Array.isArray(AU.PAT.menu.mel) || !Array.isArray(AU.PAT.menu.bass)) {
   throw new Error('Missing menu music pattern');
