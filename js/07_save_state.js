@@ -2,6 +2,7 @@
 Object.assign(G,{
   makeSaveState(label){
     if(this.state!=='PLAY'||!this.level||!this.T)return null;
+    if((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()))return null;
     const fields=['cam','viewZoom','viewY','out','saved','spawned','doorT','rate','spawnT','timeT','levelTimeT','skills','selSkill','trollUsed',
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax','monkeySeq',
@@ -13,12 +14,16 @@ Object.assign(G,{
       terrain:encodeMask(this.T.mask),terrainStairs:encodeMask(this.T.stairMask),W:this.T.W,H:this.T.H,fields:{},arrays:{}};
     for(const f of fields)data.fields[f]=jsonClone(this[f]);
     data.fields.paused=false;
-    if(data.fields.manual&&data.fields.manual.keys)data.fields.manual.keys={left:false,right:false,down:false,run:false,aim:false};
+    if(data.fields.manual){
+      if(data.fields.manual.keys)data.fields.manual.keys={left:false,right:false,down:false,run:false,aim:false};
+      data.fields.manual.jumpQueued=null;
+    }
     for(const a of arrays)data.arrays[a]=jsonClone(this[a]||[]);
     return data;
   },
   promptSaveGame(){
     if(this.state!=='PLAY'||!this.level||!this.T){this.toast('INGET SPEL ATT SPARA');return false}
+    if((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive())){this.toast('KAN INTE SPARA JUST NU');return false}
     AU.init();
     let label='BANA '+(this.levelIdx+1)+' - '+this.level.name;
     try{

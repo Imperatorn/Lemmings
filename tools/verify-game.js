@@ -1824,6 +1824,72 @@ if (!savedState || savedState.levelIdx !== 0 || !savedState.terrain || !savedSta
 if (!G.restoreSaveState(savedState) || G.state !== 'PLAY' || !G.T || G.levelIdx !== 0) {
   throw new Error('Restore-state smoke test failed');
 }
+for (const state of ['TITLE','MENU','BRIEF','RESULT']) {
+  G.state = state;
+  if (G.makeSaveState('VERIFY UNSAVEABLE')) {
+    throw new Error(`Save-state should not be created while state=${state}`);
+  }
+}
+G.state = 'PLAY';
+G.paused = true;
+const pausedState = G.makeSaveState('VERIFY PAUSED');
+if (!pausedState || pausedState.fields.paused !== false) {
+  throw new Error('Save-state should restore as unpaused');
+}
+G.paused = false;
+const manualSaveLem = new Lemming(120, 120);
+manualSaveLem.state = 'MANUAL';
+G.lems = [manualSaveLem];
+G.manual = {used:true, active:true, lemId:manualSaveLem.id, lampOn:true, keys:{left:true,right:true,down:true,run:true,aim:true}, jumpQueued:{super:true}, aimAngle:0.25};
+const manualState = G.makeSaveState('VERIFY MANUAL');
+if (!manualState || !manualState.fields.manual || manualState.fields.manual.jumpQueued || Object.values(manualState.fields.manual.keys || {}).some(Boolean)) {
+  throw new Error('Save-state should clear transient manual input');
+}
+if (!G.restoreSaveState(savedState)) throw new Error('Restore after manual save-state verification failed');
+G.playCutscene({id:'verify-save-block-cutscene',respectPrefs:false,shots:[{duration:8,text:'SAVE BLOCK'}]});
+if (G.makeSaveState('VERIFY CUTSCENE')) {
+  throw new Error('Save-state should not be created while a cutscene is active');
+}
+G.clearCutscene('verify-save-block');
+G.waterfallCave = {active:true};
+if (G.makeSaveState('VERIFY CAVE')) {
+  throw new Error('Save-state should not be created while the waterfall cave is active');
+}
+G.waterfallCave = null;
+G.playCutscene({id:'verify-restore-clears-cutscene',respectPrefs:false,shots:[{duration:8,text:'RESTORE'}]});
+G.waterfallCave = {active:true};
+G.waterfallCaveExitNeedsUpRelease = true;
+G.state = 'MENU';
+if (!G.restoreSaveState(savedState) || G.cutsceneActive() || G.waterfallCaveActive() || G.waterfallCaveExitNeedsUpRelease || G.state !== 'PLAY') {
+  throw new Error('Restore-state should clear transient overlays and return to play');
+}
+{
+  const prevStorage = sandbox.window.localStorage;
+  const prevPrompt = sandbox.window.prompt;
+  const prevInit = AU.init;
+  const store = {
+    'lemmel.save.v20': JSON.stringify({savedStates:[savedState]})
+  };
+  sandbox.window.localStorage = {
+    getItem(k){return Object.prototype.hasOwnProperty.call(store,k)?store[k]:null},
+    setItem(k,v){store[k]=String(v)},
+    removeItem(k){delete store[k]}
+  };
+  sandbox.window.prompt = () => '1';
+  AU.init = () => {};
+  try {
+    G.state = 'MENU';
+    G.level = null;
+    G.T = null;
+    if (!G.promptLoadGame() || G.state !== 'PLAY' || !G.T || G.levelIdx !== savedState.levelIdx) {
+      throw new Error('Prompt load did not restore a saved game from the menu state');
+    }
+  } finally {
+    sandbox.window.localStorage = prevStorage;
+    sandbox.window.prompt = prevPrompt;
+    AU.init = prevInit;
+  }
+}
 
 const fishSaveLevelIdx = LEVELS.findIndex(L => Array.isArray(L.water) && L.water.some(z => z && !z.lava));
 if (fishSaveLevelIdx < 0) throw new Error('Missing water level for fish save-state test');
