@@ -3,7 +3,7 @@
 Koden ar uppdelad i vanliga browser-script, inte ES-moduler. Det ar medvetet:
 befintlig kod delar globala `const`, `class` och funktioner mellan filerna.
 
-Behall laddningsordningen i `LEMMEL_fixed_v44.html`:
+Behall laddningsordningen i `LEMMEL.html`:
 
 1. `00_util.js` - canvas, konstanter, hjalpfunktioner och felrapportering
 2. `01_pixelfont.js` - pixeltext

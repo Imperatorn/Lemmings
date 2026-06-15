@@ -13,7 +13,7 @@ slumphändelser och olika verktyg.
 Öppna:
 
 ```text
-LEMMEL_fixed_v44.html
+LEMMEL.html
 ```
 
 i en modern webbläsare.
@@ -122,7 +122,7 @@ spelidé. Det här är de designregler vi har sett tydliga exempel på i spelet:
 ## Projektstruktur
 
 ```text
-LEMMEL_fixed_v44.html   HTML-skalet som laddar spelet
+LEMMEL.html             HTML-skalet som laddar spelet
 js/00_util.js           canvas, konstanter, hjälpmetoder, prefs
 js/01_pixelfont.js      pixeltext
 js/02_audio.js          procedurella ljud och musik
@@ -187,7 +187,7 @@ Det här är de viktigaste sakerna att känna till innan du fortsätter utveckla
   objektiva tester där det går, särskilt för regler som annars lätt glöms bort:
   stöd för dekor, nivågeometri, specialskills, scriptordning och debugknappar.
 - Spelet använder globala browser-script, inte importer. Om en funktion flyttas
-  mellan filer måste scriptordningen i både `LEMMEL_fixed_v44.html` och
+  mellan filer måste scriptordningen i både `LEMMEL.html` och
   `debug.html` fortfarande fungera.
 - Nya fält på `Lemming`, `G` eller dekorobjekt bör få rimliga defaultvärden.
   Spara/ladda använder mycket `Object.assign`, så enkla datafält följer ofta

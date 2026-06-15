@@ -3,7 +3,7 @@ const path = require('path');
 const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
-const htmlPath = path.join(root, 'LEMMEL_fixed_v44.html');
+const htmlPath = path.join(root, 'LEMMEL.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
 const debugHtmlPath = path.join(root, 'debug.html');
@@ -12,7 +12,7 @@ const debugScripts = debugHtml
   ? [...debugHtml.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1])
   : [];
 
-if (scripts.length === 0) throw new Error('No script tags found in LEMMEL_fixed_v44.html');
+if (scripts.length === 0) throw new Error('No script tags found in LEMMEL.html');
 
 const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
