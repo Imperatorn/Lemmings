@@ -79,7 +79,8 @@ Object.assign(G,{
     else if(AU.stopMusic)AU.stopMusic();
     if(AU.stopWeather)AU.stopWeather();
     if(AU.startWaterfallCave)AU.startWaterfallCave();
-    this.toast('BAKOM VATTENFALLET - PILARNA STYR',120);
+    if(this.clearTransientText)this.clearTransientText();
+    else{this.toasts=[];this.msg='';this.msgT=0}
     AU.sClick();
     return true;
   },

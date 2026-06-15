@@ -152,7 +152,6 @@ function render(){
     // meddelanden och HUD ligger stabilt ovanpå medan själva banan skakar/zoomar.
     if(G.waterfallCaveActive&&G.waterfallCaveActive()){
       drawWaterfallCaveView(ctx,tickCount);
-      drawToastStack(ctx);
     }else{
       drawToastStack(ctx);
       drawHUD(ctx,tickCount);

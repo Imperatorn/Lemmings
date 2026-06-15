@@ -90,6 +90,9 @@ const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_ca
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
+if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('clearTransientText') || waterfallRuntimeCode.includes('BAKOM VATTENFALLET')) {
+  throw new Error('Entering the waterfall cave should clear existing text instead of showing cave instruction toasts');
+}
 const cutsceneScenesCode = fs.readFileSync(path.join(root, 'js/07_cutscene_scenes.js'), 'utf8');
 if (!cutsceneScenesCode.includes('function cutsceneLemmingRingScale') || cutsceneScenesCode.includes('Math.round(sc*0.58)') || cutsceneScenesCode.includes('Math.round(sc*0.54)')) {
   throw new Error('Fish ring cutscene should use the larger lemming-fit swim ring scale');
@@ -120,6 +123,9 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
+}
+if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
+  throw new Error('Waterfall cave view should not render gameplay toast text on top');
 }
 
 function makeContext2d(){
@@ -596,6 +602,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevMoney = G.money;
   const prevPendingSkillBonus = G.pendingSkillBonus;
   const prevWaterfallLooted = G.waterfallCaveLooted;
+  const prevToasts = G.toasts;
+  const prevMsg = G.msg;
+  const prevMsgT = G.msgT;
   let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0;
   const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [];
   AU.startWaterfallCave = () => { started++; };
@@ -625,9 +634,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const oldTime = G.timeT;
   const musicStoppedBeforeCave = musicStopped;
   const weatherStoppedBeforeCave = weatherStopped;
+  G.toasts = [{text:'PAKET HÄMTAT: +1 REPKROK', t:90, maxT:90}];
+  G.msg = 'PAKET HÄMTAT: +1 REPKROK';
+  G.msgT = 90;
   if (!G.findWaterfallCaveEntrance(caveLem)) throw new Error('Manual lemming did not find waterfall cave entrance');
   if (!G.tryEnterWaterfallCaveFromManual() || !G.waterfallCaveActive()) {
     throw new Error('Manual up near a waterfall did not enter the waterfall cave');
+  }
+  if ((G.toasts && G.toasts.length) || G.msgT > 0 || G.msg) {
+    throw new Error('Entering waterfall cave did not clear existing toast text');
   }
   if (G.manual.jumpQueued || caveLem.fall !== 0 || caveLem.manualVy !== 0 || started !== 1) {
     throw new Error('Entering waterfall cave did not clear manual jump/fall state or start audio');
@@ -920,6 +935,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.money = prevMoney;
   G.pendingSkillBonus = prevPendingSkillBonus;
   G.waterfallCaveLooted = prevWaterfallLooted;
+  G.toasts = prevToasts;
+  G.msg = prevMsg;
+  G.msgT = prevMsgT;
 }
 {
   const prevMoney = G.money;

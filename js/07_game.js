@@ -1307,6 +1307,11 @@ const G={
       this.toast('LYKTAN FLÖT I LAND VID INGÅNGEN!');
     }else this.toast('LYKTAN TAPPAD! PLOCKA UPP DEN!');
   },
+  clearTransientText(){
+    this.toasts=[];
+    this.msg='';
+    this.msgT=0;
+  },
   toast(s,ttl){
     s=String(s||'');
     if(!s)return;
