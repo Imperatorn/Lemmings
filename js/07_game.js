@@ -429,6 +429,7 @@ const G={
   },
   queueDirectedEvent(kind,ticks,data,force){
     data=data||{};ticks=Math.max(1,Math.round(ticks||1));
+    if(kind==='supplyPlane'&&!this.canUseSupplyPlanes())return false;
     if(!force&&!this.canStartDirectedEvent(kind))return false;
     const x=data.x!=null?data.x:(data.targetX!=null?data.targetX:(data.lemX!=null?data.lemX:this.cam+VW/2));
     const y=data.y!=null?data.y:(data.baseY!=null?data.baseY-18:42);
@@ -1269,7 +1270,7 @@ const G={
     }
     return false;
   },
-  applySkill(l,k,wx,wy){
+  applySkill(l,k){
     if(!this.canApplySkill(l,k))return false;
     const originalDir=l.dir||1;
     const manualAim=k==='jet'?null:this.manualAimFor(l,k);

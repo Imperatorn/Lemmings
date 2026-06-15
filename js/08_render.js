@@ -1298,6 +1298,22 @@ function drawMeteors(c,cam,tk){
   c.restore();
 }
 
+function drawSkyBird(c,x,y,tk,seed){
+  x=Math.round(x);y=Math.round(y);
+  const phase=tk*0.045+seed*0.73;
+  const wing=Math.round(Math.sin(phase)*2);
+  const tail=wing>0?1:0;
+  c.fillRect(x+6,y,3,1);
+  c.fillRect(x+8,y-1,1,1);
+  c.fillRect(x+4,y+tail,2,1);
+  c.fillRect(x,y+wing,5,1);
+  c.fillRect(x+9,y-wing,5,1);
+  if(Math.abs(wing)>=2){
+    c.fillRect(x+1,y+wing+(wing>0?1:-1),3,1);
+    c.fillRect(x+10,y-wing+(wing>0?-1:1),3,1);
+  }
+}
+
 function drawWeatherBack(c,L,cam,tk){
   const k=G.weatherKind;
   if(!k||!G.level)return;
@@ -1315,7 +1331,7 @@ function drawWeatherBack(c,L,cam,tk){
     for(let i=0;i<4;i++){
       const bx=((hash2(i+11,G.levelSeed&4095)*L.W-cam*0.18+tk*0.12*(i+1))%(VW+80)+VW+80)%(VW+80)-40;
       const by=36+hash2(i+13,G.levelSeed&4095)*54;
-      c.fillRect(bx,by,5,1);c.fillRect(bx+6,by-1,4,1);c.fillRect(bx+11,by,5,1);
+      drawSkyBird(c,bx,by,tk,i+G.levelSeed);
     }
   }else if(k==='rain'){
     c.globalAlpha=0.16;c.fillStyle='#1a2b40';

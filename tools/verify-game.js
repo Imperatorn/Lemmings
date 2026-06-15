@@ -766,6 +766,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.scheduleSupplyDrop(false) || G.canStartDirectedEvent('supplyPlane')) {
     throw new Error('Supply plane event was allowed in a cave level');
   }
+  if (G.queueDirectedEvent('supplyPlane', 5, {}, true)) {
+    throw new Error('Forced supply plane event was allowed in a cave level');
+  }
   G.planes = [{x: 80, y: 30, vx: 1, targetX: 120, kind: 'skill', skill: 'build', dropped: false}];
   G.queuedEvents = [{kind: 'supplyPlane', t: 20, data: {}}, {kind: 'treeGrow', t: 20, data: {x: 120, baseY: 200}}];
   G.warnings = [{kind: 'supplyPlane', t: 20}, {kind: 'treeGrow', t: 20}];
