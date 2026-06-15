@@ -1179,7 +1179,6 @@ const G={
     l.y=clamp(Math.round(z.y+5),Math.round(z.y+3),Math.round(z.y+10));
     fish.giftT=28;
     fish.dir=(fish.x<l.x)?1:-1;
-    AU.sPop();
     this.toast(this.rescueToastText('fish',{x:l.x,y:l.y,rescueOnly:!!fish.rescueOnly}));
     for(let i=0;i<18&&this.parts.length<MAX_PARTICLES;i++){
       const a=RND()*6.283,sp=0.35+RND()*1.15;
@@ -1187,7 +1186,8 @@ const G={
         vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.35,life:12+RND()*14,g:0.06,
         col:RND()<0.5?'#ffb040':(RND()<0.75?'#ffe070':'#d8f8ff'),glow:RND()<0.25});
     }
-    if(this.playFishRingCutscene)this.playFishRingCutscene(l,fish,z,'fullscreen');
+    const cs=this.playFishRingCutscene?this.playFishRingCutscene(l,fish,z,'fullscreen'):null;
+    if(!cs&&AU.sCutscene)AU.sCutscene();
     return true;
   },
   checkLiquid(l){
@@ -1982,6 +1982,19 @@ const G={
         col:RND()<0.65?'#ffd040':(RND()<0.80?'#ffb020':'#ff7020'),glow:true});
     }
   },
+  bananaSplash(x,y){
+    if(!this.parts)return;
+    for(let i=0;i<10&&this.parts.length<MAX_PARTICLES;i++){
+      const side=RND()<0.5?-1:1, sp=0.18+RND()*0.75;
+      this.parts.push({
+        x:x+RND()*5-2.5,y:y-1+RND()*3,
+        vx:side*sp,vy:-0.30-RND()*0.65,
+        life:8+RND()*10,maxLife:18,g:0.08,
+        col:RND()<0.58?'#b8efff':'#7fc8e8',
+        water:true,glow:RND()<0.12
+      });
+    }
+  },
   monkeyHitScore(m,wx,wy){
     if(!m||m.gone)return Infinity;
     const dx=Math.abs(m.x-wx), dy=Math.abs((m.y-1)-wy);
@@ -2053,7 +2066,11 @@ const G={
       const steps=Math.max(1,Math.ceil(Math.max(Math.abs(b.vx),Math.abs(b.vy))));
       for(let i=0;i<steps&&!b.hit;i++){
         b.x+=b.vx/steps;b.y+=b.vy/steps;
-        if(this.T.solidBox(b.x,b.y,2)||b.y>=this.T.H-4){
+        const liquid=this.liquidAt(b.x,b.y,2);
+        if(liquid&&!liquid.lava&&!this.T.solidBox(b.x,b.y,2)){
+          this.bananaSplash(b.x,Math.max(liquid.y+2,b.y));
+          b.hit=true;
+        }else if(this.T.solidBox(b.x,b.y,2)||b.y>=this.T.H-4){
           this.bananaExplode(b.x,clamp(b.y,4,this.T.H-5),b.vx,b.vy);
           b.hit=true;
         }

@@ -705,6 +705,47 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
 {
   const prevLevel = G.level;
   const prevTerrain = G.T;
+  const prevMonkeys = G.monkeys;
+  const prevBananas = G.bananas;
+  const prevParts = G.parts;
+  const prevMonkeyEvents = G.monkeyEvents;
+  const prevMonkeyMax = G.monkeyMax;
+  const prevBananaExplode = G.bananaExplode;
+  const prevLiquidCache = G.liquidCache;
+  let exploded = false;
+  G.level = {W:240, hatch:{x:20,y:180}, water:[{x:80,w:70,y:120,lava:false}]};
+  G.T = {W:240, H:240, solid(){return false}, solidBox(){return false}};
+  G.monkeys = [];
+  G.monkeyEvents = 0;
+  G.monkeyMax = 0;
+  G.parts = [];
+  G.bananaExplode = () => { exploded = true; };
+  G.bananas = [{x:110, y:118, vx:0, vy:3, g:0, life:10, spin:0, hit:false}];
+  G.updateMonkeyEvents();
+  if (exploded || G.bananas.length !== 0 || !G.parts.some(p => p && p.water)) {
+    throw new Error('Banana thrown into open water should splash without exploding');
+  }
+  exploded = false;
+  G.parts = [];
+  G.T = {W:240, H:240, solid(){return true}, solidBox(){return true}};
+  G.bananas = [{x:110, y:118, vx:0, vy:3, g:0, life:10, spin:0, hit:false}];
+  G.updateMonkeyEvents();
+  if (!exploded) {
+    throw new Error('Banana should still explode when water is hidden behind solid terrain');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.monkeys = prevMonkeys;
+  G.bananas = prevBananas;
+  G.parts = prevParts;
+  G.monkeyEvents = prevMonkeyEvents;
+  G.monkeyMax = prevMonkeyMax;
+  G.bananaExplode = prevBananaExplode;
+  G.liquidCache = prevLiquidCache;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
   const prevPlanes = G.planes;
   const prevPackages = G.packages;
   const prevRocks = G.trollRocks;

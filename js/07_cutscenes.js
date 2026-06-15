@@ -240,6 +240,7 @@ Object.assign(G,{
     const cs={active:true,id:spec.id,spec,mode:spec.mode,t:0,shotIdx:0,shotT:0,pauseGame:spec.pauseGame,startedState:this.state||'TITLE'};
     this.cutscene=cs;
     try{if(typeof spec.onStart==='function')spec.onStart(this,cs)}catch(err){reportGameError('Cutscene start error',err)}
+    if(spec.sound!==false&&AU.sCutscene)AU.sCutscene();
     return cs;
   },
   stopCutscene(reason,silent){

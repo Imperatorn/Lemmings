@@ -217,6 +217,12 @@ const AU={
   sClick(){this.tone(880,0.05,'square',0.06)},
   sAssign(){this.tone(660,0.06,'square',0.09);this.tone(990,0.07,'square',0.07,1,this.now()+0.05)},
   sLetsGo(){const t=this.now();[523,659,784,1047].forEach((f,i)=>this.tone(f,0.12,'square',0.08,1,t+i*0.09))},
+  sCutscene(){
+    if(!this.rateFx('cutscene',0.12))return;
+    const t=this.now();
+    [880,1175,1568].forEach((f,i)=>this.tone(f,0.075,'triangle',0.055,1.01,t+i*0.055));
+    this.tone(2093,0.09,'sine',0.020,1,t+0.14);
+  },
   boomDest(){return this.boomGain||this.sfxDest()},
   makeDistortionCurve(amount){
     const n=256, curve=new Float32Array(n), k=amount||60;
