@@ -223,7 +223,7 @@ const requiredRuntimeMethods = [
   'rebindAmbientFishZones',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
-  'clearTrollWallHeadroom',
+  'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -649,9 +649,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.T.clearRect(0, 0, G.T.W, G.T.H);
   const wallTroll = {x:100, y:200, dir:1, scale:1};
   G.T.setRect(102, 165, 34, 36, 1);
+  G.T.setRect(99, 172, 5, 29, 1);
   if (!G.T.solid(110, 168)) throw new Error('Troll headroom fixture was not solid before clearing');
+  if (!G.T.solid(100, 190)) throw new Error('Troll entry lip fixture was not solid before clearing');
   G.parts = [];
   G.clearTrollWallMouth(wallTroll);
+  if (G.T.solid(100, 190) || G.T.solid(101, 188)) {
+    throw new Error('Troll wall clearing left a blocking lip next to the troll');
+  }
   if (G.T.solid(110, 168)) {
     throw new Error('Troll wall clearing left a low ceiling lip above the tunnel');
   }

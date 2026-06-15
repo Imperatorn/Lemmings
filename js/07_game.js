@@ -2207,8 +2207,21 @@ const G={
       cuts.push({x:x2,y:t.y-22*sc,r:Math.round(6*sc)},{x:x2+d*2*sc,y:t.y-15*sc,r:Math.round(7*sc)},{x:x2,y:t.y-8*sc,r:Math.round(7*sc)},{x:x2+d*sc,y:t.y-2*sc,r:Math.round(5*sc)});
     }
     for(const c of cuts)this.T.clearDisc(c.x,c.y,c.r);
-    if(finishing)this.clearTrollWallHeadroom(t);
+    if(finishing){
+      this.clearTrollWallEntry(t);
+      this.clearTrollWallHeadroom(t);
+    }
     this.debris(x,t.y-12*sc,Math.round((finishing?10:6)*sc));
+  },
+  clearTrollWallEntry(t){
+    if(!t||!this.T)return;
+    const sc=this.trollScale(t);
+    const d=t.dir>=0?1:-1;
+    const x0=Math.round(Math.min(t.x-d*2*sc,t.x+d*14*sc));
+    const x1=Math.round(Math.max(t.x-d*2*sc,t.x+d*14*sc));
+    const y0=Math.round(t.y-28*sc);
+    const y1=Math.round(t.y+1*sc);
+    this.T.clearRect(x0,y0,x1-x0+1,y1-y0+1);
   },
   clearTrollWallHeadroom(t){
     if(!t||!this.T)return 0;
@@ -2246,6 +2259,7 @@ const G={
     // De progressiva cirklarna såg bra ut, men kunde lämna en tunn rest längst
     // in i väggen som var visuellt liten men fortfarande blockerade lemlar.
     this.T.clearRect(x,y,Math.round(22*sc),Math.round(28*sc));
+    this.clearTrollWallEntry(t);
     this.T.clearDisc(t.x+d*7*sc,t.y-20*sc,Math.round(8*sc));
     this.T.clearDisc(t.x+d*9*sc,t.y-11*sc,Math.round(9*sc));
     this.T.clearDisc(t.x+d*8*sc,t.y-3*sc,Math.round(7*sc));
