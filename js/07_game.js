@@ -77,7 +77,7 @@ function createLevelDecorApi(game){
 
 const G={
   state:'TITLE', levelIdx:0, level:null, T:null,
-  lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
+  lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1, cutscenesOn:true,
   lamp:null, cleared:new Array(LEVELS.length).fill(false),
@@ -88,7 +88,7 @@ const G={
   treeT:0, treeEvents:0, treeMax:0, treeLastX:null,
   jumpT:0, jumpEvents:0, jumpMax:0, megaBoom:null, megaArmed:null, eventLockT:0, shakeT:0, shakePow:0,
   weatherKind:'sun', weatherT:0, thunderT:0, thunderFlash:0, thunderX:0, thunderPath:null, sunSurpriseT:0,
-  levelSeed:0, levelRng:null, playCount:0, ropeAim:null, ropeSeq:1, lemTalkT:0,
+  levelSeed:0, levelRng:null, playCount:0, ropeAim:null, ropeSeq:1, settledTrollRockSeq:0, lemTalkT:0,
   manual:{used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0},
   viewZoom:1, viewY:0, zoomLevels:[1,1.35,1.7,2.1],
 
@@ -493,7 +493,7 @@ const G={
     const D=createLevelDecorApi(this);
     if(L.decor)L.decor(D);
     // status
-    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;this.sunSurpriseT=0;
     this.meteorT=(L.night&&!L.cave)?Math.round((18+this.rand()*34)*1000/TICK):0;
     this.cam=clamp(L.hatch.x-160,0,this.maxCamFor(L));
@@ -2194,8 +2194,22 @@ const G={
     }
     return false;
   },
+  trollWallHasStairs(t){
+    if(!t||!this.T||!this.T.stairBox)return false;
+    const sc=this.trollScale(t);
+    const d=t.dir>=0?1:-1;
+    const step=Math.max(2,Math.round(2*sc));
+    const r=Math.max(2,Math.round(2*sc));
+    for(let dx=4*sc;dx<=34*sc;dx+=step){
+      for(let dy=-36*sc;dy<=2*sc;dy+=step){
+        if(this.T.stairBox(t.x+d*dx,t.y+dy,r))return true;
+      }
+    }
+    return false;
+  },
   clearTrollWallBite(t,finishing){
     if(!t||!this.T)return;
+    if(this.trollWallHasStairs(t))return;
     const sc=this.trollScale(t);
     const d=t.dir>=0?1:-1;
     const max=t.rageMax||TROLL_RAGE_TICKS;
@@ -2260,6 +2274,7 @@ const G={
   },
   clearTrollWallMouth(t){
     if(!t||!this.T)return;
+    if(this.trollWallHasStairs(t))return;
     const sc=this.trollScale(t);
     const d=t.dir>=0?1:-1;
     const x=d>0?Math.round(t.x+2*sc):Math.round(t.x-24*sc);
@@ -2276,7 +2291,7 @@ const G={
     this.debris(t.x+d*10*sc,t.y-12*sc,Math.round(8*sc));
   },
   startTrollWallRage(t){
-    if(!t||!this.T||!this.trollWallAhead(t))return false;
+    if(!t||!this.T||!this.trollWallAhead(t)||this.trollWallHasStairs(t))return false;
     t.rageT=TROLL_RAGE_TICKS;
     t.rageMax=TROLL_RAGE_TICKS;
     t.rageHitT=0;
@@ -2288,6 +2303,7 @@ const G={
   },
   updateTrollWallRage(t){
     if(!t||!t.rageT)return false;
+    if(this.trollWallHasStairs(t)){t.rageT=0;t.dir*=-1;return true}
     t.stepT++;
     t.rageT--;
     const elapsed=(t.rageMax||TROLL_RAGE_TICKS)-t.rageT;
@@ -2371,6 +2387,73 @@ const G={
     if(!m||this.rand()>0.82)return false;
     return this.throwTrollRock(t,m);
   },
+  trollRockLandingSurface(r){
+    if(!this.T||!r)return null;
+    const sc=Math.max(1,r.scale||1);
+    const x=clamp(Math.round(r.x),4,this.T.W-5);
+    const y0=clamp(Math.round(r.y-8*sc),2,this.T.H-3);
+    const y1=clamp(Math.round(r.y+12*sc),y0,this.T.H-2);
+    for(let y=y0;y<=y1;y++){
+      if(this.T.solid(x,y)&&!this.T.solid(x,y-1)){
+        const rStair=Math.max(2,Math.round(3*sc));
+        if((this.T.stair&&this.T.stair(x,y))||(this.T.stairBox&&this.T.stairBox(x,y,rStair)))return null;
+        return {x,y:y-1};
+      }
+    }
+    return null;
+  },
+  nearbySettledTrollRock(x,y,sc){
+    const nearX=Math.max(10,Math.round(12*Math.max(1,sc||1)));
+    const nearY=Math.max(5,Math.round(5*Math.max(1,sc||1)));
+    for(const r of this.settledTrollRocks||[]){
+      if(!r)continue;
+      const rs=Math.max(1,r.scale||1);
+      const groundY=r.groundY==null?r.y+Math.round(2*rs):r.groundY;
+      if(Math.abs(r.x-x)<=nearX&&Math.abs(groundY-y)<=nearY)return r;
+    }
+    return null;
+  },
+  settleTrollRock(r){
+    const surf=this.trollRockLandingSurface(r);
+    if(!surf||!this.T)return false;
+    const sc=Math.max(1,r.scale||1);
+    if(this.liquidAt&&this.liquidAt(surf.x,surf.y+2,2))return false;
+    if(this.nearbySettledTrollRock(surf.x,surf.y,sc)){
+      this.debris(surf.x,surf.y,Math.round(5*sc));
+      return true;
+    }
+    const dentR=Math.max(4,Math.round(4+sc*2));
+    if(this.T.clearDisc)this.T.clearDisc(surf.x,surf.y+Math.round(3*sc),dentR);
+    this.debris(surf.x,surf.y,Math.round(4*sc));
+    this.settledTrollRockSeq=(this.settledTrollRockSeq||0)+1;
+    const rock={
+      id:this.settledTrollRockSeq,
+      x:surf.x,
+      y:surf.y-Math.round(2*sc),
+      groundY:surf.y,
+      scale:sc,
+      spin:(r.spin||0)&3,
+      settled:true
+    };
+    (this.settledTrollRocks=this.settledTrollRocks||[]).push(rock);
+    if(this.settledTrollRocks.length>28)this.settledTrollRocks.shift();
+    return true;
+  },
+  findSettledTrollRockForLemming(l){
+    if(!l||!l.alive||!l.alive())return null;
+    const dir=l.dir>=0?1:-1;
+    let best=null,bestAhead=1e9;
+    for(const r of this.settledTrollRocks||[]){
+      if(!r)continue;
+      const rs=Math.max(1,r.scale||1);
+      const groundY=r.groundY==null?r.y+Math.round(2*rs):r.groundY;
+      if(Math.abs(groundY-l.y)>Math.max(6,Math.round(5*rs)))continue;
+      const ahead=(r.x-l.x)*dir;
+      const trigger=Math.max(5,Math.round(6*rs+3));
+      if(ahead>=1&&ahead<=trigger&&ahead<bestAhead){best=r;bestAhead=ahead}
+    }
+    return best;
+  },
   updateTrollRocks(){
     for(const r of this.trollRocks||[]){
       if(r.hit)continue;
@@ -2389,8 +2472,10 @@ const G={
           this.dismissMonkey(m,'rock',r.x,r.y);
           r.hit=true;
         }else if(this.T&&(this.T.solidBox(r.x,r.y,Math.round(2*sc))||r.y>=this.T.H-4)){
-          this.debris(r.x,r.y,Math.round(7*sc));
-          AU.sPop();
+          if(!this.settleTrollRock(r)){
+            this.debris(r.x,r.y,Math.round(7*sc));
+            AU.sPop();
+          }
           r.hit=true;
         }
         if(r.x<2||r.x>this.level.W-2||r.y<-30||(this.T&&r.y>this.T.H+18)||r.life<=0)r.hit=true;

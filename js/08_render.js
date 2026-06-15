@@ -67,6 +67,23 @@ function drawLemmingCore(c,l,sx,sy){
     p(-7,-11-heat,'#ffb040',1,2);p(6,-12+heat,'#ffe060',1,2);
     return;
   }
+  if(l.state==='VAULT'){
+    const t=clamp((l.busyT||0)/Math.max(1,l.vaultDur||14),0,1);
+    const crouch=t>0.15&&t<0.85?1:0;
+    const leadY=t<0.5?-4:-3;
+    const trailY=t<0.5?-2:-3;
+    p(-2,-1,COL.leg,2,1);
+    p(1,-1,COL.leg,2,1);
+    p(d>0?-4:2,trailY,COL.leg,3,1);
+    p(d>0?0:-3,-2,COL.leg,3,1);
+    p(-2,-5+crouch,COL.body,4,4);
+    p(-1,-7+crouch,COL.skin,2,2);
+    p(-2,-9+crouch,COL.hair,4,2);
+    p(d>0?1:-2,-7+crouch,'#102040',1,1);
+    p(d>0?2:-4,leadY+crouch,COL.skin,2,1);
+    p(d>0?3:-5,leadY+1+crouch,'#ffe8b8',1,1);
+    return;
+  }
   if(l.state==='ROPE'){
     // Klättringsanimeringen är bunden till faktisk rörelse längs repet, inte bara
     // global frame-counter. Det gör att långsammare repklättring fortfarande ser aktiv ut.
@@ -1302,12 +1319,22 @@ function drawTrollRock(c,r,cam,tk){
   const x=Math.round(r.x-cam),y=Math.round(r.y);
   const sc=Math.max(1,r&&r.scale||1);
   if(x<-25*sc||x>VW+25*sc||y<-25*sc||y>VH+25*sc)return;
-  const phase=(tk+(r.spin||0))&3;
+  const phase=((r&&r.settled?0:tk)+(r.spin||0))&3;
   const rct=(xx,yy,w,h,col)=>{c.fillStyle=col;c.fillRect(x+Math.round(xx*sc),y+Math.round(yy*sc),Math.max(1,Math.round(w*sc)),Math.max(1,Math.round(h*sc)))};
   rct(-3,-2,6,5,'#5a5148');
   rct(-2,-3,4,2,'#7a7064');
   rct(1-(phase&1),1,2,1,'#302820');
   rct(-2+(phase===2?1:0),-2,1,1,'#b0a090');
+}
+function drawSettledTrollRock(c,r,cam,tk){
+  const x=Math.round(r.x-cam),y=Math.round(r.y);
+  const sc=Math.max(1,r&&r.scale||1);
+  if(x<-25*sc||x>VW+25*sc||y<-25*sc||y>VH+25*sc)return;
+  c.globalAlpha=0.32;
+  c.fillStyle='#12100e';
+  c.fillRect(x-Math.round(5*sc),y+Math.round(3*sc),Math.round(10*sc),Math.max(1,Math.round(2*sc)));
+  c.globalAlpha=1;
+  drawTrollRock(c,r,cam,tk);
 }
 
 

@@ -6,8 +6,8 @@ Object.assign(G,{
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax',
       'monkeyLastX','trollT','trollEvents','trollMax','trollLastX','treeT','treeEvents','treeMax','treeLastX','jumpT','jumpEvents','jumpMax',
-      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','lemTalkT','manual'];
-    const arrays=['lems','parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','trees','dolphins','flashes',
+      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','settledTrollRockSeq','lemTalkT','manual'];
+    const arrays=['lems','parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','settledTrollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
     const data={v:1,label:String(label||'SPARAT LÄGE').slice(0,28),ts:Date.now?Date.now():0,levelIdx:this.levelIdx,levelSeed:this.levelSeed>>>0,
       terrain:encodeMask(this.T.mask),terrainStairs:encodeMask(this.T.stairMask),W:this.T.W,H:this.T.H,fields:{},arrays:{}};
@@ -55,7 +55,7 @@ Object.assign(G,{
     this.levelIdx=s.levelIdx|0;this.level=LEVELS[this.levelIdx];this.levelSeed=s.levelSeed>>>0;
     this.lems=(arrays.lems||[]).map(d=>{const l=new Lemming(d.x||0,d.y||0);Object.assign(l,d);return l});
     let maxId=0;for(const l of this.lems)maxId=Math.max(maxId,l.id||0);LEM_ID=Math.max(LEM_ID,maxId+1);
-    const names=['parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','trees','dolphins','flashes',
+    const names=['parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','settledTrollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
     for(const n of names)this[n]=jsonClone(arrays[n]||[]);
     this.weatherKind=this.normalizeWeatherForLevel(this.weatherKind,this.level);

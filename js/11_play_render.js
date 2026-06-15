@@ -33,6 +33,7 @@ function drawPlayWorld(c,L,cam,tk){
   for(const p of G.packages)drawSupplyPackage(c,p,cam,tk);
   for(const b of G.bananas)drawThrownBanana(c,b,cam,tk);
   for(const r of G.trollRocks)drawTrollRock(c,r,cam,tk);
+  for(const r of G.settledTrollRocks||[])drawSettledTrollRock(c,r,cam,tk);
   for(const rope of G.ropes)drawRope(c,rope,cam,tk);
   for(const h of G.hooks)drawRopeHook(c,h,cam,tk);
   // tappad lykta

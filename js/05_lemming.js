@@ -11,6 +11,7 @@ class Lemming{
     this.bombT=-1;this.busyT=0;this.bricks=0;this.fuel=0;
     this.jetT=0;this.jetBlockedT=0;this.afterBazState=null;
     this.jumpT=0;this.jumpVy=0;this.manualVy=0;this.ropeId=null;this.ropeT=0;this.ropeCooldown=0;
+    this.vaultRockId=null;this.vaultDur=0;this.vaultStartX=0;this.vaultStartY=0;this.vaultEndX=0;this.vaultEndY=0;this.vaultRockScale=1;
     this.scale=1;this.manualMoving=false;
     this.anim=Math.floor(RND()*4);this.dead=false;
   }
@@ -59,6 +60,7 @@ class Lemming{
       case 'JET': this.jet(T); break;
       case 'FLAME': this.flamethrower(T); break;
       case 'JUMP': this.sillyJump(T); break;
+      case 'VAULT': this.vaultRock(T); break;
       case 'ROPE': this.ropeClimb(T); break;
       case 'WARM':
         if(!T.solid(this.x,this.y+1)){this.state='FALL';this.fall=0;break}
@@ -128,6 +130,8 @@ class Lemming{
     if(T.stairBox&&T.stairBox(this.x,this.y+1,2)&&(this.anim&1)){
       G.checkExit(this);G.checkLiquid(this);return;
     }
+    const vaultRock=G.findSettledTrollRockForLemming&&G.findSettledTrollRockForLemming(this);
+    if(vaultRock&&this.startRockVault(vaultRock))return;
     const nx=this.x+this.dir;
     if(nx<3||nx>T.W-3){this.dir*=-1;return}
     if(this.turnedByBlocker(nx)){this.dir*=-1;return}
@@ -328,6 +332,43 @@ class Lemming{
     this.busyT=0;this.fall=0;this.chute=false;this.soft=false;
     AU.sHop();
     return true;
+  }
+  startRockVault(rock){
+    if(!rock||!this.alive()||this.state!=='WALK')return false;
+    const sc=this.actionScale(),rs=Math.max(1,rock.scale||1),dir=this.dir>=0?1:-1;
+    const maxX=G.T&&G.T.W?G.T.W-3:999999;
+    this.state='VAULT';
+    this.busyT=0;
+    this.vaultRockId=rock.id||null;
+    this.vaultDur=Math.max(10,Math.round(12+rs*2));
+    this.vaultStartX=this.x;
+    this.vaultStartY=this.y;
+    this.vaultEndX=clamp(Math.round(rock.x+dir*(7*rs+6*sc)),3,maxX);
+    this.vaultEndY=rock.groundY==null?this.y:rock.groundY;
+    this.vaultRockScale=rs;
+    this.fall=0;this.chute=false;this.soft=false;
+    return true;
+  }
+  vaultRock(T){
+    const dur=Math.max(1,this.vaultDur||14);
+    this.busyT++;
+    const t=clamp(this.busyT/dur,0,1);
+    const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    const lift=Math.max(2,Math.round(3*Math.max(1,this.vaultRockScale||1)));
+    this.x=Math.round(this.vaultStartX+(this.vaultEndX-this.vaultStartX)*e);
+    const baseY=this.vaultStartY+(this.vaultEndY-this.vaultStartY)*e;
+    this.y=Math.round(baseY-Math.sin(t*Math.PI)*lift);
+    if(this.busyT<dur)return;
+    this.x=this.vaultEndX;
+    let y=Math.round(this.vaultEndY==null?this.y:this.vaultEndY);
+    let guard=0;
+    while(T.solid(this.x,y)&&guard++<10)y--;
+    guard=0;
+    while(!T.solid(this.x,y+1)&&guard++<10)y++;
+    this.y=y;
+    this.state=T.solid(this.x,this.y+1)?'WALK':'FALL';
+    this.busyT=0;this.fall=0;this.vaultRockId=null;
+    G.checkExit(this);G.checkLiquid(this);
   }
   manualSolidAt(T,x,y){
     if(T.solid(x,y))return true;

@@ -129,7 +129,7 @@
   }
 
   function clearDebugActors(){
-    G.planes=[];G.packages=[];G.trolls=[];G.trollRocks=[];G.monkeys=[];G.bananas=[];
+    G.planes=[];G.packages=[];G.trolls=[];G.trollRocks=[];G.settledTrollRocks=[];G.monkeys=[];G.bananas=[];
     G.rockets=[];G.hooks=[];G.ropes=[];G.meteors=[];G.flashes=[];G.parts=[];
   }
 

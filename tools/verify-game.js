@@ -224,6 +224,7 @@ const requiredRuntimeMethods = [
   'rebindAmbientFishZones',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
+  'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
@@ -666,6 +667,26 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
 }
 {
+  G.startLevel(0);
+  G.T.clearRect(0, 0, G.T.W, G.T.H);
+  const stairTroll = {x:100, y:200, dir:1, scale:1};
+  G.T.brick(108, 176, 16, 24, '#c8a050');
+  if (!G.trollWallAhead(stairTroll)) throw new Error('Troll stair fixture was not detected as a wall');
+  if (!G.trollWallHasStairs(stairTroll)) throw new Error('Troll stair fixture was not detected as stairs');
+  if (G.startTrollWallRage(stairTroll)) {
+    throw new Error('Troll started smashing a built stair');
+  }
+  if (!G.T.solid(112, 184) || !G.T.stairBox(112, 184, 2)) {
+    throw new Error('Troll changed a built stair while checking wall rage');
+  }
+  stairTroll.rageT = 2;
+  stairTroll.rageMax = 2;
+  G.updateTrollWallRage(stairTroll);
+  if (!G.T.solid(112, 184) || !G.T.stairBox(112, 184, 2)) {
+    throw new Error('Troll wall rage cleared a built stair');
+  }
+}
+{
   const prevDecor = G.decor;
   const prevTrolls = G.trolls;
   const prevParts = G.parts;
@@ -701,6 +722,165 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   G.trollRocks = prevRocks;
   G.rand = prevRand;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevRocks = G.trollRocks;
+  const prevSettled = G.settledTrollRocks;
+  const prevSettledSeq = G.settledTrollRockSeq;
+  const prevParts = G.parts;
+  const prevMonkeys = G.monkeys;
+  const prevPlanes = G.planes;
+  const prevLiquidCache = G.liquidCache;
+  const cleared = [];
+  G.level = {W:300, hatch:{x:20,y:180}, water:[]};
+  G.T = {
+    W:300,H:240,
+    solid:(x,y)=>y>=200,
+    solidBox:(x,y,r)=>y+(r||0)>=200,
+    stair:()=>false,
+    stairBox:()=>false,
+    clearDisc(x,y,r){cleared.push({x,y,r})}
+  };
+  G.trollRocks = [{x:120,y:194,vx:0,vy:4,g:0,life:10,spin:1,hit:false,scale:1}];
+  G.settledTrollRocks = [];
+  G.settledTrollRockSeq = 0;
+  G.parts = [];
+  G.monkeys = [];
+  G.planes = [];
+  G.liquidCache = null;
+  G.updateTrollRocks();
+  if (G.trollRocks.length !== 0 || G.settledTrollRocks.length !== 1 || !cleared.length) {
+    throw new Error('Troll rock did not settle into regular ground');
+  }
+  if (!G.settledTrollRocks[0].settled || G.settledTrollRocks[0].groundY !== 199) {
+    throw new Error('Settled troll rock did not store a stable surface');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.trollRocks = prevRocks;
+  G.settledTrollRocks = prevSettled;
+  G.settledTrollRockSeq = prevSettledSeq;
+  G.parts = prevParts;
+  G.monkeys = prevMonkeys;
+  G.planes = prevPlanes;
+  G.liquidCache = prevLiquidCache;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevRocks = G.trollRocks;
+  const prevSettled = G.settledTrollRocks;
+  const prevSettledSeq = G.settledTrollRockSeq;
+  const prevParts = G.parts;
+  const prevMonkeys = G.monkeys;
+  const prevPlanes = G.planes;
+  const prevLiquidCache = G.liquidCache;
+  const cleared = [];
+  G.level = {W:300, hatch:{x:20,y:180}, water:[]};
+  G.T = {
+    W:300,H:240,
+    solid:(x,y)=>y>=200,
+    solidBox:(x,y,r)=>y+(r||0)>=200,
+    stair:()=>false,
+    stairBox:()=>false,
+    clearDisc(x,y,r){cleared.push({x,y,r})}
+  };
+  G.trollRocks = [{x:120,y:194,vx:0,vy:4,g:0,life:10,spin:1,hit:false,scale:1}];
+  G.settledTrollRocks = [{id:5,x:126,y:197,groundY:199,scale:1,settled:true}];
+  G.settledTrollRockSeq = 5;
+  G.parts = [];
+  G.monkeys = [];
+  G.planes = [];
+  G.liquidCache = null;
+  G.updateTrollRocks();
+  if (G.trollRocks.length !== 0 || G.settledTrollRocks.length !== 1) {
+    throw new Error('Nearby troll rock landing should break without creating a second settled rock');
+  }
+  if (cleared.length !== 0) {
+    throw new Error('Nearby troll rock landing should not make another terrain dent');
+  }
+  if (G.parts.length === 0) {
+    throw new Error('Nearby troll rock landing should still create debris');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.trollRocks = prevRocks;
+  G.settledTrollRocks = prevSettled;
+  G.settledTrollRockSeq = prevSettledSeq;
+  G.parts = prevParts;
+  G.monkeys = prevMonkeys;
+  G.planes = prevPlanes;
+  G.liquidCache = prevLiquidCache;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevRocks = G.trollRocks;
+  const prevSettled = G.settledTrollRocks;
+  const prevSettledSeq = G.settledTrollRockSeq;
+  const prevParts = G.parts;
+  const prevMonkeys = G.monkeys;
+  const prevPlanes = G.planes;
+  G.level = {W:300, hatch:{x:20,y:180}, water:[]};
+  G.T = {
+    W:300,H:240,
+    solid:(x,y)=>y>=200,
+    solidBox:(x,y,r)=>y+(r||0)>=200,
+    stair:()=>true,
+    stairBox:()=>true,
+    clearDisc(){throw new Error('Troll rock should not dent built stairs')}
+  };
+  G.trollRocks = [{x:120,y:194,vx:0,vy:4,g:0,life:10,spin:1,hit:false,scale:1}];
+  G.settledTrollRocks = [];
+  G.settledTrollRockSeq = 0;
+  G.parts = [];
+  G.monkeys = [];
+  G.planes = [];
+  G.updateTrollRocks();
+  if (G.settledTrollRocks.length !== 0) {
+    throw new Error('Troll rock settled on a stair');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.trollRocks = prevRocks;
+  G.settledTrollRocks = prevSettled;
+  G.settledTrollRockSeq = prevSettledSeq;
+  G.parts = prevParts;
+  G.monkeys = prevMonkeys;
+  G.planes = prevPlanes;
+}
+{
+  const prevLevel = G.level;
+  const prevTerrain = G.T;
+  const prevLems = G.lems;
+  const prevRopes = G.ropes;
+  const prevSettled = G.settledTrollRocks;
+  G.level = {W:300, hatch:{x:20,y:180}, water:[], exit:{x:280,y:199}};
+  G.T = {
+    W:300,H:240,
+    solid:(x,y)=>y>=200,
+    solidBox:(x,y,r)=>y+(r||0)>=200,
+    stairBox:()=>false
+  };
+  G.ropes = [];
+  const lem = new Lemming(112,199);
+  lem.state = 'WALK';
+  lem.dir = 1;
+  G.lems = [lem];
+  G.settledTrollRocks = [{id:7,x:118,y:197,groundY:199,scale:1,settled:true}];
+  lem.update(G.T);
+  if (lem.state !== 'VAULT') throw new Error('Lemming did not start vaulting over a settled troll rock');
+  for (let i = 0; i < 20; i++) lem.update(G.T);
+  if (lem.state !== 'WALK' || lem.x <= 124) {
+    throw new Error('Lemming did not finish past the settled troll rock');
+  }
+  G.level = prevLevel;
+  G.T = prevTerrain;
+  G.lems = prevLems;
+  G.ropes = prevRopes;
+  G.settledTrollRocks = prevSettled;
 }
 {
   const prevLevel = G.level;
