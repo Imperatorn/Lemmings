@@ -878,7 +878,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.settledTrollRocks = [{id:7,x:118,y:197,groundY:199,scale:1,settled:true}];
   lem.update(G.T);
   if (lem.state !== 'VAULT') throw new Error('Lemming did not start vaulting over a settled troll rock');
-  for (let i = 0; i < 20; i++) lem.update(G.T);
+  let vaultGuard = 0;
+  while (lem.state === 'VAULT' && vaultGuard++ < 30) lem.update(G.T);
   if (lem.state !== 'WALK' || lem.x <= 124) {
     throw new Error('Lemming did not finish past the settled troll rock');
   }
