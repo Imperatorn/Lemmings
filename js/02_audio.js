@@ -206,10 +206,10 @@ const AU={
     const wind=this.loopNoise(5.2,0.010,620,{type:'lowpass',smooth:0.82,attack:1.4});
     if(wind)this.weather.loopNodes.push(wind);
   },
-  stopWaterfallCave(fade){
-    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[]});
+  fadeLoopNodes(nodes,fade){
+    if(!nodes)return;
     const t=this.now(), stopDelay=fade==null?0.35:fade;
-    for(const n of bank.loopNodes||[]){
+    for(const n of nodes||[]){
       try{
         if(n.gain&&n.gain.gain){
           const p=n.gain.gain;
@@ -221,19 +221,80 @@ const AU={
         if(n.src&&n.src.stop)n.src.stop(t+stopDelay+0.08);
       }catch(_){}
     }
+  },
+  stopWaterfallCaveFire(fade){
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
+    this.fadeLoopNodes(bank.fireNodes,fade==null?0.45:fade);
+    bank.fireNodes=[];
+    bank.fireOn=false;
+    bank.nextFireCrackle=0;
+  },
+  stopWaterfallCave(fade){
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
+    this.fadeLoopNodes(bank.loopNodes,fade==null?0.35:fade);
+    this.fadeLoopNodes(bank.fireNodes,fade==null?0.35:fade);
     bank.loopNodes=[];
+    bank.fireNodes=[];
+    bank.fireOn=false;
+    bank.nextFireCrackle=0;
   },
   startWaterfallCave(){
     this.init();
     this.stopWaterfallCave(0.05);
     if(!this.ctx||!this.on||!this.sfxOn)return;
-    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[]});
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
     const body=this.loopNoise(6.4,0.035,460,{type:'lowpass',smooth:0.90,attack:0.9});
     const wash=this.loopNoise(5.6,0.021,880,{type:'bandpass',q:0.38,smooth:0.88,attack:1.2});
     const spray=this.loopNoise(4.8,0.011,2400,{type:'bandpass',q:0.50,smooth:0.68,attack:1.1});
+    if(body)body.baseVol=0.035;
+    if(wash)wash.baseVol=0.021;
+    if(spray)spray.baseVol=0.011;
     if(body)bank.loopNodes.push(body);
     if(wash)bank.loopNodes.push(wash);
     if(spray)bank.loopNodes.push(spray);
+    bank.waterLevel=1;
+  },
+  setWaterfallCaveWaterLevel(level,fade){
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
+    bank.waterLevel=clamp(Number.isFinite(level)?level:1,0.05,1);
+    if(!this.ctx||!this.on)return;
+    const t=this.now(), dur=fade==null?0.55:fade;
+    for(const n of bank.loopNodes||[]){
+      const p=n&&n.gain&&n.gain.gain;
+      if(!p)continue;
+      const target=Math.max(0.00005,(n.baseVol||0.014)*bank.waterLevel);
+      try{
+        if(p.cancelScheduledValues)p.cancelScheduledValues(t);
+        if(p.setValueAtTime)p.setValueAtTime(Math.max(0.00005,p.value||0.0001),t);
+        if(p.linearRampToValueAtTime)p.linearRampToValueAtTime(target,t+dur);
+        else if(p.exponentialRampToValueAtTime)p.exponentialRampToValueAtTime(target,t+dur);
+        else p.setValueAtTime(target,t);
+      }catch(_){try{p.value=target}catch(__){}}
+    }
+  },
+  startWaterfallCaveFire(){
+    this.init();
+    if(!this.ctx||!this.on||!this.sfxOn)return;
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
+    if(bank.fireOn)return;
+    bank.fireNodes=bank.fireNodes||[];
+    const ember=this.loopNoise(5.2,0.014,760,{type:'lowpass',smooth:0.82,attack:0.75});
+    const hiss=this.loopNoise(4.4,0.006,2600,{type:'bandpass',q:0.72,smooth:0.38,attack:0.9});
+    if(ember)bank.fireNodes.push(ember);
+    if(hiss)bank.fireNodes.push(hiss);
+    bank.fireOn=true;
+    bank.nextFireCrackle=this.now()+0.35+Math.random()*0.75;
+  },
+  updateWaterfallCaveCampfire(){
+    const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
+    if(!bank.fireOn||!this.ctx||!this.on||!this.sfxOn)return;
+    const t=this.now();
+    if(!bank.nextFireCrackle||t>=bank.nextFireCrackle){
+      this.softNoise(0.055,0.032+Math.random()*0.020,4300,0.46,t,{type:'bandpass',q:1.35,smooth:0.10,attack:0.002,release:0.040});
+      if(Math.random()<0.48)this.tone(900+Math.random()*850,0.035,'triangle',0.010,0.65,t+0.012);
+      if(Math.random()<0.22)this.softNoise(0.14,0.018,1300,0.72,t+0.035,{type:'lowpass',smooth:0.55,attack:0.006,release:0.070});
+      bank.nextFireCrackle=t+0.32+Math.random()*1.05;
+    }
   },
   // --- effekter ---
   rateFx(name,gap){

@@ -244,7 +244,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -253,7 +253,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','silenceMusicForWaterfallCave','sWaterfallCaveStep']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','sWaterfallCaveStep']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -548,13 +548,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStartWeather = AU.startWeather;
   const prevStopWeather = AU.stopWeather;
   const prevCaveStep = AU.sWaterfallCaveStep;
+  const prevWaterLevel = AU.setWaterfallCaveWaterLevel;
+  const prevStartFire = AU.startWaterfallCaveFire;
+  const prevStopFire = AU.stopWaterfallCaveFire;
+  const prevUpdateFire = AU.updateWaterfallCaveCampfire;
   const prevMusicOn = AU.musicOn;
   const prevSfxOn = AU.sfxOn;
   const prevMoney = G.money;
   const prevPendingSkillBonus = G.pendingSkillBonus;
   const prevWaterfallLooted = G.waterfallCaveLooted;
-  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0;
-  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [];
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0;
+  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
   AU.startMusic = kind => { musicStarted.push(kind); };
@@ -563,6 +567,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.startWeather = kind => { weatherStarted.push(kind); };
   AU.stopWeather = () => { weatherStopped++; };
   AU.sWaterfallCaveStep = depth => { caveSteps.push(depth); };
+  AU.setWaterfallCaveWaterLevel = (level, fade) => { waterLevels.push({level, fade}); };
+  AU.startWaterfallCaveFire = () => { firesStarted++; };
+  AU.stopWaterfallCaveFire = () => { firesStopped++; };
+  AU.updateWaterfallCaveCampfire = () => { fireUpdates++; };
   AU.musicOn = true;
   AU.sfxOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
@@ -765,7 +773,43 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!deepItem.coverOpen || deepItem.coverSide !== 'front') {
     throw new Error('Deep cave game cover did not flip back to the front side');
   }
-  G.handleWaterfallCaveInput({x:240,y:150}, 'click');
+  G.handleWaterfallCaveInput({x:20,y:20}, 'click');
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCave.deepBounds.campY + 1;
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'camp') {
+    throw new Error('Deep waterfall cave did not continue into the campfire scene');
+  }
+  if (!G.waterfallCave.campBounds || G.waterfallCave.campBounds.maxY < 300) {
+    throw new Error('Campfire cave scene is missing walkable camp bounds');
+  }
+  if (firesStarted < 1 || !waterLevels.some(w => w.level <= 0.30)) {
+    throw new Error('Campfire cave scene did not start fire audio and lower the waterfall level');
+  }
+  if (typeof drawWaterfallCaveView !== 'function' || !drawWaterfallCaveView(WCTX, 23)) {
+    throw new Error('Campfire waterfall cave view did not render');
+  }
+  G.tick();
+  if (fireUpdates < 1) {
+    throw new Error('Campfire cave scene did not update fire crackles while active');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCave.campBounds.exitY + 1;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'deep') {
+    throw new Error('Campfire cave scene did not return to the deep cave when walking up');
+  }
+  if (firesStopped < 1 || !waterLevels.some(w => w.level >= 0.70)) {
+    throw new Error('Leaving campfire cave did not stop fire audio and restore waterfall level');
+  }
+  for (let i = 0; i < 18; i++) G.tick();
+  if (deepItem.coverOpen) {
+    throw new Error('Deep cave game cover opened automatically while returning from the campfire scene');
+  }
+  G.handleWaterfallCaveKeyUp('ArrowUp');
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCave.deepBounds.exitY + 1;
   G.handleWaterfallCaveKey('ArrowUp');
@@ -816,6 +860,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.startWeather = prevStartWeather;
   AU.stopWeather = prevStopWeather;
   AU.sWaterfallCaveStep = prevCaveStep;
+  AU.setWaterfallCaveWaterLevel = prevWaterLevel;
+  AU.startWaterfallCaveFire = prevStartFire;
+  AU.stopWaterfallCaveFire = prevStopFire;
+  AU.updateWaterfallCaveCampfire = prevUpdateFire;
   AU.musicOn = prevMusicOn;
   AU.sfxOn = prevSfxOn;
   G.money = prevMoney;

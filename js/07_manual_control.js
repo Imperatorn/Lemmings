@@ -131,8 +131,9 @@ Object.assign(G,{
       active:true,t:0,scene:'main',lemId:l.id,lemX:240,lemY:232,dir:l.dir||1,facing:'front',walking:false,walkAnim:0,lastStepT:-999,stepSide:0,
       keys:{left:false,right:false,up:false,down:false},
       bounds:{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298},
-      deepBounds:{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178},
-      deepItem:{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front'},
+      deepBounds:{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276},
+      campBounds:{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182},
+      deepItem:{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},
       chest:{x:342,y:226,coins:3,opened:false,collected:looted,near:false,glowT:0,lootKey},
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
       exitCam:this.cam,exitViewY:this.viewY,exitZoom:this.viewZoom
@@ -167,6 +168,15 @@ Object.assign(G,{
   startWeatherAfterWaterfallCave(kind){
     if(this.state==='PLAY'&&this.level&&AU.startWeather)AU.startWeather(kind||this.weatherKind);
   },
+  setWaterfallCaveSceneAudio(scene){
+    if(scene==='camp'){
+      if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.28,0.75);
+      if(AU.startWaterfallCaveFire)AU.startWaterfallCaveFire();
+    }else{
+      if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.45);
+      if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(scene==='deep'?0.72:1.0,0.55);
+    }
+  },
   waterfallCaveMovementHeld(cave){
     const k=(cave&&cave.keys)||{};
     return !!(k.left||k.right||k.up||k.down);
@@ -200,9 +210,10 @@ Object.assign(G,{
     cave.t++;
     cave.keys=cave.keys||{};
     cave.bounds=cave.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298};
-    cave.deepBounds=cave.deepBounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178};
+    cave.deepBounds=cave.deepBounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276};
+    cave.campBounds=cave.campBounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182};
     if(!cave.scene)cave.scene='main';
-    const b=cave.scene==='deep'?cave.deepBounds:cave.bounds;
+    const b=cave.scene==='camp'?cave.campBounds:(cave.scene==='deep'?cave.deepBounds:cave.bounds);
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     const waitingForCoverRelease=cave.scene==='deep'&&cave.deepItem&&cave.deepItem.coverOpen&&!cave.deepItem.coverCloseArmed;
@@ -238,10 +249,11 @@ Object.assign(G,{
     }
     if(cave.scene==='main'&&cave.keys.down&&(cave.lemY||0)>=cave.bounds.deepY&&(cave.lemX||0)>=cave.bounds.deepX0&&(cave.lemX||0)<=cave.bounds.deepX1){
       cave.scene='deep';
+      this.setWaterfallCaveSceneAudio('deep');
       cave.lemX=240;cave.lemY=190;cave.facing='front';cave.walking=false;cave.lastStepT=cave.t;
     }
     if(cave.scene==='deep'){
-      const it=cave.deepItem||(cave.deepItem={x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front'});
+      const it=cave.deepItem||(cave.deepItem={x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
       const ix=Math.abs((cave.lemX||0)-it.x),iy=Math.abs((cave.lemY||0)-it.y);
       const near=(ix/30)*(ix/30)+(iy/20)*(iy/20)<=1;
       const leftResetZone=(ix/38)*(ix/38)+(iy/26)*(iy/26)>=1;
@@ -250,8 +262,14 @@ Object.assign(G,{
         it.dismissedNear=false;
         if(it.coverOpen)it.coverOpen=false;
         it.coverCloseArmed=false;
+        if(!this.waterfallCaveMovementHeld(cave))it.coverReturnBlocked=false;
       }
-      if(it.near&&!it.dismissedNear&&!it.coverOpen){
+      if(it.coverReturnBlocked&&this.waterfallCaveMovementHeld(cave)&&near)it.dismissedNear=true;
+      if(it.coverReturnBlocked&&!this.waterfallCaveMovementHeld(cave)){
+        it.coverReturnBlocked=false;
+        if(near)it.dismissedNear=true;
+      }
+      if(it.near&&!it.dismissedNear&&!it.coverOpen&&!it.coverReturnBlocked){
         it.coverOpen=true;
         it.coverCloseArmed=!this.waterfallCaveMovementHeld(cave);
         it.coverSide='front';
@@ -259,7 +277,23 @@ Object.assign(G,{
       if(cave.keys.up&&(cave.lemY||0)<=cave.deepBounds.exitY&&(cave.lemX||0)>=cave.deepBounds.exitX0&&(cave.lemX||0)<=cave.deepBounds.exitX1){
         if(it.coverOpen)this.closeWaterfallCaveDeepItem(it);
         cave.scene='main';
+        this.setWaterfallCaveSceneAudio('main');
         cave.lemX=240;cave.lemY=cave.bounds.maxY-8;cave.facing='back';cave.walking=false;cave.lastStepT=cave.t;
+      }
+      if(!it.coverOpen&&cave.keys.down&&(cave.lemY||0)>=cave.deepBounds.campY&&(cave.lemX||0)>=cave.deepBounds.campX0&&(cave.lemX||0)<=cave.deepBounds.campX1){
+        cave.scene='camp';
+        this.setWaterfallCaveSceneAudio('camp');
+        cave.lemX=240;cave.lemY=198;cave.facing='front';cave.walking=false;cave.lastStepT=cave.t;
+      }
+    }
+    if(cave.scene==='camp'){
+      if(AU.updateWaterfallCaveCampfire)AU.updateWaterfallCaveCampfire();
+      if(cave.keys.up&&(cave.lemY||0)<=cave.campBounds.exitY&&(cave.lemX||0)>=cave.campBounds.exitX0&&(cave.lemX||0)<=cave.campBounds.exitX1){
+        cave.scene='deep';
+        this.setWaterfallCaveSceneAudio('deep');
+        const it=cave.deepItem||(cave.deepItem={x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
+        it.coverOpen=false;it.coverCloseArmed=false;it.coverReturnBlocked=true;it.near=false;
+        cave.lemX=240;cave.lemY=cave.deepBounds.maxY-4;cave.facing='back';cave.walking=false;cave.lastStepT=cave.t;
       }
     }
     if(cave.scene==='main'&&cave.keys.up&&(cave.lemY||0)<=cave.bounds.exitY&&(cave.lemX||0)>=cave.bounds.exitX0&&(cave.lemX||0)<=cave.bounds.exitX1){
