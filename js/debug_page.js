@@ -461,8 +461,8 @@
       renderDebug();setStatus('Fackelvärme tvingad på närmaste lemming.','ok');return;
     }
     if(action==='plane'){
-      G.spawnSupplyPlane(null,G.cam+VW/2);
-      renderDebug();setStatus('Paketflyg skickat.','ok');return;
+      const plane=G.spawnSupplyPlane(null,G.cam+VW/2);
+      renderDebug();setStatus(plane?'Paketflyg skickat.':'Flygplan ar avstangda i grottor.',plane?'ok':'warn');return;
     }
     if(action==='monkey'){
       const before=G.monkeys.length;

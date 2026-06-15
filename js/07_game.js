@@ -406,9 +406,11 @@ const G={
   markLevelCleared(idx){if(!this.cleared[idx]){this.cleared[idx]=true;this.savePrefs()}},
   levelProgress(){return this.levelTimeT>0?clamp(1-this.timeT/this.levelTimeT,0,1):0},
   isMegaAllowed(){return this.levelProgress()>=MEGA_MIN_PROGRESS},
+  canUseSupplyPlanes(){return !!(this.level&&!this.level.cave)},
   canStartDirectedEvent(kind){
     if(this.megaBoom||this.megaArmed)return false;
     if(this.eventLockT>0)return false;
+    if(kind==='supplyPlane'&&!this.canUseSupplyPlanes())return false;
     return true;
   },
   warningText(kind,data){
@@ -448,6 +450,10 @@ const G={
     else if(ev.kind==='megaBoom'){this.megaArmed=null;this.startMegaBoom(d.x,d.y)}
   },
   updateEventDirector(){
+    if(this.level&&this.level.cave){
+      this.queuedEvents=this.queuedEvents.filter(q=>q.kind!=='supplyPlane');
+      this.warnings=this.warnings.filter(w=>w.kind!=='supplyPlane');
+    }
     if(this.isDarkLevel()){
       this.queuedEvents=this.queuedEvents.filter(q=>q.kind!=='monkey'&&q.kind!=='troll');
       this.warnings=this.warnings.filter(w=>w.kind!=='monkey'&&w.kind!=='troll');
@@ -499,13 +505,14 @@ const G={
     this.initLevelLootPackages();
     this.initLevelRescues();
     const cfg=this.chaosConfig();
-    this.supplyT=Math.round((cfg.supplyFirstMin+this.rand()*cfg.supplyFirstRange)*1000/TICK);
+    const supplyPlanesOn=!L.cave;
+    this.supplyT=supplyPlanesOn?Math.round((cfg.supplyFirstMin+this.rand()*cfg.supplyFirstRange)*1000/TICK):0;
     this.supplyDrops=0;
-    this.supplyMax=Math.max(cfg.supplyMaxMin,Math.min(cfg.supplyMaxCap,Math.floor(L.time/70)+2));
+    this.supplyMax=supplyPlanesOn?Math.max(cfg.supplyMaxMin,Math.min(cfg.supplyMaxCap,Math.floor(L.time/70)+2)):0;
     this.supplyLastX=null;
     this.supplyRecentXs=[];
     this.supplyMegaDropped=false;
-    this.supplyMegaPlanned=this.rand()<cfg.megaPlanChance;
+    this.supplyMegaPlanned=supplyPlanesOn&&this.rand()<cfg.megaPlanChance;
     this.supplyMegaForceAt=1+Math.floor(this.rand()*2);
     this.supplyLateMegaScheduled=false;
     const darkNoCreatures=!!(L.night||L.cave);
@@ -1587,7 +1594,7 @@ const G={
     return best;
   },
   scheduleSupplyDrop(forceMega){
-    if(!this.level)return false;
+    if(!this.canUseSupplyPlanes())return false;
     const payload=this.pickSupplyPayload(!!forceMega);
     if(payload&&payload.kind==='mega'){this.supplyMegaDropped=true;this.supplyLateMegaScheduled=true}
     const targetX=this.pickSupplyDropX();
@@ -1597,12 +1604,12 @@ const G={
     return ok;
   },
   spawnSupplyPlane(payload,targetX){
-    if(!this.level)return;
+    if(!this.canUseSupplyPlanes())return null;
     payload=payload||this.pickSupplyPayload();
     if(payload&&payload.kind==='mega')this.supplyMegaDropped=true;
     const dir=this.rand()<0.5?1:-1;
     targetX=targetX==null?this.pickSupplyDropX():targetX;
-    this.planes.push({
+    const plane={
       x:dir>0?-55:this.level.W+55,
       y:18+this.rand()*26,
       vx:dir*(3.0+this.rand()*0.8),
@@ -1610,8 +1617,10 @@ const G={
       kind:payload.kind,
       skill:payload.skill,
       dropped:false
-    });
+    };
+    this.planes.push(plane);
     this.toast('FLYGPLAN MED PAKET!');
+    return plane;
   },
   supplyPlaneHitScore(a,wx,wy,scale){
     if(!a||a.crashing||a.wrecked)return Infinity;
@@ -1805,33 +1814,39 @@ const G={
     return !!(this.supplyMegaPlanned&&!this.supplyMegaDropped&&!this.supplyLateMegaScheduled&&this.isMegaAllowed()&&this.supplyDrops>=this.supplyMax&&!this.megaBoom&&!this.megaArmed);
   },
   updateSupplyDrops(){
-    const cfg=this.chaosConfig();
-    const lateMega=this.shouldScheduleLateMegaSupply();
-    if(this.supplyDrops<this.supplyMax||lateMega){
-      this.supplyT--;
-      if(lateMega)this.supplyT=Math.min(this.supplyT,1);
-      if(this.supplyT<=0){
-        if(this.canStartDirectedEvent('supplyPlane')){
-          if(this.scheduleSupplyDrop(lateMega)){
-            this.supplyDrops++;
-            this.supplyT=Math.round((cfg.supplyGapMin+this.rand()*cfg.supplyGapRange)*1000/TICK);
-          }else this.supplyT=Math.round(4*1000/TICK);
-        }else this.supplyT=Math.round(3*1000/TICK);
+    if(!this.canUseSupplyPlanes()){
+      this.planes=[];
+      this.queuedEvents=this.queuedEvents.filter(q=>q.kind!=='supplyPlane');
+      this.warnings=this.warnings.filter(w=>w.kind!=='supplyPlane');
+    }else{
+      const cfg=this.chaosConfig();
+      const lateMega=this.shouldScheduleLateMegaSupply();
+      if(this.supplyDrops<this.supplyMax||lateMega){
+        this.supplyT--;
+        if(lateMega)this.supplyT=Math.min(this.supplyT,1);
+        if(this.supplyT<=0){
+          if(this.canStartDirectedEvent('supplyPlane')){
+            if(this.scheduleSupplyDrop(lateMega)){
+              this.supplyDrops++;
+              this.supplyT=Math.round((cfg.supplyGapMin+this.rand()*cfg.supplyGapRange)*1000/TICK);
+            }else this.supplyT=Math.round(4*1000/TICK);
+          }else this.supplyT=Math.round(3*1000/TICK);
+        }
       }
-    }
 
-    for(const a of this.planes){
-      if(a.wrecked){this.updateWreckedSupplyPlane(a);continue}
-      if(a.crashing){this.updateCrashingSupplyPlane(a);continue}
-      a.x+=a.vx;
-      if(a.x>this.cam-120&&a.x<this.cam+this.viewW()+120)AU.sPlane();
-      if(!a.dropped&&((a.vx>0&&a.x>=a.targetX)||(a.vx<0&&a.x<=a.targetX))){
-        this.packages.push({x:a.x,y:a.y+10,vx:a.vx*0.05,vy:0,kind:a.kind||((a.skill==='tree')?'tree':((a.skill==='mega')?'mega':'skill')),skill:a.skill,landed:false,opened:false,openT:0,picked:false,landX:null,landY:null,treeBaseY:null});
-        a.dropped=true;
-        AU.sClick();
+      for(const a of this.planes){
+        if(a.wrecked){this.updateWreckedSupplyPlane(a);continue}
+        if(a.crashing){this.updateCrashingSupplyPlane(a);continue}
+        a.x+=a.vx;
+        if(a.x>this.cam-120&&a.x<this.cam+this.viewW()+120)AU.sPlane();
+        if(!a.dropped&&((a.vx>0&&a.x>=a.targetX)||(a.vx<0&&a.x<=a.targetX))){
+          this.packages.push({x:a.x,y:a.y+10,vx:a.vx*0.05,vy:0,kind:a.kind||((a.skill==='tree')?'tree':((a.skill==='mega')?'mega':'skill')),skill:a.skill,landed:false,opened:false,openT:0,picked:false,landX:null,landY:null,treeBaseY:null});
+          a.dropped=true;
+          AU.sClick();
+        }
       }
+      this.planes=this.planes.filter(a=>a.wrecked||a.crashing||a.x>-80&&a.x<this.level.W+80);
     }
-    this.planes=this.planes.filter(a=>a.wrecked||a.crashing||a.x>-80&&a.x<this.level.W+80);
 
     for(const p of this.packages){
       // Kontrollera pickup både före och efter fysiksteget. Det löser fallet

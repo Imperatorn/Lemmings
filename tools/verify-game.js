@@ -220,6 +220,7 @@ const requiredRuntimeMethods = [
   'hitDecorTargetAt',
   'findNearbyRingFish','makeRescueRingFish','tryFishSwimRing',
   'rescueToastText',
+  'canUseSupplyPlanes',
   'rebindAmbientFishZones',
   'trollScale','makeTroll','findTrollTransformTarget','transformLemmingToTrollAt','pickSupplyPlaneForTroll','hitSupplyPlaneAt',
   'damageSupplyPlane','finishSupplyPlaneCrash','updateWreckedSupplyPlane','tryTrollThrowAtMonkey','throwTrollRock',
@@ -749,6 +750,33 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.flashes = prevFlashes;
   G.toasts = prevToasts;
   G.rand = prevRand;
+}
+{
+  const caveIdx = LEVELS.findIndex(L => L && L.cave);
+  if (caveIdx < 0) throw new Error('Missing cave level fixture');
+  G.startLevel(caveIdx);
+  if (G.canUseSupplyPlanes() || G.supplyMax !== 0 || G.supplyMegaPlanned) {
+    throw new Error('Cave levels should disable supply planes');
+  }
+  G.planes = [];
+  G.monkeys = [];
+  if (G.spawnSupplyPlane(null, 120) || G.planes.length !== 0) {
+    throw new Error('Supply plane spawned in a cave level');
+  }
+  if (G.scheduleSupplyDrop(false) || G.canStartDirectedEvent('supplyPlane')) {
+    throw new Error('Supply plane event was allowed in a cave level');
+  }
+  G.planes = [{x: 80, y: 30, vx: 1, targetX: 120, kind: 'skill', skill: 'build', dropped: false}];
+  G.queuedEvents = [{kind: 'supplyPlane', t: 20, data: {}}, {kind: 'treeGrow', t: 20, data: {x: 120, baseY: 200}}];
+  G.warnings = [{kind: 'supplyPlane', t: 20}, {kind: 'treeGrow', t: 20}];
+  G.updateSupplyDrops();
+  if (G.planes.length !== 0 || G.queuedEvents.some(e => e.kind === 'supplyPlane') || G.warnings.some(w => w.kind === 'supplyPlane')) {
+    throw new Error('Cave supply plane cleanup failed');
+  }
+  G.spawnMonkey({dir: 1, y: 58});
+  if (G.monkeys.length !== 0) {
+    throw new Error('Monkey spawned in a cave level');
+  }
 }
 G.state = 'MENU';
 drawMenu(WCTX, 1);
