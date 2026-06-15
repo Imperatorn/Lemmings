@@ -239,7 +239,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','silenceMusicForWaterfallCave']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','silenceMusicForWaterfallCave','sWaterfallCaveStep']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -530,21 +530,25 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStopWaterfall = AU.stopWaterfallCave;
   const prevStartMusic = AU.startMusic;
   const prevStopMusic = AU.stopMusic;
+  const prevSilenceMusic = AU.silenceMusicForWaterfallCave;
   const prevStartWeather = AU.startWeather;
   const prevStopWeather = AU.stopWeather;
+  const prevCaveStep = AU.sWaterfallCaveStep;
   const prevMusicOn = AU.musicOn;
   const prevSfxOn = AU.sfxOn;
   const prevMoney = G.money;
   const prevPendingSkillBonus = G.pendingSkillBonus;
   const prevWaterfallLooted = G.waterfallCaveLooted;
   let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0;
-  const musicStarted = [], weatherStarted = [];
+  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
   AU.startMusic = kind => { musicStarted.push(kind); };
   AU.stopMusic = () => { musicStopped++; };
+  AU.silenceMusicForWaterfallCave = fade => { musicFadeDurations.push(fade); AU.stopMusic(); };
   AU.startWeather = kind => { weatherStarted.push(kind); };
   AU.stopWeather = () => { weatherStopped++; };
+  AU.sWaterfallCaveStep = depth => { caveSteps.push(depth); };
   AU.musicOn = true;
   AU.sfxOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
@@ -569,6 +573,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (musicStopped !== musicStoppedBeforeCave + 1 || weatherStopped !== weatherStoppedBeforeCave + 1) {
     throw new Error(`Entering waterfall cave should stop level music and weather ambient, got music=${musicStopped - musicStoppedBeforeCave} weather=${weatherStopped - weatherStoppedBeforeCave}`);
+  }
+  if (musicFadeDurations.length !== 1 || musicFadeDurations[0] < 0.49) {
+    throw new Error('Entering waterfall cave should fade music out over about half a second');
   }
   G.tick();
   if (G.timeT !== oldTime || !G.waterfallCaveActive() || G.waterfallCave.t !== 1) {
@@ -595,6 +602,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.handleWaterfallCaveKey('ArrowRight')) throw new Error('Waterfall cave did not accept ArrowRight');
   for (let i = 0; i < 4; i++) G.tick();
   G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (caveSteps.length < 1 || caveSteps.some(d => d < 0 || d > 1)) {
+    throw new Error('Waterfall cave walking did not trigger bounded footstep sounds');
+  }
   if (!G.waterfallCaveActive() || G.waterfallCave.lemX <= startCaveX) {
     throw new Error('Waterfall cave lemming did not move with arrow keys');
   }
@@ -687,8 +697,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWaterfallCave = prevStopWaterfall;
   AU.startMusic = prevStartMusic;
   AU.stopMusic = prevStopMusic;
+  AU.silenceMusicForWaterfallCave = prevSilenceMusic;
   AU.startWeather = prevStartWeather;
   AU.stopWeather = prevStopWeather;
+  AU.sWaterfallCaveStep = prevCaveStep;
   AU.musicOn = prevMusicOn;
   AU.sfxOn = prevSfxOn;
   G.money = prevMoney;

@@ -128,7 +128,7 @@ Object.assign(G,{
     const lootKey=this.waterfallCaveLootKey?this.waterfallCaveLootKey(wf):((this.levelIdx||0)+':'+Math.round(wf.x||0)+','+Math.round(wf.y||0));
     const looted=!!(this.waterfallCaveLooted&&this.waterfallCaveLooted[lootKey]);
     this.waterfallCave={
-      active:true,t:0,lemId:l.id,lemX:240,lemY:232,dir:l.dir||1,facing:'front',walking:false,walkAnim:0,
+      active:true,t:0,lemId:l.id,lemX:240,lemY:232,dir:l.dir||1,facing:'front',walking:false,walkAnim:0,lastStepT:-999,stepSide:0,
       keys:{left:false,right:false,up:false,down:false},
       bounds:{minX:102,maxX:386,minY:176,maxY:282,exitX0:184,exitX1:296,exitY:218},
       chest:{x:342,y:226,coins:3,opened:false,collected:looted,near:false,glowT:0,lootKey},
@@ -137,7 +137,7 @@ Object.assign(G,{
     };
     this.waterfallCaveResumeMusic=!!AU.musicOn;
     this.waterfallCaveResumeWeather=this.weatherKind||null;
-    if(AU.silenceMusicForWaterfallCave)AU.silenceMusicForWaterfallCave(0.18);
+    if(AU.silenceMusicForWaterfallCave)AU.silenceMusicForWaterfallCave(0.5);
     else if(AU.stopMusic)AU.stopMusic();
     if(AU.stopWeather)AU.stopWeather();
     if(AU.startWaterfallCave)AU.startWaterfallCave();
@@ -183,6 +183,12 @@ Object.assign(G,{
       else cave.facing=dy<0?'back':'front';
       cave.walking=true;
       cave.walkAnim=(cave.walkAnim||0)+1;
+      if(AU.sWaterfallCaveStep&&(cave.t-(Number.isFinite(cave.lastStepT)?cave.lastStepT:-999))>=12){
+        cave.lastStepT=cave.t;
+        cave.stepSide=1-(cave.stepSide||0);
+        const depth=clamp(((cave.lemY||0)-cave.bounds.exitY)/Math.max(1,cave.bounds.maxY-cave.bounds.exitY),0,1);
+        AU.sWaterfallCaveStep(depth,cave.stepSide);
+      }
     }else{
       cave.walking=false;
     }

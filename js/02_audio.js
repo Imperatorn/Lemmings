@@ -228,9 +228,9 @@ const AU={
     this.stopWaterfallCave(0.05);
     if(!this.ctx||!this.on||!this.sfxOn)return;
     const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[]});
-    const body=this.loopNoise(6.4,0.015,460,{type:'lowpass',smooth:0.90,attack:0.9});
-    const wash=this.loopNoise(5.6,0.009,880,{type:'bandpass',q:0.38,smooth:0.88,attack:1.2});
-    const spray=this.loopNoise(4.8,0.0052,2400,{type:'bandpass',q:0.50,smooth:0.68,attack:1.1});
+    const body=this.loopNoise(6.4,0.023,460,{type:'lowpass',smooth:0.90,attack:0.9});
+    const wash=this.loopNoise(5.6,0.0135,880,{type:'bandpass',q:0.38,smooth:0.88,attack:1.2});
+    const spray=this.loopNoise(4.8,0.0074,2400,{type:'bandpass',q:0.50,smooth:0.68,attack:1.1});
     if(body)bank.loopNodes.push(body);
     if(wash)bank.loopNodes.push(wash);
     if(spray)bank.loopNodes.push(spray);
@@ -623,6 +623,13 @@ const AU={
     this.softNoise(0.10,0.010*bright,3600,0.62,t+0.018,{type:'bandpass',q:1.6,smooth:0.08,attack:0.006,release:0.060});
     if(Math.random()<0.42)this.tone(260+Math.random()*90,0.16,'triangle',0.010,0.82,t+0.035);
   },
+  sWaterfallCaveStep(depth){
+    if(!this.rateFx('waterfallcavestep',0.115))return;
+    const d=clamp(Number.isFinite(depth)?depth:0.45,0,1), t=this.now();
+    this.softNoise(0.060,0.020+d*0.010,540-d*110,0.58,t,{type:'lowpass',smooth:0.76,attack:0.003,release:0.044});
+    this.softNoise(0.040,0.007+d*0.005,1550,0.62,t+0.008,{type:'bandpass',q:0.85,smooth:0.30,attack:0.003,release:0.030});
+    if(d>0.45)this.softNoise(0.050,0.005+d*0.004,2600,0.72,t+0.018,{type:'bandpass',q:1.0,smooth:0.20,attack:0.006,release:0.034});
+  },
   sSnowWind(){
     const t=this.now();
     // Mjuk vind: lågpassat, lång fade och svag ton som blåser förbi.
@@ -954,7 +961,7 @@ const AU={
   silenceMusicForWaterfallCave(fade){
     this.stopMusic();
     if(!this.musGain||!this.musGain.gain)return;
-    const t=this.now(), stopDelay=fade==null?0.18:fade;
+    const t=this.now(), stopDelay=fade==null?0.5:fade;
     const p=this.musGain.gain;
     try{
       if(p.cancelScheduledValues)p.cancelScheduledValues(t);

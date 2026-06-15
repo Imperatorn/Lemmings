@@ -293,6 +293,23 @@ function drawWaterfallCaveView(c,tk){
     if(i%4===0)c.fillRect(rx+1,ry-1,1,3);
   }
   c.globalAlpha=1;
+  c.globalAlpha=0.38;
+  c.fillStyle='#42606d';
+  for(let i=0;i<18;i++){
+    const side=i&1?-1:1;
+    const rx=side<0?78+Math.round(hash2(i+181,wf.x||0)*96):306+Math.round(hash2(i+183,wf.y||0)*88);
+    const ry=52+Math.round(hash2(i+185,wf.x||0)*132);
+    const h=14+Math.round(hash2(i+187,wf.y||0)*38);
+    c.fillRect(rx,ry,1,h);
+    if(i%3===0)c.fillRect(rx+1,ry+5,1,Math.max(5,Math.round(h*0.45)));
+    const fall=(tk+t+i*11)%(h+18);
+    if(fall<h){
+      c.fillStyle='#9ed8e6';
+      c.fillRect(rx,ry+fall,2,2);
+      c.fillStyle='#42606d';
+    }
+  }
+  c.globalAlpha=1;
   c.fillStyle='#2b3a44';
   for(let i=0;i<18;i++){
     const rx=62+Math.round(hash2(i+44,wf.x||0)*(CW-124));
