@@ -260,12 +260,8 @@ const G={
     return out;
   },
   shopOptions(){
-    return [
-      {k:'build',label:'BYGG',cost:1},
-      {k:'bash',label:'HACKA',cost:1},
-      {k:'dig',label:'GRAV',cost:1},
-      {k:'rope',label:'REP',cost:1}
-    ];
+    const labels={climb:'KLATTR',float:'FALL',bomb:'BOMB',block:'BLOCK',build:'BYGG',downbuild:'NEDBYGG',bash:'HACKA',mine:'TUNNEL',dig:'GRAV',baz:'BAZ',jet:'JET',flame:'ELD',rope:'REP'};
+    return SKILLS.map(s=>({k:s.k,label:labels[s.k]||String(s.name||s.k).slice(0,7),cost:1}));
   },
   pendingBonusForLevel(idx){
     const all=this.pendingSkillBonus||(this.pendingSkillBonus={});

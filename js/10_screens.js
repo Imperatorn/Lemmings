@@ -240,12 +240,14 @@ function drawBrief(c,tk){
   }
   if(shopActive){
     c.fillStyle=L.night?'#000010':'#080800';
-    c.fillRect(0,198,CW,72);
+    c.fillRect(0,198,CW,102);
     drawTextC(c,'PENGAR: '+money+'  EXTRA SKILLS KOSTAR 1 MYNT',CW/2,204,1,'#ffd866');
     const opts=G.shopOptions?G.shopOptions():[];
-    const bw=78,bh=20,gap=8,total=opts.length*bw+Math.max(0,opts.length-1)*gap;
-    let x=Math.round(CW/2-total/2),y=216;
-    for(const opt of opts){
+    const cols=7,bw=62,bh=17,gapX=4,gapY=5,total=cols*bw+(cols-1)*gapX;
+    const x0=Math.round(CW/2-total/2),y0=216;
+    for(let i=0;i<opts.length;i++){
+      const opt=opts[i],col=i%cols,row=(i/cols)|0;
+      const x=x0+col*(bw+gapX),y=y0+row*(bh+gapY);
       const hov=G.mx>=x&&G.mx<x+bw&&G.my>=y&&G.my<y+bh;
       const can=money>=opt.cost;
       c.fillStyle=hov?'#2c4258':(can?'#162838':'#101820');
@@ -256,11 +258,10 @@ function drawBrief(c,tk){
       c.fillRect(x,y+bh-1,bw,1);c.fillRect(x+bw-1,y,1,bh);
       drawTextC(c,opt.label+' +'+(bonus[opt.k]||0),x+bw/2,y+5,1,can?'#ffffff':'#707880');
       G.briefShopButtons.push({x,y,w:bw,h:bh,k:opt.k});
-      x+=bw+gap;
     }
-    drawTextC(c,L.hint,CW/2,252,1,'#40c040');
+    drawTextC(c,L.hint,CW/2,263,1,'#40c040');
   }else drawTextC(c,L.hint,CW/2,Math.min(infoY,L.night?226:228),1,'#40c040');
-  if((tk>>4)&1)drawTextC(c,'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,236,2,'#ffd040');
+  if((tk>>4)&1)drawTextC(c,shopActive?'KLICKA UTANFOR BUTIKEN FOR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,shopActive?282:236,shopActive?1:2,'#ffd040');
 }
 
 function drawResult(c,tk){

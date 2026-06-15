@@ -123,7 +123,7 @@ Object.assign(G,{
     this.waterfallCave={
       active:true,t:0,lemId:l.id,lemX:240,lemY:210,dir:l.dir||1,
       keys:{left:false,right:false,up:false,down:false},
-      bounds:{minX:112,maxX:370,minY:70,maxY:230,exitX0:184,exitX1:296,exitY:82},
+      bounds:{minX:112,maxX:370,minY:96,maxY:232,exitX0:184,exitX1:296,exitY:104},
       chest:{x:342,y:219,coins:3,opened:looted,collected:looted,near:false,glowT:looted?16:0,lootKey},
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
       exitCam:this.cam,exitViewY:this.viewY,exitZoom:this.viewZoom
@@ -148,7 +148,7 @@ Object.assign(G,{
     const cave=this.waterfallCave;
     cave.t++;
     cave.keys=cave.keys||{};
-    cave.bounds=cave.bounds||{minX:112,maxX:370,minY:70,maxY:230,exitX0:184,exitX1:296,exitY:82};
+    cave.bounds=cave.bounds||{minX:112,maxX:370,minY:96,maxY:232,exitX0:184,exitX1:296,exitY:104};
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     if(dx||dy){

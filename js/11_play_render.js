@@ -134,6 +134,15 @@ function drawPlayWorld(c,L,cam,tk){
   c.restore();
 }
 
+function waterfallCaveLemmingScale(cave){
+  const b=cave&&cave.bounds||{};
+  const far=Number.isFinite(b.exitY)?b.exitY:104;
+  const near=Number.isFinite(b.maxY)?b.maxY:232;
+  const y=Number.isFinite(cave&&cave.lemY)?cave.lemY:210;
+  const p=clamp((y-far)/Math.max(1,near-far),0,1);
+  return 1.55+p*1.55;
+}
+
 function drawWaterfallCaveView(c,tk){
   const cave=G.waterfallCave;
   if(!cave||!cave.active)return false;
@@ -222,6 +231,19 @@ function drawWaterfallCaveView(c,tk){
     const my=235+Math.round(hash2(i+81,wf.y||0)*28);
     c.fillRect(mx,my,2,1);
   }
+  const b=cave.bounds||{}, exitY=Math.round(b.exitY||104);
+  c.globalAlpha=0.45;
+  c.fillStyle='#7fc8e8';
+  c.fillRect(Math.round(b.exitX0||184),exitY,Math.round((b.exitX1||296)-(b.exitX0||184)),2);
+  c.globalAlpha=0.24;
+  c.fillStyle='#e8fbff';
+  for(let i=0;i<11;i++){
+    const sx=Math.round((b.exitX0||184)+8+i*10+Math.sin((tk+t)*0.09+i)*2);
+    c.fillRect(sx,exitY-2+(i&1),5,1);
+  }
+  c.globalAlpha=1;
+  const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
+  const lemScale=waterfallCaveLemmingScale(cave);
   const ch=cave.chest;
   if(ch){
     const glow=clamp((ch.glowT||0)/70,0,1);
@@ -232,8 +254,8 @@ function drawWaterfallCaveView(c,tk){
       c.globalAlpha=0.18+glow*0.32;
       fillPixelPoly(c,[
         [Math.round(ch.x-19),Math.round(ch.y-15)],
-        [Math.round((cave.lemX||240)-10),Math.round((cave.lemY||210)-28)],
-        [Math.round((cave.lemX||240)+10),Math.round((cave.lemY||210)-28)],
+        [lx-Math.round(8*lemScale),ly-Math.round(22*lemScale)],
+        [lx+Math.round(8*lemScale),ly-Math.round(22*lemScale)],
         [Math.round(ch.x+19),Math.round(ch.y-15)]
       ]);
       c.globalAlpha=0.16+glow*0.20;
@@ -271,12 +293,11 @@ function drawWaterfallCaveView(c,tk){
       c.fillRect(x-1,y-7,2,3);
     }
   }
-  const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
   c.globalAlpha=0.35;
   c.fillStyle='#000000';
-  c.fillRect(lx-7,ly+1,14,2);
+  c.fillRect(lx-Math.round(8*lemScale),ly+1,Math.round(16*lemScale),Math.max(2,Math.round(2*lemScale)));
   c.globalAlpha=1;
-  drawLemming(c,{state:'WALK',dir:cave.dir||1,anim:(tk+t)|0,scale:1,alive(){return true}},lx,ly);
+  drawLemming(c,{state:'WALK',dir:cave.dir||1,anim:(tk+t)|0,scale:lemScale,alive(){return true}},lx,ly);
   drawTextC(c,'PENGAR '+Math.max(0,G.money|0),58,284,1,'#ffd866');
   c.restore();
   return true;

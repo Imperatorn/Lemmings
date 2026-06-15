@@ -188,12 +188,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,waterfallCaveLemmingScale,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, waterfallCaveLemmingScale, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -559,6 +559,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (typeof drawWaterfallCaveView !== 'function' || !drawWaterfallCaveView(WCTX, 9)) {
     throw new Error('Waterfall cave view did not render');
   }
+  if (typeof waterfallCaveLemmingScale !== 'function') {
+    throw new Error('Waterfall cave lemming scale helper is missing');
+  }
+  const farScale = waterfallCaveLemmingScale(Object.assign({}, G.waterfallCave, {lemY:G.waterfallCave.bounds.exitY}));
+  const nearScale = waterfallCaveLemmingScale(Object.assign({}, G.waterfallCave, {lemY:G.waterfallCave.bounds.maxY}));
+  if (!(nearScale > farScale && farScale > 1 && nearScale >= 3)) {
+    throw new Error('Waterfall cave lemming scale does not grow toward the foreground');
+  }
   const startCaveX = G.waterfallCave.lemX;
   if (!G.handleWaterfallCaveKey('ArrowRight')) throw new Error('Waterfall cave did not accept ArrowRight');
   for (let i = 0; i < 4; i++) G.tick();
@@ -579,7 +587,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Waterfall cave chest awarded money more than once');
   }
   G.waterfallCave.lemX = 240;
-  G.waterfallCave.lemY = 83;
+  G.waterfallCave.lemY = G.waterfallCave.bounds.exitY + 1;
   G.handleWaterfallCaveKey('ArrowUp');
   G.tick();
   if (G.waterfallCaveActive() || stopped < 1) {
@@ -597,9 +605,20 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevBriefButtons = G.briefShopButtons;
   const shopIdx = Math.min(1, LEVELS.length - 1);
   G.levelIdx = shopIdx;
-  G.money = 2;
+  G.money = SKILLS.length + 2;
   G.pendingSkillBonus = {};
   G.briefShopButtons = [{x:10,y:10,w:40,h:18,k:'rope'}];
+  const optionKeys = new Set(G.shopOptions().map(o => o.k));
+  for (const s of SKILLS) {
+    if (!optionKeys.has(s.k)) throw new Error(`Briefing shop is missing skill option: ${s.k}`);
+  }
+  for (const s of SKILLS) {
+    if (!G.buyBriefShopSkill(s.k) || G.briefShopSkillBonus(shopIdx, s.k) !== 1) {
+      throw new Error(`Briefing shop could not buy skill: ${s.k}`);
+    }
+  }
+  G.money = 2;
+  G.pendingSkillBonus = {};
   if (!G.buyBriefShopSkill('build') || G.money !== 1 || G.briefShopSkillBonus(shopIdx, 'build') !== 1) {
     throw new Error('Briefing shop did not buy a direct skill bonus');
   }
