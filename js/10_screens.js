@@ -214,6 +214,7 @@ function drawMenu(c,tk){
 function drawBrief(c,tk){
   const L=LEVELS[G.levelIdx];
   c.fillStyle=L.night?'#000010':'#080800';c.fillRect(0,0,CW,CH);
+  G.briefShopButtons=[];
   drawTextC(c,'BANA '+(G.levelIdx+1),CW/2,40,2,'#8090b0');
   drawTextC(c,L.name,CW/2,62,3,'#5fa8ff');
   drawTextC(c,'ANTAL LEMLAR: '+L.lem,CW/2,110,1,'#fff');
@@ -224,6 +225,9 @@ function drawBrief(c,tk){
   drawTextC(c,'VÄDER SLUMPAS VARJE FÖRSÖK: SOL, REGN/SKURAR/ÅSKA ELLER SNÖ',CW/2,178,1,'#80b8ff');
   drawTextC(c,'TEMPO: '+G.tempoName()+'  +/- ÄNDRAR',CW/2,190,1,'#ffd080');
   let infoY=202;
+  const money=Math.max(0,G.money|0);
+  const bonus=(G.pendingSkillBonus&&G.pendingSkillBonus[G.levelIdx])||{};
+  const shopActive=money>0||Object.keys(bonus).length>0;
   if(L.night){
     drawTextC(c,'NATTBANA: FÖRSTA LEMMELN BÄR LYKTAN.',CW/2,infoY,1,'#9090ff');
     drawTextC(c,'OM DEN DÖR KAN EN ANNAN PLOCKA UPP DEN.',CW/2,infoY+12,1,'#9090ff');
@@ -234,7 +238,28 @@ function drawBrief(c,tk){
     drawTextC(c,'EXTRA LEMLAR KAN GE ÖVER 100% RÄDDAT.',CW/2,infoY+12,1,'#ffd040');
     infoY+=24;
   }
-  drawTextC(c,L.hint,CW/2,Math.min(infoY,L.night?226:228),1,'#40c040');
+  if(shopActive){
+    c.fillStyle=L.night?'#000010':'#080800';
+    c.fillRect(0,198,CW,72);
+    drawTextC(c,'PENGAR: '+money+'  EXTRA SKILLS KOSTAR 1 MYNT',CW/2,204,1,'#ffd866');
+    const opts=G.shopOptions?G.shopOptions():[];
+    const bw=78,bh=20,gap=8,total=opts.length*bw+Math.max(0,opts.length-1)*gap;
+    let x=Math.round(CW/2-total/2),y=216;
+    for(const opt of opts){
+      const hov=G.mx>=x&&G.mx<x+bw&&G.my>=y&&G.my<y+bh;
+      const can=money>=opt.cost;
+      c.fillStyle=hov?'#2c4258':(can?'#162838':'#101820');
+      c.fillRect(x,y,bw,bh);
+      c.fillStyle=can?'#5f8fc8':'#303848';
+      c.fillRect(x,y,bw,1);c.fillRect(x,y,1,bh);
+      c.fillStyle='#05070d';
+      c.fillRect(x,y+bh-1,bw,1);c.fillRect(x+bw-1,y,1,bh);
+      drawTextC(c,opt.label+' +'+(bonus[opt.k]||0),x+bw/2,y+5,1,can?'#ffffff':'#707880');
+      G.briefShopButtons.push({x,y,w:bw,h:bh,k:opt.k});
+      x+=bw+gap;
+    }
+    drawTextC(c,L.hint,CW/2,252,1,'#40c040');
+  }else drawTextC(c,L.hint,CW/2,Math.min(infoY,L.night?226:228),1,'#40c040');
   if((tk>>4)&1)drawTextC(c,'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,236,2,'#ffd040');
 }
 

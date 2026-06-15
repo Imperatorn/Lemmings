@@ -197,8 +197,8 @@ const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCuts
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
-if (Math.abs(DOLPHIN_RESCUE_CHANCE - 0.15) > 0.0001) throw new Error('Dolphin rescue chance should be 15%');
-if (Math.abs(FISH_RING_CHANCE - 0.20) > 0.0001) throw new Error('Fish swim ring chance should be 20%');
+if (Math.abs(DOLPHIN_RESCUE_CHANCE - 0.20) > 0.0001) throw new Error('Dolphin rescue chance should be 20%');
+if (Math.abs(FISH_RING_CHANCE - 0.33) > 0.0001) throw new Error('Fish swim ring chance should be 33%');
 if (Math.abs(TORCH_WARM_CHANCE - 0.09) > 0.0001) throw new Error('Torch warming chance should be 9%');
 const maxGameplayCutsceneTicks = Math.max(1, Math.floor(3000 / TICK));
 const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
@@ -230,7 +230,8 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey',
+  'waterfallCaveActive','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
   'updateRandomJumpEvents','updateLemmingChatter','updateWaterfallHeadSplashes'
@@ -527,6 +528,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
 {
   const prevStartWaterfall = AU.startWaterfallCave;
   const prevStopWaterfall = AU.stopWaterfallCave;
+  const prevMoney = G.money;
+  const prevPendingSkillBonus = G.pendingSkillBonus;
+  const prevWaterfallLooted = G.waterfallCaveLooted;
   let started = 0, stopped = 0;
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
@@ -555,11 +559,65 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (typeof drawWaterfallCaveView !== 'function' || !drawWaterfallCaveView(WCTX, 9)) {
     throw new Error('Waterfall cave view did not render');
   }
-  if (!G.handleWaterfallCaveKey('ArrowDown') || G.waterfallCaveActive() || stopped < 1) {
-    throw new Error('Waterfall cave did not exit on ArrowDown');
+  const startCaveX = G.waterfallCave.lemX;
+  if (!G.handleWaterfallCaveKey('ArrowRight')) throw new Error('Waterfall cave did not accept ArrowRight');
+  for (let i = 0; i < 4; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (!G.waterfallCaveActive() || G.waterfallCave.lemX <= startCaveX) {
+    throw new Error('Waterfall cave lemming did not move with arrow keys');
+  }
+  const caveMoney = Math.max(0, G.money | 0);
+  G.waterfallCave.lemX = G.waterfallCave.chest.x;
+  G.waterfallCave.lemY = G.waterfallCave.chest.y;
+  G.tick();
+  if (!G.waterfallCave.chest.opened || !G.waterfallCave.chest.collected || G.money !== caveMoney + G.waterfallCave.chest.coins) {
+    throw new Error('Waterfall cave chest did not open and award money when approached');
+  }
+  const afterChestMoney = G.money;
+  G.tick();
+  if (G.money !== afterChestMoney) {
+    throw new Error('Waterfall cave chest awarded money more than once');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = 83;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  if (G.waterfallCaveActive() || stopped < 1) {
+    throw new Error('Waterfall cave did not exit when walking up to the water');
   }
   AU.startWaterfallCave = prevStartWaterfall;
   AU.stopWaterfallCave = prevStopWaterfall;
+  G.money = prevMoney;
+  G.pendingSkillBonus = prevPendingSkillBonus;
+  G.waterfallCaveLooted = prevWaterfallLooted;
+}
+{
+  const prevMoney = G.money;
+  const prevPendingSkillBonus = G.pendingSkillBonus;
+  const prevBriefButtons = G.briefShopButtons;
+  const shopIdx = Math.min(1, LEVELS.length - 1);
+  G.levelIdx = shopIdx;
+  G.money = 2;
+  G.pendingSkillBonus = {};
+  G.briefShopButtons = [{x:10,y:10,w:40,h:18,k:'rope'}];
+  if (!G.buyBriefShopSkill('build') || G.money !== 1 || G.briefShopSkillBonus(shopIdx, 'build') !== 1) {
+    throw new Error('Briefing shop did not buy a direct skill bonus');
+  }
+  if (!G.handleBriefShopInput({x:18,y:14}) || G.money !== 0 || G.briefShopSkillBonus(shopIdx, 'rope') !== 1) {
+    throw new Error('Briefing shop click did not buy the selected skill bonus');
+  }
+  const baseBuild = (LEVELS[shopIdx].skills && LEVELS[shopIdx].skills.build) || 0;
+  const baseRope = (LEVELS[shopIdx].skills && Object.prototype.hasOwnProperty.call(LEVELS[shopIdx].skills, 'rope')) ? LEVELS[shopIdx].skills.rope : 2;
+  G.startLevel(shopIdx);
+  if ((G.skills.build || 0) !== baseBuild + 1 || (G.skills.rope || 0) !== baseRope + 1) {
+    throw new Error('Pending briefing shop bonuses were not applied when the level started');
+  }
+  if (G.briefShopSkillBonus(shopIdx, 'build') !== 0 || G.briefShopSkillBonus(shopIdx, 'rope') !== 0) {
+    throw new Error('Briefing shop bonuses were not cleared after starting the level');
+  }
+  G.money = prevMoney;
+  G.pendingSkillBonus = prevPendingSkillBonus;
+  G.briefShopButtons = prevBriefButtons;
 }
 {
   const prevLevel = G.level;

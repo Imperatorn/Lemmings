@@ -77,7 +77,10 @@ function pressAt(p){
         G.levelIdx=r.idx;G.menuChapter=menuChapterForLevel(r.idx);G.savePrefs();G.state='BRIEF';AU.sClick();return}
     return;
   }
-  if(G.state==='BRIEF'){G.startLevel(G.levelIdx);return}
+  if(G.state==='BRIEF'){
+    if(G.handleBriefShopInput&&G.handleBriefShopInput(p))return;
+    G.startLevel(G.levelIdx);return
+  }
   if(G.state==='RESULT'){
     G.advanceFromResult();
     AU.sClick();return;
@@ -270,7 +273,7 @@ window.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('keyup',e=>{
-  if(G.waterfallCaveActive&&G.waterfallCaveActive()){e.preventDefault();return}
+  if(G.waterfallCaveActive&&G.waterfallCaveActive()){if(G.handleWaterfallCaveKeyUp)G.handleWaterfallCaveKeyUp(e.key);e.preventDefault();return}
   if(G.cutsceneActive&&G.cutsceneActive()){e.preventDefault();return}
   if(G.state==='PLAY'&&G.isManualActive&&G.isManualActive()){
     if(e.key==='ArrowLeft'){G.setManualKey('left',false);e.preventDefault();return}

@@ -80,7 +80,7 @@ const G={
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1, cutscenesOn:true,
-  lamp:null, cleared:new Array(LEVELS.length).fill(false),
+  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, waterfallCaveLooted:{},
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
   monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0, monkeyAirSupportPending:false, monkeyAirSupportTargetX:null,
@@ -243,10 +243,104 @@ const G={
     persisted.playCount=this.playCount;savePersisted(persisted);
     return (base^Math.imul(idx+1,1009)^Math.imul(this.playCount,104729))>>>0;
   },
+  normalizePendingSkillBonus(data){
+    const out={};
+    if(!data||typeof data!=='object')return out;
+    for(const idxKey in data){
+      const idx=clamp(parseInt(idxKey,10)||0,0,LEVELS.length-1);
+      const src=data[idxKey];
+      if(!src||typeof src!=='object')continue;
+      const dst={};
+      for(const s of SKILLS){
+        const v=Number(src[s.k]);
+        if(Number.isFinite(v)&&v>0)dst[s.k]=clamp(Math.round(v),0,99);
+      }
+      if(Object.keys(dst).length)out[idx]=dst;
+    }
+    return out;
+  },
+  shopOptions(){
+    return [
+      {k:'build',label:'BYGG',cost:1},
+      {k:'bash',label:'HACKA',cost:1},
+      {k:'dig',label:'GRAV',cost:1},
+      {k:'rope',label:'REP',cost:1}
+    ];
+  },
+  pendingBonusForLevel(idx){
+    const all=this.pendingSkillBonus||(this.pendingSkillBonus={});
+    return all[idx]||(all[idx]={});
+  },
+  briefShopSkillBonus(idx,k){
+    const all=this.pendingSkillBonus||{};
+    return all[idx]&&all[idx][k]||0;
+  },
+  buyBriefShopSkill(k){
+    const opt=this.shopOptions().find(o=>o.k===k);
+    if(!opt)return false;
+    this.money=Math.max(0,this.money|0);
+    if(this.money<opt.cost){
+      this.toast('FOR LITE PENGAR');
+      AU.sShrug();
+      return true;
+    }
+    const bonus=this.pendingBonusForLevel(this.levelIdx);
+    bonus[k]=(bonus[k]||0)+1;
+    this.money-=opt.cost;
+    this.savePrefs();
+    this.toast('+1 '+opt.label+' TILL DENNA BANA');
+    AU.sClick();
+    return true;
+  },
+  handleBriefShopInput(p){
+    if(!this.briefShopButtons||!this.briefShopButtons.length)return false;
+    for(const b of this.briefShopButtons){
+      if(p.x>=b.x&&p.x<b.x+b.w&&p.y>=b.y&&p.y<b.y+b.h)return this.buyBriefShopSkill(b.k);
+    }
+    return false;
+  },
+  applyPendingSkillBonus(idx){
+    const all=this.pendingSkillBonus||{};
+    const bonus=all[idx];
+    if(!bonus||!this.skills)return false;
+    let applied=false;
+    for(const k in bonus){
+      const v=Number(bonus[k])|0;
+      if(v>0){this.skills[k]=(this.skills[k]||0)+v;applied=true}
+    }
+    delete all[idx];
+    if(applied)this.savePrefs();
+    return applied;
+  },
+  waterfallCaveLootKey(wf){
+    wf=wf&&wf.wf?wf.wf:wf;
+    return (this.levelIdx||0)+':'+Math.round(wf&&wf.x||0)+','+Math.round(wf&&wf.y||0);
+  },
+  collectWaterfallCaveChest(cave){
+    cave=cave||this.waterfallCave;
+    const ch=cave&&cave.chest;
+    if(!ch||ch.collected)return false;
+    const key=ch.lootKey||this.waterfallCaveLootKey(cave);
+    this.waterfallCaveLooted=this.waterfallCaveLooted||{};
+    if(this.waterfallCaveLooted[key]){
+      ch.opened=true;ch.collected=true;
+      return false;
+    }
+    this.waterfallCaveLooted[key]=true;
+    ch.opened=true;ch.collected=true;ch.glowT=Math.max(ch.glowT||0,70);
+    const coins=Math.max(1,Math.round(ch.coins||3));
+    this.money=Math.max(0,this.money|0)+coins;
+    this.savePrefs();
+    this.toast('SKATTKISTA: +'+coins+' PENGAR',140);
+    if(AU.sSaved)AU.sSaved();else AU.sClick();
+    return true;
+  },
   loadPrefs(){
     const p=loadPersisted();
     if(p.mode==='classic'||p.mode==='chaos')this.mode=p.mode;
     if(Array.isArray(p.cleared))this.cleared=this.cleared.map((_,i)=>!!p.cleared[i]);
+    if(Number.isFinite(p.money))this.money=Math.max(0,p.money|0);
+    this.pendingSkillBonus=this.normalizePendingSkillBonus(p.pendingSkillBonus);
     if(typeof p.musicOn==='boolean')AU.musicOn=p.musicOn;
     if(typeof p.sfxOn==='boolean')AU.sfxOn=p.sfxOn;
     if(typeof p.cutscenesOn==='boolean')this.cutscenesOn=p.cutscenesOn;
@@ -259,7 +353,7 @@ const G={
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
@@ -497,7 +591,7 @@ const G={
     const D=createLevelDecorApi(this);
     if(L.decor)L.decor(D);
     // status
-    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.waterfallCaveLooted={};this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;this.sunSurpriseT=0;
     this.meteorT=(L.night&&!L.cave)?Math.round((18+this.rand()*34)*1000/TICK):0;
     this.cam=clamp(L.hatch.x-160,0,this.maxCamFor(L));
@@ -507,6 +601,7 @@ const G={
     this.rate=L.rate;this.spawnT=20;
     this.timeT=L.time*1000/TICK;this.levelTimeT=this.timeT;
     this.skills=Object.assign({rope:2,downbuild:Math.max(2,Math.ceil((L.skills.build||0)/2)),flame:Math.max(0,Math.min(3,Math.ceil((L.skills.baz||0)/3)))},L.skills);
+    this.applyPendingSkillBonus(idx);
     this.initLevelLootPackages();
     this.initLevelRescues();
     const cfg=this.chaosConfig();

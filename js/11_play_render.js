@@ -167,7 +167,7 @@ function drawWaterfallCaveView(c,tk){
     }
   }
 
-  const waterW=72,wx=ox+ow/2-waterW/2,wy=oy-8,wh=oh+34;
+  const waterW=112,wx=ox+ow/2-waterW/2,wy=oy-8,wh=oh+34;
   c.globalAlpha=0.36;
   c.fillStyle='#b8efff';
   c.fillRect(wx,wy,waterW,wh);
@@ -222,6 +222,62 @@ function drawWaterfallCaveView(c,tk){
     const my=235+Math.round(hash2(i+81,wf.y||0)*28);
     c.fillRect(mx,my,2,1);
   }
+  const ch=cave.chest;
+  if(ch){
+    const glow=clamp((ch.glowT||0)/70,0,1);
+    if(glow>0){
+      c.globalAlpha=0.08+glow*0.16;
+      c.fillStyle='#ffcf66';
+      c.fillRect(0,0,CW,CH);
+      c.globalAlpha=0.18+glow*0.32;
+      fillPixelPoly(c,[
+        [Math.round(ch.x-19),Math.round(ch.y-15)],
+        [Math.round((cave.lemX||240)-10),Math.round((cave.lemY||210)-28)],
+        [Math.round((cave.lemX||240)+10),Math.round((cave.lemY||210)-28)],
+        [Math.round(ch.x+19),Math.round(ch.y-15)]
+      ]);
+      c.globalAlpha=0.16+glow*0.20;
+      c.fillStyle='#ffe090';
+      c.fillRect(Math.round(ch.x-46),Math.round(ch.y-42),92,46);
+      c.globalAlpha=1;
+    }
+    const x=Math.round(ch.x),y=Math.round(ch.y),open=!!ch.opened;
+    c.fillStyle='rgba(0,0,0,0.35)';
+    c.fillRect(x-22,y+1,44,4);
+    c.fillStyle='#5a2d13';
+    c.fillRect(x-18,y-14,36,14);
+    c.fillStyle='#9a5b24';
+    c.fillRect(x-16,y-12,32,10);
+    c.fillStyle='#d8a84c';
+    c.fillRect(x-19,y-15,38,2);
+    c.fillRect(x-2,y-14,4,14);
+    c.fillStyle='#2a140a';
+    c.fillRect(x-18,y-2,36,2);
+    if(open){
+      c.fillStyle='#5a2d13';
+      fillPixelPoly(c,[[x-17,y-16],[x+16,y-24],[x+19,y-19],[x-15,y-12]]);
+      c.fillStyle='#f5c85a';
+      c.fillRect(x-11,y-13,22,3);
+      c.fillStyle='#ffe58a';
+      for(let i=0;i<8;i++)c.fillRect(x-10+i*3,y-15+(i&1),2,2);
+    }else{
+      c.fillStyle='#7a3d18';
+      c.fillRect(x-17,y-21,34,7);
+      c.fillStyle='#b8702a';
+      c.fillRect(x-15,y-20,30,5);
+      c.fillStyle='#ffd866';
+      c.fillRect(x-3,y-9,6,6);
+      c.fillStyle='#4a2a13';
+      c.fillRect(x-1,y-7,2,3);
+    }
+  }
+  const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
+  c.globalAlpha=0.35;
+  c.fillStyle='#000000';
+  c.fillRect(lx-7,ly+1,14,2);
+  c.globalAlpha=1;
+  drawLemming(c,{state:'WALK',dir:cave.dir||1,anim:(tk+t)|0,scale:1,alive(){return true}},lx,ly);
+  drawTextC(c,'PENGAR '+Math.max(0,G.money|0),58,284,1,'#ffd866');
   c.restore();
   return true;
 }
