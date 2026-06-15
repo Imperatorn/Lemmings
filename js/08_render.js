@@ -1073,10 +1073,20 @@ function drawRescueCages(c,rescues,cam,tk){
     const x=Math.round(r.releaseX-cam),y=Math.round(r.releaseY);
     if(x<-34||x>VW+34)continue;
     if(r.opened){
-      c.fillStyle='rgba(0,0,0,0.48)';c.fillRect(x-8,y-14,16,16);
-      c.fillStyle='#596070';c.fillRect(x-10,y-15,20,2);c.fillRect(x-10,y,20,2);
-      c.fillStyle='#9aa4b0';c.fillRect(x-11,y-17,6,3);c.fillRect(x+5,y-17,6,3);
-      c.globalAlpha=0.35+0.15*Math.sin(tk*0.18+r.p);
+      c.fillStyle='rgba(0,0,0,0.34)';c.fillRect(x-10,y-22,20,24);
+      c.fillStyle='#39414c';c.fillRect(x-9,y-21,18,20);
+      c.fillStyle='#596070';
+      c.fillRect(x-12,y-24,24,3);c.fillRect(x-12,y,24,3);
+      c.fillRect(x-12,y-24,3,27);c.fillRect(x+9,y-24,3,27);
+      c.fillStyle='#7f8996';for(let xx=-6;xx<=6;xx+=6)c.fillRect(x+xx,y-22,2,22);
+      c.fillStyle='#b7c1cc';c.fillRect(x-11,y-17,3,2);c.fillRect(x+8,y-17,3,2);
+      const doorX=x+13,doorY=y-21;
+      c.fillStyle='#4a5361';
+      c.fillRect(doorX,doorY,13,2);c.fillRect(doorX,doorY+16,13,2);
+      c.fillRect(doorX,doorY,2,18);c.fillRect(doorX+11,doorY+1,2,16);
+      c.fillStyle='#9aa4b0';for(let dx=4;dx<=8;dx+=4)c.fillRect(doorX+dx,doorY+2,2,14);
+      c.fillStyle='#d7e0ea';c.fillRect(doorX+1,doorY+1,5,1);
+      c.globalAlpha=0.20+0.10*Math.sin(tk*0.18+r.p);
       c.fillStyle='#80d8ff';c.fillRect(x-5,y-10,10,5);
       c.globalAlpha=1;
     }else{
