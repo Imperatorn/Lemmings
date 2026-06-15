@@ -63,6 +63,10 @@ if (debugHtml) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
 }
+const hudCode = fs.readFileSync(path.join(root, 'js/09_hud.js'), 'utf8');
+if (!hudCode.includes("'UTE '+G.out+'/'+L.lem")) {
+  throw new Error('HUD active lemming counter must show active/total');
+}
 
 function makeContext2d(){
   return {
@@ -966,6 +970,19 @@ if (warmLem.state !== 'WARM' || warmLem.busyT < 40) {
 G.finishTorchWarm(warmLem, G.T);
 if (warmLem.state !== 'WALK' || warmLem.busyT !== 0) {
   throw new Error('Torch warming did not return lemming to walking state');
+}
+warmLem.state = 'WALK';
+warmLem.busyT = 0;
+G.level.water = [{x: 40, y: 210, w: 60, lava: true}];
+G.decor = [{t: 'torch', x: 102, y: 178}];
+G.rand = () => 0.0;
+if (G.canWarmAtTorch(warmLem)) {
+  throw new Error('Lemmings should not be able to freeze on lava levels');
+}
+G.updateTorchWarmEffects();
+G.rand = oldRand;
+if (warmLem.state === 'WARM') {
+  throw new Error('Torch warming started on a lava level');
 }
 
 console.log(`verify-game ok: ${LEVELS.length} levels, ${scripts.length} scripts`);

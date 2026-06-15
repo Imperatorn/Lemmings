@@ -156,7 +156,9 @@ Object.assign(G,{
     }
   },
   canWarmAtTorch(l){
-    return !!(l&&l.alive&&l.alive()&&l.bombT<=0&&(l.state==='WALK'||l.state==='SHRUG'));
+    const L=this.level||{};
+    const lavaLevel=Array.isArray(L.water)&&L.water.some(z=>z&&z.lava);
+    return !lavaLevel&&!!(l&&l.alive&&l.alive()&&l.bombT<=0&&(l.state==='WALK'||l.state==='SHRUG'));
   },
   startTorchWarm(l,torch){
     if(!this.canWarmAtTorch(l)||!torch)return false;

@@ -99,7 +99,7 @@ function drawHUD(c,tk){
   else info='VÄDER '+G.weatherShort()+'  ZOOM '+Math.round((G.viewZoom||1)*100)+'%';
   if(G.manual&&G.manual.active)info='DIREKT: PILAR STYR  SHIFT SPRING  CTRL SIKTE  L LAMPA';
   drawText(c,info,4,HUDY+4,1,G.manual&&G.manual.active?'#80d8ff':'#40ff40');
-  drawText(c,'UTE '+G.out,170,HUDY+4,1,'#40ff40');
+  drawText(c,'UTE '+G.out+'/'+L.lem,170,HUDY+4,1,'#40ff40');
   const pct=Math.floor(G.saved/L.lem*100);
   drawText(c,'INNE '+pct+'%',242,HUDY+4,1,'#40ff40');
   const secs=Math.max(0,Math.floor(G.timeT*TICK/1000));
