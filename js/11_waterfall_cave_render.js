@@ -122,8 +122,9 @@ function drawLandsOfLoreCaveCover(c,cave,tk){
       'Tilldelat Valdemar,',
       'Tage och Elis.',
       '',
-      'Betatestare:',
-      'Micke och Calle'
+      'Beta-testare:',
+      'Micke och Calle',
+      ''
     ];
     for(let i=0;i<lines.length;i++)c.fillText(lines[i],x+22,y+42+i*20);
     c.fillStyle='#6d472a';c.fillRect(x+22,y+h-34,w-44,2);
@@ -347,6 +348,14 @@ function drawWaterfallCaveAdventureBase(c,cave,tk,style){
     c.fillStyle='#ffd080';
     fillPixelPoly(c,[[122,146],[44,92],[32,228],[150,250],[214,176]]);
     c.globalAlpha=1;
+    c.fillStyle='#020304';
+    fillPixelPoly(c,[[166,70],[204,48],[276,48],[318,72],[292,106],[190,106]]);
+    c.fillStyle='#0a1218';
+    fillPixelPoly(c,[[188,78],[218,62],[266,62],[292,78],[276,96],[204,96]]);
+    c.globalAlpha=0.28;
+    c.fillStyle='#ffb45a';
+    c.fillRect(205,97,72,2);
+    c.globalAlpha=1;
   }
   if(scene==='mirrorPool'){
     c.globalAlpha=0.16;
@@ -449,6 +458,41 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
   }
 }
 
+function drawWaterfallCaveStoneInspect(c,cave,tk){
+  if(!cave||cave.scene!=='emberPassage')return false;
+  const hit=((G.waterfallCaveSceneObjects&&G.waterfallCaveSceneObjects(cave))||[]).find(h=>h.def&&h.def.id==='looseStone');
+  const obj=hit&&hit.obj;
+  if(!obj||(!obj.near&&!(obj.lastInteractT!=null&&(cave.t||0)-obj.lastInteractT<70)))return false;
+  const x=156,y=24,w=168,h=86;
+  c.save();
+  c.globalAlpha=0.72;
+  c.fillStyle='#030507';
+  c.fillRect(x-8,y-8,w+16,h+16);
+  c.globalAlpha=1;
+  c.fillStyle='#1a1612';c.fillRect(x,y,w,h);
+  c.fillStyle='#332820';c.fillRect(x+4,y+4,w-8,h-8);
+  c.fillStyle='#12171a';c.fillRect(x+10,y+10,w-20,h-20);
+  c.fillStyle='#2d373a';
+  fillPixelPoly(c,[[x+42,y+56],[x+58,y+30],[x+102,y+26],[x+126,y+50],[x+112,y+70],[x+56,y+72]]);
+  c.fillStyle='#536066';
+  fillPixelPoly(c,[[x+52,y+52],[x+64,y+36],[x+96,y+34],[x+114,y+50],[x+102,y+62],[x+60,y+64]]);
+  c.fillStyle='#d99a54';
+  c.fillRect(x+78,y+38,4,22);
+  c.fillRect(x+82,y+50,24,4);
+  c.fillRect(x+98,y+46,4,12);
+  c.fillRect(x+58,y+54,18,3);
+  c.fillStyle='#ffcf74';
+  c.fillRect(x+80,y+39,2,20);
+  c.fillRect(x+84,y+51,19,2);
+  c.globalAlpha=0.22;
+  c.fillStyle='#ffb45a';
+  fillPixelPoly(c,[[x+34,y+66],[x+62,y+18],[x+114,y+18],[x+140,y+58],[x+112,y+82],[x+58,y+82]]);
+  c.globalAlpha=1;
+  if(typeof drawTextC==='function')drawTextC(c,'RISTAD STEN',x+w/2,y+h-13,1,'#f1c275');
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveAdventureView(c,cave,tk){
   const style=waterfallCaveAdventureStyle(cave.scene);
   c.save();
@@ -463,6 +507,7 @@ function drawWaterfallCaveAdventureView(c,cave,tk){
     const torch=((G.waterfallCaveSceneObjects&&G.waterfallCaveSceneObjects(cave))||[]).find(hit=>hit.def&&hit.def.id==='wallTorch');
     if(torch&&torch.obj)drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,lemScale,torch.obj.x||130);
   }
+  drawWaterfallCaveStoneInspect(c,cave,tk);
   c.globalAlpha=0.22;
   c.fillStyle='#000000';
   c.fillRect(0,0,CW,18);c.fillRect(0,CH-18,CW,18);c.fillRect(0,0,18,CH);c.fillRect(CW-18,0,18,CH);

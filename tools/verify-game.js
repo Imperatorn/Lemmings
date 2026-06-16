@@ -92,7 +92,7 @@ const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_ca
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
-for (const token of ['WATERFALL_CAVE_SCENES','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','rootSanctum:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveObjectDefault']) {
+for (const token of ['WATERFALL_CAVE_SCENES','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','rootSanctum:{','toCrystalGalleryUp','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveObjectDefault']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave scene registry is missing ${token}`);
   }
@@ -133,7 +133,7 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
   throw new Error('Campfire audio should use softer, less sharp crackles');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
@@ -916,13 +916,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!emberStone.obj.activated || !emberStone.obj.shifted) {
     throw new Error('Ember passage loose stone did not react to interaction');
   }
-  G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).minX;
-  G.waterfallCave.lemY = 236;
-  G.handleWaterfallCaveKey('ArrowLeft');
+  if (!drawWaterfallCaveView(WCTX, 33)) {
+    throw new Error('Ember passage stone inspection view did not render');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
+  G.handleWaterfallCaveKey('ArrowUp');
   G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowLeft');
+  G.handleWaterfallCaveKeyUp('ArrowUp');
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'crystalGallery') {
-    throw new Error(`Secret passage did not continue into the crystal gallery, scene=${G.waterfallCave && G.waterfallCave.scene} x=${G.waterfallCave && G.waterfallCave.lemX} y=${G.waterfallCave && G.waterfallCave.lemY}`);
+    throw new Error(`Secret passage did not continue upward into the crystal gallery, scene=${G.waterfallCave && G.waterfallCave.scene} x=${G.waterfallCave && G.waterfallCave.lemX} y=${G.waterfallCave && G.waterfallCave.lemY}`);
   }
   if (!drawWaterfallCaveView(WCTX, 37)) throw new Error('Crystal gallery view did not render');
   const songCrystal = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'songCrystal');

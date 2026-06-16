@@ -72,6 +72,7 @@ const WATERFALL_CAVE_SCENES={
     },
     exits:[
       {id:'toCamp',key:'right',x0:392,yMin:194,yMax:270,target:'camp',spawn:'fromEmber'},
+      {id:'toCrystalGalleryUp',key:'up',x0:138,x1:330,yMax:178,target:'crystalGallery',spawn:'fromEmber'},
       {id:'toCrystalGallery',key:'left',x1:76,yMin:188,yMax:276,target:'crystalGallery',spawn:'fromEmber'}
     ],
     objects:[
