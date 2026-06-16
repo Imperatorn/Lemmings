@@ -29,6 +29,120 @@ Object.assign(G,{
     if(key==='ArrowUp')this.waterfallCaveExitNeedsUpRelease=false;
     return !this.waterfallCaveExitNeedsUpRelease;
   },
+  waterfallCaveSceneIds(){
+    return typeof waterfallCaveSceneIds==='function'?waterfallCaveSceneIds():['main','deep','camp'];
+  },
+  waterfallCaveSceneDef(id){
+    return typeof waterfallCaveSceneDef==='function'?waterfallCaveSceneDef(id):null;
+  },
+  waterfallCaveSceneBounds(cave,sceneId){
+    cave=cave||this.waterfallCave;
+    if(typeof waterfallCaveSceneBoundsFor==='function')return waterfallCaveSceneBoundsFor(cave,sceneId);
+    if(cave&&cave.scene==='camp')return cave.campBounds||{};
+    if(cave&&cave.scene==='deep')return cave.deepBounds||{};
+    return cave&&cave.bounds||{};
+  },
+  waterfallCaveRuntimeObject(cave,obj){
+    cave=cave||this.waterfallCave;
+    if(!cave||!obj)return null;
+    if(obj.runtimeKey)return cave[obj.runtimeKey]||null;
+    cave.sceneState=cave.sceneState||{};
+    const bucket=cave.sceneState[cave.scene]||(cave.sceneState[cave.scene]={});
+    return bucket[obj.id]||null;
+  },
+  waterfallCaveSceneObjects(cave){
+    cave=cave||this.waterfallCave;
+    const defs=typeof waterfallCaveSceneObjects==='function'?waterfallCaveSceneObjects(cave&&cave.scene):[];
+    return defs.map(def=>({def,obj:this.waterfallCaveRuntimeObject(cave,def)})).filter(hit=>!!hit.obj);
+  },
+  waterfallCaveHitObject(p){
+    const cave=this.waterfallCave;
+    if(!cave||!p)return null;
+    for(const hit of this.waterfallCaveSceneObjects(cave)){
+      const def=hit.def,obj=hit.obj,h=def.hit||{};
+      const ox=(obj.x||0)+(h.dx||0),oy=(obj.y||0)+(h.dy||0);
+      let inside=false;
+      if(h.type==='rect')inside=p.x>=ox-(h.w||0)/2&&p.x<ox+(h.w||0)/2&&p.y>=oy-(h.h||0)/2&&p.y<oy+(h.h||0)/2;
+      else{
+        const rx=Math.max(1,h.rx||12),ry=Math.max(1,h.ry||12);
+        inside=((p.x-ox)/rx)*((p.x-ox)/rx)+((p.y-oy)/ry)*((p.y-oy)/ry)<=1;
+      }
+      if(inside)return hit;
+    }
+    return null;
+  },
+  ensureWaterfallCaveSceneState(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave)return null;
+    const main=this.waterfallCaveSceneDef('main')||{};
+    const deep=this.waterfallCaveSceneDef('deep')||{};
+    const camp=this.waterfallCaveSceneDef('camp')||{};
+    cave.bounds=cave.bounds||waterfallCaveCloneData(main.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298});
+    cave.deepBounds=cave.deepBounds||waterfallCaveCloneData(deep.bounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276});
+    cave.campBounds=cave.campBounds||waterfallCaveCloneData(camp.bounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182});
+    cave.deepItem=cave.deepItem||waterfallCaveObjectDefault('deep','cover')||{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false};
+    cave.campFire=cave.campFire||waterfallCaveObjectDefault('camp','campFire')||{x:318,y:244,rx:54,ry:30};
+    cave.visited=cave.visited||{};
+    cave.flags=cave.flags||{};
+    cave.inventory=cave.inventory||[];
+    cave.inputMode=cave.inputMode||'direct';
+    cave.hoverObject=cave.hoverObject||null;
+    if(!cave.scene)cave.scene='main';
+    cave.visited[cave.scene]=true;
+    return cave;
+  },
+  setWaterfallCaveScene(scene,spawnId,opts){
+    const cave=this.ensureWaterfallCaveSceneState(this.waterfallCave);
+    if(!cave)return false;
+    const def=this.waterfallCaveSceneDef(scene);
+    if(!def)return false;
+    cave.scene=def.id;
+    cave.visited=cave.visited||{};
+    cave.visited[def.id]=true;
+    cave.hoverObject=null;
+    const spawn=typeof waterfallCaveSceneSpawn==='function'?waterfallCaveSceneSpawn(def.id,spawnId):null;
+    if(spawn){
+      cave.lemX=spawn.x;cave.lemY=spawn.y;
+      if(spawn.facing)cave.facing=spawn.facing;
+      if(Number.isFinite(spawn.dir))cave.dir=spawn.dir;
+    }
+    cave.walking=false;
+    cave.lastStepT=cave.t||0;
+    if(!opts||opts.audio!==false)this.setWaterfallCaveSceneAudio(def.id);
+    return true;
+  },
+  waterfallCaveExitReady(cave,exit){
+    if(!cave||!exit)return false;
+    if(exit.key==='up'&&!cave.keys.up)return false;
+    if(exit.key==='down'&&!cave.keys.down)return false;
+    if(Number.isFinite(exit.x0)&&(cave.lemX||0)<exit.x0)return false;
+    if(Number.isFinite(exit.x1)&&(cave.lemX||0)>exit.x1)return false;
+    if(Number.isFinite(exit.yMin)&&(cave.lemY||0)<exit.yMin)return false;
+    if(Number.isFinite(exit.yMax)&&(cave.lemY||0)>exit.yMax)return false;
+    return true;
+  },
+  tryWaterfallCaveSceneExit(cave){
+    cave=this.ensureWaterfallCaveSceneState(cave);
+    if(!cave)return false;
+    const exits=typeof waterfallCaveSceneExits==='function'?waterfallCaveSceneExits(cave.scene):[];
+    for(const exit of exits){
+      if(!this.waterfallCaveExitReady(cave,exit))continue;
+      const it=cave.deepItem;
+      if(exit.requiresClosedDeepItem&&it&&it.coverOpen)continue;
+      if(exit.closeDeepItem&&it&&it.coverOpen)this.closeWaterfallCaveDeepItem(it);
+      if(!exit.target){
+        this.exitWaterfallCave(exit.reason||'walkout');
+        return true;
+      }
+      this.setWaterfallCaveScene(exit.target,exit.spawn);
+      if(exit.markCoverReturn){
+        const cover=cave.deepItem||(cave.deepItem=waterfallCaveObjectDefault('deep','cover')||{x:246,y:252});
+        cover.coverOpen=false;cover.coverCloseArmed=false;cover.coverReturnBlocked=true;cover.near=false;
+      }
+      return true;
+    }
+    return false;
+  },
   findWaterfallCaveEntrance(l){
     if(!l||!l.alive||!l.alive()||!this.decor)return null;
     const sc=Math.max(1,l.scale||1);
@@ -61,15 +175,20 @@ Object.assign(G,{
     this.clearRopeAim();
     const lootKey=this.waterfallCaveLootKey?this.waterfallCaveLootKey(wf):((this.levelIdx||0)+':'+Math.round(wf.x||0)+','+Math.round(wf.y||0));
     const looted=!!(this.waterfallCaveLooted&&this.waterfallCaveLooted[lootKey]);
+    const main=this.waterfallCaveSceneDef('main')||{},deep=this.waterfallCaveSceneDef('deep')||{},camp=this.waterfallCaveSceneDef('camp')||{};
+    const spawn=typeof waterfallCaveSceneSpawn==='function'?waterfallCaveSceneSpawn('main','entry'):{x:240,y:232,facing:'front'};
+    const chest=waterfallCaveObjectDefault('main','chest')||{x:342,y:226,coins:3,opened:false,collected:false,near:false,glowT:0};
+    chest.collected=looted;chest.lootKey=lootKey;
     this.waterfallCave={
-      active:true,t:0,scene:'main',lemId:l.id,lemX:240,lemY:232,dir:l.dir||1,facing:'front',walking:false,walkAnim:0,lastStepT:-999,stepSide:0,
+      active:true,t:0,scene:'main',inputMode:'direct',lemId:l.id,lemX:spawn.x,lemY:spawn.y,dir:l.dir||1,facing:spawn.facing||'front',walking:false,walkAnim:0,lastStepT:-999,stepSide:0,
       keys:{left:false,right:false,up:false,down:false},
-      bounds:{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298},
-      deepBounds:{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276},
-      campBounds:{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182},
-      campFire:{x:318,y:244,rx:54,ry:30},
-      deepItem:{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},
-      chest:{x:342,y:226,coins:3,opened:false,collected:looted,near:false,glowT:0,lootKey},
+      bounds:waterfallCaveCloneData(main.bounds),
+      deepBounds:waterfallCaveCloneData(deep.bounds),
+      campBounds:waterfallCaveCloneData(camp.bounds),
+      campFire:waterfallCaveObjectDefault('camp','campFire')||{x:318,y:244,rx:54,ry:30},
+      deepItem:waterfallCaveObjectDefault('deep','cover')||{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},
+      chest,
+      inventory:[],flags:{},visited:{main:true},hoverObject:null,sceneState:{},
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
       exitCam:this.cam,exitViewY:this.viewY,exitZoom:this.viewZoom
     };
@@ -153,13 +272,9 @@ Object.assign(G,{
     if(!this.waterfallCaveActive())return false;
     const cave=this.waterfallCave;
     cave.t++;
+    this.ensureWaterfallCaveSceneState(cave);
     cave.keys=cave.keys||{};
-    cave.bounds=cave.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298};
-    cave.deepBounds=cave.deepBounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276};
-    cave.campBounds=cave.campBounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182};
-    cave.campFire=cave.campFire||{x:318,y:244,rx:54,ry:30};
-    if(!cave.scene)cave.scene='main';
-    const b=cave.scene==='camp'?cave.campBounds:(cave.scene==='deep'?cave.deepBounds:cave.bounds);
+    const b=this.waterfallCaveSceneBounds(cave);
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     const waitingForCoverRelease=cave.scene==='deep'&&cave.deepItem&&cave.deepItem.coverOpen&&!cave.deepItem.coverCloseArmed;
@@ -205,11 +320,7 @@ Object.assign(G,{
     }else if(ch){
       ch.near=false;ch.opened=false;ch.glowT=0;
     }
-    if(cave.scene==='main'&&cave.keys.down&&(cave.lemY||0)>=cave.bounds.deepY&&(cave.lemX||0)>=cave.bounds.deepX0&&(cave.lemX||0)<=cave.bounds.deepX1){
-      cave.scene='deep';
-      this.setWaterfallCaveSceneAudio('deep');
-      cave.lemX=240;cave.lemY=190;cave.facing='front';cave.walking=false;cave.lastStepT=cave.t;
-    }
+    if(cave.scene==='main'&&this.tryWaterfallCaveSceneExit(cave))return true;
     if(cave.scene==='deep'){
       const it=cave.deepItem||(cave.deepItem={x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
       const ix=Math.abs((cave.lemX||0)-it.x),iy=Math.abs((cave.lemY||0)-it.y);
@@ -232,30 +343,11 @@ Object.assign(G,{
         it.coverCloseArmed=!this.waterfallCaveMovementHeld(cave);
         it.coverSide='front';
       }
-      if(cave.keys.up&&(cave.lemY||0)<=cave.deepBounds.exitY&&(cave.lemX||0)>=cave.deepBounds.exitX0&&(cave.lemX||0)<=cave.deepBounds.exitX1){
-        if(it.coverOpen)this.closeWaterfallCaveDeepItem(it);
-        cave.scene='main';
-        this.setWaterfallCaveSceneAudio('main');
-        cave.lemX=240;cave.lemY=cave.bounds.maxY-8;cave.facing='back';cave.walking=false;cave.lastStepT=cave.t;
-      }
-      if(!it.coverOpen&&cave.keys.down&&(cave.lemY||0)>=cave.deepBounds.campY&&(cave.lemX||0)>=cave.deepBounds.campX0&&(cave.lemX||0)<=cave.deepBounds.campX1){
-        cave.scene='camp';
-        this.setWaterfallCaveSceneAudio('camp');
-        cave.lemX=240;cave.lemY=198;cave.facing='front';cave.walking=false;cave.lastStepT=cave.t;
-      }
+      if(this.tryWaterfallCaveSceneExit(cave))return true;
     }
     if(cave.scene==='camp'){
       if(AU.updateWaterfallCaveCampfire)AU.updateWaterfallCaveCampfire();
-      if(cave.keys.up&&(cave.lemY||0)<=cave.campBounds.exitY&&(cave.lemX||0)>=cave.campBounds.exitX0&&(cave.lemX||0)<=cave.campBounds.exitX1){
-        cave.scene='deep';
-        this.setWaterfallCaveSceneAudio('deep');
-        const it=cave.deepItem||(cave.deepItem={x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
-        it.coverOpen=false;it.coverCloseArmed=false;it.coverReturnBlocked=true;it.near=false;
-        cave.lemX=240;cave.lemY=cave.deepBounds.maxY-4;cave.facing='back';cave.walking=false;cave.lastStepT=cave.t;
-      }
-    }
-    if(cave.scene==='main'&&cave.keys.up&&(cave.lemY||0)<=cave.bounds.exitY&&(cave.lemX||0)>=cave.bounds.exitX0&&(cave.lemX||0)<=cave.bounds.exitX1){
-      this.exitWaterfallCave('walkout');
+      if(this.tryWaterfallCaveSceneExit(cave))return true;
     }
     return true;
   },
@@ -266,6 +358,11 @@ Object.assign(G,{
       const r=this.waterfallCaveCoverRect();
       if(p&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h)this.toggleWaterfallCaveDeepItemCover(it);
       else this.closeWaterfallCaveDeepItem(it);
+      return true;
+    }
+    const hit=this.waterfallCaveHitObject(p);
+    if(hit&&this.waterfallCave){
+      this.waterfallCave.hoverObject=hit.def&&hit.def.id||null;
       return true;
     }
     if(kind==='silent')this.exitWaterfallCave('silent');

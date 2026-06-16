@@ -1,5 +1,6 @@
 // ---------------------- VATTENFALLSGROTTA RENDER -----------------------
 function waterfallCaveActiveBounds(cave){
+  if(typeof waterfallCaveSceneBoundsFor==='function')return waterfallCaveSceneBoundsFor(cave);
   if(cave&&cave.scene==='camp')return cave.campBounds||cave.deepBounds||cave.bounds||{};
   return cave&&cave.scene==='deep'&&(cave.deepBounds||cave.bounds)?(cave.deepBounds||cave.bounds):(cave&&cave.bounds||{});
 }
