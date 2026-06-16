@@ -288,7 +288,9 @@ const AU={
     bank.nextFireCrackle=this.now()+0.65+Math.random()*1.25;
   },
   waterfallCaveChurchHymnVolume(mode){
-    const base=mode==='distant'?0.12:0.57;
+    const bank=this.churchHymn||{};
+    const distantLevel=clamp(Number.isFinite(bank.distantLevel)?bank.distantLevel:1,0.05,1);
+    const base=mode==='distant'?0.12*distantLevel:0.47;
     return base*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
   },
   waterfallCaveChurchHymnElement(){
@@ -299,7 +301,7 @@ const AU={
       el.loop=true;
       el.preload='auto';
       el.volume=0;
-      this.churchHymn={el,timer:null,on:false};
+      this.churchHymn={el,timer:null,on:false,mode:'inside',distantLevel:1};
       return el;
     }catch(_){return null}
   },
@@ -343,6 +345,7 @@ const AU={
     const bank=this.churchHymn;
     bank.on=true;
     bank.mode=mode==='distant'?'distant':'inside';
+    if(bank.mode!=='distant')bank.distantLevel=1;
     try{
       if(el.paused){
         const p=el.play();
@@ -352,8 +355,17 @@ const AU={
     this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume(bank.mode),fade==null?1.0:fade);
     return true;
   },
-  startWaterfallCaveChurchHymnDistant(fade){
+  startWaterfallCaveChurchHymnDistant(fade,level){
+    const el=this.waterfallCaveChurchHymnElement();
+    if(el&&this.churchHymn)this.churchHymn.distantLevel=clamp(Number.isFinite(level)?level:1,0.05,1);
     return this.startWaterfallCaveChurchHymn(fade==null?0.85:fade,'distant');
+  },
+  setWaterfallCaveChurchHymnDistantLevel(level,fade){
+    const bank=this.churchHymn;
+    if(!bank||!bank.el||!bank.on)return false;
+    bank.mode='distant';
+    bank.distantLevel=clamp(Number.isFinite(level)?level:1,0.05,1);
+    return this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume('distant'),fade==null?0.18:fade);
   },
   stopWaterfallCaveChurchHymn(fade){
     const bank=this.churchHymn;
@@ -361,6 +373,7 @@ const AU={
     if(!el)return false;
     bank.on=false;
     bank.mode='inside';
+    bank.distantLevel=1;
     return this.fadeWaterfallCaveChurchHymn(0,fade==null?0.65:fade,()=>{
       try{
         el.pause();

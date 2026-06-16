@@ -148,7 +148,10 @@ if (caveRenderCode.includes('#f0d080')) {
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingFireLight') || caveRenderCode.includes('function flameLayer') || caveRenderCode.includes('fireX-72') || caveRenderCode.includes('fireX-50')) {
   throw new Error('Campfire cave render should use pixel-frame fire and lemming side-lighting instead of old rectangular light panels');
 }
-if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveChurchLemmingOcclusion') || !caveRenderCode.includes('drawWaterfallCavePriest') || !caveRenderCode.includes('drawWaterfallCaveBlessedLemmingOverlay') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
+if (!caveRenderCode.includes('drawWaterfallCaveEmberCampOpeningLight') || !caveRenderCode.includes('drawWaterfallCaveTorchGlow') || caveRenderCode.includes('[[CW,94],[CW,CH],[278,CH]') || caveRenderCode.includes('[[122,146],[44,92]') || caveRenderCode.includes('[[400,190],[450,174],[CW,184]') || caveRenderCode.includes('[[x-38,y+5],[x-17,y-31]') || caveRenderCode.includes('[[x,y-18],[x-70,y+28]')) {
+  throw new Error('Ember passage should use localized torch glow and opening-only campfire light');
+}
+if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveChurchLemmingOcclusion') || !caveRenderCode.includes('drawWaterfallCavePriest') || !caveRenderCode.includes('drawWaterfallCaveBlessedLemmingOverlay') || !caveRenderCode.includes('drawWaterfallCaveChurchBlessingText') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
   throw new Error('Waterfall cave render should replace the old root sanctum with a church model, church interior, and scaled ground cards');
 }
 if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.includes("c.fillRect(x-74,y-54,148,84)")) {
@@ -176,7 +179,7 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
 if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCaveMysteryMusic') || !audioCode.includes('CAVE_MYSTERY_GAIN_BOOST')) {
   throw new Error('Church scene should have an audible dedicated mystery music variant');
 }
-if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
+if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
@@ -352,6 +355,7 @@ const requiredRuntimeMethods = [
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'waterfallCaveRuneAt','waterfallCaveRuneLines','readWaterfallCaveRune',
+  'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -360,7 +364,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','sWaterfallCaveStep']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -663,6 +667,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStopMysteryMusic = AU.stopWaterfallCaveMysteryMusic;
   const prevStartChurchHymn = AU.startWaterfallCaveChurchHymn;
   const prevStartChurchHymnDistant = AU.startWaterfallCaveChurchHymnDistant;
+  const prevSetChurchHymnDistantLevel = AU.setWaterfallCaveChurchHymnDistantLevel;
   const prevStopChurchHymn = AU.stopWaterfallCaveChurchHymn;
   const prevMusicOn = AU.musicOn;
   const prevSfxOn = AU.sfxOn;
@@ -675,7 +680,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevHolyBlessingUnlocked = G.holyBlessingUnlocked;
   const prevHolyLevelLemId = G.holyLevelLemId;
   let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
-  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [];
+  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [], churchHymnLevels = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
   AU.startMusic = kind => { musicStarted.push(kind); };
@@ -691,7 +696,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.startWaterfallCaveMysteryMusic = fade => { mysteryStarted++; mysteryFadeDurations.push(fade); };
   AU.stopWaterfallCaveMysteryMusic = fade => { mysteryStopped++; mysteryFadeDurations.push(fade); };
   AU.startWaterfallCaveChurchHymn = fade => { churchHymnStarted++; churchHymnFadeDurations.push(fade); };
-  AU.startWaterfallCaveChurchHymnDistant = fade => { churchHymnDistantStarted++; churchHymnFadeDurations.push(fade); };
+  AU.startWaterfallCaveChurchHymnDistant = (fade, level) => { churchHymnDistantStarted++; churchHymnFadeDurations.push(fade); churchHymnLevels.push({level, fade, start:true}); };
+  AU.setWaterfallCaveChurchHymnDistantLevel = (level, fade) => { churchHymnLevels.push({level, fade}); };
   AU.stopWaterfallCaveChurchHymn = fade => { churchHymnStopped++; churchHymnFadeDurations.push(fade); };
   AU.musicOn = true;
   AU.sfxOn = true;
@@ -1243,6 +1249,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!blessing || !blessing.active || blessing.phase !== 'enter') {
     throw new Error('Walking near the church altar should start the priest blessing sequence');
   }
+  if (blessing.latinText !== 'BENEDICAT TE DOMINUS') {
+    throw new Error('Priest blessing should prepare a Latin blessing phrase');
+  }
   const lockedBlessingX = G.waterfallCave.lemX;
   G.handleWaterfallCaveKey('ArrowRight');
   for (let i = 0; i < 12; i++) G.tick();
@@ -1260,6 +1269,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (!(G.toasts || []).some(t => String(t && t.text || '').includes('GUDS VÄLSIGNELSE') && String(t && t.text || '').includes('ODÖDLIG'))) {
     throw new Error('Priest blessing should explain that the lemmel is now immortal');
+  }
+  if (!(G.waterfallCave.blessingMessageT > 0) || !(G.waterfallCave.blessingMessageLines || []).join(' ').includes('OD')) {
+    throw new Error('Priest blessing should show the immortal blessing text inside the church view');
   }
   const holyProbe = new Lemming(blessedLem.x, blessedLem.y);
   holyProbe.holy = true;
@@ -1291,6 +1303,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (churchHymnStopped !== churchHymnStoppedBeforeReturn || churchHymnDistantStarted <= churchHymnDistantBeforeReturn || !G.waterfallCave.churchHymnDistant) {
     throw new Error('Leaving the church interior should keep the hymn playing quietly in the church yard');
   }
+  const distantLevelsBeforeLeavingChurch = churchHymnLevels.length;
   const mysteryStoppedBeforeChurchExit = mysteryStopped;
   const hymnStoppedBeforeChurchExit = churchHymnStopped;
   G.waterfallCave.lemX = 240;
@@ -1301,29 +1314,21 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'glyphArchive') {
     throw new Error('Church scene did not return to the glyph archive');
   }
-  if (churchHymnStopped <= hymnStoppedBeforeChurchExit) {
-    throw new Error('Leaving the church yard for the glyph archive should stop the distant hymn');
+  if (churchHymnStopped !== hymnStoppedBeforeChurchExit || !G.waterfallCave.churchHymnDistant || !G.waterfallCave.churchHymnCarry) {
+    throw new Error('The distant hymn should continue into the glyph archive but not restart as normal music');
   }
   if (mysteryStopped <= mysteryStoppedBeforeChurchExit) {
     throw new Error('Leaving the church scene should stop the mystery music variant');
   }
-  const mysteryBeforeChurchReentry = mysteryStarted;
-  G.waterfallCave.lemX = 240;
-  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
-  G.handleWaterfallCaveKey('ArrowDown');
-  G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowDown');
-  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'church' || G.waterfallCave.churchHymnDistant || mysteryStarted <= mysteryBeforeChurchReentry) {
-    throw new Error('Returning to the church yard from the glyph archive should use the normal mystery music');
+  const distanceLevels = churchHymnLevels.slice(distantLevelsBeforeLeavingChurch).map(v => Number(v && v.level)).filter(Number.isFinite);
+  if (!distanceLevels.length || Math.min(...distanceLevels) >= Math.max(...churchHymnLevels.map(v => Number(v && v.level)).filter(Number.isFinite))) {
+    throw new Error('Distant church hymn volume should fall as the lemmel moves away from the church');
   }
-  G.waterfallCave.lemX = 240;
-  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
-  G.handleWaterfallCaveKey('ArrowUp');
-  G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowUp');
-  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'glyphArchive') {
-    throw new Error('Church scene did not return to the glyph archive after normal-music reentry');
+  const glyphArchiveLevel = distanceLevels[distanceLevels.length - 1];
+  if (!(glyphArchiveLevel <= 0.17)) {
+    throw new Error('Distant church hymn should be very quiet once it reaches the glyph archive');
   }
+  const hymnStoppedBeforeLeavingArchive = churchHymnStopped;
   G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).maxX;
   G.waterfallCave.lemY = 228;
   G.handleWaterfallCaveKey('ArrowRight');
@@ -1331,6 +1336,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKeyUp('ArrowRight');
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'mirrorPool') {
     throw new Error('Glyph archive did not return to the mirror pool');
+  }
+  if (churchHymnStopped <= hymnStoppedBeforeLeavingArchive || G.waterfallCave.churchHymnDistant || G.waterfallCave.churchHymnCarry) {
+    throw new Error('Leaving the glyph archive for the mirror pool should stop the distant hymn');
   }
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
@@ -1442,6 +1450,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWaterfallCaveMysteryMusic = prevStopMysteryMusic;
   AU.startWaterfallCaveChurchHymn = prevStartChurchHymn;
   AU.startWaterfallCaveChurchHymnDistant = prevStartChurchHymnDistant;
+  AU.setWaterfallCaveChurchHymnDistantLevel = prevSetChurchHymnDistantLevel;
   AU.stopWaterfallCaveChurchHymn = prevStopChurchHymn;
   AU.musicOn = prevMusicOn;
   AU.sfxOn = prevSfxOn;

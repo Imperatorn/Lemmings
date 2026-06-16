@@ -178,6 +178,8 @@ Object.assign(G,{
     this.holyLevelLemId=l.id;
     if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l);
     if(this.holyLemmingGlow)this.holyLemmingGlow(l,'blessing');
+    cave.blessingMessageT=180;
+    cave.blessingMessageLines=['LÄMMELN HAR FÅTT GUDS VÄLSIGNELSE','OCH ÄR NU ODÖDLIG'];
     this.toast('LÄMMELN HAR FÅTT GUDS VÄLSIGNELSE OCH ÄR NU ODÖDLIG',180);
     return true;
   },
@@ -202,6 +204,7 @@ Object.assign(G,{
     st.targetX=clamp((cave.lemX||240)-24,b.minX||78,b.maxX||402);
     st.targetY=ly;
     st.blessT=0;
+    st.latinText='BENEDICAT TE DOMINUS';
     cave.lemY=ly;
     cave.facing='front';
     cave.walking=false;
@@ -361,7 +364,18 @@ Object.assign(G,{
     cave.walking=false;
     cave.running=false;
     cave.lastStepT=cave.t||0;
-    cave.churchHymnDistant=def.id==='church'&&prevScene==='churchInterior';
+    if(def.id==='churchInterior'){
+      cave.churchHymnCarry=false;
+      cave.churchHymnDistant=false;
+    }else if(prevScene==='churchInterior'&&def.id==='church'){
+      cave.churchHymnCarry=true;
+      cave.churchHymnDistant=true;
+    }else if(cave.churchHymnCarry&&(def.id==='church'||def.id==='glyphArchive')){
+      cave.churchHymnDistant=true;
+    }else{
+      cave.churchHymnDistant=false;
+      if(prevScene==='church'||prevScene==='glyphArchive')cave.churchHymnCarry=false;
+    }
     if(!opts||opts.audio!==false)this.setWaterfallCaveSceneAudio(def.id,{fromScene:prevScene});
     return true;
   },
@@ -482,10 +496,34 @@ Object.assign(G,{
   startWeatherAfterWaterfallCave(kind){
     if(this.state==='PLAY'&&this.level&&AU.startWeather)AU.startWeather(kind||this.weatherKind);
   },
+  waterfallCaveChurchHymnDistanceLevel(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||!cave.churchHymnCarry)return 0;
+    if(cave.scene==='church'){
+      const d=Math.hypot((cave.lemX||258)-258,(cave.lemY||270)-270);
+      return clamp(1-d/150,0.32,1);
+    }
+    if(cave.scene==='glyphArchive'){
+      const d=Math.hypot((cave.lemX||240)-240,(cave.lemY||282)-282);
+      return clamp(0.16-d/360,0.05,0.16);
+    }
+    return 0;
+  },
+  updateWaterfallCaveChurchHymnDistance(cave,fade,start){
+    cave=cave||this.waterfallCave;
+    const level=this.waterfallCaveChurchHymnDistanceLevel(cave);
+    if(!(level>0))return false;
+    if(start){
+      if(AU.startWaterfallCaveChurchHymnDistant)AU.startWaterfallCaveChurchHymnDistant(fade==null?0.85:fade,level);
+      else if(AU.startWaterfallCaveChurchHymn)AU.startWaterfallCaveChurchHymn(fade==null?0.85:fade,'distant');
+    }
+    if(AU.setWaterfallCaveChurchHymnDistantLevel)AU.setWaterfallCaveChurchHymnDistantLevel(level,fade==null?0.18:Math.min(0.35,fade));
+    return true;
+  },
   setWaterfallCaveSceneAudio(scene,opts){
     const def=this.waterfallCaveSceneDef(scene)||{};
     const audio=def.audio||scene;
-    const distantChurchHymn=audio==='church-mystery'&&this.waterfallCave&&this.waterfallCave.scene==='church'&&this.waterfallCave.churchHymnDistant;
+    const distantChurchHymn=!!(this.waterfallCave&&this.waterfallCave.churchHymnDistant&&(this.waterfallCave.scene==='church'||this.waterfallCave.scene==='glyphArchive'));
     if(audio!=='church-hymn'&&!distantChurchHymn&&AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.65);
     if((audio!=='church-mystery'||distantChurchHymn)&&AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.65);
     if(audio==='campfire'){
@@ -504,8 +542,7 @@ Object.assign(G,{
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.08,0.85);
       if(distantChurchHymn){
-        if(AU.startWaterfallCaveChurchHymnDistant)AU.startWaterfallCaveChurchHymnDistant(0.95);
-        else if(AU.startWaterfallCaveChurchHymn)AU.startWaterfallCaveChurchHymn(0.95,'distant');
+        this.updateWaterfallCaveChurchHymnDistance(this.waterfallCave,0.95,true);
       }else if(AU.startWaterfallCaveMysteryMusic)AU.startWaterfallCaveMysteryMusic(1.35);
     }else if(audio==='church-hymn'){
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
@@ -515,6 +552,7 @@ Object.assign(G,{
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.45);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(audio==='waterfall-near'?1.0:0.12,0.65);
     }
+    if(distantChurchHymn&&audio!=='church-mystery')this.updateWaterfallCaveChurchHymnDistance(this.waterfallCave,0.95,true);
   },
   waterfallCaveMovementHeld(cave){
     const k=(cave&&cave.keys)||{};
@@ -622,6 +660,7 @@ Object.assign(G,{
     if(!this.waterfallCaveActive())return false;
     const cave=this.waterfallCave;
     cave.t++;
+    if(cave.blessingMessageT>0)cave.blessingMessageT--;
     this.ensureWaterfallCaveSceneState(cave);
     cave.keys=cave.keys||{};
     if(cave.mapOpen){
@@ -686,6 +725,7 @@ Object.assign(G,{
       ch.near=false;ch.opened=false;ch.glowT=0;
     }
     this.updateWaterfallCaveSceneObjects(cave);
+    if(cave.churchHymnDistant)this.updateWaterfallCaveChurchHymnDistance(cave,0.18,false);
     if(cave.scene==='deep'){
       const it=cave.deepItem||(cave.deepItem={x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
       const ix=Math.abs((cave.lemX||0)-it.x),iy=Math.abs((cave.lemY||0)-it.y);
