@@ -137,6 +137,7 @@
       ctx.drawImage(WORLD_CV,0,0);
       if(G.waterfallCaveActive&&G.waterfallCaveActive()){
         drawWaterfallCaveView(ctx,DBG.tick);
+        if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
         drawToastStack(ctx);
         return;
       }
@@ -329,6 +330,26 @@
     finishAnimationSetup('Animation: direktstyrd lemming gar in bakom vattenfallet.');
   }
 
+  function setupWaterfallCaveScene(sceneId,spawnId,label){
+    if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    clearDebugActors();
+    const x=worldCenterX();
+    const l=firstLiveLemming();
+    resetDebugLemming(l,x,groundYAt(x));
+    l.state='MANUAL';l.dir=1;
+    G.lems=[l];G.out=1;
+    G.manual={used:true,active:true,lemId:l.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
+    if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte oppna vattenfallsgrottan.','warn');return}
+    if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry')){
+      setStatus('Kunde inte ga till grottscen: '+sceneId,'warn');
+      return;
+    }
+    if(G.clearWaterfallCaveMoveKeys)G.clearWaterfallCaveMoveKeys(G.waterfallCave);
+    finishAnimationSetup('Grottdebug: '+(label||sceneId)+'. Styr med piltangenterna, Shift gar snabbare, M visar kartan.');
+  }
+
   function setupFishRingAnimation(){
     if(!ensureWaterLevelForFishRing()){setStatus('Ingen vattenbana hittades för badringstest.','warn');return}
     clearDebugActors();
@@ -517,6 +538,7 @@
     if(action!=='camLeft'&&action!=='camRight'&&!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
     audioReady();
     if(action&&action.indexOf('anim')===0){doAnimation(action);return}
+    if(action==='caveGlyphArchive'){setupWaterfallCaveScene('glyphArchive','fromChurch','Runarkivet');return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;
     }
@@ -722,6 +744,72 @@
     }
   }
 
+  function debugCanvasPos(e){
+    const r=cvs.getBoundingClientRect();
+    const w=Math.max(1,r.width),h=Math.max(1,r.height);
+    return {
+      x:clamp((e.clientX-r.left)*CW/w,0,CW-0.001),
+      y:clamp((e.clientY-r.top)*CH/h,0,CH-0.001)
+    };
+  }
+
+  function debugTypingTarget(target){
+    const tag=target&&target.tagName?String(target.tagName).toLowerCase():'';
+    return tag==='input'||tag==='select'||tag==='textarea'||!!(target&&target.isContentEditable);
+  }
+
+  function handleDebugCavePointer(e,kind){
+    if(!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive()))return false;
+    e.preventDefault();
+    audioReady();
+    const p=debugCanvasPos(e);
+    if(G.waterfallCaveActive&&G.waterfallCaveActive())G.handleWaterfallCaveInput(p,kind||'click');
+    else if(G.cutsceneActive&&G.cutsceneActive())G.handleCutsceneInput(p,kind||'click');
+    renderDebug();
+    ensureLoop();
+    return true;
+  }
+
+  function handleDebugCaveKeyDown(e){
+    if(debugTypingTarget(e.target))return;
+    if(G.waterfallCaveActive&&G.waterfallCaveActive()){
+      audioReady();
+      G.handleWaterfallCaveKey(e.key);
+      e.preventDefault();
+      renderDebug();
+      ensureLoop();
+      return;
+    }
+    if(G.cutsceneActive&&G.cutsceneActive()){
+      if(G.handleCutsceneKey)G.handleCutsceneKey(e.key);
+      e.preventDefault();
+      renderDebug();
+      ensureLoop();
+    }
+  }
+
+  function handleDebugCaveKeyUp(e){
+    if(debugTypingTarget(e.target))return;
+    if(G.waterfallCaveActive&&G.waterfallCaveActive()){
+      if(G.handleWaterfallCaveKeyUp)G.handleWaterfallCaveKeyUp(e.key);
+      e.preventDefault();
+      renderDebug();
+    }
+  }
+
+  function bindDebugCaveControls(){
+    cvs.addEventListener('contextmenu',e=>{
+      if(handleDebugCavePointer(e,'context'))return;
+      e.preventDefault();
+    });
+    cvs.addEventListener('mousedown',e=>{
+      if(e.button===2)handleDebugCavePointer(e,'context');
+      else if(e.button===0)handleDebugCavePointer(e,'click');
+    });
+    window.addEventListener('keydown',handleDebugCaveKeyDown);
+    window.addEventListener('keyup',handleDebugCaveKeyUp);
+  }
+
   function initDebugPage(){
     DBG.levelSelect=$('levelSelect');
     DBG.statusEl=$('debugStatus');
@@ -754,6 +842,7 @@
 
     buildAudioButtons();
     buildCutsceneButtons();
+    bindDebugCaveControls();
     $('debugReady').textContent='Redo';
     $('debugReady').style.color='var(--ok)';
     renderDebug();
