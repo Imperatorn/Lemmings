@@ -813,6 +813,11 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
     const sx=x-102+i*13;
     c.fillRect(sx,y+18+(i%2),8,2);
   }
+  c.fillStyle='#1b2022';
+  fillPixelPoly(c,[[x-108,y+32],[x-84,y+22],[x+100,y+23],[x+124,y+31],[x+96,y+38],[x-96,y+38]]);
+  c.fillStyle='#728087';
+  c.fillRect(x-98,y+21,26,2);
+  c.fillRect(x+44,y+23,42,2);
 
   c.fillStyle='#9b3f1d';
   fillPixelPoly(c,[[x-62,y-58],[x+16,y-80],[x+104,y-56],[x+88,y-43],[x-74,y-42]]);
@@ -822,6 +827,10 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   for(let i=0;i<10;i++)c.fillRect(x-54+i*14,y-55+Math.floor(i/3),10,3);
   c.fillStyle='#e0904c';
   c.fillRect(x-42,y-61,114,2);
+  c.fillStyle='#5a1d12';
+  c.fillRect(x-69,y-43,160,4);
+  c.fillStyle='#b95528';
+  c.fillRect(x+92,y-47,30,3);
 
   c.fillStyle='#f0e5bc';
   fillPixelPoly(c,[[x-58,y-43],[x+88,y-43],[x+88,y+18],[x-58,y+18]]);
@@ -829,24 +838,39 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   fillPixelPoly(c,[[x+88,y-43],[x+124,y-28],[x+124,y+16],[x+88,y+18]]);
   c.fillStyle='#fff3c8';
   fillPixelPoly(c,[[x-56,y-40],[x+22,y-40],[x+22,y+17],[x-56,y+17]]);
+  c.fillStyle='#e7d9a6';
+  c.fillRect(x+24,y-38,60,55);
+  c.fillStyle='#c9b77f';
+  c.fillRect(x+88,y-38,3,56);
+  c.fillStyle='#f8edc4';
+  c.fillRect(x-52,y-36,32,51);
   c.fillStyle='#b39d6b';
   c.fillRect(x-58,y-2,146,2);
   c.fillRect(x-58,y+17,146,3);
+  c.fillStyle='#9c8758';
+  c.fillRect(x-58,y-43,146,2);
+  for(let i=0;i<6;i++)c.fillRect(x-45+i*22,y+20,14,2);
 
   c.fillStyle='#5f2415';
   fillPixelPoly(c,[[x-108,y-78],[x-72,y-88],[x-50,y-76],[x-58,y-65],[x-112,y-64]]);
+  c.fillStyle='#8f351b';
+  fillPixelPoly(c,[[x-106,y-77],[x-72,y-86],[x-54,y-76],[x-59,y-70],[x-110,y-68]]);
   c.fillStyle='#e9ddb4';
   fillPixelPoly(c,[[x-106,y-64],[x-58,y-64],[x-58,y+18],[x-106,y+18]]);
   c.fillStyle='#cdbb88';
   fillPixelPoly(c,[[x-58,y-64],[x-42,y-54],[x-42,y+16],[x-58,y+18]]);
   c.fillStyle='#fff0c2';
   c.fillRect(x-103,y-60,42,42);
+  c.fillStyle='#d8c997';
+  c.fillRect(x-60,y-54,3,70);
   c.fillStyle='#b49e70';
   c.fillRect(x-106,y-10,48,2);
   c.fillRect(x-106,y+17,48,3);
 
   c.fillStyle='#303033';
   fillPixelPoly(c,[[x-101,y-118],[x-62,y-118],[x-52,y-104],[x-58,y-78],[x-108,y-78],[x-112,y-104]]);
+  c.fillStyle='#3a3838';
+  c.fillRect(x-106,y-83,46,4);
   c.fillStyle='#4c4a42';
   fillPixelPoly(c,[[x-95,y-158],[x-82,y-184],[x-70,y-158],[x-62,y-118],[x-102,y-118]]);
   c.fillStyle='#252629';
@@ -879,6 +903,9 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   c.fillRect(x+5,y-8,14,24);
   c.fillStyle='#d1a45a';
   c.fillRect(x+17,y+3,2,2);
+  c.fillStyle='#8d7350';
+  c.fillRect(x+1,y+18,22,3);
+  c.fillRect(x-2,y+21,28,2);
 
   c.globalAlpha=0.28+0.20*light;
   c.fillStyle='#d8ecff';
@@ -1073,27 +1100,46 @@ function drawWaterfallCavePriest(c,st,tk){
   const walking=st.phase==='enter'||st.phase==='exit';
   const bless=st.phase==='raise'||st.phase==='bless';
   const handReach=st.phase==='raise'?clamp(st.t/18,0,1):(st.phase==='bless'?1:0);
-  const step=walking?((tk>>3)&1):0;
+  const step=walking?((st.t>>3)&1):0;
+  const d=st.phase==='exit'?-1:1;
   c.save();
+  c.globalAlpha=0.26;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[x-12,y+3],[x-6,y],[x+8,y],[x+14,y+3],[x+8,y+6],[x-8,y+6]]);
+  c.globalAlpha=1;
   c.translate(x,y);
-  c.scale(2.05,2.05);
+  c.scale(d*2.05,2.05);
   function p(x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h)}
-  p(-4,-2,3,2,'#17100d');
-  p(2-step,-2,3,2,'#17100d');
-  p(-4,-13,8,11,'#201713');
-  p(-5,-10,2,7,'#15100e');
-  p(3,-10,2,7,'#15100e');
-  p(-3,-15,6,3,'#f3ead2');
-  p(-3,-21,6,6,'#f0c99b');
+  const sway=walking?(step?1:0):0;
+  p(-5,-2,3,2,'#17100d');
+  p(2+sway,-2,3,2,'#17100d');
+  c.fillStyle='#15100e';
+  fillPixelPoly(c,[[-6,-2],[-4,-14],[4,-14],[7,-2]]);
+  c.fillStyle='#261b16';
+  fillPixelPoly(c,[[-4,-13],[2,-13],[4,-2],[-5,-2]]);
+  c.fillStyle='#0c0a09';
+  fillPixelPoly(c,[[2,-13],[5,-12],[7,-2],[4,-2]]);
+  p(-5,-10,2,7,'#1b1411');
+  p(3,-10,2,7,'#100c0b');
+  p(-3,-15,6,3,'#f4ead8');
+  p(-1,-15,2,5,'#ffffff');
+  p(-3,-21,6,6,'#efc89a');
+  p(2,-19,2,2,'#f5d3ab');
   p(-4,-23,8,3,'#3a3028');
-  p(0,-15,1,3,'#ffffff');
+  p(-3,-24,6,1,'#5d5147');
   p(2,-19,1,1,'#1a1715');
-  p(4,-15,2,5,'#201713');
+  p(4,-13,2,5,'#211914');
   if(bless){
-    const reach=Math.round(8*handReach);
-    p(4,-15,2+reach,2,'#201713');
-    p(5+reach,-15,2,2,'#f0c99b');
-  }else p(4,-12,2,5,'#201713');
+    const reach=Math.round(12*handReach);
+    p(4,-10,3+reach,2,'#211914');
+    p(7+reach,-10,2,2,'#efc89a');
+    p(8+reach,-9,2,1,'#ffe8bd');
+  }else{
+    p(4,-11,2,5,'#211914');
+    p(4,-6,2,1,'#efc89a');
+  }
+  p(-2,-12,1,10,'#d8c58a');
+  if(bless)p(0,-8,1,1,'#d8c58a');
   c.restore();
   return true;
 }
@@ -1101,21 +1147,28 @@ function drawWaterfallCavePriest(c,st,tk){
 function drawWaterfallCaveBlessedLemmingOverlay(c,cave,lx,ly,scale,st,tk){
   if(!st||st.phase!=='bless')return false;
   const pulse=0.55+0.45*Math.sin((tk+st.t)*0.18);
+  const hx=lx,hy=ly-Math.round(10*scale);
+  const rx=Math.max(4,Math.round(5*scale)),ry=Math.max(3,Math.round(4*scale));
   c.save();
   c.globalCompositeOperation='lighter';
-  c.globalAlpha=0.22+0.18*pulse;
+  c.globalAlpha=0.16+0.10*pulse;
   c.fillStyle='#fff3a0';
   fillPixelPoly(c,[
-    [lx-Math.round(13*scale),ly-Math.round(30*scale)],
-    [lx-Math.round(6*scale),ly-Math.round(42*scale)],
-    [lx+Math.round(8*scale),ly-Math.round(42*scale)],
-    [lx+Math.round(15*scale),ly-Math.round(30*scale)],
-    [lx+Math.round(8*scale),ly-Math.round(20*scale)],
-    [lx-Math.round(8*scale),ly-Math.round(20*scale)]
+    [hx-rx*2,hy],
+    [hx-rx,hy-ry*2],
+    [hx+rx,hy-ry*2],
+    [hx+rx*2,hy],
+    [hx+rx,hy+ry],
+    [hx-rx,hy+ry]
   ]);
-  c.globalAlpha=0.55+0.20*pulse;
+  c.globalAlpha=0.52+0.18*pulse;
   c.fillStyle='#ffffff';
-  c.fillRect(lx-Math.round(5*scale),ly-Math.round(31*scale),Math.round(10*scale),Math.max(1,Math.round(1.4*scale)));
+  c.fillRect(hx-rx,hy-Math.max(1,Math.round(2*scale)),rx*2,Math.max(1,Math.round(1.2*scale)));
+  c.globalAlpha=0.22+0.08*pulse;
+  c.fillStyle='#d8ecff';
+  c.fillRect(hx-Math.round(2*scale),hy-ry*3,Math.max(1,Math.round(4*scale)),Math.max(1,Math.round(1*scale)));
+  c.fillRect(hx-rx*3,hy-Math.round(1*scale),Math.max(1,Math.round(2*scale)),Math.max(1,Math.round(1*scale)));
+  c.fillRect(hx+rx*3-Math.round(2*scale),hy-Math.round(1*scale),Math.max(1,Math.round(2*scale)),Math.max(1,Math.round(1*scale)));
   c.restore();
   c.save();
   c.translate(lx,ly);
@@ -1123,7 +1176,7 @@ function drawWaterfallCaveBlessedLemmingOverlay(c,cave,lx,ly,scale,st,tk){
   c.fillStyle=(typeof COL==='object'&&COL&&COL.skin)||'#ffd9a8';
   c.fillRect(-2,-8,4,2);
   c.fillStyle='#102040';
-  c.fillRect(-1,-7,1,1);
+  c.fillRect(-2,-7,1,1);
   c.fillRect(1,-7,1,1);
   c.restore();
   return true;
