@@ -81,6 +81,7 @@ const G={
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1, cutscenesOn:true,
   lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
+  holyBlessingUnlocked:false, holyLevelLemId:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
   monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0, monkeyAirSupportPending:false, monkeyAirSupportTargetX:null,
@@ -308,12 +309,39 @@ const G={
     if(applied)this.savePrefs();
     return applied;
   },
+  unlockHolyBlessing(){
+    if(this.holyBlessingUnlocked)return false;
+    this.holyBlessingUnlocked=true;
+    this.savePrefs();
+    return true;
+  },
+  normalizeHolyLemmings(preferred){
+    let keep=(preferred&&preferred.holy&&!preferred.dead)?preferred:null;
+    for(const l of this.lems||[]){
+      if(!l||!l.holy)continue;
+      if(!keep&&!l.dead)keep=l;
+      else if(l!==keep)l.holy=false;
+    }
+    this.holyLevelLemId=(keep&&!keep.dead)?keep.id:null;
+    return keep;
+  },
+  assignHolyLemmingForLevel(l,source){
+    if(!l||!this.holyBlessingUnlocked||this.holyLevelLemId!=null)return false;
+    if(source&&source!=='hatch')return false;
+    l.holy=true;
+    l.holySaveT=-999;
+    this.holyLevelLemId=l.id;
+    this.normalizeHolyLemmings(l);
+    return true;
+  },
   loadPrefs(){
     const p=loadPersisted();
     if(p.mode==='classic'||p.mode==='chaos')this.mode=p.mode;
     if(Array.isArray(p.cleared))this.cleared=this.cleared.map((_,i)=>!!p.cleared[i]);
     if(Number.isFinite(p.money))this.money=Math.max(0,p.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus(p.pendingSkillBonus);
+    this.holyBlessingUnlocked=!!p.holyBlessingUnlocked;
+    this.holyLevelLemId=null;
     if(typeof p.musicOn==='boolean')AU.musicOn=p.musicOn;
     if(typeof p.sfxOn==='boolean')AU.sfxOn=p.sfxOn;
     if(typeof p.cutscenesOn==='boolean')this.cutscenesOn=p.cutscenesOn;
@@ -326,7 +354,7 @@ const G={
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
@@ -638,7 +666,7 @@ const G={
     const D=createLevelDecorApi(this);
     if(L.decor)L.decor(D);
     // status
-    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.waterfallCaveLooted={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.waterfallCaveLooted={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.holyLevelLemId=null;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;this.sunSurpriseT=0;
     this.meteorT=(L.night&&!L.cave)?Math.round((18+this.rand()*34)*1000/TICK):0;
     this.cam=clamp(L.hatch.x-160,0,this.maxCamFor(L));
@@ -3146,6 +3174,7 @@ const G={
     if(this.doorT>24&&this.spawned<L.lem){
       if(--this.spawnT<=0){
         const l=new Lemming(L.hatch.x,L.hatch.y+6);
+        this.assignHolyLemmingForLevel(l,'hatch');
         this.lems.push(l);this.spawned++;
         if(this.lamp&&this.lamp.holder===null&&!this.lamp.onGround&&this.spawned===1){
           this.lamp.holder=l.id;

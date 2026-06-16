@@ -136,9 +136,12 @@ Object.assign(G,{
     const l=this.findLemById?this.findLemById(cave.lemId):null;
     cave.flags=cave.flags||{};
     cave.flags.priestBlessed=true;
+    if(this.unlockHolyBlessing)this.unlockHolyBlessing();
     if(!l||l.holy)return false;
     l.holy=true;
     l.holySaveT=-999;
+    this.holyLevelLemId=l.id;
+    if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l);
     if(this.holyLemmingGlow)this.holyLemmingGlow(l,'blessing');
     this.toast('LÄMMELN ÄR VÄLSIGNAD');
     return true;

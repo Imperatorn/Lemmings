@@ -125,6 +125,9 @@ if (!gameCode.includes('holyLemmingSurvive') || !gameCode.includes('holyLemmingS
 if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('clearTransientText') || waterfallRuntimeCode.includes('BAKOM VATTENFALLET')) {
   throw new Error('Entering the waterfall cave should clear existing text instead of showing cave instruction toasts');
 }
+if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHolyLemmingForLevel') || !gameCode.includes('normalizeHolyLemmings')) {
+  throw new Error('Blessed lemmels should unlock exactly one persistent holy hatch lemmel for future levels');
+}
 const cutsceneScenesCode = fs.readFileSync(path.join(root, 'js/07_cutscene_scenes.js'), 'utf8');
 if (!cutsceneScenesCode.includes('function cutsceneLemmingRingScale') || cutsceneScenesCode.includes('Math.round(sc*0.58)') || cutsceneScenesCode.includes('Math.round(sc*0.54)')) {
   throw new Error('Fish ring cutscene should use the larger lemming-fit swim ring scale');
@@ -316,6 +319,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
+  'unlockHolyBlessing','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'restoreGoalBase',
@@ -660,6 +664,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevToasts = G.toasts;
   const prevMsg = G.msg;
   const prevMsgT = G.msgT;
+  const prevHolyBlessingUnlocked = G.holyBlessingUnlocked;
+  const prevHolyLevelLemId = G.holyLevelLemId;
   let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnStopped = 0;
   const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [];
   AU.startWaterfallCave = () => { started++; };
@@ -1351,6 +1357,19 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (musicStarted.length !== musicBeforeSilentExit || weatherStarted.length !== weatherBeforeSilentExit) {
     throw new Error('Silent waterfall cave exit should not restart music or weather');
   }
+  if (!G.holyBlessingUnlocked) {
+    throw new Error('Priest blessing should unlock persistent holy hatch lemmels');
+  }
+  G.holyLevelLemId = null;
+  G.startLevel(waterfallIdx);
+  for (let i = 0; i < 120 && G.spawned < 3; i++) G.tick();
+  const holyHatchLems = (G.lems || []).filter(l => l && l.holy);
+  if (holyHatchLems.length !== 1 || G.holyLevelLemId !== holyHatchLems[0].id) {
+    throw new Error('A blessed profile should spawn exactly one holy hatch lemmel on a new level');
+  }
+  if ((G.lems || []).some(l => l && l !== holyHatchLems[0] && l.holy)) {
+    throw new Error('Only one lemmel may be holy in a new level');
+  }
   AU.startWaterfallCave = prevStartWaterfall;
   AU.stopWaterfallCave = prevStopWaterfall;
   AU.startMusic = prevStartMusic;
@@ -1375,6 +1394,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.toasts = prevToasts;
   G.msg = prevMsg;
   G.msgT = prevMsgT;
+  G.holyBlessingUnlocked = prevHolyBlessingUnlocked;
+  G.holyLevelLemId = prevHolyLevelLemId;
 }
 {
   const prevMoney = G.money;

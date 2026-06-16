@@ -7,7 +7,7 @@ Object.assign(G,{
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax','monkeySeq',
       'monkeyAirSupportPending','monkeyAirSupportTargetX','monkeyLastX','trollT','trollEvents','trollMax','trollLastX','treeT','treeEvents','treeMax','treeLastX','jumpT','jumpEvents','jumpMax',
-      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus'];
+      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus','holyBlessingUnlocked','holyLevelLemId'];
     const arrays=['lems','parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','settledTrollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
     const data={v:1,label:String(label||'SPARAT LÄGE').slice(0,28),ts:Date.now?Date.now():0,levelIdx:this.levelIdx,levelSeed:this.levelSeed>>>0,
@@ -63,10 +63,12 @@ Object.assign(G,{
     this.waterfallCaveResumeWeather=null;
     this.money=Math.max(0,this.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus?this.normalizePendingSkillBonus(this.pendingSkillBonus):{};
+    this.holyBlessingUnlocked=!!(this.holyBlessingUnlocked||loadPersisted().holyBlessingUnlocked);
     if(this.selSkill==='nuke')this.selSkill=null;
     this.paused=false;
     this.levelIdx=s.levelIdx|0;this.level=LEVELS[this.levelIdx];this.levelSeed=s.levelSeed>>>0;
     this.lems=(arrays.lems||[]).map(d=>{const l=new Lemming(d.x||0,d.y||0);Object.assign(l,d);return l});
+    if(this.normalizeHolyLemmings)this.normalizeHolyLemmings();
     let maxId=0;for(const l of this.lems)maxId=Math.max(maxId,l.id||0);LEM_ID=Math.max(LEM_ID,maxId+1);
     const names=['parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','settledTrollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
