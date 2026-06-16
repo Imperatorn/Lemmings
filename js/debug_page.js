@@ -846,7 +846,8 @@
   }
 
   function handleDebugGamePointer(e,kind){
-    if(!DBG.gameInput||G.state!=='PLAY'||!(G.level&&G.T)||G.waterfallCaveActive&&G.waterfallCaveActive()||G.cutsceneActive&&G.cutsceneActive())return false;
+    const overlayActive=(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive());
+    if(!DBG.gameInput||G.state!=='PLAY'||!(G.level&&G.T)||overlayActive)return false;
     e.preventDefault();
     audioReady();
     const p=debugRefreshGamePointer(e);
@@ -881,7 +882,8 @@
   }
 
   function handleDebugGameKeyDown(e){
-    if(!DBG.gameInput||debugTypingTarget(e.target)||G.state!=='PLAY'||G.waterfallCaveActive&&G.waterfallCaveActive()||G.cutsceneActive&&G.cutsceneActive())return false;
+    const overlayActive=(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive());
+    if(!DBG.gameInput||debugTypingTarget(e.target)||G.state!=='PLAY'||overlayActive)return false;
     if(G.portalStone&&G.portalStone.placingExit&&(e.key==='Escape'||e.key==='b'||e.key==='B')){
       G.cancelPortalStonePlacement();
       e.preventDefault();
