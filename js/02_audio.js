@@ -288,7 +288,7 @@ const AU={
     bank.nextFireCrackle=this.now()+0.65+Math.random()*1.25;
   },
   waterfallCaveChurchHymnVolume(){
-    return 0.78*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    return 0.66*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
   },
   waterfallCaveChurchHymnElement(){
     if(this.churchHymn&&this.churchHymn.el)return this.churchHymn.el;
