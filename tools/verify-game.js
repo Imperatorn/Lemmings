@@ -716,6 +716,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.lemX <= startCaveX) {
     throw new Error('Waterfall cave lemming did not move with arrow keys');
   }
+  const normalCaveMove = G.waterfallCave.lemX - startCaveX;
   const rightAnim = G.waterfallCave.walkAnim;
   if (G.waterfallCave.facing !== 'right' || !G.waterfallCave.walking || rightAnim <= 0) {
     throw new Error('Waterfall cave lemming did not face right and animate while walking right');
@@ -723,6 +724,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.tick();
   if (G.waterfallCave.walking || G.waterfallCave.walkAnim !== rightAnim) {
     throw new Error('Waterfall cave lemming legs should stop animating when idle');
+  }
+  const runStartX = G.waterfallCave.lemX;
+  G.handleWaterfallCaveKey('Shift');
+  G.handleWaterfallCaveKey('ArrowRight');
+  for (let i = 0; i < 4; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  G.handleWaterfallCaveKeyUp('Shift');
+  const runCaveMove = G.waterfallCave.lemX - runStartX;
+  if (!(runCaveMove > normalCaveMove * 1.35) || G.waterfallCave.keys.run || G.waterfallCave.running) {
+    throw new Error('Holding Shift should make the waterfall cave lemming run faster and release cleanly');
   }
   G.waterfallCave.lemX = G.waterfallCave.bounds.minX;
   G.waterfallCave.lemY = 220;

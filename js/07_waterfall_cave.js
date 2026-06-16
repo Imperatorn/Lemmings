@@ -181,6 +181,7 @@ Object.assign(G,{
       if(Number.isFinite(spawn.dir))cave.dir=spawn.dir;
     }
     cave.walking=false;
+    cave.running=false;
     cave.lastStepT=cave.t||0;
     if(!opts||opts.audio!==false)this.setWaterfallCaveSceneAudio(def.id);
     return true;
@@ -256,8 +257,8 @@ Object.assign(G,{
     const chest=this.waterfallCaveObjectDefaultData('main','chest',{x:342,y:226,coins:3,opened:false,collected:false,near:false,glowT:0});
     chest.collected=looted;chest.lootKey=lootKey;
     this.waterfallCave={
-      active:true,t:0,scene:'main',inputMode:'direct',lemId:l.id,lemX:spawn.x,lemY:spawn.y,dir:l.dir||1,facing:spawn.facing||'front',walking:false,walkAnim:0,lastStepT:-999,stepSide:0,
-      keys:{left:false,right:false,up:false,down:false},
+      active:true,t:0,scene:'main',inputMode:'direct',lemId:l.id,lemX:spawn.x,lemY:spawn.y,dir:l.dir||1,facing:spawn.facing||'front',walking:false,running:false,walkAnim:0,lastStepT:-999,stepSide:0,
+      keys:{left:false,right:false,up:false,down:false,run:false},
       bounds:this.cloneWaterfallCaveData(main.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298}),
       deepBounds:this.cloneWaterfallCaveData(deep.bounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276}),
       campBounds:this.cloneWaterfallCaveData(camp.bounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182}),
@@ -336,7 +337,8 @@ Object.assign(G,{
     else if(key==='ArrowRight')k.right=value;
     else if(key==='ArrowUp')k.up=value;
     else if(key==='ArrowDown')k.down=value;
-    return key==='ArrowLeft'||key==='ArrowRight'||key==='ArrowUp'||key==='ArrowDown';
+    else if(key==='Shift')k.run=value;
+    return key==='ArrowLeft'||key==='ArrowRight'||key==='ArrowUp'||key==='ArrowDown'||key==='Shift';
   },
   toggleWaterfallCaveDeepItemCover(it){
     if(!it||!it.coverOpen)return false;
@@ -369,7 +371,8 @@ Object.assign(G,{
     if(dx||dy){
       const inv=Math.hypot(dx,dy)>1?1/Math.hypot(dx,dy):1;
       dx*=inv;dy*=inv;
-      const sp=1.55;
+      const running=!!cave.keys.run;
+      const sp=running?2.35:1.55;
       const oldX=cave.lemX==null?240:cave.lemX, oldY=cave.lemY==null?210:cave.lemY;
       let nextX=clamp(oldX+dx*sp,b.minX,b.maxX);
       let nextY=clamp(oldY+dy*sp,b.minY,b.maxY);
@@ -387,8 +390,10 @@ Object.assign(G,{
       if(dx){cave.dir=dx>0?1:-1;cave.facing=dx>0?'right':'left'}
       else cave.facing=dy<0?'back':'front';
       cave.walking=true;
-      cave.walkAnim=(cave.walkAnim||0)+1;
-      if(AU.sWaterfallCaveStep&&(cave.t-(Number.isFinite(cave.lastStepT)?cave.lastStepT:-999))>=10){
+      cave.running=running;
+      cave.walkAnim=(cave.walkAnim||0)+(running?2:1);
+      const stepGap=running?7:10;
+      if(AU.sWaterfallCaveStep&&(cave.t-(Number.isFinite(cave.lastStepT)?cave.lastStepT:-999))>=stepGap){
         cave.lastStepT=cave.t;
         cave.stepSide=1-(cave.stepSide||0);
         const far=Number.isFinite(b.exitY)?b.exitY:(Number.isFinite(b.minY)?b.minY:176);
@@ -398,6 +403,7 @@ Object.assign(G,{
       }
     }else{
       cave.walking=false;
+      cave.running=false;
     }
     const ch=cave.chest;
     if(cave.scene==='main'&&ch){
