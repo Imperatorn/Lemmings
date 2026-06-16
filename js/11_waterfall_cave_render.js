@@ -1130,10 +1130,15 @@ function drawWaterfallCavePriest(c,st,tk){
   p(2,-19,1,1,'#1a1715');
   p(4,-13,2,5,'#211914');
   if(bless){
-    const reach=Math.round(12*handReach);
-    p(4,-10,3+reach,2,'#211914');
-    p(7+reach,-10,2,2,'#efc89a');
-    p(8+reach,-9,2,1,'#ffe8bd');
+    const elbowX=5+Math.round(2*handReach);
+    const elbowY=-8-Math.round(2*handReach);
+    const handX=6+Math.round(4*handReach);
+    const handY=-6-Math.round(3*handReach);
+    c.fillStyle='#211914';
+    fillPixelPoly(c,[[4,-11],[6,-11],[elbowX+1,elbowY],[elbowX,elbowY+2]]);
+    fillPixelPoly(c,[[elbowX,elbowY],[elbowX+2,elbowY],[handX+1,handY+1],[handX,handY+2]]);
+    p(handX,handY,2,2,'#efc89a');
+    p(handX+1,handY+1,1,1,'#ffe8bd');
   }else{
     p(4,-11,2,5,'#211914');
     p(4,-6,2,1,'#efc89a');

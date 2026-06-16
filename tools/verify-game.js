@@ -1227,6 +1227,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!blessedLem || !blessedLem.holy) {
     throw new Error('Priest blessing should make the cave lemmel holy');
   }
+  if (!(G.toasts || []).some(t => String(t && t.text || '').includes('GUDS VÄLSIGNELSE') && String(t && t.text || '').includes('ODÖDLIG'))) {
+    throw new Error('Priest blessing should explain that the lemmel is now immortal');
+  }
   const holyProbe = new Lemming(blessedLem.x, blessedLem.y);
   holyProbe.holy = true;
   holyProbe.state = 'FALL';

@@ -143,7 +143,7 @@ Object.assign(G,{
     this.holyLevelLemId=l.id;
     if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l);
     if(this.holyLemmingGlow)this.holyLemmingGlow(l,'blessing');
-    this.toast('LÄMMELN ÄR VÄLSIGNAD');
+    this.toast('LÄMMELN HAR FÅTT GUDS VÄLSIGNELSE OCH ÄR NU ODÖDLIG',180);
     return true;
   },
   startWaterfallCaveChurchBlessing(cave){
@@ -158,7 +158,7 @@ Object.assign(G,{
     st.t=0;
     st.priestX=(b.minX||78)-34;
     st.priestY=ly;
-    st.targetX=clamp((cave.lemX||240)-36,b.minX||78,b.maxX||402);
+    st.targetX=clamp((cave.lemX||240)-24,b.minX||78,b.maxX||402);
     st.targetY=ly;
     st.blessT=0;
     cave.lemY=ly;

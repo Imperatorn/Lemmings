@@ -22,20 +22,24 @@ function drawHolyLemmingAura(c,l,sx,sy,sc){
   const pulse=0.55+0.45*Math.sin((l.anim||0)*0.18);
   c.save();
   c.globalCompositeOperation='lighter';
-  c.globalAlpha=0.16+0.10*pulse;
+  c.globalAlpha=0.10+0.06*pulse;
   c.fillStyle='#fff3a0';
   fillPixelPoly(c,[
-    [x-Math.round(8*s),y-Math.round(20*s)],
-    [x-Math.round(3*s),y-Math.round(27*s)],
-    [x+Math.round(5*s),y-Math.round(27*s)],
-    [x+Math.round(9*s),y-Math.round(20*s)],
-    [x+Math.round(5*s),y-Math.round(15*s)],
-    [x-Math.round(5*s),y-Math.round(15*s)]
+    [x-Math.round(7*s),y-Math.round(17*s)],
+    [x-Math.round(3*s),y-Math.round(23*s)],
+    [x+Math.round(4*s),y-Math.round(23*s)],
+    [x+Math.round(7*s),y-Math.round(17*s)],
+    [x+Math.round(4*s),y-Math.round(12*s)],
+    [x-Math.round(4*s),y-Math.round(12*s)]
   ]);
-  c.globalAlpha=0.55+0.18*pulse;
+  const hy=y-Math.round(24*s),hw=Math.max(4,Math.round(8*s)),hh=Math.max(1,Math.round(2*s));
+  c.globalAlpha=0.68+0.18*pulse;
   c.fillStyle='#fff8c8';
-  c.fillRect(x-Math.round(4*s),y-Math.round(23*s),Math.round(8*s),Math.max(1,Math.round(1.2*s)));
-  c.globalAlpha=0.22;
+  c.fillRect(x-Math.round(hw/2),hy,hw,hh);
+  c.fillStyle='#ffe070';
+  c.fillRect(x-Math.round(hw/2)-Math.round(1*s),hy+hh,Math.max(1,Math.round(2*s)),hh);
+  c.fillRect(x+Math.round(hw/2)-Math.round(1*s),hy+hh,Math.max(1,Math.round(2*s)),hh);
+  c.globalAlpha=0.16;
   c.fillStyle='#ffe070';
   c.fillRect(x-Math.round(6*s),y+Math.round(1*s),Math.round(12*s),Math.max(1,Math.round(1.4*s)));
   c.restore();
