@@ -81,9 +81,15 @@ if (!hudCode.includes("'UTE '+G.out+'/'+L.lem")) {
 if (!fs.existsSync(path.join(root, 'assets/lands-of-lore-pixel.png'))) {
   throw new Error('Missing Lands of Lore pixel-art asset');
 }
+if (!fs.existsSync(path.join(root, 'assets/dala-floda-kyrka-pixel.png'))) {
+  throw new Error('Missing Dala-Floda church pixel-art asset');
+}
 const utilCode = fs.readFileSync(path.join(root, 'js/00_util.js'), 'utf8');
 if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
   throw new Error('Lands of Lore pixel-art asset is not registered');
+}
+if (!utilCode.includes("assets/dala-floda-kyrka-pixel.png")) {
+  throw new Error('Dala-Floda church pixel-art asset is not registered');
 }
 const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
@@ -92,7 +98,7 @@ const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_ca
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
-for (const token of ['WATERFALL_CAVE_SCENES','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','rootSanctum:{','toCrystalGalleryUp','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveObjectDefault']) {
+for (const token of ['WATERFALL_CAVE_SCENES','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','rootSanctum:{','toCrystalGalleryUp','churchCard','viewCard','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveObjectDefault']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave scene registry is missing ${token}`);
   }
@@ -112,6 +118,9 @@ if (!cutsceneScenesCode.includes('function cutsceneLemmingRingScale') || cutscen
 const caveRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
 if (!caveRenderCode.includes('ASSETS.landsOfLoreCover') || caveRenderCode.includes('THE THRONE OF CHAOS')) {
   throw new Error('Waterfall cave cover should use the image asset instead of the old hand-drawn cover');
+}
+if (!caveRenderCode.includes('ASSETS[card.asset]') || !caveRenderCode.includes('Dala-Floda kyrka')) {
+  throw new Error('Waterfall cave view cards should render the Dala-Floda card asset and back text');
 }
 if (caveRenderCode.includes('#f0d080')) {
   throw new Error('Deep cave game item should not render the old yellow hitbox highlight');
@@ -133,7 +142,7 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
   throw new Error('Campfire audio should use softer, less sharp crackles');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
@@ -301,7 +310,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -983,6 +992,48 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!runeWall.obj.activated) {
     throw new Error('Rune wall did not light up when approached');
   }
+  const churchCard = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchCard');
+  if (!churchCard) throw new Error('Glyph archive is missing the Dala-Floda church card');
+  G.waterfallCave.lemX = churchCard.obj.x + 28;
+  G.waterfallCave.lemY = churchCard.obj.y;
+  G.tick();
+  if (churchCard.obj.cardOpen || churchCard.obj.near) {
+    throw new Error('Dala-Floda church card opened before the lemmel reached it');
+  }
+  G.waterfallCave.lemX = churchCard.obj.x;
+  G.waterfallCave.lemY = churchCard.obj.y;
+  G.tick();
+  if (!churchCard.obj.cardOpen || churchCard.obj.cardSide !== 'front' || !churchCard.obj.near) {
+    throw new Error('Dala-Floda church card did not open on the front side when approached');
+  }
+  if (!drawWaterfallCaveView(WCTX, 51)) {
+    throw new Error('Dala-Floda church card close-up did not render');
+  }
+  G.handleWaterfallCaveKey('v');
+  if (!churchCard.obj.cardOpen || churchCard.obj.cardSide !== 'back') {
+    throw new Error('Dala-Floda church card did not flip to the back side');
+  }
+  G.handleWaterfallCaveInput({x:20,y:20}, 'click');
+  if (churchCard.obj.cardOpen || !churchCard.obj.dismissedNear) {
+    throw new Error('Dala-Floda church card did not close without immediately reopening');
+  }
+  G.waterfallCave.lemX = churchCard.obj.x - 64;
+  G.waterfallCave.lemY = churchCard.obj.y;
+  G.tick();
+  if (churchCard.obj.dismissedNear) {
+    throw new Error('Dala-Floda church card did not reset after walking away');
+  }
+  G.waterfallCave.lemX = churchCard.obj.x;
+  G.waterfallCave.lemY = churchCard.obj.y;
+  G.tick();
+  if (!churchCard.obj.cardOpen || churchCard.obj.cardSide !== 'front') {
+    throw new Error('Dala-Floda church card did not reopen on a later visit');
+  }
+  G.handleWaterfallCaveKey('Enter');
+  if (!churchCard.obj.cardOpen || churchCard.obj.cardSide !== 'back') {
+    throw new Error('Dala-Floda church card did not flip with Enter');
+  }
+  G.handleWaterfallCaveInput({x:20,y:20}, 'click');
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
   G.handleWaterfallCaveKey('ArrowDown');

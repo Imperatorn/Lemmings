@@ -131,7 +131,8 @@ const WATERFALL_CAVE_SCENES={
       {id:'toRootSanctum',key:'down',x0:162,x1:318,yMin:282,target:'rootSanctum',spawn:'fromGlyph'}
     ],
     objects:[
-      {id:'runeWall',kind:'runeWall',default:{x:238,y:182,near:false,activated:false,pulseT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read']}
+      {id:'runeWall',kind:'runeWall',default:{x:238,y:182,near:false,activated:false,pulseT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read']},
+      {id:'churchCard',kind:'viewCard',default:{x:328,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:20,ry:14},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Dala-Floda kyrka']}}
     ]
   },
   rootSanctum:{

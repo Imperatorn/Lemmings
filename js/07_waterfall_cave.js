@@ -126,6 +126,7 @@ Object.assign(G,{
     if(def.kind==='pool')obj.rippleT=Math.max(obj.rippleT||0,96);
     if(def.kind==='stone'&&mode)obj.shifted=true;
     if(def.kind==='torch')obj.flameT=Math.max(obj.flameT||0,96);
+    if(def.kind==='viewCard'&&(mode!=='near'||!obj.dismissedNear))this.openWaterfallCaveViewCard(hit);
     cave.flags=cave.flags||{};
     cave.flags[def.id||'object']=true;
     return true;
@@ -139,7 +140,16 @@ Object.assign(G,{
       if(Number.isFinite(obj.pulseT))obj.pulseT=Math.max(0,obj.pulseT-1);
       if(Number.isFinite(obj.rippleT))obj.rippleT=Math.max(0,obj.rippleT-1);
       if(Number.isFinite(obj.flameT))obj.flameT=Math.max(0,obj.flameT-1);
-      const near=this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,1.08);
+      const nearScale=def.kind==='viewCard'?1.0:1.08;
+      const near=this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,nearScale);
+      if(def.kind==='viewCard'){
+        const leftResetZone=!this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,1.42);
+        if(leftResetZone){
+          obj.dismissedNear=false;
+          if(obj.cardOpen)obj.cardOpen=false;
+          obj.cardCloseArmed=false;
+        }
+      }
       if(near&&!obj.near)this.interactWaterfallCaveObject(hit,'near');
       obj.near=near;
     }
@@ -331,6 +341,40 @@ Object.assign(G,{
     it.coverCloseArmed=false;
     return true;
   },
+  waterfallCaveActiveViewCard(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave)return null;
+    return this.waterfallCaveSceneObjects(cave).find(hit=>hit.def&&hit.def.kind==='viewCard'&&hit.obj&&hit.obj.cardOpen)||null;
+  },
+  openWaterfallCaveViewCard(hit){
+    const cave=this.waterfallCave;
+    if(!cave||!hit||!hit.obj)return false;
+    const obj=hit.obj;
+    obj.cardOpen=true;
+    obj.cardSide='front';
+    obj.cardCloseArmed=!this.waterfallCaveMovementHeld(cave);
+    obj.dismissedNear=false;
+    cave.inspectObjectId=hit.def&&hit.def.id||null;
+    return true;
+  },
+  closeWaterfallCaveViewCard(hit){
+    const obj=hit&&hit.obj?hit.obj:hit;
+    if(!obj)return false;
+    obj.cardOpen=false;
+    obj.dismissedNear=true;
+    obj.cardCloseArmed=false;
+    return true;
+  },
+  toggleWaterfallCaveViewCard(hit){
+    const obj=hit&&hit.obj?hit.obj:hit;
+    if(!obj||!obj.cardOpen)return false;
+    obj.cardSide=obj.cardSide==='back'?'front':'back';
+    return true;
+  },
+  waterfallCaveViewCardRect(hit){
+    const card=hit&&hit.def&&hit.def.card||{};
+    return card.rect||{x:126,y:54,w:228,h:152};
+  },
   setWaterfallCaveMoveKey(cave,key,value){
     const k=cave.keys||(cave.keys={});
     if(key==='ArrowLeft')k.left=value;
@@ -367,7 +411,9 @@ Object.assign(G,{
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     const waitingForCoverRelease=cave.scene==='deep'&&cave.deepItem&&cave.deepItem.coverOpen&&!cave.deepItem.coverCloseArmed;
-    if(waitingForCoverRelease){dx=0;dy=0}
+    const viewCard=this.waterfallCaveActiveViewCard(cave);
+    const waitingForViewCardRelease=viewCard&&viewCard.obj&&viewCard.obj.cardOpen&&!viewCard.obj.cardCloseArmed;
+    if(waitingForCoverRelease||waitingForViewCardRelease){dx=0;dy=0}
     if(dx||dy){
       const inv=Math.hypot(dx,dy)>1?1/Math.hypot(dx,dy):1;
       dx*=inv;dy*=inv;
@@ -454,6 +500,13 @@ Object.assign(G,{
       else this.closeWaterfallCaveDeepItem(it);
       return true;
     }
+    const viewCard=this.waterfallCaveActiveViewCard(this.waterfallCave);
+    if(viewCard&&viewCard.obj&&viewCard.obj.cardOpen){
+      const r=this.waterfallCaveViewCardRect(viewCard);
+      if(p&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h)this.toggleWaterfallCaveViewCard(viewCard);
+      else this.closeWaterfallCaveViewCard(viewCard);
+      return true;
+    }
     const hit=this.waterfallCaveHitObject(p);
     if(hit&&this.waterfallCave){
       this.waterfallCave.hoverObject=hit.def&&hit.def.id||null;
@@ -483,6 +536,23 @@ Object.assign(G,{
       }
       return true;
     }
+    const viewCard=this.waterfallCaveActiveViewCard(cave);
+    if(viewCard&&viewCard.obj&&viewCard.obj.cardOpen){
+      if(key===' '||key==='Spacebar'||key==='Enter'||key==='v'||key==='V'){
+        this.toggleWaterfallCaveViewCard(viewCard);
+        return true;
+      }
+      if(key==='Escape'){
+        this.closeWaterfallCaveViewCard(viewCard);
+        return true;
+      }
+      if(viewCard.obj.cardCloseArmed){
+        this.closeWaterfallCaveViewCard(viewCard);
+        if(this.setWaterfallCaveMoveKey(cave,key,true))return true;
+        return true;
+      }
+      return true;
+    }
     if(this.setWaterfallCaveMoveKey(cave,key,true))return true;
     if(key===' '||key==='Spacebar'||key==='Enter'){
       const hit=this.waterfallCaveNearestObject(cave);
@@ -500,6 +570,8 @@ Object.assign(G,{
     if(key==='Shift'||!this.waterfallCaveMovementHeld(cave))cave.running=false;
     const it=cave.deepItem;
     if(it&&it.coverOpen&&!it.coverCloseArmed&&!this.waterfallCaveMovementHeld(cave))it.coverCloseArmed=true;
+    const viewCard=this.waterfallCaveActiveViewCard(cave);
+    if(viewCard&&viewCard.obj&&viewCard.obj.cardOpen&&!viewCard.obj.cardCloseArmed&&!this.waterfallCaveMovementHeld(cave))viewCard.obj.cardCloseArmed=true;
     this.releaseWaterfallCaveEntryBlock(key);
     return true;
   },
