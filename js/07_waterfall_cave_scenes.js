@@ -40,7 +40,7 @@ const WATERFALL_CAVE_SCENES={
       {id:'toCamp',key:'down',x0:154,x1:326,yMin:276,target:'camp',spawn:'fromDeep',requiresClosedDeepItem:true}
     ],
     objects:[
-      {id:'cover',runtimeKey:'deepItem',kind:'inspectable',default:{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},hit:{type:'ellipse',rx:30,ry:20},verbs:['look','turn']}
+      {id:'cover',runtimeKey:'deepItem',kind:'inspectable',default:{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},hit:{type:'ellipse',rx:30,ry:20},verbs:['look','turn']}
     ]
   },
   camp:{
@@ -130,32 +130,32 @@ const WATERFALL_CAVE_SCENES={
     map:{x:-1,y:4,w:48,h:26,kind:'archive',short:'RU'},
     spawns:{
       fromPool:{x:384,y:228,facing:'left'},
-      fromRoot:{x:240,y:282,facing:'back'}
+      fromChurch:{x:240,y:282,facing:'back'}
     },
     exits:[
       {id:'toMirrorPool',key:'right',x0:392,yMin:194,yMax:268,target:'mirrorPool',spawn:'fromGlyph'},
-      {id:'toRootSanctum',key:'down',x0:154,x1:326,yMin:282,target:'rootSanctum',spawn:'fromGlyph'}
+      {id:'toChurch',key:'down',x0:154,x1:326,yMin:282,target:'church',spawn:'fromGlyph'}
     ],
     objects:[
       {id:'runeWall',kind:'runeWall',default:{x:238,y:182,near:false,activated:false,pulseT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read']},
-      {id:'churchCard',kind:'viewCard',default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:22,ry:15},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Dala-Floda kyrka']}}
+      {id:'churchCard',kind:'viewCard',displayScale:0.5,default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:22,ry:15},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Dala-Floda kyrka']}}
     ]
   },
-  rootSanctum:{
-    id:'rootSanctum',
-    label:'Rotsanktum',
-    render:'rootSanctum',
-    audio:'root-mystery',
+  church:{
+    id:'church',
+    label:'Kyrkan',
+    render:'church',
+    audio:'church-mystery',
     bounds:{minX:86,maxX:394,minY:170,maxY:294},
-    map:{x:-1,y:5,w:44,h:26,kind:'roots',short:'RO'},
+    map:{x:-1,y:5,w:44,h:26,kind:'church',short:'KY'},
     spawns:{
       fromGlyph:{x:240,y:184,facing:'front'}
     },
     exits:[
-      {id:'toGlyphArchive',key:'up',x0:168,x1:312,yMax:174,target:'glyphArchive',spawn:'fromRoot'}
+      {id:'toGlyphArchive',key:'up',x0:168,x1:312,yMax:174,target:'glyphArchive',spawn:'fromChurch'}
     ],
     objects:[
-      {id:'rootHeart',kind:'rootHeart',default:{x:246,y:250,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:42,ry:32},block:{type:'ellipse',rx:34,ry:22,dy:12},blocker:true,verbs:['look','touch']}
+      {id:'churchModel',kind:'churchModel',default:{x:246,y:238,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:82,ry:40,dy:22},block:{type:'ellipse',rx:92,ry:26,dy:34},blocker:true,verbs:['look','enter']}
     ]
   }
 };
@@ -168,7 +168,7 @@ const WATERFALL_CAVE_MAP_KINDS={
   crystal:{label:'Kristall',color:'#55b9d0'},
   water:{label:'Spegeldamm',color:'#4f91b8'},
   archive:{label:'Runarkiv',color:'#c0944b'},
-  roots:{label:'Rötter',color:'#76a85f'}
+  church:{label:'Kyrkan',color:'#d8c58a'}
 };
 
 function waterfallCaveCloneData(v){

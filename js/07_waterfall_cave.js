@@ -178,7 +178,7 @@ Object.assign(G,{
     cave.bounds=cave.bounds||this.cloneWaterfallCaveData(main.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298});
     cave.deepBounds=cave.deepBounds||this.cloneWaterfallCaveData(deep.bounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276});
     cave.campBounds=cave.campBounds||this.cloneWaterfallCaveData(camp.bounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182});
-    cave.deepItem=cave.deepItem||this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
+    cave.deepItem=cave.deepItem||this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
     cave.campFire=cave.campFire||this.waterfallCaveObjectDefaultData('camp','campFire',{x:318,y:244,rx:54,ry:30});
     cave.visited=cave.visited||{};
     cave.flags=cave.flags||{};
@@ -291,7 +291,7 @@ Object.assign(G,{
       deepBounds:this.cloneWaterfallCaveData(deep.bounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276}),
       campBounds:this.cloneWaterfallCaveData(camp.bounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182}),
       campFire:this.waterfallCaveObjectDefaultData('camp','campFire',{x:318,y:244,rx:54,ry:30}),
-      deepItem:this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false}),
+      deepItem:this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false}),
       chest,
       inventory:[],flags:{},visited:{main:true},hoverObject:null,sceneState:{},mapOpen:false,
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
@@ -332,7 +332,7 @@ Object.assign(G,{
   setWaterfallCaveSceneAudio(scene){
     const def=this.waterfallCaveSceneDef(scene)||{};
     const audio=def.audio||scene;
-    if(audio!=='root-mystery'&&AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.65);
+    if(audio!=='church-mystery'&&AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.65);
     if(audio==='campfire'){
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.28,0.75);
       if(AU.startWaterfallCaveFire)AU.startWaterfallCaveFire();
@@ -345,7 +345,7 @@ Object.assign(G,{
     }else if(audio==='distant-water'){
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.24,0.65);
-    }else if(audio==='root-mystery'){
+    }else if(audio==='church-mystery'){
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.08,0.85);
       if(AU.startWaterfallCaveMysteryMusic)AU.startWaterfallCaveMysteryMusic(1.35);
@@ -524,7 +524,7 @@ Object.assign(G,{
     }
     this.updateWaterfallCaveSceneObjects(cave);
     if(cave.scene==='deep'){
-      const it=cave.deepItem||(cave.deepItem={x:246,y:252,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
+      const it=cave.deepItem||(cave.deepItem={x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
       const ix=Math.abs((cave.lemX||0)-it.x),iy=Math.abs((cave.lemY||0)-it.y);
       const near=(ix/30)*(ix/30)+(iy/20)*(iy/20)<=1;
       const leftResetZone=(ix/38)*(ix/38)+(iy/26)*(iy/26)>=1;

@@ -327,7 +327,7 @@ function drawWaterfallCaveMapOverlay(c,cave,tk){
     const node=nodesById[id];
     if(node)usedKinds[node.kind]=true;
   }
-  const kindOrder=['entrance','cave','fire','ember','crystal','water','archive','roots'];
+  const kindOrder=['entrance','cave','fire','ember','crystal','water','archive','church'];
   for(const kind of kindOrder){
     if(!usedKinds[kind])continue;
     const info=(graph.kinds&&graph.kinds[kind])||{label:kind,color:'#8a7658'};
@@ -386,10 +386,12 @@ function drawWaterfallCaveDeepView(c,cave,tk){
   c.globalAlpha=1;
   const it=cave.deepItem||{x:246,y:252};
   const ix=Math.round(it.x),iy=Math.round(it.y);
-  c.globalAlpha=0.42;c.fillStyle='#000000';c.fillRect(ix-20,iy+5,44,5);c.globalAlpha=1;
+  const itemScale=Number.isFinite(it.displayScale)?it.displayScale:0.5;
+  c.globalAlpha=0.42;c.fillStyle='#000000';c.fillRect(ix-Math.round(20*itemScale),iy+4,Math.round(44*itemScale),3);c.globalAlpha=1;
   c.save();
   c.translate(ix,iy);
   c.rotate(-0.12);
+  c.scale(itemScale,itemScale);
   c.fillStyle='#2b1710';c.fillRect(-15,-10,34,20);
   c.fillStyle='#9a5124';c.fillRect(-13,-8,30,16);
   c.fillStyle='#d0a052';c.fillRect(-12,-7,28,2);
@@ -505,7 +507,7 @@ function waterfallCaveAdventureStyle(scene){
     crystalGallery:{wall:'#07121d',mid:'#11293a',floor:'#101b24',rim:'#24475b',accent:'#6fe8ff',glow:'#6aa8ff'},
     mirrorPool:{wall:'#071017',mid:'#102532',floor:'#111920',rim:'#26414c',accent:'#77d8f0',glow:'#78b8d0'},
     glyphArchive:{wall:'#100d0b',mid:'#221a15',floor:'#171718',rim:'#473325',accent:'#d5a55a',glow:'#ffce78'},
-    rootSanctum:{wall:'#0b100d',mid:'#172319',floor:'#141a15',rim:'#36502e',accent:'#8fdd7c',glow:'#b8f080'}
+    church:{wall:'#080d12',mid:'#141d22',floor:'#161a1b',rim:'#35434a',accent:'#d8c58a',glow:'#d8ecff'}
   };
   return styles[scene]||styles.emberPassage;
 }
@@ -595,13 +597,17 @@ function drawWaterfallCaveAdventureBase(c,cave,tk,style){
     fillPixelPoly(c,[[96,CH],[162,230],[260,214],[346,234],[398,CH]]);
     c.globalAlpha=1;
   }
-  if(scene==='rootSanctum'){
-    c.globalAlpha=0.46;
-    c.fillStyle='#21391e';
-    for(let i=0;i<18;i++){
-      const x=54+i*22+Math.round(hash2(i+739,wf.x||0)*8);
-      fillPixelPoly(c,[[x,0],[x+5,0],[x+Math.round(Math.sin((tk+t+i)*0.03)*8),112+Math.round(hash2(i+741,wf.y||0)*80)],[x-5,138]]);
-    }
+  if(scene==='church'){
+    c.globalAlpha=0.28;
+    c.fillStyle='#d8ecff';
+    fillPixelPoly(c,[[102,72],[202,48],[302,54],[392,92],[344,148],[138,142]]);
+    c.globalAlpha=0.34;
+    c.fillStyle='#2e3940';
+    fillPixelPoly(c,[[62,CH],[130,214],[226,194],[328,208],[418,CH]]);
+    c.globalAlpha=0.22;
+    c.fillStyle='#d8c58a';
+    c.fillRect(154,224,156,2);
+    c.fillRect(178,236,118,1);
     c.globalAlpha=1;
   }
 }
@@ -721,25 +727,154 @@ function drawWaterfallCaveAdventureDetails(c,cave,tk,style){
       if((i+Math.floor((tk+t)/24))%4===0)c.fillRect(x+8,y+3,5,1);
     }
     c.restore();
-  }else if(scene==='rootSanctum'){
-    drawWaterfallCaveAmbientMotes(c,cave,tk,'#b8f080',26,901,0.30);
+  }else if(scene==='church'){
+    drawWaterfallCaveAmbientMotes(c,cave,tk,'#d8ecff',24,901,0.22);
     c.save();
-    c.globalAlpha=0.58;
-    c.fillStyle='#2b2416';
-    for(let i=0;i<11;i++){
-      const x=70+i*32+Math.round(hash2(i+907,wf.x||0)*10);
-      fillPixelPoly(c,[[x,CH],[x+8,CH-34],[x+18,CH-70],[x+12,CH-104],[x+23,CH-132],[x+26,CH-96],[x+20,CH-60],[x+26,CH]]);
-    }
-    c.globalAlpha=0.38;
-    c.fillStyle='#8fdd7c';
+    c.globalAlpha=0.32;
+    c.fillStyle='#4a5559';
     for(let i=0;i<14;i++){
-      const x=88+Math.round(hash2(i+911,wf.x||0)*304);
-      const y=112+Math.round(hash2(i+913,wf.y||0)*132);
+      const x=74+Math.round(hash2(i+907,wf.x||0)*330);
+      const y=188+Math.round(hash2(i+911,wf.y||0)*78);
+      c.fillRect(x,y,18+Math.round(hash2(i+913,wf.x||0)*36),2);
+      if(i%3===0)c.fillRect(x+5,y+3,10,1);
+    }
+    c.globalAlpha=0.20;
+    c.fillStyle='#d8c58a';
+    for(let i=0;i<10;i++){
+      const x=126+Math.round(hash2(i+917,wf.x||0)*230);
+      const y=96+Math.round(hash2(i+919,wf.y||0)*94);
       c.fillRect(x,y,2,2);
-      if((tk+t+i*5)%54<18)c.fillRect(x-1,y+2,4,1);
+      if((tk+t+i*7)%58<16)c.fillRect(x-1,y+2,4,1);
     }
     c.restore();
   }
+}
+
+function drawWaterfallCaveGroundCard(c,x,y,def,obj,style,near,pulse){
+  const sc=Number.isFinite(def&&def.displayScale)?def.displayScale:1;
+  const glow=near||pulse>0.15||!!(obj&&obj.cardOpen);
+  c.save();
+  c.translate(x,y);
+  c.rotate(-0.12);
+  c.scale(sc,sc);
+  c.globalAlpha=0.36;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[-28,8],[-14,2],[24,3],[32,9],[16,14],[-24,14]]);
+  if(glow){
+    c.globalAlpha=0.12+0.18*pulse;
+    c.fillStyle=style.glow||'#d5a55a';
+    fillPixelPoly(c,[[-38,9],[-20,-16],[28,-14],[42,8],[20,20],[-24,20]]);
+  }
+  c.globalAlpha=1;
+  c.fillStyle='#3a2619';
+  c.fillRect(-22,-13,44,26);
+  c.fillStyle=near?'#eee0bd':'#cdbf9c';
+  c.fillRect(-20,-11,40,22);
+  c.fillStyle='#3275a8';
+  c.fillRect(-18,-9,36,8);
+  c.fillStyle='#e7dfc8';
+  c.fillRect(-18,0,36,9);
+  c.fillStyle='#7a4a2a';
+  c.fillRect(-15,3,9,4);
+  c.fillRect(-2,2,5,5);
+  c.fillRect(9,3,5,4);
+  c.fillStyle='#26451f';
+  c.fillRect(-11,5,24,2);
+  c.restore();
+}
+
+function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
+  const active=!!(obj&&obj.activated);
+  const light=active||near?1:clamp(pulse||0,0,1);
+  c.save();
+  c.globalAlpha=0.12+0.12*light;
+  c.fillStyle='#d8ecff';
+  fillPixelPoly(c,[[x-126,y+26],[x-82,y-124],[x-18,y-166],[x+98,y-104],[x+142,y+28],[x+72,y+50],[x-96,y+46]]);
+  c.globalAlpha=0.40;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[x-116,y+34],[x-78,y+18],[x+96,y+18],[x+138,y+34],[x+96,y+48],[x-96,y+48]]);
+  c.globalAlpha=1;
+
+  c.fillStyle='#2b3032';
+  fillPixelPoly(c,[[x-112,y+20],[x-72,y+10],[x+102,y+12],[x+128,y+24],[x+96,y+34],[x-100,y+34]]);
+  c.fillStyle='#59646a';
+  for(let i=0;i<16;i++){
+    const sx=x-102+i*13;
+    c.fillRect(sx,y+18+(i%2),8,2);
+  }
+
+  c.fillStyle='#9b3f1d';
+  fillPixelPoly(c,[[x-62,y-58],[x+16,y-80],[x+104,y-56],[x+88,y-43],[x-74,y-42]]);
+  c.fillStyle='#6d2715';
+  fillPixelPoly(c,[[x+104,y-56],[x+136,y-39],[x+124,y-28],[x+88,y-43]]);
+  c.fillStyle='#c8642c';
+  for(let i=0;i<10;i++)c.fillRect(x-54+i*14,y-55+Math.floor(i/3),10,3);
+  c.fillStyle='#e0904c';
+  c.fillRect(x-42,y-61,114,2);
+
+  c.fillStyle='#f0e5bc';
+  fillPixelPoly(c,[[x-58,y-43],[x+88,y-43],[x+88,y+18],[x-58,y+18]]);
+  c.fillStyle='#d6c58f';
+  fillPixelPoly(c,[[x+88,y-43],[x+124,y-28],[x+124,y+16],[x+88,y+18]]);
+  c.fillStyle='#fff3c8';
+  fillPixelPoly(c,[[x-56,y-40],[x+22,y-40],[x+22,y+17],[x-56,y+17]]);
+  c.fillStyle='#b39d6b';
+  c.fillRect(x-58,y-2,146,2);
+  c.fillRect(x-58,y+17,146,3);
+
+  c.fillStyle='#5f2415';
+  fillPixelPoly(c,[[x-108,y-78],[x-72,y-88],[x-50,y-76],[x-58,y-65],[x-112,y-64]]);
+  c.fillStyle='#e9ddb4';
+  fillPixelPoly(c,[[x-106,y-64],[x-58,y-64],[x-58,y+18],[x-106,y+18]]);
+  c.fillStyle='#cdbb88';
+  fillPixelPoly(c,[[x-58,y-64],[x-42,y-54],[x-42,y+16],[x-58,y+18]]);
+  c.fillStyle='#fff0c2';
+  c.fillRect(x-103,y-60,42,42);
+  c.fillStyle='#b49e70';
+  c.fillRect(x-106,y-10,48,2);
+  c.fillRect(x-106,y+17,48,3);
+
+  c.fillStyle='#303033';
+  fillPixelPoly(c,[[x-101,y-118],[x-62,y-118],[x-52,y-104],[x-58,y-78],[x-108,y-78],[x-112,y-104]]);
+  c.fillStyle='#4c4a42';
+  fillPixelPoly(c,[[x-95,y-158],[x-82,y-184],[x-70,y-158],[x-62,y-118],[x-102,y-118]]);
+  c.fillStyle='#252629';
+  fillPixelPoly(c,[[x-82,y-184],[x-68,y-154],[x-58,y-118],[x-62,y-118],[x-70,y-158]]);
+  c.fillStyle='#d4a843';
+  c.fillRect(x-84,y-190,4,10);
+  c.fillRect(x-90,y-186,16,3);
+  c.fillRect(x-83,y-198,2,8);
+  c.fillStyle='#786f58';
+  for(let i=0;i<5;i++){
+    c.fillRect(x-95+i*7,y-110,4,24);
+    c.fillRect(x-96+i*7,y-108,6,2);
+  }
+
+  function arch(wx,wy,w,h,lit){
+    c.fillStyle='#1a2026';
+    fillPixelPoly(c,[[wx,wy+h],[wx,wy+7],[wx+Math.round(w/2),wy],[wx+w,wy+7],[wx+w,wy+h]]);
+    c.fillStyle=lit?'#d8ecff':'#4a5960';
+    c.fillRect(wx+3,wy+8,w-6,h-10);
+    c.fillStyle='#20272d';
+    c.fillRect(wx+Math.floor(w/2),wy+7,2,h-7);
+    c.fillRect(wx+3,wy+Math.floor(h*0.55),w-6,2);
+  }
+  arch(x-28,y-24,16,31,light>0.2);
+  arch(x+42,y-24,16,31,light>0.2);
+  arch(x+100,y-12,12,22,light>0.2);
+  c.fillStyle='#6a351f';
+  fillPixelPoly(c,[[x-1,y+16],[x-1,y-10],[x+12,y-19],[x+25,y-10],[x+25,y+16]]);
+  c.fillStyle='#3d2014';
+  c.fillRect(x+5,y-8,14,24);
+  c.fillStyle='#d1a45a';
+  c.fillRect(x+17,y+3,2,2);
+
+  c.globalAlpha=0.28+0.20*light;
+  c.fillStyle='#d8ecff';
+  c.fillRect(x-30,y-25,20,34);
+  c.fillRect(x+40,y-25,20,34);
+  c.globalAlpha=1;
+  c.restore();
 }
 
 function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
@@ -798,43 +933,9 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
       }
       if(active){c.globalAlpha=0.18;c.fillStyle='#ffd080';c.fillRect(x-78,y-58,156,92);c.globalAlpha=1}
     }else if(kind==='viewCard'){
-      const glow=near||pulse>0.15||!!obj.cardOpen;
-      c.save();
-      c.translate(x,y);
-      c.rotate(-0.12);
-      c.globalAlpha=0.36;
-      c.fillStyle='#000000';
-      fillPixelPoly(c,[[-28,8],[-14,2],[24,3],[32,9],[16,14],[-24,14]]);
-      if(glow){
-        c.globalAlpha=0.12+0.18*pulse;
-        c.fillStyle=style.glow||'#d5a55a';
-        fillPixelPoly(c,[[-38,9],[-20,-16],[28,-14],[42,8],[20,20],[-24,20]]);
-      }
-      c.globalAlpha=1;
-      c.fillStyle='#3a2619';
-      c.fillRect(-22,-13,44,26);
-      c.fillStyle=near?'#eee0bd':'#cdbf9c';
-      c.fillRect(-20,-11,40,22);
-      c.fillStyle='#3275a8';
-      c.fillRect(-18,-9,36,8);
-      c.fillStyle='#e7dfc8';
-      c.fillRect(-18,0,36,9);
-      c.fillStyle='#7a4a2a';
-      c.fillRect(-15,3,9,4);
-      c.fillRect(-2,2,5,5);
-      c.fillRect(9,3,5,4);
-      c.fillStyle='#26451f';
-      c.fillRect(-11,5,24,2);
-      c.restore();
-    }else if(kind==='rootHeart'){
-      c.globalAlpha=0.20+0.22*pulse;c.fillStyle='#b8f080';fillPixelPoly(c,[[x,y-48],[x-76,y-10],[x-52,y+54],[x+54,y+54],[x+80,y-8]]);c.globalAlpha=1;
-      c.fillStyle='#3b2a1a';
-      for(let i=0;i<9;i++){
-        const sx=x-58+i*14;
-        fillPixelPoly(c,[[sx,y+34],[sx+8,y+20],[x-8+Math.round(Math.sin(i)*10),y+4],[x+2,y+20],[sx+18,y+48]]);
-      }
-      c.fillStyle=active?'#b8f080':'#5f8c55';fillPixelPoly(c,[[x-16,y+2],[x,y-22],[x+18,y+2],[x+12,y+24],[x-10,y+24]]);
-      c.fillStyle=active?'#ecffd0':'#a0c590';c.fillRect(x-4,y-5,8,14);
+      drawWaterfallCaveGroundCard(c,x,y,def,obj,style,near,pulse);
+    }else if(kind==='churchModel'){
+      drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse);
     }
   }
 }
@@ -969,7 +1070,7 @@ function drawWaterfallCaveView(c,tk){
   const renderKey=waterfallCaveRenderKey(cave);
   if(renderKey==='camp')return drawWaterfallCaveCampView(c,cave,tk);
   if(renderKey==='deep')return drawWaterfallCaveDeepView(c,cave,tk);
-  if(['emberPassage','crystalGallery','mirrorPool','glyphArchive','rootSanctum'].includes(renderKey))return drawWaterfallCaveAdventureView(c,cave,tk);
+  if(['emberPassage','crystalGallery','mirrorPool','glyphArchive','church'].includes(renderKey))return drawWaterfallCaveAdventureView(c,cave,tk);
   const wf=cave.wf||{}, t=cave.t||0;
   c.save();
   c.fillStyle='#030508';
