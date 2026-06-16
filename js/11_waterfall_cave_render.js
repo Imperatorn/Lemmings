@@ -947,7 +947,7 @@ function drawWaterfallCaveChurchLemmingOcclusion(c,cave,tk,style,lx,ly,lemScale)
   return true;
 }
 
-function drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse){
+function drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse,def,obj){
   c.save();
   c.globalAlpha=0.34;
   c.fillStyle='#000000';
@@ -966,6 +966,18 @@ function drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse){
     [-34,1,17,2],[-26,-8,2,19],[-5,-4,2,18],[2,4,16,2],[25,-4,2,18],[18,8,16,2]
   ];
   for(const r of runes)c.fillRect(x+r[0],y+r[1],r[2],r[3]);
+  const runeDefs=Array.isArray(def&&def.runes)?def.runes:[];
+  const read=obj&&obj.readRunes||{};
+  for(let i=0;i<runeDefs.length;i++){
+    const r=runeDefs[i]||{},rx=x+(r.dx||0),ry=y+(r.dy||0);
+    const selected=obj&&obj.activeRuneIndex===i&&obj.readT>0;
+    const seen=!!read[r.id||('rune'+i)];
+    if(!selected&&!seen)continue;
+    c.globalAlpha=selected?0.32+0.18*Math.sin(tk*0.18):0.14;
+    c.fillStyle=selected?'#ffd080':'#b88a48';
+    fillPixelPoly(c,[[rx-14,ry+12],[rx-8,ry-14],[rx+10,ry-14],[rx+15,ry+12],[rx+8,ry+18],[rx-9,ry+18]]);
+  }
+  c.globalAlpha=1;
   c.globalAlpha=0.24+0.18*pulse;
   c.fillStyle=active?'#ffd080':'#5f4630';
   fillPixelPoly(c,[[x-58,y+22],[x-44,y-46],[x+42,y-46],[x+58,y+22],[x+28,y+34],[x-30,y+34]]);
@@ -1019,7 +1031,7 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
       }
       c.globalAlpha=1;
     }else if(kind==='runeWall'){
-      drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse);
+      drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse,def,obj);
     }else if(kind==='viewCard'){
       drawWaterfallCaveGroundCard(c,x,y,def,obj,style,near,pulse);
     }else if(kind==='churchModel'){
@@ -1070,7 +1082,9 @@ function drawWaterfallCaveRuneReadPanel(c,cave,tk){
   if(!obj||!(obj.readT>0))return false;
   const lines=(Array.isArray(obj.readLines)&&obj.readLines.length?obj.readLines:def.readLines)||['Runorna viskar.'];
   const life=clamp((obj.readT||0)/22,0,1);
-  const x=94,y=22,w=292,h=54;
+  const total=Array.isArray(def.runes)?def.runes.length:0;
+  const readCount=obj.readRunes?Object.keys(obj.readRunes).length:0;
+  const x=76,y=20,w=328,h=68;
   c.save();
   c.globalAlpha=0.54+0.28*life;
   c.fillStyle='#030507';
@@ -1087,6 +1101,10 @@ function drawWaterfallCaveRuneReadPanel(c,cave,tk){
   for(let i=0;i<Math.min(3,lines.length);i++){
     const col=i===0?'#ffd080':'#e8d0a0';
     if(typeof drawTextC==='function')drawTextC(c,lines[i],x+w/2,y+12+i*13,1,col);
+  }
+  if(total>0&&typeof drawTextC==='function'){
+    const suffix=obj.readComplete?'HEL TEXT FUNNEN':'LÄSTA RUNOR '+readCount+'/'+total;
+    drawTextC(c,suffix,x+w/2,y+h-13,1,obj.readComplete?'#fff0a8':'#a89068');
   }
   c.restore();
   return true;

@@ -109,6 +109,9 @@ for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{'
 if (waterfallScenesCode.includes('rootSanctum') || waterfallScenesCode.includes('rootHeart') || waterfallScenesCode.includes("audio:'root-mystery'")) {
   throw new Error('Waterfall cave scene registry should rename the old root sanctum to the church scene');
 }
+if (!waterfallScenesCode.includes("runes:[") || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
+  throw new Error('Glyph archive rune wall should define separate readable rune text segments');
+}
 for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldamm','Kyrkan']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave map text is missing Swedish label ${token}`);
@@ -348,6 +351,7 @@ const requiredRuntimeMethods = [
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveRuneAt','waterfallCaveRuneLines','readWaterfallCaveRune',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -1105,6 +1109,24 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Rune wall did not show readable rune text when approached');
   }
   if (!drawWaterfallCaveView(WCTX, 50)) throw new Error('Glyph archive rune reading panel did not render');
+  if (!Array.isArray(runeWall.def.runes) || runeWall.def.runes.length < 6) {
+    throw new Error('Rune wall should define several individually readable runes');
+  }
+  const runeTexts = new Set();
+  for (let i = 0; i < runeWall.def.runes.length; i++) {
+    const rune = runeWall.def.runes[i];
+    G.waterfallCave.lemX = runeWall.obj.x + (rune.dx || 0);
+    G.waterfallCave.lemY = runeWall.obj.y + (rune.dy || 0);
+    G.tick();
+    const joined = (runeWall.obj.readLines || []).join(' ');
+    runeTexts.add(joined);
+    if (runeWall.obj.activeRuneIndex !== i || !joined.includes(`Runa ${i + 1}/${runeWall.def.runes.length}`)) {
+      throw new Error(`Rune ${i + 1} did not show its own text segment`);
+    }
+  }
+  if (runeTexts.size !== runeWall.def.runes.length || !runeWall.obj.readComplete) {
+    throw new Error('Reading all rune positions should reveal separate segments of the larger rune text');
+  }
   const churchCard = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchCard');
   if (!churchCard) throw new Error('Glyph archive is missing the Dala-Floda church card');
   if (!(churchCard.def.displayScale <= 0.51)) {

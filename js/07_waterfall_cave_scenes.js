@@ -138,7 +138,15 @@ const WATERFALL_CAVE_SCENES={
     ],
     objects:[
       {id:'runeWall',kind:'runeWall',default:{x:238,y:182,near:false,activated:false,pulseT:0,readT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read'],
-        readLines:['Runorna viskar:','Den välsignade går oskadd','genom eld, vatten och fall.']},
+        runes:[
+          {id:'water',dx:-26,dy:-22,rx:19,ry:28,lines:['Runa 1/6','När vattnet döljer porten','börjar den dolda vägen.']},
+          {id:'dark',dx:-7,dy:-22,rx:19,ry:28,lines:['Runa 2/6','I mörkret prövas modet,','men hjärtat söker ljus.']},
+          {id:'altar',dx:15,dy:-22,rx:19,ry:28,lines:['Runa 3/6','Vid altaret väntar handen','som stilla ger välsignelse.']},
+          {id:'fire',dx:-27,dy:7,rx:20,ry:24,lines:['Runa 4/6','Då mister elden sin hunger','och lågan viker undan.']},
+          {id:'fall',dx:6,dy:8,rx:20,ry:24,lines:['Runa 5/6','Djupet kan inte krossa','den som bär heligt ljus.']},
+          {id:'hope',dx:27,dy:9,rx:20,ry:24,lines:['Runa 6/6','Så vandrar lämmeln vidare','och hoppet följer flocken.']}
+        ],
+        readLines:['Runorna viskar:','Läs varje tecken i stenen','så formas hela budskapet.']},
       {id:'churchCard',kind:'viewCard',displayScale:0.5,default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:22,ry:15},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Dala-Floda kyrka']}}
     ]
   },

@@ -97,6 +97,41 @@ Object.assign(G,{
     }
     return false;
   },
+  waterfallCaveRuneAt(def,obj,x,y){
+    const runes=Array.isArray(def&&def.runes)?def.runes:[];
+    if(!obj||!runes.length)return null;
+    let best=null,bestScore=Infinity;
+    for(let i=0;i<runes.length;i++){
+      const r=runes[i]||{};
+      const rx=Math.max(1,r.rx||18),ry=Math.max(1,r.ry||24);
+      const cx=(obj.x||0)+(r.dx||0),cy=(obj.y||0)+(r.dy||0);
+      const score=((x-cx)/rx)*((x-cx)/rx)+((y-cy)/ry)*((y-cy)/ry);
+      if(score<bestScore){best={rune:r,index:i,score};bestScore=score}
+    }
+    return best&&best.score<=1?best:null;
+  },
+  waterfallCaveRuneLines(rune,index,total){
+    if(rune&&Array.isArray(rune.lines)&&rune.lines.length)return this.cloneWaterfallCaveData(rune.lines);
+    const text=rune&&rune.text?String(rune.text):'Runorna viskar.';
+    return ['Runa '+((index||0)+1)+'/'+Math.max(1,total||1),text];
+  },
+  readWaterfallCaveRune(hit){
+    const cave=this.waterfallCave;
+    const def=hit&&hit.def||{},obj=hit&&hit.obj;
+    if(!cave||!obj)return false;
+    const picked=this.waterfallCaveRuneAt(def,obj,cave.lemX||0,cave.lemY||0);
+    if(!picked)return false;
+    const runes=Array.isArray(def.runes)?def.runes:[];
+    const id=picked.rune.id||('rune'+picked.index);
+    obj.activeRuneId=id;
+    obj.activeRuneIndex=picked.index;
+    obj.readRunes=obj.readRunes||{};
+    obj.readRunes[id]=true;
+    obj.readT=Math.max(obj.readT||0,110);
+    obj.readLines=this.waterfallCaveRuneLines(picked.rune,picked.index,runes.length);
+    obj.readComplete=Object.keys(obj.readRunes).length>=runes.length;
+    return true;
+  },
   waterfallCaveHitObject(p){
     const cave=this.waterfallCave;
     if(!cave||!p)return null;
@@ -234,8 +269,12 @@ Object.assign(G,{
     if(def.kind==='stone'&&mode)obj.shifted=true;
     if(def.kind==='torch')obj.flameT=Math.max(obj.flameT||0,96);
     if(def.kind==='runeWall'){
-      obj.readT=Math.max(obj.readT||0,110);
-      obj.readLines=this.cloneWaterfallCaveData(def.readLines||['Runorna viskar.']);
+      if(!this.readWaterfallCaveRune(hit)){
+        obj.activeRuneId=null;
+        obj.activeRuneIndex=null;
+        obj.readT=Math.max(obj.readT||0,90);
+        obj.readLines=this.cloneWaterfallCaveData(def.readLines||['Runorna viskar.']);
+      }
     }
     if(def.kind==='viewCard'&&(mode!=='near'||!obj.dismissedNear))this.openWaterfallCaveViewCard(hit);
     cave.flags=cave.flags||{};
@@ -264,9 +303,12 @@ Object.assign(G,{
       }
       if(near&&!obj.near)this.interactWaterfallCaveObject(hit,'near');
       if(def.kind==='runeWall'&&near){
-        obj.readT=Math.max(obj.readT||0,90);
-        obj.readLines=obj.readLines||this.cloneWaterfallCaveData(def.readLines||['Runorna viskar.']);
+        if(!this.readWaterfallCaveRune(hit)&&!obj.readLines){
+          obj.readT=Math.max(obj.readT||0,70);
+          obj.readLines=this.cloneWaterfallCaveData(def.readLines||['Runorna viskar.']);
+        }
       }
+      if(def.kind==='runeWall'&&!near&&!(obj.readT>0)){obj.activeRuneId=null;obj.activeRuneIndex=null}
       obj.near=near;
     }
     return true;
