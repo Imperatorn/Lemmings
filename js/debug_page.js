@@ -5,7 +5,7 @@
   const $=id=>document.getElementById(id);
   const DBG={
     running:false,timer:null,tick:0,lastLevelIdx:0,
-    levelSelect:null,statusEl:null,runBtn:null
+    levelSelect:null,statusEl:null,runBtn:null,gameInput:false
   };
 
   const MUSIC=[
@@ -45,7 +45,8 @@
       ['Troll',()=>AU.sTroll()],['Troll steg',()=>AU.sTrollStep()],['Troll krossar',()=>AU.sTrollSmash()],
       ['Troll äter',()=>AU.sTrollMunch()],['Troll rapar',()=>AU.sTrollBurp()],['Troll ugh',()=>AU.sTrollUgh()],
       ['Delfin',()=>AU.sDolphin()],['Växer',()=>AU.sGrow()],['Lykta',()=>AU.sLamp()],
-      ['Träd tänds',()=>AU.sTreeIgnite()],['Träd brinner',()=>AU.sTreeBurn()],['Träd aska',()=>AU.sTreeAsh()]
+      ['Träd tänds',()=>AU.sTreeIgnite()],['Träd brinner',()=>AU.sTreeBurn()],['Träd aska',()=>AU.sTreeAsh()],
+      ['Portal öppnas',()=>AU.sPortalStoneOpen()],['Portal resa',()=>AU.sPortalStoneTravel()]
     ]],
     ['Väder',[
       ['Fågel',()=>AU.sBirdChirp()],['Regnloop',()=>AU.sRainLoop()],['Grottdroppe',()=>AU.sCaveDrip(G.cam+VW/2)],
@@ -141,6 +142,12 @@
         drawToastStack(ctx);
         return;
       }
+      if(DBG.gameInput){
+        drawHUD(ctx,DBG.tick);
+        if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
+        drawToastStack(ctx);
+        return;
+      }
       ctx.fillStyle='#05070d';ctx.fillRect(0,HUDY,CW,CH-HUDY);
       drawText(ctx,'DEBUG',8,248,1,'#63d0ff');
       drawText(ctx,(G.level.name||'NIVA').slice(0,34),70,248,1,'#dce8ff');
@@ -196,11 +203,13 @@
   function clearDebugActors(){
     G.planes=[];G.packages=[];G.trolls=[];G.trollRocks=[];G.settledTrollRocks=[];G.monkeys=[];G.bananas=[];
     G.rockets=[];G.hooks=[];G.ropes=[];G.meteors=[];G.flashes=[];G.parts=[];
+    if(G.clearPortalStone)G.clearPortalStone();
   }
 
   function startSelectedLevel(){
     audioReady();
     stopLoop();
+    DBG.gameInput=false;
     const idx=clamp(Number(DBG.levelSelect.value)||0,0,LEVELS.length-1);
     DBG.lastLevelIdx=idx;
     G.state='PLAY';
@@ -351,6 +360,45 @@
     }
     if(G.clearWaterfallCaveMoveKeys)G.clearWaterfallCaveMoveKeys(G.waterfallCave);
     finishAnimationSetup('Grottdebug: '+(label||sceneId)+'. Styr med piltangenterna, Shift gar snabbare, M visar kartan.');
+  }
+
+  function setupPortalStoneTest(){
+    if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    audioReady();
+    clearDebugActors();
+    DBG.gameInput=true;
+    const maxX=Math.max(90,G.level.W-260);
+    const x=clamp(Math.round(worldCenterX()-70),90,maxX);
+    let gy=groundYAt(x);
+    if(G.T){
+      gy=clamp(gy,150,214);
+      G.T.clearRect(x-92,gy-76,382,86);
+      debugBrick(x-96,gy+1,390,8);
+      debugBrick(x+286,gy-28,10,37);
+    }
+    gy=groundYAt(x);
+    const holy=resetDebugLemming(new Lemming(x,gy),x,gy);
+    holy.dir=1;holy.holy=true;holy.teleportStone=true;holy.holySaveT=-999;
+    const followers=[];
+    for(let i=0;i<2;i++){
+      const f=resetDebugLemming(new Lemming(x-42-i*24,gy),x-42-i*24,gy);
+      f.dir=1;
+      followers.push(f);
+    }
+    G.lems=[holy,...followers];
+    G.out=G.lems.length;
+    G.spawned=G.level.lem;
+    G.holyBlessingUnlocked=true;
+    G.holyTeleportStoneUnlocked=true;
+    G.holyLevelLemId=holy.id;
+    G.holyTeleportStoneLemId=holy.id;
+    G.selSkill=null;
+    G.paused=true;
+    G.rate=50;
+    G.cam=clamp(x-120,0,G.maxCam());
+    G.toast('DEBUG: VÄLJ PT OCH KLICKA DEN HELIGA LÄMMELN');
+    finishAnimationSetup('Teleportsten: använd vanliga HUD-knappen PT, klicka den heliga lämmeln och placera utgångsportalen i världen.');
   }
 
   function setupFishRingAnimation(){
@@ -542,6 +590,7 @@
     audioReady();
     if(action&&action.indexOf('anim')===0){doAnimation(action);return}
     if(action==='caveGlyphArchive'){setupWaterfallCaveScene('glyphArchive','fromChurch','Runarkivet');return}
+    if(action==='portalStoneTest'){setupPortalStoneTest();return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;
     }
@@ -761,6 +810,99 @@
     return tag==='input'||tag==='select'||tag==='textarea'||!!(target&&target.isContentEditable);
   }
 
+  function debugRefreshGamePointer(e){
+    const p=debugCanvasPos(e);
+    G.mx=p.x;G.my=p.y;
+    G.hoverBtn=hitButton(p);
+    return p;
+  }
+
+  function debugSelectHudButton(k){
+    if(k==='portal'){
+      if(!G.portalStoneButtonAvailable||!G.portalStoneButtonAvailable()){
+        G.toast('STENEN KRÄVER DEN HELIGA LÄMMELN');
+        AU.sShrug();
+        return true;
+      }
+      G.clearRopeAim();
+      G.selSkill='portal';
+      G.toast('VALD TELEPORTERINGSSTEN - KLICKA PÅ DEN HELIGA LÄMMELN');
+      AU.sClick();
+      return true;
+    }
+    if(k==='save'){G.promptSaveGame();return true}
+    if(k==='troll'){
+      if(G.trollUsed){G.toast('TROLLFÖRVANDLING REDAN ANVÄND');AU.sShrug();return true}
+      G.clearRopeAim();G.selSkill='troll';G.toast('VALD TROLL - KLICKA PÅ EN LEMMEL');AU.sClick();return true;
+    }
+    const s=SKILLS.find(q=>q.k===k);
+    if(!s)return false;
+    if(k!=='rope')G.clearRopeAim();
+    if(G.skills&&Object.prototype.hasOwnProperty.call(G.skills,k)&&G.skills[k]<=0){G.toast('INGA '+s.name+' KVAR');AU.sShrug();return true}
+    G.selSkill=k;
+    G.toast(k==='rope'?'VALD REPKROK - KLICKA PÅ EN LEMMEL':'VALD '+s.name+' - KLICKA PÅ EN LEMMEL');
+    AU.sClick();
+    return true;
+  }
+
+  function handleDebugGamePointer(e,kind){
+    if(!DBG.gameInput||G.state!=='PLAY'||!(G.level&&G.T)||G.waterfallCaveActive&&G.waterfallCaveActive()||G.cutsceneActive&&G.cutsceneActive())return false;
+    e.preventDefault();
+    audioReady();
+    const p=debugRefreshGamePointer(e);
+    if(kind==='move'){renderDebug();return true}
+    if(kind==='context'){
+      if(G.portalStone&&G.portalStone.placingExit)G.cancelPortalStonePlacement();
+      renderDebug();
+      return true;
+    }
+    if(p.y>=HUDY){
+      if(G.portalStone&&G.portalStone.placingExit){
+        G.toast('PLACERA UTGÅNGSPORTAL ELLER HÖGERKLICKA/ESC');
+        renderDebug();
+        return true;
+      }
+      const bi=hitButton(p);
+      if(bi>=0){
+        const b=typeof hudButtonAt==='function'?hudButtonAt(bi):BUTTONS[bi];
+        if(b)debugSelectHudButton(b.k);
+      }else if(G.mm&&p.x>=G.mm.x&&p.y>=G.mm.y&&p.y<G.mm.y+G.mm.h){
+        G.cam=clamp((p.x-G.mm.x)/G.mm.sc-G.viewW()/2,0,G.maxCam());
+        G.viewY=clamp((p.y-G.mm.ty)/G.mm.sc-G.viewH()/2,0,G.maxViewY());
+      }
+      renderDebug();
+      return true;
+    }
+    const wp=G.screenToWorld(p);
+    G.clickWorld(wp.x,wp.y);
+    renderDebug();
+    ensureLoop();
+    return true;
+  }
+
+  function handleDebugGameKeyDown(e){
+    if(!DBG.gameInput||debugTypingTarget(e.target)||G.state!=='PLAY'||G.waterfallCaveActive&&G.waterfallCaveActive()||G.cutsceneActive&&G.cutsceneActive())return false;
+    if(G.portalStone&&G.portalStone.placingExit&&(e.key==='Escape'||e.key==='b'||e.key==='B')){
+      G.cancelPortalStonePlacement();
+      e.preventDefault();
+      renderDebug();
+      return true;
+    }
+    if(e.key===' '){
+      G.paused=!G.paused;
+      e.preventDefault();
+      renderDebug();
+      return true;
+    }
+    if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+      G.cam=clamp(G.cam+(e.key==='ArrowLeft'?-40:40)/(G.viewZoom||1),0,G.maxCam());
+      e.preventDefault();
+      renderDebug();
+      return true;
+    }
+    return false;
+  }
+
   function handleDebugCavePointer(e,kind){
     if(!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive()))return false;
     e.preventDefault();
@@ -803,13 +945,25 @@
   function bindDebugCaveControls(){
     cvs.addEventListener('contextmenu',e=>{
       if(handleDebugCavePointer(e,'context'))return;
+      if(handleDebugGamePointer(e,'context'))return;
       e.preventDefault();
     });
-    cvs.addEventListener('mousedown',e=>{
-      if(e.button===2)handleDebugCavePointer(e,'context');
-      else if(e.button===0)handleDebugCavePointer(e,'click');
+    cvs.addEventListener('mousemove',e=>{
+      handleDebugGamePointer(e,'move');
     });
-    window.addEventListener('keydown',handleDebugCaveKeyDown);
+    cvs.addEventListener('mousedown',e=>{
+      if(e.button===2){
+        if(handleDebugCavePointer(e,'context'))return;
+        handleDebugGamePointer(e,'context');
+      }else if(e.button===0){
+        if(handleDebugCavePointer(e,'click'))return;
+        handleDebugGamePointer(e,'click');
+      }
+    });
+    window.addEventListener('keydown',e=>{
+      handleDebugCaveKeyDown(e);
+      handleDebugGameKeyDown(e);
+    });
     window.addEventListener('keyup',handleDebugCaveKeyUp);
   }
 

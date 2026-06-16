@@ -25,6 +25,7 @@ Object.assign(G,{
   promptSaveGame(){
     if(this.state!=='PLAY'||!this.level||!this.T){this.toast('INGET SPEL ATT SPARA');return false}
     if((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive())){this.toast('KAN INTE SPARA JUST NU');return false}
+    if(this.portalStone&&this.portalStone.placingExit){this.toast('KAN INTE SPARA MEDAN PORTAL PLACERAS');return false}
     AU.init();
     let label='BANA '+(this.levelIdx+1)+' - '+this.level.name;
     try{

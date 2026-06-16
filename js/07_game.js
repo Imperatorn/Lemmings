@@ -461,7 +461,7 @@ const G={
       AU.sShrug();
       return false;
     }
-    ps.out={x:res.point.x,y:res.point.y,dir:1};
+    ps.out={x:res.point.x,y:res.point.y,dir:ps.in&&ps.in.dir||1};
     ps.placingExit=false;
     ps.active=true;
     ps.t=0;
@@ -503,7 +503,8 @@ const G={
       const sc=Math.max(1,l.scale||1);
       const dx=Math.abs(l.x-ps.in.x),dy=Math.abs(l.y-ps.in.y);
       if((l.portalCooldown||0)>0||dx>Math.max(7,7*sc)||dy>Math.max(15,13*sc))continue;
-      l.x=ps.out.x+(ps.out.dir||1)*4;
+      const exitDir=l.dir||ps.out.dir||1;
+      l.x=ps.out.x+exitDir*4;
       l.y=ps.out.y;
       l.fall=0;l.jumpT=0;l.jumpVy=0;l.manualVy=0;l.ropeId=null;l.ropeCooldown=8;
       l.portalCooldown=PORTAL_STONE_ENTER_COOLDOWN;
