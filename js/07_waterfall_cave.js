@@ -233,6 +233,10 @@ Object.assign(G,{
     if(def.kind==='pool')obj.rippleT=Math.max(obj.rippleT||0,96);
     if(def.kind==='stone'&&mode)obj.shifted=true;
     if(def.kind==='torch')obj.flameT=Math.max(obj.flameT||0,96);
+    if(def.kind==='runeWall'){
+      obj.readT=Math.max(obj.readT||0,110);
+      obj.readLines=this.cloneWaterfallCaveData(def.readLines||['Runorna viskar.']);
+    }
     if(def.kind==='viewCard'&&(mode!=='near'||!obj.dismissedNear))this.openWaterfallCaveViewCard(hit);
     cave.flags=cave.flags||{};
     cave.flags[def.id||'object']=true;
@@ -247,6 +251,7 @@ Object.assign(G,{
       if(Number.isFinite(obj.pulseT))obj.pulseT=Math.max(0,obj.pulseT-1);
       if(Number.isFinite(obj.rippleT))obj.rippleT=Math.max(0,obj.rippleT-1);
       if(Number.isFinite(obj.flameT))obj.flameT=Math.max(0,obj.flameT-1);
+      if(Number.isFinite(obj.readT))obj.readT=Math.max(0,obj.readT-1);
       const nearScale=def.kind==='viewCard'?1.0:1.08;
       const near=this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,nearScale);
       if(def.kind==='viewCard'){
@@ -258,6 +263,10 @@ Object.assign(G,{
         }
       }
       if(near&&!obj.near)this.interactWaterfallCaveObject(hit,'near');
+      if(def.kind==='runeWall'&&near){
+        obj.readT=Math.max(obj.readT||0,90);
+        obj.readLines=obj.readLines||this.cloneWaterfallCaveData(def.readLines||['Runorna viskar.']);
+      }
       obj.near=near;
     }
     return true;

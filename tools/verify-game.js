@@ -151,6 +151,9 @@ if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.
 if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.includes("c.fillRect(x-74,y-54,148,84)")) {
   throw new Error('Glyph archive should use the finished rune wall rendering instead of the old flat rectangle');
 }
+if (!caveRenderCode.includes('drawWaterfallCaveRuneReadPanel')) {
+  throw new Error('Glyph archive should render readable rune text when the lemmel approaches the runes');
+}
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingShadow') || caveRenderCode.includes('fillRect(x-54,y+13,108,8)') || caveRenderCode.includes('fillRect(lx-Math.round(8*lemScale)')) {
   throw new Error('Campfire cave shadows should avoid the old hard rectangular shadow blocks');
 }
@@ -1098,6 +1101,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!runeWall.obj.activated) {
     throw new Error('Rune wall did not light up when approached');
   }
+  if (!(runeWall.obj.readT > 0) || !Array.isArray(runeWall.obj.readLines) || !runeWall.obj.readLines.length) {
+    throw new Error('Rune wall did not show readable rune text when approached');
+  }
+  if (!drawWaterfallCaveView(WCTX, 50)) throw new Error('Glyph archive rune reading panel did not render');
   const churchCard = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchCard');
   if (!churchCard) throw new Error('Glyph archive is missing the Dala-Floda church card');
   if (!(churchCard.def.displayScale <= 0.51)) {
