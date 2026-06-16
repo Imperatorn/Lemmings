@@ -98,7 +98,7 @@ const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_ca
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
-for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','church:{','toCrystalGallery','churchCard','churchModel','viewCard','map:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveObjectDefault']) {
+for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','church:{','churchInterior:{','toCrystalGallery','churchCard','churchModel','viewCard','map:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveObjectDefault']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave scene registry is missing ${token}`);
   }
@@ -136,8 +136,11 @@ if (caveRenderCode.includes('#f0d080')) {
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingFireLight') || caveRenderCode.includes('function flameLayer') || caveRenderCode.includes('fireX-72') || caveRenderCode.includes('fireX-50')) {
   throw new Error('Campfire cave render should use pixel-frame fire and lemming side-lighting instead of old rectangular light panels');
 }
-if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
-  throw new Error('Waterfall cave render should replace the old root sanctum with a church model and scaled ground cards');
+if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
+  throw new Error('Waterfall cave render should replace the old root sanctum with a church model, church interior, and scaled ground cards');
+}
+if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.includes("c.fillRect(x-74,y-54,148,84)")) {
+  throw new Error('Glyph archive should use the finished rune wall rendering instead of the old flat rectangle');
 }
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingShadow') || caveRenderCode.includes('fillRect(x-54,y+13,108,8)') || caveRenderCode.includes('fillRect(lx-Math.round(8*lemScale)')) {
   throw new Error('Campfire cave shadows should avoid the old hard rectangular shadow blocks');
@@ -152,8 +155,8 @@ const audioCode = fs.readFileSync(path.join(root, 'js/02_audio.js'), 'utf8');
 if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850') || !audioCode.includes('0.65+Math.random()*1.55')) {
   throw new Error('Campfire audio should use softer, less sharp crackles');
 }
-if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCaveMysteryMusic')) {
-  throw new Error('Root sanctum should have a dedicated mystery music variant');
+if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCaveMysteryMusic') || !audioCode.includes('CAVE_MYSTERY_GAIN_BOOST')) {
+  throw new Error('Church scene should have an audible dedicated mystery music variant');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || !caveRenderCode.includes('Tecken') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
@@ -681,7 +684,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Manual up near a waterfall did not enter the waterfall cave');
   }
   const caveSceneIds = G.waterfallCaveSceneIds();
-  for (const id of ['main','deep','camp','emberPassage','crystalGallery','mirrorPool','glyphArchive','church']) {
+  for (const id of ['main','deep','camp','emberPassage','crystalGallery','mirrorPool','glyphArchive','church','churchInterior']) {
     if (!caveSceneIds.includes(id)) throw new Error(`Waterfall cave scene registry is missing scene ${id}`);
   }
   if (G.waterfallCaveSceneDef('main').render !== 'main' || G.waterfallCaveSceneDef('camp').audio !== 'campfire') {
@@ -1125,6 +1128,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'church') {
     throw new Error('Glyph archive did not lead down to the church');
   }
+  if (G.waterfallCave.lemY < 280 || G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY)) {
+    throw new Error('Entering the church scene should place the lemmel on the ground in front of the church');
+  }
   if (G.waterfallCaveSceneDef('church').audio !== 'church-mystery' || mysteryStarted < 1 || !waterLevels.some(w => w.level <= 0.09)) {
     throw new Error('Church scene should start the mystery music variant and lower the waterfall sound');
   }
@@ -1137,8 +1143,11 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!churchModel.obj.activated || churchModel.obj.pulseT <= 0) {
     throw new Error('Church model did not react when approached');
   }
-  if (!churchModel.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, churchModel.obj.x, churchModel.obj.y + 34)) {
+  if (!churchModel.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, churchModel.obj.x - 42, churchModel.obj.y + 34)) {
     throw new Error('Church model should be a blocking cave object');
+  }
+  if (G.waterfallCaveSceneBlockerAt(G.waterfallCave, churchModel.obj.x + 12, churchModel.obj.y + 26)) {
+    throw new Error('Church door should remain passable so the lemmel can enter');
   }
   G.waterfallCave.lemX = churchModel.obj.x - 118;
   G.waterfallCave.lemY = churchModel.obj.y + 34;
@@ -1147,6 +1156,25 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKeyUp('ArrowRight');
   if (G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > churchModel.obj.x - 72) {
     throw new Error('Church cave lemmel can walk through the church model');
+  }
+  G.waterfallCave.lemX = churchModel.obj.x + 12;
+  G.waterfallCave.lemY = churchModel.obj.y + 26;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'churchInterior') {
+    throw new Error('Walking into the church door should enter the church interior');
+  }
+  if (!drawWaterfallCaveView(WCTX, 56)) {
+    throw new Error('Church interior view did not render');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'church') {
+    throw new Error('Church interior did not return to the church scene');
   }
   const mysteryStoppedBeforeChurchExit = mysteryStopped;
   G.waterfallCave.lemX = 240;
