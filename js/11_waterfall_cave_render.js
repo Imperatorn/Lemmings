@@ -183,7 +183,7 @@ function drawWaterfallCaveViewCardInspect(c,cave,tk,hit){
     c.font='18px sans-serif';
     c.textAlign='center';
     c.textBaseline='middle';
-    const lines=card.backLines&&card.backLines.length?card.backLines:['Dala-Floda kyrka'];
+    const lines=card.backLines&&card.backLines.length?card.backLines:['Floda kyrka'];
     for(let i=0;i<lines.length;i++)c.fillText(lines[i],x+w/2,y+h/2+(i-(lines.length-1)/2)*24);
   }else if(loaded){
     c.imageSmoothingEnabled=false;

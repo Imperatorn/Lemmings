@@ -139,8 +139,8 @@ const caveRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_ren
 if (!caveRenderCode.includes('ASSETS.landsOfLoreCover') || caveRenderCode.includes('THE THRONE OF CHAOS')) {
   throw new Error('Waterfall cave cover should use the image asset instead of the old hand-drawn cover');
 }
-if (!caveRenderCode.includes('ASSETS[card.asset]') || !caveRenderCode.includes('Dala-Floda kyrka')) {
-  throw new Error('Waterfall cave view cards should render the Dala-Floda card asset and back text');
+if (!caveRenderCode.includes('ASSETS[card.asset]') || !caveRenderCode.includes('Floda kyrka')) {
+  throw new Error('Waterfall cave view cards should render the church card asset and Floda kyrka back text');
 }
 if (caveRenderCode.includes('#f0d080')) {
   throw new Error('Deep cave game item should not render the old yellow hitbox highlight');
@@ -364,7 +364,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -659,6 +659,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStartWeather = AU.startWeather;
   const prevStopWeather = AU.stopWeather;
   const prevCaveStep = AU.sWaterfallCaveStep;
+  const prevCrystalChime = AU.sWaterfallCaveCrystalChime;
   const prevWaterLevel = AU.setWaterfallCaveWaterLevel;
   const prevStartFire = AU.startWaterfallCaveFire;
   const prevStopFire = AU.stopWaterfallCaveFire;
@@ -679,7 +680,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevMsgT = G.msgT;
   const prevHolyBlessingUnlocked = G.holyBlessingUnlocked;
   const prevHolyLevelLemId = G.holyLevelLemId;
-  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
   const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [], churchHymnLevels = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
@@ -689,6 +690,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.startWeather = kind => { weatherStarted.push(kind); };
   AU.stopWeather = () => { weatherStopped++; };
   AU.sWaterfallCaveStep = depth => { caveSteps.push(depth); };
+  AU.sWaterfallCaveCrystalChime = () => { crystalChimes++; };
   AU.setWaterfallCaveWaterLevel = (level, fade) => { waterLevels.push({level, fade}); };
   AU.startWaterfallCaveFire = () => { firesStarted++; };
   AU.stopWaterfallCaveFire = () => { firesStopped++; };
@@ -1060,11 +1062,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!drawWaterfallCaveView(WCTX, 37)) throw new Error('Crystal gallery view did not render');
   const songCrystal = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'songCrystal');
   if (!songCrystal) throw new Error('Crystal gallery is missing the song crystal');
+  const crystalChimesBefore = crystalChimes;
   G.waterfallCave.lemX = songCrystal.obj.x;
   G.waterfallCave.lemY = songCrystal.obj.y;
   G.tick();
   if (!songCrystal.obj.activated || songCrystal.obj.pulseT <= 0) {
     throw new Error('Song crystal did not glow when approached');
+  }
+  if (crystalChimes <= crystalChimesBefore) {
+    throw new Error('Song crystal did not play a chime when approached');
   }
   if (!songCrystal.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, songCrystal.obj.x, songCrystal.obj.y + 8)) {
     throw new Error('Song crystal should be a blocking cave object');
@@ -1379,6 +1385,19 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Deep cave game cover opened automatically while returning from the campfire scene');
   }
   G.handleWaterfallCaveKeyUp('ArrowUp');
+  G.waterfallCave.lemX = deepItem.x;
+  G.waterfallCave.lemY = deepItem.y;
+  G.tick();
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'front') {
+    throw new Error('Deep cave game cover did not reopen after returning from another cave room');
+  }
+  G.handleWaterfallCaveInput({x:20,y:20}, 'click');
+  G.waterfallCave.lemX = deepItem.x - 70;
+  G.waterfallCave.lemY = deepItem.y;
+  G.tick();
+  if (deepItem.coverOpen || deepItem.dismissedNear) {
+    throw new Error('Deep cave game cover did not reset after reopening from another room');
+  }
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCave.deepBounds.exitY + 1;
   G.handleWaterfallCaveKey('ArrowUp');
@@ -1442,6 +1461,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.startWeather = prevStartWeather;
   AU.stopWeather = prevStopWeather;
   AU.sWaterfallCaveStep = prevCaveStep;
+  AU.sWaterfallCaveCrystalChime = prevCrystalChime;
   AU.setWaterfallCaveWaterLevel = prevWaterLevel;
   AU.startWaterfallCaveFire = prevStartFire;
   AU.stopWaterfallCaveFire = prevStopFire;

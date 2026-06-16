@@ -277,6 +277,7 @@ Object.assign(G,{
     if(def.kind==='pool')obj.rippleT=Math.max(obj.rippleT||0,96);
     if(def.kind==='stone'&&mode)obj.shifted=true;
     if(def.kind==='torch')obj.flameT=Math.max(obj.flameT||0,96);
+    if(def.kind==='crystal'&&AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(mode==='near'?0.85:1);
     if(def.kind==='runeWall'){
       if(!this.readWaterfallCaveRune(hit)){
         obj.activeRuneId=null;
@@ -738,10 +739,8 @@ Object.assign(G,{
         it.coverCloseArmed=false;
         if(!this.waterfallCaveMovementHeld(cave))it.coverReturnBlocked=false;
       }
-      if(it.coverReturnBlocked&&this.waterfallCaveMovementHeld(cave)&&near)it.dismissedNear=true;
       if(it.coverReturnBlocked&&!this.waterfallCaveMovementHeld(cave)){
         it.coverReturnBlocked=false;
-        if(near)it.dismissedNear=true;
       }
       if(it.near&&!it.dismissedNear&&!it.coverOpen&&!it.coverReturnBlocked){
         it.coverOpen=true;

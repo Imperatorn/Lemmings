@@ -392,6 +392,14 @@ const AU={
       bank.nextFireCrackle=t+0.65+Math.random()*1.55;
     }
   },
+  sWaterfallCaveCrystalChime(strength){
+    if(!this.rateFx('waterfall-cave-crystal',0.85))return;
+    const t=this.now(), s=clamp(Number.isFinite(strength)?strength:1,0.45,1);
+    this.padTone(784,0.58,'sine',0.018*s,t);
+    this.padTone(1175,0.66,'triangle',0.013*s,t+0.05);
+    this.tone(1568,0.20,'sine',0.020*s,1.01,t+0.12);
+    this.tone(2093,0.16,'triangle',0.010*s,0.98,t+0.24);
+  },
   // --- effekter ---
   rateFx(name,gap){
     if(!this.ctx||!this.on||!this.sfxOn)return false;

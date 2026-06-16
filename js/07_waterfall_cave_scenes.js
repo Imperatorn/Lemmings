@@ -147,7 +147,7 @@ const WATERFALL_CAVE_SCENES={
           {id:'hope',dx:27,dy:9,rx:20,ry:24,lines:['Runa 6/6','Så vandrar lämmeln vidare','och hoppet följer flocken.']}
         ],
         readLines:['Runorna viskar:','Läs varje tecken i stenen','så formas hela budskapet.']},
-      {id:'churchCard',kind:'viewCard',displayScale:0.5,default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:22,ry:15},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Dala-Floda kyrka']}}
+      {id:'churchCard',kind:'viewCard',displayScale:0.5,default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:22,ry:15},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Floda kyrka']}}
     ]
   },
   church:{
