@@ -287,8 +287,9 @@ const AU={
     bank.fireOn=true;
     bank.nextFireCrackle=this.now()+0.65+Math.random()*1.25;
   },
-  waterfallCaveChurchHymnVolume(){
-    return 0.66*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+  waterfallCaveChurchHymnVolume(mode){
+    const base=mode==='distant'?0.12:0.57;
+    return base*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
   },
   waterfallCaveChurchHymnElement(){
     if(this.churchHymn&&this.churchHymn.el)return this.churchHymn.el;
@@ -332,29 +333,34 @@ const AU={
   updateWaterfallCaveChurchHymnVolume(fade){
     const bank=this.churchHymn;
     if(!bank||!bank.el||!bank.on)return false;
-    return this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume(),fade==null?0.12:fade);
+    return this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume(bank.mode),fade==null?0.12:fade);
   },
-  startWaterfallCaveChurchHymn(fade){
+  startWaterfallCaveChurchHymn(fade,mode){
     this.init();
     if(!this.on||!this.musicOn)return false;
     const el=this.waterfallCaveChurchHymnElement();
     if(!el)return false;
     const bank=this.churchHymn;
     bank.on=true;
+    bank.mode=mode==='distant'?'distant':'inside';
     try{
       if(el.paused){
         const p=el.play();
         if(p&&p.catch)p.catch(()=>{});
       }
     }catch(_){}
-    this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume(),fade==null?1.0:fade);
+    this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume(bank.mode),fade==null?1.0:fade);
     return true;
+  },
+  startWaterfallCaveChurchHymnDistant(fade){
+    return this.startWaterfallCaveChurchHymn(fade==null?0.85:fade,'distant');
   },
   stopWaterfallCaveChurchHymn(fade){
     const bank=this.churchHymn;
     const el=bank&&bank.el;
     if(!el)return false;
     bank.on=false;
+    bank.mode='inside';
     return this.fadeWaterfallCaveChurchHymn(0,fade==null?0.65:fade,()=>{
       try{
         el.pause();

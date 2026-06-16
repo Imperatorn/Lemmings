@@ -185,6 +185,12 @@ Object.assign(G,{
     cave=cave||this.waterfallCave;
     const st=this.waterfallCaveChurchBlessingState(cave);
     if(!st||st.done||st.active)return false;
+    const l=this.findLemById?this.findLemById(cave.lemId):null;
+    if((cave.flags&&cave.flags.priestBlessed)||(l&&l.holy)){
+      st.done=true;
+      st.phase='done';
+      return false;
+    }
     const b=this.waterfallCaveSceneBounds(cave);
     const ly=clamp(cave.lemY||146,b.minY||132,160);
     st.active=true;
@@ -340,6 +346,7 @@ Object.assign(G,{
     if(!cave)return false;
     const def=this.waterfallCaveSceneDef(scene);
     if(!def)return false;
+    const prevScene=cave.scene;
     cave.scene=def.id;
     cave.visited=cave.visited||{};
     cave.visited[def.id]=true;
@@ -354,7 +361,8 @@ Object.assign(G,{
     cave.walking=false;
     cave.running=false;
     cave.lastStepT=cave.t||0;
-    if(!opts||opts.audio!==false)this.setWaterfallCaveSceneAudio(def.id);
+    cave.churchHymnDistant=def.id==='church'&&prevScene==='churchInterior';
+    if(!opts||opts.audio!==false)this.setWaterfallCaveSceneAudio(def.id,{fromScene:prevScene});
     return true;
   },
   waterfallCaveExitReady(cave,exit){
@@ -474,11 +482,12 @@ Object.assign(G,{
   startWeatherAfterWaterfallCave(kind){
     if(this.state==='PLAY'&&this.level&&AU.startWeather)AU.startWeather(kind||this.weatherKind);
   },
-  setWaterfallCaveSceneAudio(scene){
+  setWaterfallCaveSceneAudio(scene,opts){
     const def=this.waterfallCaveSceneDef(scene)||{};
     const audio=def.audio||scene;
-    if(audio!=='church-hymn'&&AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.65);
-    if(audio!=='church-mystery'&&AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.65);
+    const distantChurchHymn=audio==='church-mystery'&&this.waterfallCave&&this.waterfallCave.scene==='church'&&this.waterfallCave.churchHymnDistant;
+    if(audio!=='church-hymn'&&!distantChurchHymn&&AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.65);
+    if((audio!=='church-mystery'||distantChurchHymn)&&AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.65);
     if(audio==='campfire'){
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.28,0.75);
       if(AU.startWaterfallCaveFire)AU.startWaterfallCaveFire();
@@ -494,7 +503,10 @@ Object.assign(G,{
     }else if(audio==='church-mystery'){
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.08,0.85);
-      if(AU.startWaterfallCaveMysteryMusic)AU.startWaterfallCaveMysteryMusic(1.35);
+      if(distantChurchHymn){
+        if(AU.startWaterfallCaveChurchHymnDistant)AU.startWaterfallCaveChurchHymnDistant(0.95);
+        else if(AU.startWaterfallCaveChurchHymn)AU.startWaterfallCaveChurchHymn(0.95,'distant');
+      }else if(AU.startWaterfallCaveMysteryMusic)AU.startWaterfallCaveMysteryMusic(1.35);
     }else if(audio==='church-hymn'){
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.05,0.85);
