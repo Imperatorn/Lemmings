@@ -84,6 +84,9 @@ if (!fs.existsSync(path.join(root, 'assets/lands-of-lore-pixel.png'))) {
 if (!fs.existsSync(path.join(root, 'assets/dala-floda-kyrka-pixel.png'))) {
   throw new Error('Missing Dala-Floda church pixel-art asset');
 }
+if (!fs.existsSync(path.join(root, 'assets/blessthelord.mp3'))) {
+  throw new Error('Missing church hymn MP3 asset');
+}
 const utilCode = fs.readFileSync(path.join(root, 'js/00_util.js'), 'utf8');
 if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
   throw new Error('Lands of Lore pixel-art asset is not registered');
@@ -157,6 +160,9 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
 }
 if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCaveMysteryMusic') || !audioCode.includes('CAVE_MYSTERY_GAIN_BOOST')) {
   throw new Error('Church scene should have an audible dedicated mystery music variant');
+}
+if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
+  throw new Error('Church interior should play the Bless the Lord MP3 asset');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || !caveRenderCode.includes('Tecken') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
@@ -637,6 +643,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevUpdateFire = AU.updateWaterfallCaveCampfire;
   const prevStartMysteryMusic = AU.startWaterfallCaveMysteryMusic;
   const prevStopMysteryMusic = AU.stopWaterfallCaveMysteryMusic;
+  const prevStartChurchHymn = AU.startWaterfallCaveChurchHymn;
+  const prevStopChurchHymn = AU.stopWaterfallCaveChurchHymn;
   const prevMusicOn = AU.musicOn;
   const prevSfxOn = AU.sfxOn;
   const prevMoney = G.money;
@@ -645,8 +653,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevToasts = G.toasts;
   const prevMsg = G.msg;
   const prevMsgT = G.msgT;
-  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0;
-  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [];
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnStopped = 0;
+  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
   AU.startMusic = kind => { musicStarted.push(kind); };
@@ -661,6 +669,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.updateWaterfallCaveCampfire = () => { fireUpdates++; };
   AU.startWaterfallCaveMysteryMusic = fade => { mysteryStarted++; mysteryFadeDurations.push(fade); };
   AU.stopWaterfallCaveMysteryMusic = fade => { mysteryStopped++; mysteryFadeDurations.push(fade); };
+  AU.startWaterfallCaveChurchHymn = fade => { churchHymnStarted++; churchHymnFadeDurations.push(fade); };
+  AU.stopWaterfallCaveChurchHymn = fade => { churchHymnStopped++; churchHymnFadeDurations.push(fade); };
   AU.musicOn = true;
   AU.sfxOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
@@ -1165,9 +1175,13 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'churchInterior') {
     throw new Error('Walking into the church door should enter the church interior');
   }
+  if (G.waterfallCaveSceneDef('churchInterior').audio !== 'church-hymn' || churchHymnStarted < 1) {
+    throw new Error('Church interior should start the MP3 hymn audio');
+  }
   if (!drawWaterfallCaveView(WCTX, 56)) {
     throw new Error('Church interior view did not render');
   }
+  const churchHymnStoppedBeforeReturn = churchHymnStopped;
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
   G.handleWaterfallCaveKey('ArrowDown');
@@ -1175,6 +1189,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKeyUp('ArrowDown');
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'church') {
     throw new Error('Church interior did not return to the church scene');
+  }
+  if (churchHymnStopped <= churchHymnStoppedBeforeReturn) {
+    throw new Error('Leaving the church interior should stop the MP3 hymn audio');
   }
   const mysteryStoppedBeforeChurchExit = mysteryStopped;
   G.waterfallCave.lemX = 240;
@@ -1291,6 +1308,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.updateWaterfallCaveCampfire = prevUpdateFire;
   AU.startWaterfallCaveMysteryMusic = prevStartMysteryMusic;
   AU.stopWaterfallCaveMysteryMusic = prevStopMysteryMusic;
+  AU.startWaterfallCaveChurchHymn = prevStartChurchHymn;
+  AU.stopWaterfallCaveChurchHymn = prevStopChurchHymn;
   AU.musicOn = prevMusicOn;
   AU.sfxOn = prevSfxOn;
   G.money = prevMoney;

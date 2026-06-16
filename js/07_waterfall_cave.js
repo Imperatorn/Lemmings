@@ -315,6 +315,7 @@ Object.assign(G,{
     this.waterfallCaveExitNeedsUpRelease=reason==='walkout';
     if(AU.stopWaterfallCave)AU.stopWaterfallCave();
     if(AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.35);
+    if(AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.35);
     const resumeMusic=!!this.waterfallCaveResumeMusic;
     const resumeWeather=this.waterfallCaveResumeWeather;
     this.waterfallCaveResumeMusic=false;
@@ -332,6 +333,7 @@ Object.assign(G,{
   setWaterfallCaveSceneAudio(scene){
     const def=this.waterfallCaveSceneDef(scene)||{};
     const audio=def.audio||scene;
+    if(audio!=='church-hymn'&&AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.65);
     if(audio!=='church-mystery'&&AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.65);
     if(audio==='campfire'){
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.28,0.75);
@@ -349,6 +351,10 @@ Object.assign(G,{
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.08,0.85);
       if(AU.startWaterfallCaveMysteryMusic)AU.startWaterfallCaveMysteryMusic(1.35);
+    }else if(audio==='church-hymn'){
+      if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
+      if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.05,0.85);
+      if(AU.startWaterfallCaveChurchHymn)AU.startWaterfallCaveChurchHymn(1.0);
     }else{
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.45);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(audio==='waterfall-near'?1.0:0.12,0.65);

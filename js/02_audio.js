@@ -4,7 +4,7 @@ const MUSIC_GAIN_BASE=0.50;
 const CAVE_MYSTERY_GAIN_BOOST=1.35;
 const AU={
   ctx:null, master:null, musGain:null, sfxGain:null, on:true, musicOn:true, sfxOn:true, musicVol:1, sfxVol:1, started:false,
-  weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, waterfallCave:{loopNodes:[]}, fxLast:{},
+  weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, waterfallCave:{loopNodes:[]}, churchHymn:null, fxLast:{},
   init(){
     if(this.ctx) return;
     try{
@@ -40,6 +40,7 @@ const AU={
     const sv=clamp(Number.isFinite(this.sfxVol)?this.sfxVol:1,0,1);
     if(this.musGain&&this.musGain.gain)this.gainRamp(this.musGain,this.musGain.gain,t,mv,'linear');
     if(this.sfxGain&&this.sfxGain.gain)this.gainRamp(this.sfxGain,this.sfxGain.gain,t,sv,'linear');
+    if(this.updateWaterfallCaveChurchHymnVolume)this.updateWaterfallCaveChurchHymnVolume(0.08);
   },
   setMusicVolume(v){
     v=Number(v);
@@ -285,6 +286,81 @@ const AU={
     if(hiss)bank.fireNodes.push(hiss);
     bank.fireOn=true;
     bank.nextFireCrackle=this.now()+0.65+Math.random()*1.25;
+  },
+  waterfallCaveChurchHymnVolume(){
+    return 0.78*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+  },
+  waterfallCaveChurchHymnElement(){
+    if(this.churchHymn&&this.churchHymn.el)return this.churchHymn.el;
+    if(typeof Audio==='undefined')return null;
+    try{
+      const el=new Audio('assets/blessthelord.mp3');
+      el.loop=true;
+      el.preload='auto';
+      el.volume=0;
+      this.churchHymn={el,timer:null,on:false};
+      return el;
+    }catch(_){return null}
+  },
+  fadeWaterfallCaveChurchHymn(target,fade,done){
+    const bank=this.churchHymn;
+    const el=bank&&bank.el;
+    if(!el)return false;
+    if(bank.timer){clearInterval(bank.timer);bank.timer=null}
+    target=clamp(Number.isFinite(target)?target:0,0,1);
+    const start=clamp(Number.isFinite(el.volume)?el.volume:0,0,1);
+    const dur=Math.max(0,fade==null?0.65:fade)*1000;
+    if(dur<=16){
+      try{el.volume=target}catch(_){}
+      if(done)done();
+      return true;
+    }
+    const startT=Date.now?Date.now():0;
+    bank.timer=setInterval(()=>{
+      const now=Date.now?Date.now():startT+dur;
+      const p=clamp((now-startT)/dur,0,1);
+      const v=start+(target-start)*p;
+      try{el.volume=clamp(v,0,1)}catch(_){}
+      if(p>=1){
+        clearInterval(bank.timer);
+        bank.timer=null;
+        if(done)done();
+      }
+    },40);
+    return true;
+  },
+  updateWaterfallCaveChurchHymnVolume(fade){
+    const bank=this.churchHymn;
+    if(!bank||!bank.el||!bank.on)return false;
+    return this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume(),fade==null?0.12:fade);
+  },
+  startWaterfallCaveChurchHymn(fade){
+    this.init();
+    if(!this.on||!this.musicOn)return false;
+    const el=this.waterfallCaveChurchHymnElement();
+    if(!el)return false;
+    const bank=this.churchHymn;
+    bank.on=true;
+    try{
+      if(el.paused){
+        const p=el.play();
+        if(p&&p.catch)p.catch(()=>{});
+      }
+    }catch(_){}
+    this.fadeWaterfallCaveChurchHymn(this.waterfallCaveChurchHymnVolume(),fade==null?1.0:fade);
+    return true;
+  },
+  stopWaterfallCaveChurchHymn(fade){
+    const bank=this.churchHymn;
+    const el=bank&&bank.el;
+    if(!el)return false;
+    bank.on=false;
+    return this.fadeWaterfallCaveChurchHymn(0,fade==null?0.65:fade,()=>{
+      try{
+        el.pause();
+        el.currentTime=0;
+      }catch(_){}
+    });
   },
   updateWaterfallCaveCampfire(){
     const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});

@@ -170,7 +170,7 @@ const WATERFALL_CAVE_SCENES={
     id:'churchInterior',
     label:'Inne i kyrkan',
     render:'churchInterior',
-    audio:'church-mystery',
+    audio:'church-hymn',
     bounds:{minX:78,maxX:402,minY:172,maxY:292},
     spawns:{
       fromDoor:{x:240,y:264,facing:'front'}

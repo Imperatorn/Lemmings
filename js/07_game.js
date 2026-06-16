@@ -340,10 +340,15 @@ const G={
   },
   toggleMusic(){
     AU.musicOn=!AU.musicOn;
-    if(!AU.musicOn)AU.stopMusic();
+    if(!AU.musicOn){
+      AU.stopMusic();
+      if(AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.25);
+      if(AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.25);
+    }
     else if(this.waterfallCaveActive&&this.waterfallCaveActive()){
       this.waterfallCaveResumeMusic=true;
       AU.stopMusic();
+      if(this.setWaterfallCaveSceneAudio)this.setWaterfallCaveSceneAudio(this.waterfallCave&&this.waterfallCave.scene);
     }
     else if(this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
     else AU.startMusic('menu');
@@ -355,6 +360,7 @@ const G={
     if(this.waterfallCaveActive&&this.waterfallCaveActive()){
       this.waterfallCaveResumeMusic=true;
       AU.stopMusic();
+      if(this.setWaterfallCaveSceneAudio)this.setWaterfallCaveSceneAudio(this.waterfallCave&&this.waterfallCave.scene);
     }
     else if(this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
     else AU.startMusic('menu');
