@@ -400,6 +400,15 @@ const AU={
     this.tone(1568,0.20,'sine',0.020*s,1.01,t+0.12);
     this.tone(2093,0.16,'triangle',0.010*s,0.98,t+0.24);
   },
+  sWaterfallCaveTeleportStone(){
+    if(!this.rateFx('waterfall-cave-teleport-stone',1.2))return;
+    const t=this.now();
+    this.padTone(392,0.92,'sine',0.016,t);
+    this.padTone(740,0.78,'triangle',0.018,t+0.05);
+    this.tone(1175,0.24,'sine',0.026,1.18,t+0.12);
+    this.tone(1760,0.22,'triangle',0.014,0.84,t+0.26);
+    this.softNoise(0.45,0.010,1800,0.55,t+0.03,{type:'bandpass',q:0.60,smooth:0.76,attack:0.07,release:0.28});
+  },
   // --- effekter ---
   rateFx(name,gap){
     if(!this.ctx||!this.on||!this.sfxOn)return false;

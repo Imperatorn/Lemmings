@@ -470,6 +470,97 @@ function drawWaterfallCaveCampfire(c,x,y,tk){
   c.restore();
 }
 
+function waterfallCaveTeleportStoneRenderState(cave){
+  const st=cave&&cave.sceneState&&cave.sceneState.churchInterior&&cave.sceneState.churchInterior.teleportStone;
+  if(st&&st.found&&!st.collected)return st;
+  return null;
+}
+
+function drawWaterfallCaveTeleportStone(c,x,y,scale,tk,pulse){
+  const p=clamp(Number.isFinite(pulse)?pulse:0,0,1);
+  const flick=0.55+0.45*Math.sin(tk*0.12);
+  c.save();
+  c.translate(Math.round(x),Math.round(y));
+  c.scale(scale||1,scale||1);
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.10+0.20*p+0.05*flick;
+  c.fillStyle='#5ee8ff';
+  fillPixelPoly(c,[[-18,12],[-10,-14],[8,-20],[20,-4],[15,16],[-8,22]]);
+  c.globalAlpha=0.08+0.18*p+0.04*(1-flick);
+  c.fillStyle='#ff4fd8';
+  fillPixelPoly(c,[[-20,10],[-14,-8],[2,-22],[18,-8],[18,14],[-2,24]]);
+  c.globalCompositeOperation='source-over';
+  c.globalAlpha=0.45;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[-20,18],[-8,13],[14,13],[24,18],[12,23],[-12,23]]);
+  c.globalAlpha=1;
+  c.fillStyle='#474a50';
+  fillPixelPoly(c,[[-12,12],[-17,-2],[-9,-18],[8,-22],[18,-8],[16,10],[4,20],[-8,18]]);
+  c.fillStyle='#6a6f78';
+  fillPixelPoly(c,[[-8,10],[-12,-1],[-6,-14],[6,-18],[13,-6],[11,8],[2,15]]);
+  c.fillStyle='#2d3036';
+  fillPixelPoly(c,[[4,20],[16,10],[18,-8],[22,-3],[20,13],[10,22]]);
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.74+0.18*flick;
+  c.fillStyle='#69f0ff';
+  c.fillRect(-8,-5,2,13);
+  c.fillRect(-8,-5,9,2);
+  c.fillRect(4,-14,2,12);
+  c.fillRect(4,-2,8,2);
+  c.globalAlpha=0.62+0.16*(1-flick);
+  c.fillStyle='#ff58d8';
+  c.fillRect(-2,-17,2,9);
+  c.fillRect(-2,-9,8,2);
+  c.fillRect(8,2,2,9);
+  c.fillRect(1,10,9,2);
+  c.restore();
+}
+
+function drawWaterfallCaveChurchAltarForeground(c,tk){
+  c.save();
+  c.globalAlpha=0.78;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[194,139],[212,132],[270,132],[288,139],[270,146],[210,146]]);
+  c.globalAlpha=1;
+  c.fillStyle='#5b3d20';
+  fillPixelPoly(c,[[202,100],[278,100],[288,138],[192,138]]);
+  c.fillStyle='#7b5a30';
+  fillPixelPoly(c,[[210,96],[270,96],[278,105],[202,105]]);
+  c.fillStyle='#d8c58a';
+  c.fillRect(212,98,56,4);
+  c.fillStyle='#3a2616';
+  c.fillRect(202,132,76,6);
+  c.fillStyle='#a47a3d';
+  c.fillRect(218,111,44,2);
+  c.fillRect(224,122,32,2);
+  c.globalAlpha=0.22+0.08*Math.sin(tk*0.12);
+  c.fillStyle='#d8ecff';
+  c.fillRect(226,106,28,1);
+  c.restore();
+}
+
+function drawWaterfallCaveTeleportStoneMessage(c,cave,tk){
+  const lines=cave&&cave.teleportStoneMessageT>0&&Array.isArray(cave.teleportStoneMessageLines)?cave.teleportStoneMessageLines:null;
+  if(!lines||typeof drawTextC!=='function')return false;
+  const life=clamp((cave.teleportStoneMessageT||0)/28,0,1);
+  const x=72,y=28,w=336,h=38;
+  c.save();
+  c.globalAlpha=0.58+0.24*life;
+  c.fillStyle='#020508';
+  c.fillRect(x-6,y-6,w+12,h+12);
+  c.globalAlpha=0.90;
+  c.fillStyle='#101528';
+  fillPixelPoly(c,[[x,y+4],[x+12,y],[x+w-12,y],[x+w,y+4],[x+w-10,y+h],[x+10,y+h]]);
+  c.globalAlpha=0.30+0.16*Math.sin(tk*0.10);
+  c.fillStyle='#5ee8ff';
+  c.fillRect(x+12,y+h-7,w-24,2);
+  c.globalAlpha=1;
+  drawTextC(c,lines[0]||'',x+w/2,y+10,1,'#a8f7ff');
+  drawTextC(c,lines[1]||'',x+w/2,y+23,1,'#ffb0f0');
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,scale,fireX){
   const dx=(fireX-lx), dist=Math.abs(dx);
   const strength=clamp(1-dist/160,0,1);
@@ -1319,6 +1410,8 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   c.globalAlpha=1;
   c.fillStyle='#090806';
   fillPixelPoly(c,[[196,72],[208,48],[272,48],[284,72],[274,124],[206,124]]);
+  const teleportStone=waterfallCaveTeleportStoneRenderState(cave);
+  if(teleportStone)drawWaterfallCaveTeleportStone(c,teleportStone.x||240,teleportStone.y||118,1.65,tk,clamp((teleportStone.pulseT||0)/120,0,1));
   c.fillStyle='#7b5a30';
   c.fillRect(210,92,60,24);
   c.fillStyle='#d8c58a';
@@ -1359,7 +1452,9 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
   drawWaterfallCaveBlessedLemmingOverlay(c,cave,lx,ly,lemScale,blessing,tk);
   if(blessing&&blessing.active&&blessing.priestY>=(cave.lemY||264))drawWaterfallCavePriest(c,blessing,tk);
+  if(!(blessing&&blessing.active)&&ly<=150&&lx>=190&&lx<=290)drawWaterfallCaveChurchAltarForeground(c,tk);
   drawWaterfallCaveChurchBlessingText(c,cave,blessing,tk);
+  drawWaterfallCaveTeleportStoneMessage(c,cave,tk);
   c.restore();
   return true;
 }

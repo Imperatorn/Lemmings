@@ -253,6 +253,61 @@ Object.assign(G,{
     }
     return st.active;
   },
+  waterfallCaveTeleportStoneState(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='churchInterior')return null;
+    cave.sceneState=cave.sceneState||{};
+    const bucket=cave.sceneState.churchInterior||(cave.sceneState.churchInterior={});
+    if(!bucket.teleportStone)bucket.teleportStone={x:240,y:118,found:!!this.holyTeleportStoneUnlocked,collected:!!this.holyTeleportStoneUnlocked,near:false,pulseT:0};
+    if(this.holyTeleportStoneUnlocked){
+      bucket.teleportStone.found=true;
+      bucket.teleportStone.collected=true;
+    }
+    return bucket.teleportStone;
+  },
+  waterfallCaveBehindChurchAltar(cave){
+    if(!cave||cave.scene!=='churchInterior')return false;
+    const x=cave.lemX||0,y=cave.lemY||999;
+    const fromBehind=cave.facing==='front';
+    return x>=206&&x<=274&&y>=132&&y<=140&&fromBehind;
+  },
+  discoverWaterfallCaveTeleportStone(cave,stone,l){
+    if(!cave||!stone||!l||!l.holy||stone.found)return false;
+    stone.found=true;
+    stone.collected=true;
+    stone.near=true;
+    stone.pulseT=180;
+    cave.facing='front';
+    cave.walking=false;
+    cave.running=false;
+    this.clearWaterfallCaveMoveKeys(cave);
+    cave.flags=cave.flags||{};
+    cave.flags.teleportStoneFound=true;
+    cave.teleportStoneMessageT=180;
+    cave.teleportStoneMessageLines=['TELEPORTERINGSSTENEN HAR VAKNAT','DEN TILLHOR DEN HELIGA LAMMELN'];
+    this.unlockHolyTeleportStone(l);
+    if(AU.sWaterfallCaveTeleportStone)AU.sWaterfallCaveTeleportStone();
+    else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
+    if(this.playTeleportStoneCutscene)this.playTeleportStoneCutscene(l,'fullscreen');
+    this.toast('TELEPORTERINGSSTEN HITTAD',160);
+    return true;
+  },
+  updateWaterfallCaveTeleportStone(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='churchInterior')return false;
+    const stone=this.waterfallCaveTeleportStoneState(cave);
+    if(!stone)return false;
+    if(stone.pulseT>0)stone.pulseT--;
+    if(cave.teleportStoneMessageT>0)cave.teleportStoneMessageT--;
+    const l=this.findLemById?this.findLemById(cave.lemId):null;
+    if(l&&l.holy&&this.holyTeleportStoneUnlocked&&!l.teleportStone){
+      l.teleportStone=true;
+      this.holyTeleportStoneLemId=l.id;
+    }
+    stone.near=this.waterfallCaveBehindChurchAltar(cave);
+    if(stone.near&&l&&l.holy&&!stone.found)return this.discoverWaterfallCaveTeleportStone(cave,stone,l);
+    return false;
+  },
   waterfallCaveNearestObject(cave){
     cave=cave||this.waterfallCave;
     if(!cave)return null;
@@ -659,6 +714,7 @@ Object.assign(G,{
   },
   updateWaterfallCave(){
     if(!this.waterfallCaveActive())return false;
+    if(this.cutsceneActive&&this.cutsceneActive())return false;
     const cave=this.waterfallCave;
     cave.t++;
     if(cave.blessingMessageT>0)cave.blessingMessageT--;
@@ -671,6 +727,7 @@ Object.assign(G,{
       return true;
     }
     if(this.updateWaterfallCaveChurchBlessing(cave))return true;
+    if(this.updateWaterfallCaveTeleportStone(cave))return true;
     const b=this.waterfallCaveSceneBounds(cave);
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
@@ -727,6 +784,7 @@ Object.assign(G,{
     }
     this.updateWaterfallCaveSceneObjects(cave);
     if(cave.churchHymnDistant)this.updateWaterfallCaveChurchHymnDistance(cave,0.18,false);
+    if(this.updateWaterfallCaveTeleportStone(cave))return true;
     if(cave.scene==='deep'){
       const it=cave.deepItem||(cave.deepItem={x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
       const ix=Math.abs((cave.lemX||0)-it.x),iy=Math.abs((cave.lemY||0)-it.y);

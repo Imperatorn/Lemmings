@@ -117,7 +117,7 @@ for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldam
     throw new Error(`Waterfall cave map text is missing Swedish label ${token}`);
   }
 }
-for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing','blessWaterfallCaveLemming']) {
+for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing','blessWaterfallCaveLemming','waterfallCaveTeleportStoneState','updateWaterfallCaveTeleportStone']) {
   if (!waterfallRuntimeCode.includes(token)) {
     throw new Error(`Waterfall cave runtime is missing scene-system method ${token}`);
   }
@@ -131,9 +131,15 @@ if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('
 if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHolyLemmingForLevel') || !gameCode.includes('normalizeHolyLemmings')) {
   throw new Error('Blessed lemmels should unlock exactly one persistent holy hatch lemmel for future levels');
 }
+if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('unlockHolyTeleportStone') || !gameCode.includes('teleportStone')) {
+  throw new Error('Teleport stone should be persisted as a holy lemmel property');
+}
 const cutsceneScenesCode = fs.readFileSync(path.join(root, 'js/07_cutscene_scenes.js'), 'utf8');
 if (!cutsceneScenesCode.includes('function cutsceneLemmingRingScale') || cutsceneScenesCode.includes('Math.round(sc*0.58)') || cutsceneScenesCode.includes('Math.round(sc*0.54)')) {
   throw new Error('Fish ring cutscene should use the larger lemming-fit swim ring scale');
+}
+if (!cutsceneScenesCode.includes('makeTeleportStoneCutsceneSpec') || !cutsceneScenesCode.includes('drawTeleportStoneCloseup') || !cutsceneScenesCode.includes('teleport-stone-found')) {
+  throw new Error('Teleport stone discovery should have a dedicated cutscene');
 }
 const caveRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
 if (!caveRenderCode.includes('ASSETS.landsOfLoreCover') || caveRenderCode.includes('THE THRONE OF CHAOS')) {
@@ -145,6 +151,9 @@ if (!caveRenderCode.includes('ASSETS[card.asset]') || !caveRenderCode.includes('
 if (caveRenderCode.includes('#f0d080')) {
   throw new Error('Deep cave game item should not render the old yellow hitbox highlight');
 }
+if (caveRenderCode.includes('holyTeleportStoneUnlocked)return {x:240')) {
+  throw new Error('Teleport stone should not keep rendering after it has been collected');
+}
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingFireLight') || caveRenderCode.includes('function flameLayer') || caveRenderCode.includes('fireX-72') || caveRenderCode.includes('fireX-50')) {
   throw new Error('Campfire cave render should use pixel-frame fire and lemming side-lighting instead of old rectangular light panels');
 }
@@ -153,6 +162,9 @@ if (!caveRenderCode.includes('drawWaterfallCaveEmberCampOpeningLight') || !caveR
 }
 if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveChurchLemmingOcclusion') || !caveRenderCode.includes('drawWaterfallCavePriest') || !caveRenderCode.includes('drawWaterfallCaveBlessedLemmingOverlay') || !caveRenderCode.includes('drawWaterfallCaveChurchBlessingText') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
   throw new Error('Waterfall cave render should replace the old root sanctum with a church model, church interior, and scaled ground cards');
+}
+if (!caveRenderCode.includes('drawWaterfallCaveTeleportStone') || !caveRenderCode.includes('drawWaterfallCaveChurchAltarForeground') || !caveRenderCode.includes('drawWaterfallCaveTeleportStoneMessage')) {
+  throw new Error('Church interior should render the hidden teleport stone and altar foreground occlusion');
 }
 if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.includes("c.fillRect(x-74,y-54,148,84)")) {
   throw new Error('Glyph archive should use the finished rune wall rendering instead of the old flat rectangle');
@@ -181,6 +193,9 @@ if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCav
 }
 if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');
+}
+if (!audioCode.includes('sWaterfallCaveTeleportStone')) {
+  throw new Error('Teleport stone discovery should have a dedicated magical sound');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || !caveRenderCode.includes('Tecken') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
@@ -328,7 +343,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
-  'unlockHolyBlessing','normalizeHolyLemmings','assignHolyLemmingForLevel',
+  'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'restoreGoalBase',
@@ -339,7 +354,7 @@ const requiredRuntimeMethods = [
   'makeFishRingCutsceneSpec','playFishRingCutscene',
   'makeDolphinRescueCutsceneSpec','playDolphinRescueCutscene',
   'makeWaterClimbCutsceneSpec','playWaterClimbCutscene',
-  'makeClimbCutsceneSpec','playClimbCutscene','shouldPlayClimbCutscene','toggleCutscenes',
+  'makeClimbCutsceneSpec','playClimbCutscene','makeTeleportStoneCutsceneSpec','playTeleportStoneCutscene','shouldPlayClimbCutscene','toggleCutscenes',
   'hitDecorTargetAt',
   'findNearbyRingFish','makeRescueRingFish','tryFishSwimRing',
   'rescueToastText',
@@ -355,6 +370,7 @@ const requiredRuntimeMethods = [
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'waterfallCaveRuneAt','waterfallCaveRuneLines','readWaterfallCaveRune',
+  'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
@@ -364,7 +380,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveTeleportStone']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -660,6 +676,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStopWeather = AU.stopWeather;
   const prevCaveStep = AU.sWaterfallCaveStep;
   const prevCrystalChime = AU.sWaterfallCaveCrystalChime;
+  const prevTeleportStoneSound = AU.sWaterfallCaveTeleportStone;
   const prevWaterLevel = AU.setWaterfallCaveWaterLevel;
   const prevStartFire = AU.startWaterfallCaveFire;
   const prevStopFire = AU.stopWaterfallCaveFire;
@@ -680,7 +697,11 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevMsgT = G.msgT;
   const prevHolyBlessingUnlocked = G.holyBlessingUnlocked;
   const prevHolyLevelLemId = G.holyLevelLemId;
-  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
+  const prevHolyTeleportStoneUnlocked = G.holyTeleportStoneUnlocked;
+  const prevHolyTeleportStoneLemId = G.holyTeleportStoneLemId;
+  const prevCutscene = G.cutscene;
+  const prevCutscenesOn = G.cutscenesOn;
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, teleportStoneSounds = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
   const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [], churchHymnLevels = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
@@ -691,6 +712,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWeather = () => { weatherStopped++; };
   AU.sWaterfallCaveStep = depth => { caveSteps.push(depth); };
   AU.sWaterfallCaveCrystalChime = () => { crystalChimes++; };
+  AU.sWaterfallCaveTeleportStone = () => { teleportStoneSounds++; };
   AU.setWaterfallCaveWaterLevel = (level, fade) => { waterLevels.push({level, fade}); };
   AU.startWaterfallCaveFire = () => { firesStarted++; };
   AU.stopWaterfallCaveFire = () => { firesStopped++; };
@@ -703,6 +725,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWaterfallCaveChurchHymn = fade => { churchHymnStopped++; churchHymnFadeDurations.push(fade); };
   AU.musicOn = true;
   AU.sfxOn = true;
+  G.cutscenesOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
   if (waterfallIdx < 0) throw new Error('Missing waterfall cave fixture level');
   G.startLevel(waterfallIdx);
@@ -1289,6 +1312,38 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!drawWaterfallCaveView(WCTX, 57)) {
     throw new Error('Church blessing view did not render');
   }
+  const teleportSoundsBefore = teleportStoneSounds;
+  G.clearWaterfallCaveMoveKeys(G.waterfallCave);
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = 136;
+  G.waterfallCave.facing = 'back';
+  G.tick();
+  let teleportStone = G.waterfallCaveTeleportStoneState(G.waterfallCave);
+  if (teleportStone && teleportStone.found) {
+    throw new Error('Teleport stone should not trigger when the holy lemmel approaches the altar from the front/upward side');
+  }
+  if (G.cutsceneActive()) {
+    throw new Error('Teleport stone should not start its cutscene from the wrong altar side');
+  }
+  G.waterfallCave.facing = 'front';
+  G.tick();
+  teleportStone = G.waterfallCaveTeleportStoneState(G.waterfallCave);
+  if (!teleportStone || !teleportStone.found || !teleportStone.collected || !G.holyTeleportStoneUnlocked || !blessedLem.teleportStone || G.holyTeleportStoneLemId !== blessedLem.id) {
+    throw new Error('Holy lemmel should discover and receive the teleport stone behind the church altar');
+  }
+  if (teleportStoneSounds <= teleportSoundsBefore) {
+    throw new Error('Teleport stone discovery did not play its magical sound');
+  }
+  if (!G.cutsceneActive() || !G.cutscene || G.cutscene.id !== 'teleport-stone-found') {
+    throw new Error('Teleport stone discovery did not start its cutscene');
+  }
+  if (!drawCutsceneOverlay(WCTX, 59)) {
+    throw new Error('Teleport stone discovery cutscene did not render');
+  }
+  G.clearCutscene('verify-teleport-stone');
+  if (!drawWaterfallCaveView(WCTX, 60)) {
+    throw new Error('Church interior did not render after teleport stone discovery');
+  }
   const blessingDoneX = G.waterfallCave.lemX;
   G.handleWaterfallCaveKey('ArrowRight');
   G.tick();
@@ -1453,6 +1508,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if ((G.lems || []).some(l => l && l !== holyHatchLems[0] && l.holy)) {
     throw new Error('Only one lemmel may be holy in a new level');
   }
+  if (!holyHatchLems[0].teleportStone || G.holyTeleportStoneLemId !== holyHatchLems[0].id) {
+    throw new Error('A holy lemmel with the discovered teleport stone should keep that property on new levels');
+  }
   AU.startWaterfallCave = prevStartWaterfall;
   AU.stopWaterfallCave = prevStopWaterfall;
   AU.startMusic = prevStartMusic;
@@ -1462,6 +1520,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWeather = prevStopWeather;
   AU.sWaterfallCaveStep = prevCaveStep;
   AU.sWaterfallCaveCrystalChime = prevCrystalChime;
+  AU.sWaterfallCaveTeleportStone = prevTeleportStoneSound;
   AU.setWaterfallCaveWaterLevel = prevWaterLevel;
   AU.startWaterfallCaveFire = prevStartFire;
   AU.stopWaterfallCaveFire = prevStopFire;
@@ -1482,6 +1541,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.msgT = prevMsgT;
   G.holyBlessingUnlocked = prevHolyBlessingUnlocked;
   G.holyLevelLemId = prevHolyLevelLemId;
+  G.holyTeleportStoneUnlocked = prevHolyTeleportStoneUnlocked;
+  G.holyTeleportStoneLemId = prevHolyTeleportStoneLemId;
+  G.cutscene = prevCutscene;
+  G.cutscenesOn = prevCutscenesOn;
 }
 {
   const prevMoney = G.money;

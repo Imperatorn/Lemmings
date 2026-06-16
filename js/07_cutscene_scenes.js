@@ -136,6 +136,92 @@
     }
     return spec;
   }
+  function drawTeleportStoneCloseup(c,r,p,cs,tk){
+    c.save();
+    c.fillStyle='#030509';
+    c.fillRect(r.x,r.y,r.w,r.h);
+    c.fillStyle='#101018';
+    fillPixelPoly(c,[[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.h],[r.x,r.y+r.h]]);
+    c.fillStyle='#1a1512';
+    fillPixelPoly(c,[[r.x+36,r.y+r.h],[r.x+108,r.y+74],[r.x+190,r.y+36],[r.x+306,r.y+36],[r.x+392,r.y+78],[r.x+r.w-32,r.y+r.h]]);
+    c.fillStyle='#090706';
+    fillPixelPoly(c,[[r.x+172,r.y+72],[r.x+204,r.y+44],[r.x+276,r.y+44],[r.x+308,r.y+72],[r.x+294,r.y+132],[r.x+186,r.y+132]]);
+    c.globalAlpha=0.22;
+    c.fillStyle='#d8c58a';
+    fillPixelPoly(c,[[r.x+178,r.y+82],[r.x+302,r.y+82],[r.x+326,r.y+154],[r.x+154,r.y+154]]);
+    c.globalAlpha=1;
+
+    const sx=r.x+r.w/2, sy=r.y+Math.round(r.h*0.48);
+    const rise=clamp(p/0.45,0,1);
+    const glow=0.5+0.5*Math.sin(tk*0.13);
+    c.globalCompositeOperation='lighter';
+    c.globalAlpha=0.12+0.18*rise;
+    c.fillStyle='#5ee8ff';
+    fillPixelPoly(c,[[sx-84,sy+44],[sx-52,sy-66],[sx+28,sy-92],[sx+82,sy-24],[sx+64,sy+60],[sx-28,sy+86]]);
+    c.globalAlpha=0.10+0.16*rise;
+    c.fillStyle='#ff4fd8';
+    fillPixelPoly(c,[[sx-74,sy+32],[sx-40,sy-82],[sx+42,sy-86],[sx+86,sy-8],[sx+54,sy+80],[sx-38,sy+74]]);
+    c.globalCompositeOperation='source-over';
+
+    c.globalAlpha=0.48;
+    c.fillStyle='#000000';
+    fillPixelPoly(c,[[sx-74,sy+82],[sx-30,sy+64],[sx+54,sy+66],[sx+84,sy+82],[sx+42,sy+98],[sx-46,sy+98]]);
+    c.globalAlpha=1;
+    c.fillStyle='#3e424b';
+    fillPixelPoly(c,[[sx-38,sy+46],[sx-58,sy-4],[sx-34,sy-62],[sx+22,sy-78],[sx+58,sy-22],[sx+48,sy+42],[sx+6,sy+76],[sx-26,sy+68]]);
+    c.fillStyle='#676d78';
+    fillPixelPoly(c,[[sx-24,sy+36],[sx-40,sy-2],[sx-22,sy-48],[sx+16,sy-62],[sx+42,sy-18],[sx+32,sy+28],[sx,sy+56]]);
+    c.fillStyle='#272a31';
+    fillPixelPoly(c,[[sx+6,sy+76],[sx+48,sy+42],[sx+58,sy-22],[sx+72,sy-8],[sx+64,sy+54],[sx+26,sy+84]]);
+    c.globalCompositeOperation='lighter';
+    c.globalAlpha=0.70+0.18*glow;
+    c.fillStyle='#69f0ff';
+    c.fillRect(sx-28,sy-18,6,48);
+    c.fillRect(sx-28,sy-18,38,6);
+    c.fillRect(sx+14,sy-54,6,42);
+    c.fillRect(sx+14,sy-14,34,6);
+    c.globalAlpha=0.62+0.18*(1-glow);
+    c.fillStyle='#ff58d8';
+    c.fillRect(sx-4,sy-62,6,36);
+    c.fillRect(sx-4,sy-30,34,6);
+    c.fillRect(sx+32,sy+6,6,40);
+    c.fillRect(sx-2,sy+44,40,6);
+    c.globalAlpha=0.40+0.18*rise;
+    c.fillStyle='#ffffff';
+    c.fillRect(sx-14,sy-2,28,4);
+    c.restore();
+
+    for(let i=0;i<20;i++){
+      const a=tk*0.035+i*0.9;
+      const rr=34+((i*17)%58)+p*20;
+      const x=Math.round(sx+Math.cos(a)*rr);
+      const y=Math.round(sy+Math.sin(a*1.3)*rr*0.52);
+      c.globalAlpha=0.24+0.36*((i+tk)%5===0?1:0);
+      c.fillStyle=i%2?'#5ee8ff':'#ff58d8';
+      c.fillRect(x,y,2,2);
+    }
+    c.globalAlpha=1;
+  }
+  function makeTeleportStoneCutsceneSpec(mode){
+    mode=(mode==='box')?'box':'fullscreen';
+    return {
+      id:'teleport-stone-found',
+      label:'Teleporteringssten',
+      group:'Grottan',
+      order:55,
+      title:'TELEPORTERINGSSTENEN',
+      mode,
+      pauseGame:true,
+      skippable:true,
+      advanceOnInput:false,
+      shots:[{
+        duration:Math.max(1,Math.floor(3200/TICK)),
+        title:'TELEPORTERINGSSTENEN',
+        text:['BAKOM ALTARET VAKNAR EN STEN AV LJUS.'],
+        draw:drawTeleportStoneCloseup
+      }]
+    };
+  }
   function drawCutsceneAtmosphere(c,r,cs,tk){
     const ctx=cutsceneWorldContext(cs);
     if(ctx.cave){
@@ -761,6 +847,17 @@
     applyRescueCutsceneText(spec,'climb');
     return G.playCutscene(spec,{respectPrefs:true});
   }
+  function playTeleportStoneCutscene(l,mode){
+    if(G.cutsceneActive&&G.cutsceneActive())return null;
+    const spec=makeTeleportStoneCutsceneSpec(mode||'fullscreen');
+    spec.event=makeCutsceneWorldContext(l,null,{
+      lemX:l&&Number.isFinite(l.x)?Math.round(l.x):null,
+      lemY:l&&Number.isFinite(l.y)?Math.round(l.y):null,
+      fromWater:false,
+      cave:true
+    });
+    return G.playCutscene(spec,{respectPrefs:true});
+  }
 
   Object.assign(G,{
     makeCutscenePreviewSpec,
@@ -768,12 +865,14 @@
     makeDolphinRescueCutsceneSpec,
     makeWaterClimbCutsceneSpec,
     makeClimbCutsceneSpec,
+    makeTeleportStoneCutsceneSpec,
     shouldPlayClimbCutscene,
     applyRescueCutsceneText,
     playFishRingCutscene,
     playDolphinRescueCutscene,
     playWaterClimbCutscene,
-    playClimbCutscene
+    playClimbCutscene,
+    playTeleportStoneCutscene
   });
 
   G.registerCutscene(makeCutscenePreviewSpec('box'));
@@ -782,4 +881,5 @@
   G.registerCutscene(makeDolphinRescueCutsceneSpec('fullscreen'));
   G.registerCutscene(makeWaterClimbCutsceneSpec('fullscreen'));
   G.registerCutscene(makeClimbCutsceneSpec('fullscreen'));
+  G.registerCutscene(makeTeleportStoneCutsceneSpec('fullscreen'));
 })();

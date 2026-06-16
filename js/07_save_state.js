@@ -7,7 +7,7 @@ Object.assign(G,{
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax','monkeySeq',
       'monkeyAirSupportPending','monkeyAirSupportTargetX','monkeyLastX','trollT','trollEvents','trollMax','trollLastX','treeT','treeEvents','treeMax','treeLastX','jumpT','jumpEvents','jumpMax',
-      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus','holyBlessingUnlocked','holyLevelLemId'];
+      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus','holyBlessingUnlocked','holyLevelLemId','holyTeleportStoneUnlocked','holyTeleportStoneLemId'];
     const arrays=['lems','parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','settledTrollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
     const data={v:1,label:String(label||'SPARAT LÄGE').slice(0,28),ts:Date.now?Date.now():0,levelIdx:this.levelIdx,levelSeed:this.levelSeed>>>0,
@@ -63,7 +63,9 @@ Object.assign(G,{
     this.waterfallCaveResumeWeather=null;
     this.money=Math.max(0,this.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus?this.normalizePendingSkillBonus(this.pendingSkillBonus):{};
-    this.holyBlessingUnlocked=!!(this.holyBlessingUnlocked||loadPersisted().holyBlessingUnlocked);
+    const persisted=loadPersisted();
+    this.holyBlessingUnlocked=!!(this.holyBlessingUnlocked||persisted.holyBlessingUnlocked);
+    this.holyTeleportStoneUnlocked=!!(this.holyTeleportStoneUnlocked||persisted.holyTeleportStoneUnlocked);
     if(this.selSkill==='nuke')this.selSkill=null;
     this.paused=false;
     this.levelIdx=s.levelIdx|0;this.level=LEVELS[this.levelIdx];this.levelSeed=s.levelSeed>>>0;
