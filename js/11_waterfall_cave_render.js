@@ -205,6 +205,147 @@ function drawWaterfallCaveViewCardInspect(c,cave,tk,hit){
   c.restore();
 }
 
+function waterfallCaveMapScreenNode(node){
+  const cellW=62,cellH=34,originX=178,originY=50;
+  const w=node.w||56,h=node.h||34;
+  const cx=originX+(node.x||0)*cellW,cy=originY+(node.y||0)*cellH;
+  return {x:Math.round(cx-w/2),y:Math.round(cy-h/2),w,h,cx:Math.round(cx),cy:Math.round(cy)};
+}
+
+function drawWaterfallCaveMapText(c,text,x,y,size,col,align){
+  c.fillStyle=col||'#22150c';
+  c.font=(size||10)+'px sans-serif';
+  c.textAlign=align||'left';
+  c.textBaseline='top';
+  c.fillText(text,x,y);
+}
+
+function drawWaterfallCaveMapCorridor(c,a,b,col){
+  const mx=Math.round((a.cx+b.cx)/2),w=5;
+  function rectLine(x1,y1,x2,y2,width,color){
+    c.fillStyle=color;
+    if(Math.abs(x2-x1)>=Math.abs(y2-y1)){
+      const x=Math.min(x1,x2),ww=Math.max(width,Math.abs(x2-x1)+width);
+      c.fillRect(x,Math.round(y1-width/2),ww,width);
+    }else{
+      const y=Math.min(y1,y2),hh=Math.max(width,Math.abs(y2-y1)+width);
+      c.fillRect(Math.round(x1-width/2),y,width,hh);
+    }
+  }
+  rectLine(a.cx,a.cy,mx,a.cy,w+4,'#3d2616');
+  rectLine(mx,a.cy,mx,b.cy,w+4,'#3d2616');
+  rectLine(mx,b.cy,b.cx,b.cy,w+4,'#3d2616');
+  rectLine(a.cx,a.cy,mx,a.cy,w,col);
+  rectLine(mx,a.cy,mx,b.cy,w,col);
+  rectLine(mx,b.cy,b.cx,b.cy,w,col);
+}
+
+function drawWaterfallCaveMapOverlay(c,cave,tk){
+  const graph=G.waterfallCaveMapGraph?G.waterfallCaveMapGraph():{nodes:[],links:[],kinds:{}};
+  const visited=cave&&cave.visited||{};
+  const nodesById={};
+  for(const node of graph.nodes||[])nodesById[node.id]=node;
+  c.save();
+  c.globalAlpha=0.72;
+  c.fillStyle='#000000';
+  c.fillRect(0,0,CW,CH);
+  c.globalAlpha=1;
+
+  const x=18,y=18,w=444,h=264,legendX=326;
+  c.fillStyle='#3a2414';c.fillRect(x,y,w,h);
+  c.fillStyle='#7d4a24';c.fillRect(x+4,y+4,w-8,h-8);
+  c.fillStyle='#d7ad5c';c.fillRect(x+8,y+8,w-16,h-16);
+  c.fillStyle='#c89545';c.fillRect(x+12,y+12,w-24,h-24);
+  c.fillStyle='#e0bd6d';c.fillRect(x+16,y+16,w-32,h-32);
+
+  c.globalAlpha=0.16;
+  c.fillStyle='#8b5a2d';
+  for(let i=0;i<34;i++){
+    const px=x+28+Math.round(hash2(i+1301,cave.t||0)*(w-70));
+    const py=y+30+Math.round(hash2(i+1307,cave.t||0)*(h-62));
+    c.fillRect(px,py,16+Math.round(hash2(i+1311,0)*46),1);
+  }
+  c.globalAlpha=1;
+  c.fillStyle='#6f421f';c.fillRect(legendX-12,y+22,2,h-44);
+  drawWaterfallCaveMapText(c,'GROTTKARTA',legendX,y+28,15,'#201107','left');
+  c.fillStyle='#7d4a24';c.fillRect(legendX,y+47,112,2);
+
+  const visibleIds={};
+  for(const id in visited)if(visited[id]&&nodesById[id])visibleIds[id]=true;
+  if(cave&&cave.scene&&nodesById[cave.scene])visibleIds[cave.scene]=true;
+  const mapNodes={};
+  for(const node of graph.nodes||[]){
+    if(!visibleIds[node.id])continue;
+    mapNodes[node.id]=waterfallCaveMapScreenNode(node);
+  }
+
+  for(const link of graph.links||[]){
+    if(!visibleIds[link.from]||!visibleIds[link.to])continue;
+    const a=mapNodes[link.from],b=mapNodes[link.to];
+    if(a&&b)drawWaterfallCaveMapCorridor(c,a,b,'#8a6335');
+  }
+
+  for(const node of graph.nodes||[]){
+    if(!visibleIds[node.id])continue;
+    const r=mapNodes[node.id],kind=(graph.kinds&&graph.kinds[node.kind])||{color:'#8a7658',label:'Rum'};
+    const current=cave&&cave.scene===node.id;
+    c.fillStyle='#2d1a0d';c.fillRect(r.x-3,r.y-3,r.w+6,r.h+6);
+    c.fillStyle=current?'#efd27a':kind.color;
+    c.fillRect(r.x,r.y,r.w,r.h);
+    c.globalAlpha=0.24;
+    c.fillStyle='#fff0b8';
+    c.fillRect(r.x+4,r.y+4,Math.max(4,r.w-8),3);
+    c.globalAlpha=1;
+    c.fillStyle='#3a2414';
+    c.fillRect(r.x+4,r.y+r.h-7,r.w-8,3);
+    drawWaterfallCaveMapText(c,node.short||node.id.slice(0,2).toUpperCase(),r.cx,r.y+Math.max(5,Math.floor(r.h/2)-6),10,'#201107','center');
+  }
+
+  const currentNode=nodesById[cave&&cave.scene];
+  const currentRect=currentNode&&mapNodes[currentNode.id];
+  if(currentNode&&currentRect){
+    const b=waterfallCaveActiveBounds(cave);
+    const px=currentRect.x+5+clamp(((cave.lemX||0)-(b.minX||0))/Math.max(1,(b.maxX||1)-(b.minX||0)),0,1)*(currentRect.w-10);
+    const py=currentRect.y+5+clamp(((cave.lemY||0)-(b.minY||0))/Math.max(1,(b.maxY||1)-(b.minY||0)),0,1)*(currentRect.h-10);
+    c.fillStyle='#2d1a0d';c.fillRect(Math.round(px)-4,Math.round(py)-4,8,8);
+    c.fillStyle='#f8f8e8';c.fillRect(Math.round(px)-3,Math.round(py)-3,6,6);
+    c.fillStyle='#2444cc';c.fillRect(Math.round(px)-1,Math.round(py)-1,2,2);
+  }
+
+  let ly=y+62;
+  drawWaterfallCaveMapText(c,'Legend',legendX,ly,11,'#201107','left');ly+=18;
+  const usedKinds={};
+  for(const id in visibleIds){
+    const node=nodesById[id];
+    if(node)usedKinds[node.kind]=true;
+  }
+  const kindOrder=['entrance','cave','fire','ember','crystal','water','archive','roots'];
+  for(const kind of kindOrder){
+    if(!usedKinds[kind])continue;
+    const info=(graph.kinds&&graph.kinds[kind])||{label:kind,color:'#8a7658'};
+    c.fillStyle='#3a2414';c.fillRect(legendX,ly+2,11,11);
+    c.fillStyle=info.color;c.fillRect(legendX+2,ly+4,7,7);
+    drawWaterfallCaveMapText(c,info.label,legendX+16,ly,9,'#2b1a0d','left');
+    ly+=14;
+  }
+  ly+=4;
+  c.fillStyle='#f8f8e8';c.fillRect(legendX+2,ly+4,7,7);
+  c.fillStyle='#2444cc';c.fillRect(legendX+4,ly+6,3,3);
+  drawWaterfallCaveMapText(c,'Du',legendX+16,ly,9,'#2b1a0d','left');
+  ly+=14;
+  c.fillStyle='#8a6335';c.fillRect(legendX+1,ly+7,14,3);
+  drawWaterfallCaveMapText(c,'Passage',legendX+20,ly,9,'#2b1a0d','left');
+
+  ly=y+h-66;
+  drawWaterfallCaveMapText(c,'Besokt',legendX,ly,10,'#201107','left');ly+=14;
+  for(const node of (graph.nodes||[]).filter(n=>visibleIds[n.id]).slice(0,5)){
+    const mark=node.id===(cave&&cave.scene)?'> ':'- ';
+    drawWaterfallCaveMapText(c,mark+(node.label||node.id),legendX,ly,8,'#2b1a0d','left');
+    ly+=11;
+  }
+  c.restore();
+}
+
 function drawWaterfallCaveDeepView(c,cave,tk){
   const wf=cave.wf||{}, t=cave.t||0;
   c.save();
@@ -661,29 +802,29 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
       c.save();
       c.translate(x,y);
       c.rotate(-0.12);
-      c.globalAlpha=0.34;
+      c.globalAlpha=0.36;
       c.fillStyle='#000000';
-      fillPixelPoly(c,[[-24,7],[-12,2],[20,3],[28,8],[14,12],[-20,12]]);
+      fillPixelPoly(c,[[-28,8],[-14,2],[24,3],[32,9],[16,14],[-24,14]]);
       if(glow){
         c.globalAlpha=0.12+0.18*pulse;
         c.fillStyle=style.glow||'#d5a55a';
-        fillPixelPoly(c,[[-34,8],[-18,-14],[24,-13],[38,7],[18,18],[-20,18]]);
+        fillPixelPoly(c,[[-38,9],[-20,-16],[28,-14],[42,8],[20,20],[-24,20]]);
       }
       c.globalAlpha=1;
       c.fillStyle='#3a2619';
-      c.fillRect(-19,-11,38,22);
+      c.fillRect(-22,-13,44,26);
       c.fillStyle=near?'#eee0bd':'#cdbf9c';
-      c.fillRect(-17,-9,34,18);
+      c.fillRect(-20,-11,40,22);
       c.fillStyle='#3275a8';
-      c.fillRect(-15,-7,30,7);
+      c.fillRect(-18,-9,36,8);
       c.fillStyle='#e7dfc8';
-      c.fillRect(-15,0,30,7);
+      c.fillRect(-18,0,36,9);
       c.fillStyle='#7a4a2a';
-      c.fillRect(-13,2,8,3);
-      c.fillRect(-1,1,4,4);
-      c.fillRect(8,2,4,3);
+      c.fillRect(-15,3,9,4);
+      c.fillRect(-2,2,5,5);
+      c.fillRect(9,3,5,4);
       c.fillStyle='#26451f';
-      c.fillRect(-9,4,20,2);
+      c.fillRect(-11,5,24,2);
       c.restore();
     }else if(kind==='rootHeart'){
       c.globalAlpha=0.20+0.22*pulse;c.fillStyle='#b8f080';fillPixelPoly(c,[[x,y-48],[x-76,y-10],[x-52,y+54],[x+54,y+54],[x+80,y-8]]);c.globalAlpha=1;
@@ -818,6 +959,13 @@ function drawWaterfallCaveCampView(c,cave,tk){
 function drawWaterfallCaveView(c,tk){
   const cave=G.waterfallCave;
   if(!cave||!cave.active)return false;
+  if(cave.mapOpen){
+    cave.mapOpen=false;
+    const ok=drawWaterfallCaveView(c,tk);
+    cave.mapOpen=true;
+    drawWaterfallCaveMapOverlay(c,cave,tk);
+    return ok;
+  }
   const renderKey=waterfallCaveRenderKey(cave);
   if(renderKey==='camp')return drawWaterfallCaveCampView(c,cave,tk);
   if(renderKey==='deep')return drawWaterfallCaveDeepView(c,cave,tk);

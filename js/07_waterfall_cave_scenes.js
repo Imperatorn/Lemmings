@@ -10,6 +10,7 @@ const WATERFALL_CAVE_SCENES={
     audio:'waterfall-near',
     boundsKey:'bounds',
     bounds:{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298},
+    map:{x:1,y:0,w:52,h:34,kind:'entrance',short:'IN'},
     spawns:{
       entry:{x:240,y:232,facing:'front'},
       fromDeep:{x:240,y:296,facing:'back'}
@@ -29,6 +30,7 @@ const WATERFALL_CAVE_SCENES={
     audio:'waterfall-far',
     boundsKey:'deepBounds',
     bounds:{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276},
+    map:{x:1,y:1,w:58,h:36,kind:'cave',short:'GR'},
     spawns:{
       fromMain:{x:240,y:190,facing:'front'},
       fromCamp:{x:240,y:278,facing:'back'}
@@ -48,6 +50,7 @@ const WATERFALL_CAVE_SCENES={
     audio:'campfire',
     boundsKey:'campBounds',
     bounds:{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182},
+    map:{x:1,y:2,w:62,h:42,kind:'fire',short:'EL'},
     spawns:{
       fromDeep:{x:240,y:198,facing:'front'},
       fromEmber:{x:88,y:226,facing:'right'}
@@ -66,6 +69,7 @@ const WATERFALL_CAVE_SCENES={
     render:'emberPassage',
     audio:'ember-near',
     bounds:{minX:70,maxX:398,minY:172,maxY:286},
+    map:{x:0,y:2,w:68,h:34,kind:'ember',short:'GL'},
     spawns:{
       fromCamp:{x:374,y:226,facing:'left'},
       fromCrystal:{x:88,y:236,facing:'right'}
@@ -86,6 +90,7 @@ const WATERFALL_CAVE_SCENES={
     render:'crystalGallery',
     audio:'deep-quiet',
     bounds:{minX:76,maxX:396,minY:166,maxY:292},
+    map:{x:0,y:3,w:70,h:38,kind:'crystal',short:'KR'},
     spawns:{
       fromEmber:{x:380,y:232,facing:'left'},
       fromPool:{x:240,y:286,facing:'back'}
@@ -104,6 +109,7 @@ const WATERFALL_CAVE_SCENES={
     render:'mirrorPool',
     audio:'distant-water',
     bounds:{minX:70,maxX:400,minY:174,maxY:286},
+    map:{x:0,y:4,w:70,h:36,kind:'water',short:'SP'},
     spawns:{
       fromCrystal:{x:240,y:184,facing:'front'},
       fromGlyph:{x:86,y:230,facing:'right'}
@@ -122,17 +128,18 @@ const WATERFALL_CAVE_SCENES={
     render:'glyphArchive',
     audio:'deep-quiet',
     bounds:{minX:76,maxX:398,minY:162,maxY:288},
+    map:{x:-1,y:4,w:72,h:38,kind:'archive',short:'RU'},
     spawns:{
       fromPool:{x:384,y:228,facing:'left'},
       fromRoot:{x:240,y:282,facing:'back'}
     },
     exits:[
       {id:'toMirrorPool',key:'right',x0:392,yMin:194,yMax:268,target:'mirrorPool',spawn:'fromGlyph'},
-      {id:'toRootSanctum',key:'down',x0:162,x1:318,yMin:282,target:'rootSanctum',spawn:'fromGlyph'}
+      {id:'toRootSanctum',key:'down',x0:154,x1:326,yMin:282,target:'rootSanctum',spawn:'fromGlyph'}
     ],
     objects:[
       {id:'runeWall',kind:'runeWall',default:{x:238,y:182,near:false,activated:false,pulseT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read']},
-      {id:'churchCard',kind:'viewCard',default:{x:328,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:20,ry:14},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Dala-Floda kyrka']}}
+      {id:'churchCard',kind:'viewCard',default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:22,ry:15},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Dala-Floda kyrka']}}
     ]
   },
   rootSanctum:{
@@ -141,6 +148,7 @@ const WATERFALL_CAVE_SCENES={
     render:'rootSanctum',
     audio:'deep-quiet',
     bounds:{minX:86,maxX:394,minY:170,maxY:294},
+    map:{x:-1,y:5,w:68,h:40,kind:'roots',short:'RO'},
     spawns:{
       fromGlyph:{x:240,y:184,facing:'front'}
     },
@@ -151,6 +159,17 @@ const WATERFALL_CAVE_SCENES={
       {id:'rootHeart',kind:'rootHeart',default:{x:246,y:250,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:42,ry:32},verbs:['look','touch']}
     ]
   }
+};
+
+const WATERFALL_CAVE_MAP_KINDS={
+  entrance:{label:'Ingang',color:'#6bb6d8'},
+  cave:{label:'Grotta',color:'#8a7658'},
+  fire:{label:'Eldplats',color:'#d07933'},
+  ember:{label:'Glodgang',color:'#a64a2a'},
+  crystal:{label:'Kristall',color:'#55b9d0'},
+  water:{label:'Vatten',color:'#4f91b8'},
+  archive:{label:'Arkiv',color:'#c0944b'},
+  roots:{label:'Rotrum',color:'#76a85f'}
 };
 
 function waterfallCaveCloneData(v){
@@ -194,4 +213,28 @@ function waterfallCaveSceneExits(sceneId){
 function waterfallCaveObjectDefault(sceneId,objectId){
   const obj=(waterfallCaveSceneObjects(sceneId)||[]).find(o=>o&&o.id===objectId);
   return waterfallCaveCloneData(obj&&obj.default||null);
+}
+
+function waterfallCaveMapKind(kind){
+  return WATERFALL_CAVE_MAP_KINDS[kind]||WATERFALL_CAVE_MAP_KINDS.cave;
+}
+
+function waterfallCaveSceneMapNode(sceneId){
+  const def=waterfallCaveSceneDef(sceneId);
+  return def&&def.map?Object.assign({id:def.id,label:def.label||def.id},waterfallCaveCloneData(def.map)):null;
+}
+
+function waterfallCaveMapGraph(){
+  const nodes=waterfallCaveSceneIds().map(id=>waterfallCaveSceneMapNode(id)).filter(Boolean);
+  const links=[],seen={};
+  for(const id of waterfallCaveSceneIds()){
+    for(const exit of waterfallCaveSceneExits(id)){
+      if(!exit||!exit.target||!waterfallCaveSceneMapNode(exit.target))continue;
+      const a=id<exit.target?id:exit.target,b=id<exit.target?exit.target:id,key=a+'>'+b;
+      if(seen[key])continue;
+      seen[key]=true;
+      links.push({from:id,to:exit.target,key:exit.key});
+    }
+  }
+  return {nodes,links,kinds:WATERFALL_CAVE_MAP_KINDS};
 }
