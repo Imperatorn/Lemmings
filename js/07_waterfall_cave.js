@@ -116,6 +116,82 @@ Object.assign(G,{
     }
     return null;
   },
+  waterfallCaveChurchBlessingState(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='churchInterior')return null;
+    cave.sceneState=cave.sceneState||{};
+    const bucket=cave.sceneState.churchInterior||(cave.sceneState.churchInterior={});
+    if(!bucket.priestBlessing)bucket.priestBlessing={
+      active:false,done:false,phase:'idle',t:0,priestX:70,priestY:150,targetX:206,targetY:150
+    };
+    return bucket.priestBlessing;
+  },
+  waterfallCaveChurchBlessingActive(cave){
+    const st=this.waterfallCaveChurchBlessingState(cave);
+    return !!(st&&st.active);
+  },
+  startWaterfallCaveChurchBlessing(cave){
+    cave=cave||this.waterfallCave;
+    const st=this.waterfallCaveChurchBlessingState(cave);
+    if(!st||st.done||st.active)return false;
+    const b=this.waterfallCaveSceneBounds(cave);
+    const ly=clamp(cave.lemY||146,b.minY||132,160);
+    st.active=true;
+    st.done=false;
+    st.phase='enter';
+    st.t=0;
+    st.priestX=(b.minX||78)-34;
+    st.priestY=ly;
+    st.targetX=clamp((cave.lemX||240)-36,b.minX||78,b.maxX||402);
+    st.targetY=ly;
+    st.blessT=0;
+    cave.lemY=ly;
+    cave.facing='front';
+    cave.walking=false;
+    cave.running=false;
+    this.clearWaterfallCaveMoveKeys(cave);
+    return true;
+  },
+  updateWaterfallCaveChurchBlessing(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='churchInterior')return false;
+    const st=this.waterfallCaveChurchBlessingState(cave);
+    if(!st)return false;
+    if(!st.active){
+      const nearAltar=(cave.lemY||999)<=146&&(cave.lemX||0)>=180&&(cave.lemX||0)<=300;
+      return nearAltar?this.startWaterfallCaveChurchBlessing(cave):false;
+    }
+    cave.walking=false;
+    cave.running=false;
+    cave.facing='front';
+    this.clearWaterfallCaveMoveKeys(cave);
+    st.t++;
+    const sp=1.55;
+    if(st.phase==='enter'){
+      const dx=(st.targetX||206)-(st.priestX||0);
+      if(Math.abs(dx)<=sp){
+        st.priestX=st.targetX;
+        st.phase='raise';
+        st.t=0;
+      }else st.priestX+=Math.sign(dx)*sp;
+      st.priestY=st.targetY;
+    }else if(st.phase==='raise'){
+      if(st.t>=18){st.phase='bless';st.t=0}
+    }else if(st.phase==='bless'){
+      st.blessT=st.t;
+      if(st.t>=86){st.phase='exit';st.t=0}
+    }else if(st.phase==='exit'){
+      st.priestX-=sp;
+      st.priestY=st.targetY;
+      if(st.priestX<(this.waterfallCaveSceneBounds(cave).minX||78)-42){
+        st.active=false;
+        st.done=true;
+        st.phase='done';
+        st.t=0;
+      }
+    }
+    return st.active;
+  },
   waterfallCaveNearestObject(cave){
     cave=cave||this.waterfallCave;
     if(!cave)return null;
@@ -474,6 +550,7 @@ Object.assign(G,{
       if(cave.scene==='camp'&&AU.updateWaterfallCaveCampfire)AU.updateWaterfallCaveCampfire();
       return true;
     }
+    if(this.updateWaterfallCaveChurchBlessing(cave))return true;
     const b=this.waterfallCaveSceneBounds(cave);
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
@@ -555,11 +632,13 @@ Object.assign(G,{
     if(cave.scene==='camp'){
       if(AU.updateWaterfallCaveCampfire)AU.updateWaterfallCaveCampfire();
     }
+    if(this.updateWaterfallCaveChurchBlessing(cave))return true;
     if(this.tryWaterfallCaveSceneExit(cave))return true;
     return true;
   },
   handleWaterfallCaveInput(p,kind){
     if(!this.waterfallCaveActive())return false;
+    if(this.waterfallCaveChurchBlessingActive&&this.waterfallCaveChurchBlessingActive(this.waterfallCave))return true;
     if(this.waterfallCaveMapOpen(this.waterfallCave)){
       if(kind==='silent')this.closeWaterfallCaveMap(this.waterfallCave);
       return true;
@@ -590,6 +669,7 @@ Object.assign(G,{
   handleWaterfallCaveKey(key){
     if(!this.waterfallCaveActive())return false;
     const cave=this.waterfallCave;
+    if(this.waterfallCaveChurchBlessingActive&&this.waterfallCaveChurchBlessingActive(cave))return true;
     if(this.waterfallCaveMapOpen(cave)){
       if(key==='m'||key==='M'||key==='Escape')this.closeWaterfallCaveMap(cave);
       return true;

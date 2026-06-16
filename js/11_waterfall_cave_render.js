@@ -1063,6 +1063,72 @@ function drawWaterfallCaveAdventureView(c,cave,tk){
   return true;
 }
 
+function waterfallCaveChurchBlessingRenderState(cave){
+  return cave&&cave.sceneState&&cave.sceneState.churchInterior&&cave.sceneState.churchInterior.priestBlessing||null;
+}
+
+function drawWaterfallCavePriest(c,st,tk){
+  if(!st||!st.active)return false;
+  const x=Math.round(st.priestX||0),y=Math.round(st.priestY||150);
+  const walking=st.phase==='enter'||st.phase==='exit';
+  const bless=st.phase==='raise'||st.phase==='bless';
+  const handReach=st.phase==='raise'?clamp(st.t/18,0,1):(st.phase==='bless'?1:0);
+  const step=walking?((tk>>3)&1):0;
+  c.save();
+  c.translate(x,y);
+  c.scale(2.05,2.05);
+  function p(x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h)}
+  p(-4,-2,3,2,'#17100d');
+  p(2-step,-2,3,2,'#17100d');
+  p(-4,-13,8,11,'#201713');
+  p(-5,-10,2,7,'#15100e');
+  p(3,-10,2,7,'#15100e');
+  p(-3,-15,6,3,'#f3ead2');
+  p(-3,-21,6,6,'#f0c99b');
+  p(-4,-23,8,3,'#3a3028');
+  p(0,-15,1,3,'#ffffff');
+  p(2,-19,1,1,'#1a1715');
+  p(4,-15,2,5,'#201713');
+  if(bless){
+    const reach=Math.round(8*handReach);
+    p(4,-15,2+reach,2,'#201713');
+    p(5+reach,-15,2,2,'#f0c99b');
+  }else p(4,-12,2,5,'#201713');
+  c.restore();
+  return true;
+}
+
+function drawWaterfallCaveBlessedLemmingOverlay(c,cave,lx,ly,scale,st,tk){
+  if(!st||st.phase!=='bless')return false;
+  const pulse=0.55+0.45*Math.sin((tk+st.t)*0.18);
+  c.save();
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.22+0.18*pulse;
+  c.fillStyle='#fff3a0';
+  fillPixelPoly(c,[
+    [lx-Math.round(13*scale),ly-Math.round(30*scale)],
+    [lx-Math.round(6*scale),ly-Math.round(42*scale)],
+    [lx+Math.round(8*scale),ly-Math.round(42*scale)],
+    [lx+Math.round(15*scale),ly-Math.round(30*scale)],
+    [lx+Math.round(8*scale),ly-Math.round(20*scale)],
+    [lx-Math.round(8*scale),ly-Math.round(20*scale)]
+  ]);
+  c.globalAlpha=0.55+0.20*pulse;
+  c.fillStyle='#ffffff';
+  c.fillRect(lx-Math.round(5*scale),ly-Math.round(31*scale),Math.round(10*scale),Math.max(1,Math.round(1.4*scale)));
+  c.restore();
+  c.save();
+  c.translate(lx,ly);
+  c.scale(scale,scale);
+  c.fillStyle=(typeof COL==='object'&&COL&&COL.skin)||'#ffd9a8';
+  c.fillRect(-2,-8,4,2);
+  c.fillStyle='#102040';
+  c.fillRect(-1,-7,1,1);
+  c.fillRect(1,-7,1,1);
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   c.save();
   c.fillStyle='#030507';
@@ -1111,10 +1177,14 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
     c.fillRect(x,y,1+(i%5===0?1:0),1);
   }
   c.globalAlpha=1;
+  const blessing=waterfallCaveChurchBlessingRenderState(cave);
+  if(blessing&&blessing.active&&blessing.priestY<(cave.lemY||264))drawWaterfallCavePriest(c,blessing,tk);
   const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?264:cave.lemY);
   const lemScale=waterfallCaveLemmingScale(cave);
   drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.30);
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
+  drawWaterfallCaveBlessedLemmingOverlay(c,cave,lx,ly,lemScale,blessing,tk);
+  if(blessing&&blessing.active&&blessing.priestY>=(cave.lemY||264))drawWaterfallCavePriest(c,blessing,tk);
   c.restore();
   return true;
 }

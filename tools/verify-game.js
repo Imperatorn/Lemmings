@@ -114,7 +114,7 @@ for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldam
     throw new Error(`Waterfall cave map text is missing Swedish label ${token}`);
   }
 }
-for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject']) {
+for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing']) {
   if (!waterfallRuntimeCode.includes(token)) {
     throw new Error(`Waterfall cave runtime is missing scene-system method ${token}`);
   }
@@ -139,7 +139,7 @@ if (caveRenderCode.includes('#f0d080')) {
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingFireLight') || caveRenderCode.includes('function flameLayer') || caveRenderCode.includes('fireX-72') || caveRenderCode.includes('fireX-50')) {
   throw new Error('Campfire cave render should use pixel-frame fire and lemming side-lighting instead of old rectangular light panels');
 }
-if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveChurchLemmingOcclusion') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
+if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveChurchLemmingOcclusion') || !caveRenderCode.includes('drawWaterfallCavePriest') || !caveRenderCode.includes('drawWaterfallCaveBlessedLemmingOverlay') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
   throw new Error('Waterfall cave render should replace the old root sanctum with a church model, church interior, and scaled ground cards');
 }
 if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.includes("c.fillRect(x-74,y-54,148,84)")) {
@@ -1148,6 +1148,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!drawWaterfallCaveView(WCTX, 55)) throw new Error('Church cave view did not render');
   const churchModel = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchModel');
   if (!churchModel) throw new Error('Church scene is missing the church model');
+  if (G.waterfallCave.lemX < churchModel.obj.x + 120) {
+    throw new Error('Glyph archive should enter the church scene at a visible upper side position');
+  }
+  G.handleWaterfallCaveKey('ArrowLeft');
+  for (let i = 0; i < 180; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowLeft');
+  if (G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > churchModel.obj.x - 126) {
+    throw new Error('Church back path should allow walking left behind the church and out on its left side');
+  }
   G.waterfallCave.lemX = churchModel.obj.x;
   G.waterfallCave.lemY = churchModel.obj.y;
   G.tick();
@@ -1181,6 +1190,36 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (!drawWaterfallCaveView(WCTX, 56)) {
     throw new Error('Church interior view did not render');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = 154;
+  G.handleWaterfallCaveKey('ArrowUp');
+  for (let i = 0; i < 8; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  const blessing = G.waterfallCaveChurchBlessingState(G.waterfallCave);
+  if (!blessing || !blessing.active || blessing.phase !== 'enter') {
+    throw new Error('Walking near the church altar should start the priest blessing sequence');
+  }
+  const lockedBlessingX = G.waterfallCave.lemX;
+  G.handleWaterfallCaveKey('ArrowRight');
+  for (let i = 0; i < 12; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (Math.abs(G.waterfallCave.lemX - lockedBlessingX) > 0.001 || G.waterfallCave.walking) {
+    throw new Error('Priest blessing should lock lemmel movement while it is active');
+  }
+  for (let i = 0; i < 360; i++) G.tick();
+  if (blessing.active || !blessing.done || blessing.phase !== 'done') {
+    throw new Error('Priest blessing sequence should finish and mark itself done');
+  }
+  if (!drawWaterfallCaveView(WCTX, 57)) {
+    throw new Error('Church blessing view did not render');
+  }
+  const blessingDoneX = G.waterfallCave.lemX;
+  G.handleWaterfallCaveKey('ArrowRight');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (G.waterfallCave.lemX <= blessingDoneX) {
+    throw new Error('Lemmel movement should unlock after the priest blessing sequence');
   }
   const churchHymnStoppedBeforeReturn = churchHymnStopped;
   G.waterfallCave.lemX = 240;

@@ -149,16 +149,16 @@ const WATERFALL_CAVE_SCENES={
     bounds:{minX:86,maxX:394,minY:170,maxY:294},
     map:{x:-1,y:5,w:44,h:26,kind:'church',short:'KY'},
     spawns:{
-      fromGlyph:{x:240,y:178,facing:'front'},
+      fromGlyph:{x:374,y:178,facing:'left'},
       fromInterior:{x:258,y:270,facing:'front'}
     },
     exits:[
       {id:'toChurchInterior',key:'up',x0:232,x1:282,yMin:250,yMax:268,target:'churchInterior',spawn:'fromDoor'},
-      {id:'toGlyphArchive',key:'up',x0:168,x1:312,yMax:174,target:'glyphArchive',spawn:'fromChurch'}
+      {id:'toGlyphArchive',key:'up',x0:118,x1:390,yMax:174,target:'glyphArchive',spawn:'fromChurch'}
     ],
     objects:[
       {id:'churchModel',kind:'churchModel',default:{x:246,y:238,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:82,ry:40,dy:22},block:[
-        {type:'rect',dx:-82,dy:-20,w:58,h:108},
+        {type:'rect',dx:-82,dy:8,w:58,h:72},
         {type:'rect',dx:-42,dy:6,w:76,h:86},
         {type:'rect',dx:62,dy:6,w:88,h:86},
         {type:'rect',dx:116,dy:10,w:44,h:72},
@@ -171,7 +171,7 @@ const WATERFALL_CAVE_SCENES={
     label:'Inne i kyrkan',
     render:'churchInterior',
     audio:'church-hymn',
-    bounds:{minX:78,maxX:402,minY:172,maxY:292},
+    bounds:{minX:78,maxX:402,minY:132,maxY:292},
     spawns:{
       fromDoor:{x:240,y:264,facing:'front'}
     },
