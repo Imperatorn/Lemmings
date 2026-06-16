@@ -146,6 +146,9 @@ const audioCode = fs.readFileSync(path.join(root, 'js/02_audio.js'), 'utf8');
 if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850') || !audioCode.includes('0.65+Math.random()*1.55')) {
   throw new Error('Campfire audio should use softer, less sharp crackles');
 }
+if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCaveMysteryMusic')) {
+  throw new Error('Root sanctum should have a dedicated mystery music variant');
+}
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || !caveRenderCode.includes('Tecken') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
@@ -315,7 +318,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -324,7 +327,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','sWaterfallCaveStep']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','sWaterfallCaveStep']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -623,6 +626,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStartFire = AU.startWaterfallCaveFire;
   const prevStopFire = AU.stopWaterfallCaveFire;
   const prevUpdateFire = AU.updateWaterfallCaveCampfire;
+  const prevStartMysteryMusic = AU.startWaterfallCaveMysteryMusic;
+  const prevStopMysteryMusic = AU.stopWaterfallCaveMysteryMusic;
   const prevMusicOn = AU.musicOn;
   const prevSfxOn = AU.sfxOn;
   const prevMoney = G.money;
@@ -631,8 +636,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevToasts = G.toasts;
   const prevMsg = G.msg;
   const prevMsgT = G.msgT;
-  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0;
-  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [];
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0;
+  const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
   AU.startMusic = kind => { musicStarted.push(kind); };
@@ -645,6 +650,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.startWaterfallCaveFire = () => { firesStarted++; };
   AU.stopWaterfallCaveFire = () => { firesStopped++; };
   AU.updateWaterfallCaveCampfire = () => { fireUpdates++; };
+  AU.startWaterfallCaveMysteryMusic = fade => { mysteryStarted++; mysteryFadeDurations.push(fade); };
+  AU.stopWaterfallCaveMysteryMusic = fade => { mysteryStopped++; mysteryFadeDurations.push(fade); };
   AU.musicOn = true;
   AU.sfxOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
@@ -1009,6 +1016,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!songCrystal.obj.activated || songCrystal.obj.pulseT <= 0) {
     throw new Error('Song crystal did not glow when approached');
   }
+  if (!songCrystal.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, songCrystal.obj.x, songCrystal.obj.y + 8)) {
+    throw new Error('Song crystal should be a blocking cave object');
+  }
+  G.waterfallCave.lemX = songCrystal.obj.x - 50;
+  G.waterfallCave.lemY = songCrystal.obj.y + 8;
+  G.handleWaterfallCaveKey('ArrowRight');
+  for (let i = 0; i < 36; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > songCrystal.obj.x - 23) {
+    throw new Error('Crystal gallery lemmel can walk through the song crystal');
+  }
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
   G.handleWaterfallCaveKey('ArrowDown');
@@ -1095,6 +1113,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'rootSanctum') {
     throw new Error('Glyph archive did not lead down to the root sanctum');
   }
+  if (G.waterfallCaveSceneDef('rootSanctum').audio !== 'root-mystery' || mysteryStarted < 1 || !waterLevels.some(w => w.level <= 0.09)) {
+    throw new Error('Root sanctum should start the mystery music variant and lower the waterfall sound');
+  }
   if (!drawWaterfallCaveView(WCTX, 55)) throw new Error('Root sanctum view did not render');
   const rootHeart = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'rootHeart');
   if (!rootHeart) throw new Error('Root sanctum is missing the root heart');
@@ -1104,6 +1125,18 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!rootHeart.obj.activated || rootHeart.obj.pulseT <= 0) {
     throw new Error('Root heart did not react when approached');
   }
+  if (!rootHeart.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, rootHeart.obj.x, rootHeart.obj.y + 12)) {
+    throw new Error('Root heart should be a blocking cave object');
+  }
+  G.waterfallCave.lemX = rootHeart.obj.x - 54;
+  G.waterfallCave.lemY = rootHeart.obj.y + 12;
+  G.handleWaterfallCaveKey('ArrowRight');
+  for (let i = 0; i < 40; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > rootHeart.obj.x - 25) {
+    throw new Error('Root sanctum lemmel can walk through the root heart');
+  }
+  const mysteryStoppedBeforeRootExit = mysteryStopped;
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
   G.handleWaterfallCaveKey('ArrowUp');
@@ -1111,6 +1144,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKeyUp('ArrowUp');
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'glyphArchive') {
     throw new Error('Root sanctum did not return to the glyph archive');
+  }
+  if (mysteryStopped <= mysteryStoppedBeforeRootExit) {
+    throw new Error('Leaving the root sanctum should stop the mystery music variant');
   }
   G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).maxX;
   G.waterfallCave.lemY = 228;
@@ -1213,6 +1249,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.startWaterfallCaveFire = prevStartFire;
   AU.stopWaterfallCaveFire = prevStopFire;
   AU.updateWaterfallCaveCampfire = prevUpdateFire;
+  AU.startWaterfallCaveMysteryMusic = prevStartMysteryMusic;
+  AU.stopWaterfallCaveMysteryMusic = prevStopMysteryMusic;
   AU.musicOn = prevMusicOn;
   AU.sfxOn = prevSfxOn;
   G.money = prevMoney;

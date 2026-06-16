@@ -846,6 +846,19 @@ const AU={
             0,0,62,0, 0,0,66,0, 0,0,60,0, 0,0,64,0,
             0,0,64,0, 0,0,67,0, 0,0,59,0, 0,0,62,0,
             0,0,60,0, 0,0,64,0, 0,0,62,0, 0,0,64,0]},
+    caveMystery:{bpm:58,
+      mel:[52,0,0,0, 55,0,0,0, 59,0,57,0, 55,0,0,0,
+           52,0,0,0, 60,0,59,0, 55,0,0,0, 52,0,0,0,
+           50,0,0,0, 54,0,0,0, 57,0,55,0, 54,0,0,0,
+           48,0,0,0, 52,0,55,0, 54,0,52,0, 47,0,0,0],
+      bass:[28,0,0,0, 0,0,35,0, 28,0,0,0, 0,0,36,0,
+            28,0,0,0, 0,0,35,0, 24,0,0,0, 0,0,31,0,
+            26,0,0,0, 0,0,33,0, 24,0,0,0, 0,0,31,0,
+            23,0,0,0, 0,0,30,0, 24,0,0,0, 28,0,0,0],
+      harm:[0,0,64,0, 0,0,67,0, 0,0,64,0, 0,0,67,0,
+            0,0,64,0, 0,0,67,0, 0,0,60,0, 0,0,64,0,
+            0,0,62,0, 0,0,66,0, 0,0,60,0, 0,0,64,0,
+            0,0,59,0, 0,0,62,0, 0,0,60,0, 0,0,64,0]},
     city:{bpm:128,
       mel:[72,0,76,79, 81,79,76,0, 71,0,74,76, 79,76,74,0,
            69,0,72,76, 77,76,72,0, 68,0,71,74, 76,74,71,0,
@@ -892,6 +905,9 @@ const AU={
       if(p>=96&&p%8===4)this.tone(this.midi(m+12),stepDur*0.22,'triangle',0.010,1,t+stepDur*0.12,this.musGain);
     }else if(kind==='cave'){
       if(i%16===4||i%16===12)this.tone(this.midi(m+12),stepDur*0.46,'square',0.010,0.99,t+stepDur*0.05,this.musGain);
+    }else if(kind==='caveMystery'){
+      if(i%16===8)this.tone(this.midi(m+12),stepDur*0.82,'sine',0.008,0.995,t+stepDur*0.12,this.musGain);
+      if(i%32===24)this.tone(this.midi(m+7),stepDur*0.62,'triangle',0.006,0.99,t+stepDur*0.22,this.musGain);
     }else if(kind==='desert'){
       if(i%8===0||i%8===4)this.tone(this.midi(m+12),stepDur*0.30,'square',0.015,1,t+stepDur*0.03,this.musGain);
     }else if(kind==='city'){
@@ -928,6 +944,8 @@ const AU={
       subLen=p>=64&&p<96?3.4:2.2;
     }else if(kind==='cave'){
       third=3;pulseVol=0.027;arpVol=0.017;pulseEvery=4;arpEvery=16;padVol=0.012;padEvery=32;
+    }else if(kind==='caveMystery'){
+      third=3;pulseVol=0.012;arpVol=0.007;pulseEvery=8;arpEvery=32;padVol=0.015;padEvery=16;subVol=0.030;subEvery=16;subLen=7.0;
     }else if(kind==='desert'){
       pulseVol=0.024;arpVol=0.022;padVol=0.008;
     }else if(kind==='city'){
@@ -964,9 +982,10 @@ const AU={
       this.tone(this.midi(b+31),stepDur*0.18,'square',arpVol*0.58,1,t+stepDur*0.28,this.musGain);
     }
     if(padVol&&i%padEvery===0){
-      this.padTone(this.midi(b+12),stepDur*(kind==='cave'?7.5:5.5),'triangle',padVol,t+stepDur*0.02,this.musGain);
+      this.padTone(this.midi(b+12),stepDur*(kind==='cave'||kind==='caveMystery'?7.5:5.5),'triangle',padVol,t+stepDur*0.02,this.musGain);
       if(kind==='night')this.padTone(this.midi(b+19),stepDur*4.8,'sine',padVol*0.55,t+stepDur*0.10,this.musGain);
       if(kind==='cave')this.padTone(this.midi(b+19),stepDur*4.8,'sine',padVol*0.48,t+stepDur*0.12,this.musGain);
+      if(kind==='caveMystery')this.padTone(this.midi(b+19),stepDur*6.2,'sine',padVol*0.42,t+stepDur*0.18,this.musGain);
     }
   },
   startWeather(kind){
@@ -1033,6 +1052,29 @@ const AU={
       else p.value=0.00005;
     }catch(_){try{p.value=0.00005}catch(__){}}
   },
+  startWaterfallCaveMysteryMusic(fade){
+    this.init();
+    if(!this.ctx||!this.on||!this.musicOn)return false;
+    if(this.mus&&this.mus.timer&&this.mus.kind==='caveMystery')return true;
+    this.startMusic('caveMystery');
+    if(!this.musGain||!this.musGain.gain)return true;
+    const t=this.now(), dur=fade==null?1.2:Math.max(0.05,fade);
+    const target=MUSIC_GAIN_BASE*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    const p=this.musGain.gain;
+    try{
+      if(p.cancelScheduledValues)p.cancelScheduledValues(t);
+      if(p.setValueAtTime)p.setValueAtTime(0.00005,t);
+      if(p.linearRampToValueAtTime)p.linearRampToValueAtTime(Math.max(0.00005,target),t+dur);
+      else if(p.exponentialRampToValueAtTime)p.exponentialRampToValueAtTime(Math.max(0.00005,target),t+dur);
+      else p.value=Math.max(0.00005,target);
+    }catch(_){try{p.value=Math.max(0.00005,target)}catch(__){}}
+    return true;
+  },
+  stopWaterfallCaveMysteryMusic(fade){
+    if(!this.mus||this.mus.kind!=='caveMystery')return false;
+    this.silenceMusicForWaterfallCave(fade==null?0.75:fade);
+    return true;
+  },
   pump(){
     if(!this.ctx)return;
     const P=this.PAT[this.mus.kind], stepDur=60/P.bpm/2;
@@ -1040,25 +1082,35 @@ const AU={
       const i=this.mus.step%P.mel.length, t=this.mus.next;
       const m=P.mel[i], b=P.bass[i], kind=this.mus.kind;
       const mp=i%128;
-      const lead=kind==='cave'?'sine':(kind==='menu'?(mp>=64&&mp<96?'triangle':'square'):(kind==='lava'||kind==='night'||kind==='desert'?'triangle':(kind==='day2'&&i%32>=16?'triangle':'square')));
+      const mystery=kind==='caveMystery';
+      const lead=kind==='cave'||mystery?'sine':(kind==='menu'?(mp>=64&&mp<96?'triangle':'square'):(kind==='lava'||kind==='night'||kind==='desert'?'triangle':(kind==='day2'&&i%32>=16?'triangle':'square')));
       const accent=kind==='day2'?(i%16===0?1.18:(i%8===6?0.86:1.0)):(kind==='menu'?(mp>=96?1.10:(mp>=64?0.88:(mp%32===0?1.06:1.0))):1);
-      const leadVol=kind==='cave'?0.075:(kind==='lava'?0.102:(kind==='night'?0.10:(kind==='desert'?0.066:(kind==='menu'?0.050*accent:(kind==='city'?0.068:(kind==='day2'?0.060*accent:0.07))))));
-      const leadLen=kind==='cave'?stepDur*2.55:(kind==='lava'?stepDur*2.25:(kind==='menu'?stepDur*(P.mel[(i+1)%P.mel.length]?0.62:(mp>=64&&mp<96?1.05:0.88)):(kind==='desert'?stepDur*(i%8===0?1.65:1.05):(kind==='city'?stepDur*(P.mel[(i+1)%P.mel.length]?0.84:1.28):(kind==='day2'?(i%16===14?stepDur*1.55:(i%4===0?stepDur*1.10:stepDur*0.82)):stepDur*0.95)))));
+      const leadVol=mystery?0.046:(kind==='cave'?0.075:(kind==='lava'?0.102:(kind==='night'?0.10:(kind==='desert'?0.066:(kind==='menu'?0.050*accent:(kind==='city'?0.068:(kind==='day2'?0.060*accent:0.07)))))));
+      const leadLen=mystery?stepDur*3.6:(kind==='cave'?stepDur*2.55:(kind==='lava'?stepDur*2.25:(kind==='menu'?stepDur*(P.mel[(i+1)%P.mel.length]?0.62:(mp>=64&&mp<96?1.05:0.88)):(kind==='desert'?stepDur*(i%8===0?1.65:1.05):(kind==='city'?stepDur*(P.mel[(i+1)%P.mel.length]?0.84:1.28):(kind==='day2'?(i%16===14?stepDur*1.55:(i%4===0?stepDur*1.10:stepDur*0.82)):stepDur*0.95))))));
       if(m)this.tone(this.midi(m),leadLen,lead,leadVol,1,t,this.musGain);
       this.retroLeadLayer(kind,m,i,t,stepDur,leadLen);
       if(P.harm){
         const h=P.harm[i%P.harm.length];
-        if(h)this.tone(this.midi(h),kind==='cave'?stepDur*2.2:(kind==='lava'?stepDur*2.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.12:0.78):(kind==='desert'?stepDur*1.75:stepDur*1.35))),'triangle',kind==='cave'?0.024:(kind==='lava'?0.034:(kind==='menu'?0.014*accent:(kind==='desert'?0.022:0.030*accent))),1,t+stepDur*0.08,this.musGain);
+        if(h)this.tone(this.midi(h),mystery?stepDur*3.2:(kind==='cave'?stepDur*2.2:(kind==='lava'?stepDur*2.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.12:0.78):(kind==='desert'?stepDur*1.75:stepDur*1.35)))),'triangle',mystery?0.018:(kind==='cave'?0.024:(kind==='lava'?0.034:(kind==='menu'?0.014*accent:(kind==='desert'?0.022:0.030*accent)))),1,t+stepDur*0.08,this.musGain);
       }
-      if(b)this.tone(this.midi(b),kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.55:1.05):(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8))),'triangle',kind==='cave'?0.158:(kind==='lava'?0.158:(kind==='night'?0.225:(kind==='desert'?0.130:(kind==='menu'?0.112:(kind==='day2'?0.140:0.158))))),1,t,this.musGain);
+      if(b)this.tone(this.midi(b),mystery?stepDur*4.4:(kind==='cave'?stepDur*2.8:(kind==='lava'?stepDur*3.05:(kind==='menu'?stepDur*(mp>=64&&mp<96?1.55:1.05):(kind==='day2'||kind==='city'?stepDur*1.35:stepDur*1.8)))),'triangle',mystery?0.108:(kind==='cave'?0.158:(kind==='lava'?0.158:(kind==='night'?0.225:(kind==='desert'?0.130:(kind==='menu'?0.112:(kind==='day2'?0.140:0.158)))))),1,t,this.musGain);
       this.retroBassLayer(kind,b,i,t,stepDur);
-      if(kind!=='night'&&kind!=='cave'&&kind!=='desert'&&kind!=='lava'&&kind!=='menu'&&i%4===2)this.noise(0.03,kind==='day2'||kind==='city'?0.020:0.03,6000,0.5,t,this.musGain); // hihat-känsla
+      if(kind!=='night'&&kind!=='cave'&&!mystery&&kind!=='desert'&&kind!=='lava'&&kind!=='menu'&&i%4===2)this.noise(0.03,kind==='day2'||kind==='city'?0.020:0.03,6000,0.5,t,this.musGain); // hihat-känsla
       if(kind==='menu'){
         if(mp%8===6)this.noise(0.018,mp>=96?0.010:0.007,4800,0.46,t+stepDur*0.10,this.musGain);
         if(mp%32===0&&b)this.padTone(this.midi(b+19),stepDur*(mp>=64&&mp<96?7.0:5.2),'triangle',0.010*(mp>=96?1.15:1),t+stepDur*0.03,this.musGain);
         if(mp%32===30)this.tone(this.midi(mp>=96?88:84),stepDur*0.34,'square',0.013,1,t+stepDur*0.15,this.musGain);
       }
       if(kind==='cave'&&i%16===8)this.softNoise(0.42,0.010,520,0.82,t+stepDur*0.2,{type:'lowpass',smooth:0.82,attack:0.12,release:0.24,dest:this.musGain});
+      if(mystery){
+        if(i%32===0){
+          const root=b||28;
+          this.padTone(this.midi(root+12),stepDur*9.0,'sine',0.020,t,this.musGain);
+          this.padTone(this.midi(root+19),stepDur*8.0,'triangle',0.009,t+stepDur*0.18,this.musGain);
+        }
+        if(i%16===10)this.softNoise(0.55,0.0075,420,0.86,t+stepDur*0.2,{type:'lowpass',smooth:0.88,attack:0.18,release:0.32,dest:this.musGain});
+        if(i%32===22&&b)this.tone(this.midi(b+31),stepDur*1.4,'sine',0.008,1.01,t+stepDur*0.36,this.musGain);
+      }
       if(kind==='lava'){
         if(i%16===0){
           const root=b||28;

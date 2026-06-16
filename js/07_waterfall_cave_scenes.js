@@ -99,7 +99,7 @@ const WATERFALL_CAVE_SCENES={
       {id:'toMirrorPool',key:'down',x0:160,x1:318,yMin:286,target:'mirrorPool',spawn:'fromCrystal'}
     ],
     objects:[
-      {id:'songCrystal',kind:'crystal',default:{x:244,y:238,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:36,ry:34},verbs:['look','touch']}
+      {id:'songCrystal',kind:'crystal',default:{x:244,y:238,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:36,ry:34},block:{type:'ellipse',rx:31,ry:23,dy:8},blocker:true,verbs:['look','touch']}
     ]
   },
   mirrorPool:{
@@ -145,7 +145,7 @@ const WATERFALL_CAVE_SCENES={
     id:'rootSanctum',
     label:'Rotsanktum',
     render:'rootSanctum',
-    audio:'deep-quiet',
+    audio:'root-mystery',
     bounds:{minX:86,maxX:394,minY:170,maxY:294},
     map:{x:-1,y:5,w:44,h:26,kind:'roots',short:'RO'},
     spawns:{
@@ -155,7 +155,7 @@ const WATERFALL_CAVE_SCENES={
       {id:'toGlyphArchive',key:'up',x0:168,x1:312,yMax:174,target:'glyphArchive',spawn:'fromRoot'}
     ],
     objects:[
-      {id:'rootHeart',kind:'rootHeart',default:{x:246,y:250,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:42,ry:32},verbs:['look','touch']}
+      {id:'rootHeart',kind:'rootHeart',default:{x:246,y:250,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:42,ry:32},block:{type:'ellipse',rx:34,ry:22,dy:12},blocker:true,verbs:['look','touch']}
     ]
   }
 };

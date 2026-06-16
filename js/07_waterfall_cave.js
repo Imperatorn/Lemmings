@@ -89,6 +89,14 @@ Object.assign(G,{
     const rx=Math.max(1,(h.rx||12)*sc),ry=Math.max(1,(h.ry||12)*sc);
     return ((x-ox)/rx)*((x-ox)/rx)+((y-oy)/ry)*((y-oy)/ry)<=1;
   },
+  waterfallCaveObjectBlockContains(def,obj,x,y,scale){
+    if(!def||!obj)return false;
+    const blocks=Array.isArray(def.block)?def.block:(def.block?[def.block]:[def.hit||{}]);
+    for(const hit of blocks){
+      if(this.waterfallCaveObjectContains(Object.assign({},def,{hit}),obj,x,y,scale))return true;
+    }
+    return false;
+  },
   waterfallCaveHitObject(p){
     const cave=this.waterfallCave;
     if(!cave||!p)return null;
@@ -104,7 +112,7 @@ Object.assign(G,{
       if(!hit.def||!hit.def.blocker)continue;
       if(hit.def.id==='campFire'){
         if(this.waterfallCaveCampFireBlocked(cave,x,y))return hit;
-      }else if(this.waterfallCaveObjectContains(hit.def,hit.obj,x,y,0.86))return hit;
+      }else if(this.waterfallCaveObjectBlockContains(hit.def,hit.obj,x,y,0.86))return hit;
     }
     return null;
   },
@@ -306,6 +314,7 @@ Object.assign(G,{
     this.waterfallCave=null;
     this.waterfallCaveExitNeedsUpRelease=reason==='walkout';
     if(AU.stopWaterfallCave)AU.stopWaterfallCave();
+    if(AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.35);
     const resumeMusic=!!this.waterfallCaveResumeMusic;
     const resumeWeather=this.waterfallCaveResumeWeather;
     this.waterfallCaveResumeMusic=false;
@@ -323,6 +332,7 @@ Object.assign(G,{
   setWaterfallCaveSceneAudio(scene){
     const def=this.waterfallCaveSceneDef(scene)||{};
     const audio=def.audio||scene;
+    if(audio!=='root-mystery'&&AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.65);
     if(audio==='campfire'){
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.28,0.75);
       if(AU.startWaterfallCaveFire)AU.startWaterfallCaveFire();
@@ -335,6 +345,10 @@ Object.assign(G,{
     }else if(audio==='distant-water'){
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.24,0.65);
+    }else if(audio==='root-mystery'){
+      if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.55);
+      if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(0.08,0.85);
+      if(AU.startWaterfallCaveMysteryMusic)AU.startWaterfallCaveMysteryMusic(1.35);
     }else{
       if(AU.stopWaterfallCaveFire)AU.stopWaterfallCaveFire(0.45);
       if(AU.setWaterfallCaveWaterLevel)AU.setWaterfallCaveWaterLevel(audio==='waterfall-near'?1.0:0.12,0.65);
