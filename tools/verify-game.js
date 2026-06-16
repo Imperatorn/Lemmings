@@ -92,7 +92,7 @@ const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_ca
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
-for (const token of ['WATERFALL_CAVE_SCENES','main:{','deep:{','camp:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveObjectDefault']) {
+for (const token of ['WATERFALL_CAVE_SCENES','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','rootSanctum:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveObjectDefault']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave scene registry is missing ${token}`);
   }
@@ -133,7 +133,7 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
   throw new Error('Campfire audio should use softer, less sharp crackles');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
@@ -301,7 +301,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveHitObject','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -654,7 +654,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Manual up near a waterfall did not enter the waterfall cave');
   }
   const caveSceneIds = G.waterfallCaveSceneIds();
-  for (const id of ['main','deep','camp']) {
+  for (const id of ['main','deep','camp','emberPassage','crystalGallery','mirrorPool','glyphArchive','rootSanctum']) {
     if (!caveSceneIds.includes(id)) throw new Error(`Waterfall cave scene registry is missing scene ${id}`);
   }
   if (G.waterfallCaveSceneDef('main').render !== 'main' || G.waterfallCaveSceneDef('camp').audio !== 'campfire') {
@@ -892,6 +892,139 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKeyUp('ArrowRight');
   if (G.waterfallCaveCampFireBlocked(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > campFire.x - campFire.rx + 1) {
     throw new Error('Campfire cave lemmel can walk into the fire');
+  }
+  G.waterfallCave.lemX = G.waterfallCave.campBounds.minX;
+  G.waterfallCave.lemY = 226;
+  G.handleWaterfallCaveKey('ArrowLeft');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowLeft');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'emberPassage') {
+    throw new Error('Campfire cave did not reveal the left secret passage');
+  }
+  if (typeof drawWaterfallCaveView !== 'function' || !drawWaterfallCaveView(WCTX, 31)) {
+    throw new Error('Ember passage waterfall cave view did not render');
+  }
+  if (!waterLevels.some(w => w.level <= 0.20)) {
+    throw new Error('Secret ember passage should lower the waterfall sound level');
+  }
+  const emberStone = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'looseStone');
+  if (!emberStone) throw new Error('Ember passage is missing its loose stone object');
+  G.waterfallCave.lemX = emberStone.obj.x;
+  G.waterfallCave.lemY = emberStone.obj.y;
+  G.tick();
+  G.handleWaterfallCaveKey('Enter');
+  if (!emberStone.obj.activated || !emberStone.obj.shifted) {
+    throw new Error('Ember passage loose stone did not react to interaction');
+  }
+  G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).minX;
+  G.waterfallCave.lemY = 236;
+  G.handleWaterfallCaveKey('ArrowLeft');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowLeft');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'crystalGallery') {
+    throw new Error(`Secret passage did not continue into the crystal gallery, scene=${G.waterfallCave && G.waterfallCave.scene} x=${G.waterfallCave && G.waterfallCave.lemX} y=${G.waterfallCave && G.waterfallCave.lemY}`);
+  }
+  if (!drawWaterfallCaveView(WCTX, 37)) throw new Error('Crystal gallery view did not render');
+  const songCrystal = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'songCrystal');
+  if (!songCrystal) throw new Error('Crystal gallery is missing the song crystal');
+  G.waterfallCave.lemX = songCrystal.obj.x;
+  G.waterfallCave.lemY = songCrystal.obj.y;
+  G.tick();
+  if (!songCrystal.obj.activated || songCrystal.obj.pulseT <= 0) {
+    throw new Error('Song crystal did not glow when approached');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'mirrorPool') {
+    throw new Error('Crystal gallery did not lead down to the mirror pool');
+  }
+  if (!drawWaterfallCaveView(WCTX, 43)) throw new Error('Mirror pool view did not render');
+  const mirrorPool = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'mirrorPool');
+  if (!mirrorPool || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, mirrorPool.obj.x, mirrorPool.obj.y)) {
+    throw new Error('Mirror pool should be a blocking cave object');
+  }
+  G.waterfallCave.lemX = mirrorPool.obj.x;
+  G.waterfallCave.lemY = mirrorPool.obj.y;
+  G.tick();
+  if (!mirrorPool.obj.activated || mirrorPool.obj.rippleT <= 0) {
+    throw new Error('Mirror pool did not ripple when approached');
+  }
+  G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).minX;
+  G.waterfallCave.lemY = 230;
+  G.handleWaterfallCaveKey('ArrowLeft');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowLeft');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'glyphArchive') {
+    throw new Error('Mirror pool did not lead to the glyph archive');
+  }
+  if (!drawWaterfallCaveView(WCTX, 49)) throw new Error('Glyph archive view did not render');
+  const runeWall = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'runeWall');
+  if (!runeWall) throw new Error('Glyph archive is missing the rune wall');
+  G.waterfallCave.lemX = runeWall.obj.x;
+  G.waterfallCave.lemY = runeWall.obj.y;
+  G.tick();
+  if (!runeWall.obj.activated) {
+    throw new Error('Rune wall did not light up when approached');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'rootSanctum') {
+    throw new Error('Glyph archive did not lead down to the root sanctum');
+  }
+  if (!drawWaterfallCaveView(WCTX, 55)) throw new Error('Root sanctum view did not render');
+  const rootHeart = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'rootHeart');
+  if (!rootHeart) throw new Error('Root sanctum is missing the root heart');
+  G.waterfallCave.lemX = rootHeart.obj.x;
+  G.waterfallCave.lemY = rootHeart.obj.y;
+  G.tick();
+  if (!rootHeart.obj.activated || rootHeart.obj.pulseT <= 0) {
+    throw new Error('Root heart did not react when approached');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'glyphArchive') {
+    throw new Error('Root sanctum did not return to the glyph archive');
+  }
+  G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).maxX;
+  G.waterfallCave.lemY = 228;
+  G.handleWaterfallCaveKey('ArrowRight');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'mirrorPool') {
+    throw new Error('Glyph archive did not return to the mirror pool');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'crystalGallery') {
+    throw new Error('Mirror pool did not return to the crystal gallery');
+  }
+  G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).maxX;
+  G.waterfallCave.lemY = 232;
+  G.handleWaterfallCaveKey('ArrowRight');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'emberPassage') {
+    throw new Error('Crystal gallery did not return to the ember passage');
+  }
+  G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).maxX;
+  G.waterfallCave.lemY = 226;
+  G.handleWaterfallCaveKey('ArrowRight');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'camp') {
+    throw new Error('Ember passage did not return to the campfire cave');
   }
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCave.campBounds.exitY + 1;

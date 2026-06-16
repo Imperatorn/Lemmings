@@ -294,6 +294,171 @@ function drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,scale,fireX){
   c.restore();
 }
 
+function waterfallCaveAdventureStyle(scene){
+  const styles={
+    emberPassage:{wall:'#140f0d',mid:'#211713',floor:'#172027',rim:'#5b3320',accent:'#ff9a3a',glow:'#d46b32'},
+    crystalGallery:{wall:'#07121d',mid:'#11293a',floor:'#101b24',rim:'#24475b',accent:'#6fe8ff',glow:'#6aa8ff'},
+    mirrorPool:{wall:'#071017',mid:'#102532',floor:'#111920',rim:'#26414c',accent:'#77d8f0',glow:'#78b8d0'},
+    glyphArchive:{wall:'#100d0b',mid:'#221a15',floor:'#171718',rim:'#473325',accent:'#d5a55a',glow:'#ffce78'},
+    rootSanctum:{wall:'#0b100d',mid:'#172319',floor:'#141a15',rim:'#36502e',accent:'#8fdd7c',glow:'#b8f080'}
+  };
+  return styles[scene]||styles.emberPassage;
+}
+
+function drawWaterfallCaveAdventureBase(c,cave,tk,style){
+  const scene=cave.scene||'emberPassage', wf=cave.wf||{}, t=cave.t||0;
+  c.fillStyle='#010204';
+  c.fillRect(0,0,CW,CH);
+  c.fillStyle=style.wall;
+  fillPixelPoly(c,[[0,0],[CW,0],[CW,CH],[0,CH]]);
+  c.fillStyle=style.mid;
+  fillPixelPoly(c,[[52,CH],[84,118],[146,54],[238,30],[334,54],[400,122],[430,CH]]);
+  c.fillStyle=style.floor;
+  fillPixelPoly(c,[[34,CH],[128,210],[206,188],[282,190],[372,214],[446,CH]]);
+  c.fillStyle=style.rim;
+  c.globalAlpha=0.46;
+  fillPixelPoly(c,[[0,70],[74,86],[116,164],[54,CH],[0,CH]]);
+  fillPixelPoly(c,[[CW,62],[404,88],[362,170],[428,CH],[CW,CH]]);
+  c.globalAlpha=1;
+  c.fillStyle='#05070a';
+  fillPixelPoly(c,[[152,68],[202,50],[276,50],[326,70],[304,112],[178,112]]);
+  c.fillStyle=style.wall;
+  fillPixelPoly(c,[[170,76],[214,62],[268,62],[310,76],[288,104],[192,104]]);
+  c.fillStyle=style.rim;
+  c.globalAlpha=0.34;
+  for(let i=0;i<36;i++){
+    const x=42+Math.round(hash2(i+701,wf.x||0)*398);
+    const y=66+Math.round(hash2(i+703,wf.y||0)*180);
+    c.fillRect(x,y,14+Math.round(hash2(i+707,wf.x||0)*56),1+(i%5===0?2:0));
+  }
+  c.globalAlpha=1;
+  c.fillStyle='#07090c';
+  for(let i=0;i<12;i++){
+    const x=72+Math.round(hash2(i+721,wf.x||0)*336);
+    const h=10+Math.round(hash2(i+723,wf.y||0)*32);
+    if(i&1)fillPixelPoly(c,[[x-5,54],[x+4,54],[x+2,54+h],[x-1,58+h]]);
+    else fillPixelPoly(c,[[x-6,CH],[x-1,CH-h],[x+3,CH-h-4],[x+8,CH]]);
+  }
+  if(scene==='emberPassage'){
+    c.globalAlpha=0.20;
+    c.fillStyle='#ff8a3a';
+    fillPixelPoly(c,[[CW,94],[CW,CH],[278,CH],[334,206],[392,132]]);
+    c.globalAlpha=0.15;
+    c.fillStyle='#ffd080';
+    fillPixelPoly(c,[[122,146],[44,92],[32,228],[150,250],[214,176]]);
+    c.globalAlpha=1;
+  }
+  if(scene==='mirrorPool'){
+    c.globalAlpha=0.16;
+    c.fillStyle='#79d8f0';
+    fillPixelPoly(c,[[96,CH],[162,230],[260,214],[346,234],[398,CH]]);
+    c.globalAlpha=1;
+  }
+  if(scene==='rootSanctum'){
+    c.globalAlpha=0.46;
+    c.fillStyle='#21391e';
+    for(let i=0;i<18;i++){
+      const x=54+i*22+Math.round(hash2(i+739,wf.x||0)*8);
+      fillPixelPoly(c,[[x,0],[x+5,0],[x+Math.round(Math.sin((tk+t+i)*0.03)*8),112+Math.round(hash2(i+741,wf.y||0)*80)],[x-5,138]]);
+    }
+    c.globalAlpha=1;
+  }
+}
+
+function drawWaterfallCaveWallTorch(c,x,y,tk,obj){
+  const pulse=(obj&&obj.pulseT||0)>0?1:0;
+  const f=(Math.floor(tk/9)%3)-1;
+  c.save();
+  c.globalAlpha=0.16+0.10*pulse;
+  c.fillStyle='#ff9a3a';
+  fillPixelPoly(c,[[x,y-18],[x-70,y+28],[x-42,y+106],[x+46,y+104],[x+76,y+30]]);
+  c.globalAlpha=1;
+  c.fillStyle='#5b3924';c.fillRect(x-3,y+5,6,25);
+  c.fillStyle='#9a612e';c.fillRect(x-7,y+2,14,5);
+  c.fillStyle='#b73518';c.fillRect(x-4+f,y-7,9,12);
+  c.fillStyle='#f47a24';c.fillRect(x-2,y-13,6,14);
+  c.fillStyle='#ffd36b';c.fillRect(x,y-9,3,9);
+  c.restore();
+}
+
+function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
+  const objects=G.waterfallCaveSceneObjects?G.waterfallCaveSceneObjects(cave):[];
+  for(const hit of objects){
+    const def=hit.def||{}, obj=hit.obj||{}, kind=def.kind, x=Math.round(obj.x||0), y=Math.round(obj.y||0);
+    const pulse=clamp((obj.pulseT||0)/72,0,1), active=!!obj.activated, near=!!obj.near;
+    if(kind==='torch'){
+      drawWaterfallCaveWallTorch(c,x,y,tk,obj);
+    }else if(kind==='stone'){
+      const off=obj.shifted?4:0;
+      c.globalAlpha=0.36;c.fillStyle='#000';c.fillRect(x-22+off,y+5,44,5);c.globalAlpha=1;
+      c.fillStyle='#242d32';fillPixelPoly(c,[[x-22+off,y+4],[x-10+off,y-10],[x+16+off,y-8],[x+24+off,y+4],[x+12+off,y+12],[x-16+off,y+12]]);
+      c.fillStyle=near?'#52606a':'#3a454c';c.fillRect(x-10+off,y-4,22,4);
+    }else if(kind==='crystal'){
+      c.globalAlpha=0.18+0.30*pulse;
+      c.fillStyle='#75eaff';fillPixelPoly(c,[[x-58,y+18],[x-34,y-30],[x+4,y-46],[x+46,y-18],[x+62,y+20]]);
+      c.globalAlpha=1;
+      const cols=active?['#a8f8ff','#6fe8ff','#326c94']:['#7aa6b8','#416b82','#20384a'];
+      c.fillStyle=cols[2];fillPixelPoly(c,[[x-40,y+24],[x-24,y-24],[x-4,y+22]]);
+      c.fillStyle=cols[1];fillPixelPoly(c,[[x-10,y+26],[x+6,y-52],[x+28,y+24]]);
+      c.fillStyle=cols[0];fillPixelPoly(c,[[x+22,y+20],[x+42,y-22],[x+54,y+18]]);
+      if(active){c.fillStyle='#e8ffff';c.fillRect(x+3,y-32,3,18);c.fillRect(x-26,y-10,2,15)}
+    }else if(kind==='pool'){
+      const rip=obj.rippleT||0;
+      c.globalAlpha=0.42;c.fillStyle='#000';c.fillRect(x-86,y+18,172,8);c.globalAlpha=1;
+      c.fillStyle='#06131a';fillPixelPoly(c,[[x-90,y+8],[x-62,y-14],[x+62,y-14],[x+92,y+8],[x+60,y+28],[x-58,y+28]]);
+      c.fillStyle='#174252';fillPixelPoly(c,[[x-78,y+4],[x-52,y-10],[x+52,y-10],[x+78,y+4],[x+52,y+18],[x-52,y+18]]);
+      c.globalAlpha=0.34+0.26*clamp(rip/96,0,1);
+      c.fillStyle='#9eefff';
+      for(let i=0;i<5;i++){
+        const w=30+i*22+Math.round(Math.sin((tk+i)*0.08)*4);
+        c.fillRect(x-Math.round(w/2),y-3+i*4,w,1);
+      }
+      c.globalAlpha=1;
+    }else if(kind==='runeWall'){
+      c.fillStyle='#160f0b';c.fillRect(x-74,y-54,148,84);
+      c.fillStyle='#352519';c.fillRect(x-68,y-48,136,72);
+      c.fillStyle=active?'#f0c76a':'#75532d';
+      for(let i=0;i<18;i++){
+        const gx=x-54+(i%6)*22, gy=y-34+Math.floor(i/6)*22;
+        c.fillRect(gx,gy,10,2);c.fillRect(gx+4,gy-5,2,12);
+        if((i+Math.floor(tk/20))%3===0)c.fillRect(gx+10,gy+4,5,2);
+      }
+      if(active){c.globalAlpha=0.18;c.fillStyle='#ffd080';c.fillRect(x-78,y-58,156,92);c.globalAlpha=1}
+    }else if(kind==='rootHeart'){
+      c.globalAlpha=0.20+0.22*pulse;c.fillStyle='#b8f080';fillPixelPoly(c,[[x,y-48],[x-76,y-10],[x-52,y+54],[x+54,y+54],[x+80,y-8]]);c.globalAlpha=1;
+      c.fillStyle='#3b2a1a';
+      for(let i=0;i<9;i++){
+        const sx=x-58+i*14;
+        fillPixelPoly(c,[[sx,y+34],[sx+8,y+20],[x-8+Math.round(Math.sin(i)*10),y+4],[x+2,y+20],[sx+18,y+48]]);
+      }
+      c.fillStyle=active?'#b8f080':'#5f8c55';fillPixelPoly(c,[[x-16,y+2],[x,y-22],[x+18,y+2],[x+12,y+24],[x-10,y+24]]);
+      c.fillStyle=active?'#ecffd0':'#a0c590';c.fillRect(x-4,y-5,8,14);
+    }
+  }
+}
+
+function drawWaterfallCaveAdventureView(c,cave,tk){
+  const style=waterfallCaveAdventureStyle(cave.scene);
+  c.save();
+  drawWaterfallCaveAdventureBase(c,cave,tk,style);
+  drawWaterfallCaveAdventureObjects(c,cave,tk,style);
+  const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
+  const lemScale=waterfallCaveLemmingScale(cave);
+  drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.30);
+  drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
+  if(cave.scene==='emberPassage'){
+    drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,lemScale,430);
+    const torch=((G.waterfallCaveSceneObjects&&G.waterfallCaveSceneObjects(cave))||[]).find(hit=>hit.def&&hit.def.id==='wallTorch');
+    if(torch&&torch.obj)drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,lemScale,torch.obj.x||130);
+  }
+  c.globalAlpha=0.22;
+  c.fillStyle='#000000';
+  c.fillRect(0,0,CW,18);c.fillRect(0,CH-18,CW,18);c.fillRect(0,0,18,CH);c.fillRect(CW-18,0,18,CH);
+  c.globalAlpha=1;
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveCampView(c,cave,tk){
   const wf=cave.wf||{}, t=cave.t||0;
   c.save();
@@ -332,6 +497,12 @@ function drawWaterfallCaveCampView(c,cave,tk){
     c.fillRect(x,y,10+Math.round(hash2(i+529,wf.x||0)*26),1);
   }
   c.globalAlpha=1;
+  c.fillStyle='#050608';
+  fillPixelPoly(c,[[46,178],[66,154],[88,180],[84,260],[50,274]]);
+  c.globalAlpha=0.22;
+  c.fillStyle='#f08a3a';
+  c.fillRect(80,198,2,48);
+  c.globalAlpha=1;
   const fire=cave.campFire||{x:318,y:244};
   const fireX=Math.round(fire.x||318),fireY=Math.round(fire.y||244);
   drawWaterfallCaveCampfire(c,fireX,fireY,tk+t);
@@ -350,6 +521,7 @@ function drawWaterfallCaveView(c,tk){
   const renderKey=waterfallCaveRenderKey(cave);
   if(renderKey==='camp')return drawWaterfallCaveCampView(c,cave,tk);
   if(renderKey==='deep')return drawWaterfallCaveDeepView(c,cave,tk);
+  if(['emberPassage','crystalGallery','mirrorPool','glyphArchive','rootSanctum'].includes(renderKey))return drawWaterfallCaveAdventureView(c,cave,tk);
   const wf=cave.wf||{}, t=cave.t||0;
   c.save();
   c.fillStyle='#030508';
