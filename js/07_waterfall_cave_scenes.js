@@ -149,7 +149,7 @@ const WATERFALL_CAVE_SCENES={
     bounds:{minX:86,maxX:394,minY:170,maxY:294},
     map:{x:-1,y:5,w:44,h:26,kind:'church',short:'KY'},
     spawns:{
-      fromGlyph:{x:240,y:288,facing:'back'},
+      fromGlyph:{x:240,y:178,facing:'front'},
       fromInterior:{x:258,y:270,facing:'front'}
     },
     exits:[

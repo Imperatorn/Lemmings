@@ -139,7 +139,7 @@ if (caveRenderCode.includes('#f0d080')) {
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingFireLight') || caveRenderCode.includes('function flameLayer') || caveRenderCode.includes('fireX-72') || caveRenderCode.includes('fireX-50')) {
   throw new Error('Campfire cave render should use pixel-frame fire and lemming side-lighting instead of old rectangular light panels');
 }
-if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
+if (!caveRenderCode.includes('drawWaterfallCaveChurchModel') || !caveRenderCode.includes('drawWaterfallCaveChurchInteriorView') || !caveRenderCode.includes('drawWaterfallCaveChurchLemmingOcclusion') || !caveRenderCode.includes('drawWaterfallCaveGroundCard') || caveRenderCode.includes("kind==='rootHeart'") || caveRenderCode.includes("rootSanctum:{")) {
   throw new Error('Waterfall cave render should replace the old root sanctum with a church model, church interior, and scaled ground cards');
 }
 if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.includes("c.fillRect(x-74,y-54,148,84)")) {
@@ -190,6 +190,7 @@ function makeContext2d(){
     arc(){},
     fill(){},
     stroke(){},
+    clip(){},
     moveTo(){},
     lineTo(){},
     closePath(){},
@@ -1138,8 +1139,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'church') {
     throw new Error('Glyph archive did not lead down to the church');
   }
-  if (G.waterfallCave.lemY < 280 || G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY)) {
-    throw new Error('Entering the church scene should place the lemmel on the ground in front of the church');
+  if (G.waterfallCave.lemY > 190 || G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY)) {
+    throw new Error('Entering the church scene from the glyph archive should place the lemmel at the upper back edge of the church yard');
   }
   if (G.waterfallCaveSceneDef('church').audio !== 'church-mystery' || mysteryStarted < 1 || !waterLevels.some(w => w.level <= 0.09)) {
     throw new Error('Church scene should start the mystery music variant and lower the waterfall sound');

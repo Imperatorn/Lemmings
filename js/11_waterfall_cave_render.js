@@ -888,6 +888,38 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   c.restore();
 }
 
+function waterfallCaveChurchModelHit(cave){
+  return ((G.waterfallCaveSceneObjects&&G.waterfallCaveSceneObjects(cave))||[]).find(hit=>hit.def&&hit.def.id==='churchModel');
+}
+
+function waterfallCaveChurchOccludesLemming(hit,lx,ly){
+  const obj=hit&&hit.obj;
+  if(!obj)return false;
+  const x=obj.x||246,y=obj.y||238;
+  if(ly>y+8)return false;
+  if(lx<x-126||lx>x+138)return false;
+  if(ly<y-80)return lx>x-118&&lx<x-48;
+  if(ly<y-42)return lx>x-116&&lx<x+116;
+  return lx>x-118&&lx<x+132;
+}
+
+function drawWaterfallCaveChurchLemmingOcclusion(c,cave,tk,style,lx,ly,lemScale){
+  if(!cave||cave.scene!=='church')return false;
+  const hit=waterfallCaveChurchModelHit(cave);
+  if(!waterfallCaveChurchOccludesLemming(hit,lx,ly))return false;
+  const obj=hit.obj||{},def=hit.def||{};
+  const pulse=clamp((obj.pulseT||0)/72,0,1);
+  const w=Math.ceil(20*lemScale),top=Math.ceil(42*lemScale),bottom=Math.ceil(14*lemScale);
+  const x0=lx-w,y0=ly-top,x1=lx+w,y1=ly+bottom;
+  c.save();
+  c.beginPath();
+  c.moveTo(x0,y0);c.lineTo(x1,y0);c.lineTo(x1,y1);c.lineTo(x0,y1);c.closePath();
+  c.clip();
+  drawWaterfallCaveChurchModel(c,Math.round(obj.x||246),Math.round(obj.y||238),tk,obj,style,!!obj.near,pulse);
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse){
   c.save();
   c.globalAlpha=0.34;
@@ -1014,6 +1046,7 @@ function drawWaterfallCaveAdventureView(c,cave,tk){
   const lemScale=waterfallCaveLemmingScale(cave);
   drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.30);
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
+  drawWaterfallCaveChurchLemmingOcclusion(c,cave,tk,style,lx,ly,lemScale);
   if(cave.scene==='emberPassage'){
     drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,lemScale,430);
     const torch=((G.waterfallCaveSceneObjects&&G.waterfallCaveSceneObjects(cave))||[]).find(hit=>hit.def&&hit.def.id==='wallTorch');
