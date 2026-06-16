@@ -1,11 +1,16 @@
 // ------------------------------ HUD ---------------------------------
 const BTNW=26,BTNY=252,BTNH=CH-BTNY;
-const BUTTONS=[...SKILLS.map(s=>({k:s.k})),{k:'troll'},{k:'save'}];
+const BUTTONS=[...SKILLS.map(s=>({k:s.k})),{k:'portal'},{k:'troll'},{k:'save'}];
+function hudButtons(){
+  return BUTTONS.filter(b=>b.k!=='portal'||(G.portalStoneButtonVisible&&G.portalStoneButtonVisible()));
+}
+function hudButtonAt(i){return hudButtons()[i]||null}
 function btnRect(i){return {x:2+i*BTNW,y:BTNY,w:BTNW-1,h:BTNH-2}}
 function btnHitRect(i){const r=btnRect(i),y=Math.max(HUDY,BTNY-7);return {x:r.x,y,w:r.w,h:CH-y}}
 function hitButton(p){
   if(G.state!=='PLAY')return -1;
-  for(let i=0;i<BUTTONS.length;i++){const r=btnHitRect(i);
+  const buttons=hudButtons();
+  for(let i=0;i<buttons.length;i++){const r=btnHitRect(i);
     if(p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h)return i;
   }
   return -1;
@@ -13,7 +18,7 @@ function hitButton(p){
 
 
 const ICON_LABELS={
-  climb:'KL',float:'FS',bomb:'BO',block:'ST',build:'UP',downbuild:'NED',bash:'HA',mine:'MI',dig:'GR',baz:'BZ',jet:'JP',flame:'EL',rope:'RP',troll:'TR',save:'SP'
+  climb:'KL',float:'FS',bomb:'BO',block:'ST',build:'UP',downbuild:'NED',bash:'HA',mine:'MI',dig:'GR',baz:'BZ',jet:'JP',flame:'EL',rope:'RP',portal:'PT',troll:'TR',save:'SP'
 };
 function drawArrow(c,x,y,dir,col){
   c.fillStyle=col;
@@ -74,6 +79,11 @@ function drawIcon(c,k,x,y){
       for(let i=0;i<9;i+=2)p(4+i,6+i,'#c8a070',2,2);
       p(13,3,'#d8d8e0',5,2);p(16,3,'#d8d8e0',2,6);p(14,8,'#d8d8e0',4,2);
       break;
+    case 'portal':
+      p(7,5,'#606070',7,10);p(6,7,'#484858',9,6);p(8,4,'#a8a8b0',5,1);
+      p(9,7,'#80d8ff',1,7);p(11,6,'#ff70ff',1,8);p(13,9,'#80d8ff',1,4);
+      p(5,14,'#80d8ff',2,1);p(14,14,'#ff70ff',2,1);
+      break;
     case 'troll':
       p(5,7,'#7b4b2b',10,9);p(4,9,'#7b4b2b',12,5);
       p(6,5,'#d8c090',3,3);p(11,5,'#d8c090',3,3);
@@ -85,16 +95,19 @@ function drawIcon(c,k,x,y){
 
 function drawHUD(c,tk){
   c.fillStyle='#101010';c.fillRect(0,HUDY,CW,CH-HUDY);
+  const buttons=hudButtons();
   // inforad
   const L=G.level;
   let info='';
-  const hb=G.hoverBtn>=0?BUTTONS[G.hoverBtn]:null;
+  const hb=G.hoverBtn>=0?buttons[G.hoverBtn]:null;
   const hs=hb?SKILLS.find(s=>s.k===hb.k):null;
   if(hb&&hb.k==='troll')info=G.trollUsed?'TROLLFÖRVANDLING ANVÄND':'FÖRVANDLA LEMMEL TILL TROLL';
   else if(hb&&hb.k==='save')info='SPARA LÄGE';
+  else if(hb&&hb.k==='portal')info=(G.portalStoneButtonAvailable&&G.portalStoneButtonAvailable())?'TELEPORTERINGSSTEN':'STENEN KRÄVER DEN HELIGA LÄMMELN';
   else if(hs)info=hs.name+' '+(G.skills&&G.skills[hs.k]!=null?G.skills[hs.k]:'');
   else if(G.hoverLem)info=roleName(G.hoverLem);
   else if(G.selSkill==='troll')info='FÖRVANDLA LEMMEL TILL TROLL';
+  else if(G.selSkill==='portal')info=(G.portalStone&&G.portalStone.placingExit)?'PLACERA UTGÅNGSPORTAL':'TELEPORTERINGSSTEN - KLICKA HELIG LÄMMEL';
   else if(G.selSkill){const ss=SKILLS.find(s=>s.k===G.selSkill);info=(ss?ss.name:G.selSkill)+' '+(G.skills?G.skills[G.selSkill]:'');}
   else info='VÄDER '+G.weatherShort()+'  ZOOM '+Math.round((G.viewZoom||1)*100)+'%';
   if(G.manual&&G.manual.active)info='DIREKT: PILAR STYR  SHIFT SPRING  CTRL SIKTE  L LAMPA';
@@ -106,10 +119,10 @@ function drawHUD(c,tk){
   drawText(c,'TID '+Math.floor(secs/60)+'-'+String(secs%60).padStart(2,'0'),330,HUDY+4,1,'#40ff40');
   if(G.paused)drawText(c,'PAUS',430,HUDY+4,1,'#ffd040');
   // knappar
-  for(let i=0;i<BUTTONS.length;i++){
-    const b=BUTTONS[i],r=btnRect(i);
+  for(let i=0;i<buttons.length;i++){
+    const b=buttons[i],r=btnRect(i);
     const skillButton=!!(G.skills&&Object.prototype.hasOwnProperty.call(G.skills,b.k));
-    const disabled=(skillButton&&G.skills[b.k]<=0)||(b.k==='troll'&&G.trollUsed);
+    const disabled=(skillButton&&G.skills[b.k]<=0)||(b.k==='troll'&&G.trollUsed)||(b.k==='portal'&&!(G.portalStoneButtonAvailable&&G.portalStoneButtonAvailable()));
     const sel=!disabled&&((b.k===G.selSkill)||(b.k==='pause'&&G.paused)||(b.k==='fs'&&!!document.fullscreenElement));
     c.fillStyle=disabled?'#181820':(sel?'#284828':'#303038');
     c.fillRect(r.x,r.y,r.w,r.h);
@@ -131,7 +144,7 @@ function drawHUD(c,tk){
     if(i===G.hoverBtn){c.fillStyle=disabled?'rgba(255,255,255,0.05)':'rgba(255,255,255,0.12)';c.fillRect(r.x,r.y,r.w,r.h)}
   }
   // minikarta
-  const mmx=2+BUTTONS.length*BTNW+4,mmw=CW-mmx-3,mmh=BTNH-2;
+  const mmx=2+buttons.length*BTNW+4,mmw=CW-mmx-3,mmh=BTNH-2;
   c.fillStyle='#000';c.fillRect(mmx,BTNY,mmw,mmh);
   const sc=mmw/L.W,th=Math.min(mmh,240*sc);
   const ty=BTNY+(mmh-th)/2;
@@ -149,6 +162,10 @@ function drawHUD(c,tk){
   if(G.trolls)for(const trl of G.trolls){c.fillStyle='#d0a060';c.fillRect(mmx+clamp(trl.x,0,L.W)*sc-1,ty+clamp(trl.y,0,240)*sc-1,3,3)}
   if(G.trees)for(const tr of G.trees){c.fillStyle='#40b040';c.fillRect(mmx+tr.x*sc-1,ty+clamp(tr.baseY-tr.height,0,240)*sc-1,2,4)}
   if(G.ropes)for(const rp of G.ropes){c.fillStyle='#d0a060';c.fillRect(mmx+rp.x1*sc,ty+rp.y1*sc,1,1);c.fillRect(mmx+rp.x2*sc,ty+rp.y2*sc,2,2)}
+  if(G.portalStone){
+    if(G.portalStone.in){c.fillStyle='#80d8ff';c.fillRect(mmx+G.portalStone.in.x*sc-1,ty+clamp(G.portalStone.in.y,0,240)*sc-2,3,4)}
+    if(G.portalStone.out){c.fillStyle='#ff70ff';c.fillRect(mmx+G.portalStone.out.x*sc-1,ty+clamp(G.portalStone.out.y,0,240)*sc-2,3,4)}
+  }
   if(G.warnings)for(const w of G.warnings){
     const wx=mmx+w.x*sc, wy=ty+clamp(w.y==null?40:w.y,0,240)*sc;
     c.fillStyle=w.kind==='megaBoom'?'#ff3030':(w.kind==='treeGrow'?'#70e060':(w.kind==='troll'?'#d0a060':'#ffb040'));
@@ -207,6 +224,33 @@ function drawSkillPreview(c,cam,tk){
   const my=G.renderMy!=null?G.renderMy:G.my;
   const wx=G.mouseWorldX!=null?G.mouseWorldX:mx+cam, wy=G.mouseWorldY!=null?G.mouseWorldY:my;
   const k=G.selSkill;
+  if(k==='portal'){
+    c.save();c.globalAlpha=0.82;
+    if(G.portalStone&&G.portalStone.placingExit){
+      const res=G.portalStoneExitCandidate?G.portalStoneExitCandidate(wx,wy):{ok:false,reason:'KAN EJ'};
+      const p=res.point||(G.portalStoneSurfaceAt&&G.portalStoneSurfaceAt(wx,wy,84));
+      const col=res.ok?'#80d8ff':'#ff8080';
+      if(G.portalStone.in){
+        pixelLine(c,G.portalStone.in.x-cam,G.portalStone.in.y-16,p?p.x-cam:mx,p?p.y-16:my,col);
+        if(typeof drawPortalStonePortal==='function')drawPortalStonePortal(c,G.portalStone.in,cam,tk,'in',false);
+      }
+      if(p){
+        if(typeof drawPortalStonePortal==='function')drawPortalStonePortal(c,p,cam,tk,'out',true);
+        else pixelOutline(c,p.x-cam-9,p.y-26,18,26,col);
+        drawTextC(c,res.ok?'PLACERA':(res.reason||'KAN EJ'),clamp(p.x-cam,42,VW-42),Math.max(14,p.y-38),1,col);
+      }else drawTextC(c,res.reason||'INGEN MARK',clamp(mx,42,VW-42),Math.max(14,my-16),1,col);
+    }else{
+      const l=G.findPortalStoneTarget?G.findPortalStoneTarget(wx,wy):null;
+      const col=l?'#80d8ff':'#ff8080';
+      if(l){
+        const sc=Math.max(1,l.scale||1);
+        pixelOutline(c,l.x-cam-11*sc,l.y-21*sc,22*sc,26*sc,col);
+        drawTextC(c,'ANVÄND STENEN',clamp(l.x-cam,50,VW-50),Math.max(14,l.y-34),1,col);
+      }else drawTextC(c,'KLICKA HELIG LÄMMEL',clamp(mx,62,VW-62),Math.max(14,my-14),1,col);
+    }
+    c.restore();
+    return;
+  }
   const hit=G.findSkillTarget(wx,wy,k);
   const aimable=k==='baz'||k==='flame'||k==='rope';
   const manualBase=aimable&&G.isManualActive&&G.isManualActive()&&G.manualLem?G.manualLem():null;

@@ -36,6 +36,7 @@ function drawPlayWorld(c,L,cam,tk){
   for(const r of G.settledTrollRocks||[])drawSettledTrollRock(c,r,cam,tk);
   for(const rope of G.ropes)drawRope(c,rope,cam,tk);
   for(const h of G.hooks)drawRopeHook(c,h,cam,tk);
+  if(typeof drawPortalStoneWorld==='function')drawPortalStoneWorld(c,cam,tk);
   // tappad lykta
   if(G.lamp&&G.lamp.onGround){
     const x=G.lamp.x-cam;

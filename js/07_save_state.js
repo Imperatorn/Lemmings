@@ -3,11 +3,12 @@ Object.assign(G,{
   makeSaveState(label){
     if(this.state!=='PLAY'||!this.level||!this.T)return null;
     if((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()))return null;
+    if(this.portalStone&&this.portalStone.placingExit)return null;
     const fields=['cam','viewZoom','viewY','out','saved','spawned','doorT','rate','spawnT','timeT','levelTimeT','skills','selSkill','trollUsed',
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax','monkeySeq',
       'monkeyAirSupportPending','monkeyAirSupportTargetX','monkeyLastX','trollT','trollEvents','trollMax','trollLastX','treeT','treeEvents','treeMax','treeLastX','jumpT','jumpEvents','jumpMax',
-      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus','holyBlessingUnlocked','holyLevelLemId','holyTeleportStoneUnlocked','holyTeleportStoneLemId'];
+      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','portalStone','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus','holyBlessingUnlocked','holyLevelLemId','holyTeleportStoneUnlocked','holyTeleportStoneLemId'];
     const arrays=['lems','parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','settledTrollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
     const data={v:1,label:String(label||'SPARAT LÄGE').slice(0,28),ts:Date.now?Date.now():0,levelIdx:this.levelIdx,levelSeed:this.levelSeed>>>0,
@@ -58,6 +59,7 @@ Object.assign(G,{
     for(const k in fields)this[k]=jsonClone(fields[k]);
     if(!Object.prototype.hasOwnProperty.call(fields,'trollUsed'))this.trollUsed=!!fields.nuked;
     if(!this.waterfallCaveLooted||typeof this.waterfallCaveLooted!=='object')this.waterfallCaveLooted={};
+    if(this.portalStone&&this.portalStone.placingExit)this.portalStone=null;
     this.waterfallCaveExitNeedsUpRelease=false;
     this.waterfallCaveResumeMusic=false;
     this.waterfallCaveResumeWeather=null;

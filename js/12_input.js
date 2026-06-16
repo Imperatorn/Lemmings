@@ -33,6 +33,17 @@ function refreshPointer(p){
   return p;
 }
 function selectSkill(k){
+  if(k==='portal'){
+    if(!G.portalStoneButtonAvailable||!G.portalStoneButtonAvailable()){
+      G.toast('STENEN KRÄVER DEN HELIGA LÄMMELN');
+      AU.sShrug();
+      return;
+    }
+    G.clearRopeAim();
+    G.selSkill='portal';
+    G.toast('VALD TELEPORTERINGSSTEN - KLICKA PÅ DEN HELIGA LÄMMELN');
+    return;
+  }
   const s=SKILLS.find(q=>q.k===k);
   if(!s)return;
   // Om spelaren var mitt i ett repkroks-aim och väljer något annat ska
@@ -90,9 +101,12 @@ function pressAt(p){
     // misstolkas som världsklick. Hitboxarna är lite högre än det ritade
     // området för att fungera bättre på skalade/touch-skärmar.
     if(p.y>=HUDY){
+      if(G.portalStone&&G.portalStone.placingExit){G.toast('PLACERA UTGÅNGSPORTAL ELLER ESC');return}
       const bi=hitButton(p);
       if(bi>=0){
-        const k=BUTTONS[bi].k;
+        const b=typeof hudButtonAt==='function'?hudButtonAt(bi):BUTTONS[bi];
+        if(!b)return;
+        const k=b.k;
         if(k==='fs')toggleFullscreen();
         else if(k==='pause')G.paused=!G.paused;
         else if(k==='save')G.promptSaveGame();
@@ -116,6 +130,7 @@ function rightClickAt(p){
   if(G.waterfallCaveActive&&G.waterfallCaveActive()){G.handleWaterfallCaveInput(p,'context');return}
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'context');return}
   if(G.state==='PLAY'&&p.y<VH){
+    if(G.portalStone&&G.portalStone.placingExit){G.cancelPortalStonePlacement();return}
     const wp=G.screenToWorld(p);
     G.toggleManualControlAt(wp.x,wp.y);
   }
@@ -233,6 +248,11 @@ window.addEventListener('keydown',e=>{
   const tempoDir=(e.key==='+'||e.key==='='||e.code==='NumpadAdd')?1:((e.key==='-'||e.key==='_'||e.code==='NumpadSubtract')?-1:0);
   if(tempoDir){G.adjustTempo(tempoDir);e.preventDefault();return}
   if(G.state==='PLAY'){
+    if(G.portalStone&&G.portalStone.placingExit&&(e.key==='Escape'||e.key==='b'||e.key==='B')){
+      G.cancelPortalStonePlacement();
+      e.preventDefault();
+      return;
+    }
     if(G.isManualActive&&G.isManualActive()){
       if(e.key==='Control'){G.setManualKey('aim',true);e.preventDefault();return}
       if(e.key==='ArrowLeft'&&G.manual&&G.manual.keys&&G.manual.keys.aim){G.adjustManualAim(-0.13);e.preventDefault();return}

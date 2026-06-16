@@ -46,6 +46,52 @@ function drawHolyLemmingAura(c,l,sx,sy,sc){
   c.restore();
 }
 
+function drawPortalStonePortal(c,p,cam,tk,kind,ghost){
+  if(!p)return;
+  const x=Math.round(p.x-cam),y=Math.round(p.y),phase=(tk||0)*0.18+(kind==='out'?1.7:0);
+  const alpha=ghost?0.45:0.92;
+  c.save();
+  c.globalAlpha=alpha*0.22;
+  c.globalCompositeOperation='lighter';
+  c.fillStyle=kind==='out'?'#ff70ff':'#80d8ff';
+  fillPixelPoly(c,[[x-18,y-4],[x-11,y-28],[x+1,y-34],[x+13,y-27],[x+18,y-4],[x+10,y+3],[x-10,y+3]]);
+  c.globalCompositeOperation='source-over';
+  c.globalAlpha=alpha;
+  c.fillStyle='#272636';c.fillRect(x-13,y-7,26,7);
+  c.fillStyle='#606070';c.fillRect(x-11,y-10,22,4);
+  c.fillStyle='#3a3a48';c.fillRect(x-15,y-4,30,3);
+  c.fillStyle='#0a1020';fillPixelPoly(c,[[x-9,y-7],[x-7,y-27],[x,y-32],[x+8,y-27],[x+10,y-7]]);
+  c.globalCompositeOperation='lighter';
+  const a=0.55+0.25*Math.sin(phase);
+  c.globalAlpha=alpha*a;
+  c.fillStyle=kind==='out'?'#ff70ff':'#80d8ff';
+  fillPixelPoly(c,[[x-5,y-9],[x-4,y-22],[x,y-28],[x+5,y-22],[x+6,y-9],[x+2,y-5],[x-2,y-5]]);
+  c.fillStyle=kind==='out'?'#80d8ff':'#ff70ff';
+  for(let i=0;i<4;i++){
+    const yy=y-24+i*5+Math.round(Math.sin(phase+i)*2);
+    const xx=x+Math.round(Math.sin(phase*1.7+i*2.1)*5);
+    c.fillRect(xx,yy,2,5);
+    if(i&1)c.fillRect(xx-3,yy+2,5,1);
+    else c.fillRect(xx,yy+2,5,1);
+  }
+  c.globalAlpha=alpha*0.34;
+  c.fillStyle='#ffffff';
+  c.fillRect(x-2,y-25,4,2);
+  c.fillRect(x-1,y-17,2,5);
+  c.globalCompositeOperation='source-over';
+  c.globalAlpha=alpha*0.45;
+  c.fillStyle=kind==='out'?'#a050b8':'#3a8fc8';
+  c.fillRect(x-18,y+1,36,2);
+  c.restore();
+}
+
+function drawPortalStoneWorld(c,cam,tk){
+  const ps=G.portalStone;
+  if(!ps)return;
+  if(ps.in)drawPortalStonePortal(c,ps.in,cam,tk,'in',false);
+  if(ps.out)drawPortalStonePortal(c,ps.out,cam,tk,'out',false);
+}
+
 function drawLemmingCore(c,l,sx,sy){
   // sx,sy = fotpunkt på skärmen. Lemlarna är blå och handritade i kod.
   const d=l.dir,f=(l.anim>>1)&3;

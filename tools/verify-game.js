@@ -134,6 +134,16 @@ if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHoly
 if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('unlockHolyTeleportStone') || !gameCode.includes('teleportStone')) {
   throw new Error('Teleport stone should be persisted as a holy lemmel property');
 }
+if (!gameCode.includes('PORTAL_STONE_MAX_DIST') || !gameCode.includes('beginPortalStonePlacement') || !gameCode.includes('placePortalStoneExit') || !gameCode.includes('updatePortalStone')) {
+  throw new Error('Unlocked teleport stone should create active world portals from the holy lemmel');
+}
+if (!hudCode.includes("k:'portal'") || !hudCode.includes('hudButtons') || !hudCode.includes('drawPortalStonePortal')) {
+  throw new Error('HUD should expose the teleport stone as a special non-counted tool with portal preview');
+}
+const portalAudioCode = fs.readFileSync(path.join(root, 'js/02_audio.js'), 'utf8');
+if (!portalAudioCode.includes('sPortalStoneOpen') || !portalAudioCode.includes('sPortalStoneTravel')) {
+  throw new Error('Portal stone world use should have dedicated open and travel sounds');
+}
 const cutsceneScenesCode = fs.readFileSync(path.join(root, 'js/07_cutscene_scenes.js'), 'utf8');
 if (!cutsceneScenesCode.includes('function cutsceneLemmingRingScale') || cutsceneScenesCode.includes('Math.round(sc*0.58)') || cutsceneScenesCode.includes('Math.round(sc*0.54)')) {
   throw new Error('Fish ring cutscene should use the larger lemming-fit swim ring scale');
@@ -187,7 +197,8 @@ if (!caveRenderCode.includes('const fallH=oh+8') || caveRenderCode.includes('oh+
 if (!caveRenderCode.includes('faceLit') || !caveRenderCode.includes("globalCompositeOperation='lighter'")) {
   throw new Error('Campfire cave lemming should use subtle fire-side rim lighting');
 }
-if (!fs.readFileSync(path.join(root, 'js/08_render.js'), 'utf8').includes('drawHolyLemmingAura')) {
+const baseRenderCode = fs.readFileSync(path.join(root, 'js/08_render.js'), 'utf8');
+if (!baseRenderCode.includes('drawHolyLemmingAura')) {
   throw new Error('Holy lemmels should have a visible aura in the normal world');
 }
 const audioCode = fs.readFileSync(path.join(root, 'js/02_audio.js'), 'utf8');
@@ -204,6 +215,9 @@ if (!audioCode.includes('sWaterfallCaveTeleportStone')) {
   throw new Error('Teleport stone discovery should have a dedicated magical sound');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
+if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
+  throw new Error('World render should draw active teleport stone portals before lemmels');
+}
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || !caveRenderCode.includes('Tecken') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
@@ -350,6 +364,7 @@ const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
+  'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'restoreGoalBase',
@@ -386,7 +401,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveTeleportStone']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveTeleportStone','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -705,6 +720,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevHolyLevelLemId = G.holyLevelLemId;
   const prevHolyTeleportStoneUnlocked = G.holyTeleportStoneUnlocked;
   const prevHolyTeleportStoneLemId = G.holyTeleportStoneLemId;
+  const prevPortalStone = G.portalStone;
+  const prevSelSkill = G.selSkill;
+  const prevPaused = G.paused;
   const prevCutscene = G.cutscene;
   const prevCutscenesOn = G.cutscenesOn;
   let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, teleportStoneSounds = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
@@ -1534,6 +1552,35 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!holyHatchLems[0].teleportStone || G.holyTeleportStoneLemId !== holyHatchLems[0].id) {
     throw new Error('A holy lemmel with the discovered teleport stone should keep that property on new levels');
   }
+  if (!G.portalStoneButtonVisible() || !G.portalStoneButtonAvailable() || G.portalStoneOwner() !== holyHatchLems[0]) {
+    throw new Error('Teleport stone HUD button should be available for the holy hatch lemmel');
+  }
+  if (!G.beginPortalStonePlacement(holyHatchLems[0]) || !G.portalStone || !G.portalStone.placingExit || !G.paused || !G.portalStone.in) {
+    throw new Error('Teleport stone should create an entrance portal and pause while placing the exit');
+  }
+  if (G.makeSaveState('VERIFY PORTAL PLACING')) {
+    throw new Error('Save-state should not be created while placing a portal exit');
+  }
+  const entryPortal = G.portalStone.in;
+  let exitPortal = null;
+  for (const off of [90,120,150,70,-90,-120,-150]) {
+    const p = G.portalStoneSurfaceAt(entryPortal.x + off, entryPortal.y, 130);
+    if (p && G.portalStoneExitCandidate(p.x, p.y).ok) {
+      exitPortal = p;
+      break;
+    }
+  }
+  if (!exitPortal) throw new Error('Verify could not find a valid exit portal surface near the holy lemmel');
+  if (!G.placePortalStoneExit(exitPortal.x, exitPortal.y) || G.paused || !G.portalStone.active || !G.portalStone.out) {
+    throw new Error('Teleport stone should place an exit portal and unpause the game');
+  }
+  const portalTraveler = new Lemming(entryPortal.x, entryPortal.y);
+  portalTraveler.state = 'BLOCK';
+  G.lems.push(portalTraveler);
+  G.updatePortalStone();
+  if (Math.hypot(portalTraveler.x - G.portalStone.out.x, portalTraveler.y - G.portalStone.out.y) > 12 || portalTraveler.portalCooldown <= 0) {
+    throw new Error('Lemmel entering the portal should be teleported to the exit portal');
+  }
   AU.startWaterfallCave = prevStartWaterfall;
   AU.stopWaterfallCave = prevStopWaterfall;
   AU.startMusic = prevStartMusic;
@@ -1566,6 +1613,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.holyLevelLemId = prevHolyLevelLemId;
   G.holyTeleportStoneUnlocked = prevHolyTeleportStoneUnlocked;
   G.holyTeleportStoneLemId = prevHolyTeleportStoneLemId;
+  G.portalStone = prevPortalStone;
+  G.selSkill = prevSelSkill;
+  G.paused = prevPaused;
   G.cutscene = prevCutscene;
   G.cutscenesOn = prevCutscenesOn;
 }

@@ -11,6 +11,7 @@ class Lemming{
     this.bombT=-1;this.busyT=0;this.bricks=0;this.fuel=0;
     this.jetT=0;this.jetBlockedT=0;this.afterBazState=null;
     this.jumpT=0;this.jumpVy=0;this.manualVy=0;this.ropeId=null;this.ropeT=0;this.ropeCooldown=0;
+    this.portalCooldown=0;
     this.vaultRockId=null;this.vaultDur=0;this.vaultStartX=0;this.vaultStartY=0;this.vaultEndX=0;this.vaultEndY=0;this.vaultRockScale=1;
     this.scale=1;this.manualMoving=false;this.climbCutscene=null;this.skipClimbCutsceneT=0;
     this.anim=Math.floor(RND()*4);this.dead=false;this.holy=false;this.holySaveT=-999;this.teleportStone=false;

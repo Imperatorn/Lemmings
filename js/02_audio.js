@@ -409,6 +409,22 @@ const AU={
     this.tone(1760,0.22,'triangle',0.014,0.84,t+0.26);
     this.softNoise(0.45,0.010,1800,0.55,t+0.03,{type:'bandpass',q:0.60,smooth:0.76,attack:0.07,release:0.28});
   },
+  sPortalStoneOpen(){
+    if(!this.rateFx('portal-stone-open',0.18))return;
+    const t=this.now();
+    this.padTone(330,0.42,'sine',0.014,t);
+    this.padTone(660,0.46,'triangle',0.012,t+0.03);
+    this.tone(990,0.16,'sine',0.024,1.04,t+0.08);
+    this.tone(1480,0.12,'triangle',0.012,0.92,t+0.18);
+    this.softNoise(0.22,0.006,2200,0.45,t+0.02,{type:'bandpass',q:0.75,smooth:0.82,attack:0.035,release:0.16});
+  },
+  sPortalStoneTravel(){
+    if(!this.rateFx('portal-stone-travel',0.10))return;
+    const t=this.now();
+    this.tone(880,0.06,'triangle',0.028,1.08,t);
+    this.tone(1320,0.08,'sine',0.018,0.86,t+0.04);
+    this.softNoise(0.12,0.007,2600,0.42,t,{type:'bandpass',q:0.90,smooth:0.70,attack:0.010,release:0.08});
+  },
   // --- effekter ---
   rateFx(name,gap){
     if(!this.ctx||!this.on||!this.sfxOn)return false;
