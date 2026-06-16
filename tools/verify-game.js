@@ -1318,18 +1318,35 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const teleportSoundsBefore = teleportStoneSounds;
   G.clearWaterfallCaveMoveKeys(G.waterfallCave);
   G.waterfallCave.lemX = 240;
-  G.waterfallCave.lemY = 136;
+  G.waterfallCave.lemY = 154;
   G.waterfallCave.facing = 'back';
+  G.handleWaterfallCaveKey('ArrowUp');
+  for (let i = 0; i < 32; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
   G.tick();
   let teleportStone = G.waterfallCaveTeleportStoneState(G.waterfallCave);
+  if (G.waterfallCave.lemY < 145) {
+    throw new Error('Church altar should block walking straight through its front');
+  }
   if (teleportStone && teleportStone.found) {
     throw new Error('Teleport stone should not trigger when the holy lemmel approaches the altar from the front/upward side');
   }
   if (G.cutsceneActive()) {
     throw new Error('Teleport stone should not start its cutscene from the wrong altar side');
   }
-  G.waterfallCave.facing = 'front';
-  G.tick();
+  G.clearWaterfallCaveMoveKeys(G.waterfallCave);
+  G.waterfallCave.lemX = 320;
+  G.waterfallCave.lemY = 154;
+  G.waterfallCave.facing = 'back';
+  G.handleWaterfallCaveKey('ArrowUp');
+  for (let i = 0; i < 42; i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  if (G.waterfallCave.lemY > 122 || G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY)) {
+    throw new Error('Church altar side passage should allow the holy lemmel to walk behind the altar');
+  }
+  G.handleWaterfallCaveKey('ArrowLeft');
+  for (let i = 0; i < 50 && !G.cutsceneActive(); i++) G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowLeft');
   teleportStone = G.waterfallCaveTeleportStoneState(G.waterfallCave);
   if (!teleportStone || !teleportStone.found || !teleportStone.collected || !G.holyTeleportStoneUnlocked || !blessedLem.teleportStone || G.holyTeleportStoneLemId !== blessedLem.id) {
     throw new Error('Holy lemmel should discover and receive the teleport stone behind the church altar');

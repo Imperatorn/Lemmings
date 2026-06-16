@@ -218,7 +218,7 @@ Object.assign(G,{
     const st=this.waterfallCaveChurchBlessingState(cave);
     if(!st)return false;
     if(!st.active){
-      const nearAltar=(cave.lemY||999)<=146&&(cave.lemX||0)>=180&&(cave.lemX||0)<=300;
+      const nearAltar=(cave.lemY||999)<=166&&(cave.lemX||0)>=180&&(cave.lemX||0)<=300;
       return nearAltar?this.startWaterfallCaveChurchBlessing(cave):false;
     }
     cave.walking=false;
@@ -269,7 +269,7 @@ Object.assign(G,{
     if(!cave||cave.scene!=='churchInterior')return false;
     const x=cave.lemX||0,y=cave.lemY||999;
     const fromBehind=cave.facing!=='back';
-    return x>=202&&x<=278&&y>=132&&y<=140&&fromBehind;
+    return x>=202&&x<=278&&y>=108&&y<=122&&fromBehind;
   },
   discoverWaterfallCaveTeleportStone(cave,stone,l){
     if(!cave||!stone||!l||!l.holy||stone.found)return false;

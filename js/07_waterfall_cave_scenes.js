@@ -180,7 +180,7 @@ const WATERFALL_CAVE_SCENES={
     label:'Inne i kyrkan',
     render:'churchInterior',
     audio:'church-hymn',
-    bounds:{minX:78,maxX:402,minY:132,maxY:292},
+    bounds:{minX:78,maxX:402,minY:108,maxY:292},
     spawns:{
       fromDoor:{x:240,y:264,facing:'front'}
     },
@@ -188,6 +188,7 @@ const WATERFALL_CAVE_SCENES={
       {id:'toChurchYard',key:'down',x0:176,x1:304,yMin:286,target:'church',spawn:'fromInterior'}
     ],
     objects:[
+      {id:'churchAltar',kind:'altar',default:{x:240,y:135},hit:{type:'rect',w:104,h:54},block:{type:'rect',w:96,h:28},blocker:true,verbs:['look']}
     ]
   }
 };
