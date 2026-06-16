@@ -98,9 +98,14 @@ const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_ca
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
-for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','rootSanctum:{','toCrystalGalleryUp','churchCard','viewCard','map:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveObjectDefault']) {
+for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','rootSanctum:{','toCrystalGallery','churchCard','viewCard','map:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveObjectDefault']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave scene registry is missing ${token}`);
+  }
+}
+for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldamm','Rötter']) {
+  if (!waterfallScenesCode.includes(token)) {
+    throw new Error(`Waterfall cave map text is missing Swedish label ${token}`);
   }
 }
 for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject']) {
@@ -142,7 +147,7 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
   throw new Error('Campfire audio should use softer, less sharp crackles');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || !caveRenderCode.includes('Tecken') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
@@ -705,6 +710,25 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!caveMap.nodes.some(n => n.id === 'main' && Number.isFinite(n.x) && Number.isFinite(n.y)) || !caveMap.links.some(l => l.from === 'main' || l.to === 'main')) {
     throw new Error('Waterfall cave map graph is missing mapped cave rooms and links');
   }
+  for (const id of caveSceneIds) {
+    const scene = G.waterfallCaveSceneDef(id);
+    if (!scene || !scene.map) continue;
+    for (const exit of scene.exits || []) {
+      if (!exit || !exit.target) continue;
+      const target = G.waterfallCaveSceneDef(exit.target);
+      if (!target || !target.map) continue;
+      const dx = target.map.x - scene.map.x;
+      const dy = target.map.y - scene.map.y;
+      const ok =
+        (exit.key === 'up' && dy < 0 && Math.abs(dy) >= Math.abs(dx)) ||
+        (exit.key === 'down' && dy > 0 && Math.abs(dy) >= Math.abs(dx)) ||
+        (exit.key === 'left' && dx < 0 && Math.abs(dx) >= Math.abs(dy)) ||
+        (exit.key === 'right' && dx > 0 && Math.abs(dx) >= Math.abs(dy));
+      if (!ok) {
+        throw new Error(`Waterfall cave exit ${id}.${exit.id} uses ${exit.key} but map target ${exit.target} is dx=${dx} dy=${dy}`);
+      }
+    }
+  }
   const mapStartX = G.waterfallCave.lemX;
   G.handleWaterfallCaveKey('m');
   if (!G.waterfallCave.mapOpen || !G.waterfallCaveMapOpen(G.waterfallCave)) {
@@ -965,8 +989,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKey('ArrowUp');
   G.tick();
   G.handleWaterfallCaveKeyUp('ArrowUp');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'emberPassage') {
+    throw new Error('Secret ember passage should not lead upward into the crystal gallery');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'crystalGallery') {
-    throw new Error(`Secret passage did not continue upward into the crystal gallery, scene=${G.waterfallCave && G.waterfallCave.scene} x=${G.waterfallCave && G.waterfallCave.lemX} y=${G.waterfallCave && G.waterfallCave.lemY}`);
+    throw new Error(`Secret passage did not continue downward into the crystal gallery, scene=${G.waterfallCave && G.waterfallCave.scene} x=${G.waterfallCave && G.waterfallCave.lemX} y=${G.waterfallCave && G.waterfallCave.lemY}`);
   }
   if (!drawWaterfallCaveView(WCTX, 37)) throw new Error('Crystal gallery view did not render');
   const songCrystal = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'songCrystal');
@@ -1096,11 +1128,11 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'crystalGallery') {
     throw new Error('Mirror pool did not return to the crystal gallery');
   }
-  G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).maxX;
-  G.waterfallCave.lemY = 232;
-  G.handleWaterfallCaveKey('ArrowRight');
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
+  G.handleWaterfallCaveKey('ArrowUp');
   G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowRight');
+  G.handleWaterfallCaveKeyUp('ArrowUp');
   if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'emberPassage') {
     throw new Error('Crystal gallery did not return to the ember passage');
   }

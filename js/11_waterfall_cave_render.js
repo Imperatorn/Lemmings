@@ -206,22 +206,30 @@ function drawWaterfallCaveViewCardInspect(c,cave,tk,hit){
 }
 
 function waterfallCaveMapScreenNode(node){
-  const cellW=62,cellH=34,originX=178,originY=50;
+  const cellW=54,cellH=30,originX=170,originY=54;
   const w=node.w||56,h=node.h||34;
   const cx=originX+(node.x||0)*cellW,cy=originY+(node.y||0)*cellH;
   return {x:Math.round(cx-w/2),y:Math.round(cy-h/2),w,h,cx:Math.round(cx),cy:Math.round(cy)};
 }
 
-function drawWaterfallCaveMapText(c,text,x,y,size,col,align){
+function drawWaterfallCaveMapText(c,text,x,y,scale,col,align){
+  const s=String(text==null?'':text),sc=scale||1;
+  if(typeof drawText==='function'&&typeof textW==='function'){
+    let tx=x;
+    if(align==='center')tx=x-Math.round(textW(s,sc)/2);
+    else if(align==='right')tx=x-textW(s,sc);
+    drawText(c,s,Math.round(tx),Math.round(y),sc,col||'#22150c');
+    return;
+  }
   c.fillStyle=col||'#22150c';
-  c.font=(size||10)+'px sans-serif';
+  c.font=Math.max(8,sc*6)+'px sans-serif';
   c.textAlign=align||'left';
   c.textBaseline='top';
-  c.fillText(text,x,y);
+  c.fillText(s,x,y);
 }
 
 function drawWaterfallCaveMapCorridor(c,a,b,col){
-  const mx=Math.round((a.cx+b.cx)/2),w=5;
+  const mx=Math.round((a.cx+b.cx)/2),w=3;
   function rectLine(x1,y1,x2,y2,width,color){
     c.fillStyle=color;
     if(Math.abs(x2-x1)>=Math.abs(y2-y1)){
@@ -251,24 +259,24 @@ function drawWaterfallCaveMapOverlay(c,cave,tk){
   c.fillRect(0,0,CW,CH);
   c.globalAlpha=1;
 
-  const x=18,y=18,w=444,h=264,legendX=326;
+  const x=18,y=18,w=444,h=264,legendX=316;
   c.fillStyle='#3a2414';c.fillRect(x,y,w,h);
   c.fillStyle='#7d4a24';c.fillRect(x+4,y+4,w-8,h-8);
   c.fillStyle='#d7ad5c';c.fillRect(x+8,y+8,w-16,h-16);
   c.fillStyle='#c89545';c.fillRect(x+12,y+12,w-24,h-24);
   c.fillStyle='#e0bd6d';c.fillRect(x+16,y+16,w-32,h-32);
 
-  c.globalAlpha=0.16;
+  c.globalAlpha=0.10;
   c.fillStyle='#8b5a2d';
-  for(let i=0;i<34;i++){
-    const px=x+28+Math.round(hash2(i+1301,cave.t||0)*(w-70));
-    const py=y+30+Math.round(hash2(i+1307,cave.t||0)*(h-62));
-    c.fillRect(px,py,16+Math.round(hash2(i+1311,0)*46),1);
+  for(let i=0;i<22;i++){
+    const px=x+28+Math.round(hash2(i+1301,17)*(w-76));
+    const py=y+30+Math.round(hash2(i+1307,31)*(h-68));
+    c.fillRect(px,py,12+Math.round(hash2(i+1311,7)*34),1);
   }
   c.globalAlpha=1;
   c.fillStyle='#6f421f';c.fillRect(legendX-12,y+22,2,h-44);
-  drawWaterfallCaveMapText(c,'GROTTKARTA',legendX,y+28,15,'#201107','left');
-  c.fillStyle='#7d4a24';c.fillRect(legendX,y+47,112,2);
+  drawWaterfallCaveMapText(c,'GROTTKARTA',legendX,y+30,2,'#201107','left');
+  c.fillStyle='#7d4a24';c.fillRect(legendX,y+48,112,2);
 
   const visibleIds={};
   for(const id in visited)if(visited[id]&&nodesById[id])visibleIds[id]=true;
@@ -289,16 +297,16 @@ function drawWaterfallCaveMapOverlay(c,cave,tk){
     if(!visibleIds[node.id])continue;
     const r=mapNodes[node.id],kind=(graph.kinds&&graph.kinds[node.kind])||{color:'#8a7658',label:'Rum'};
     const current=cave&&cave.scene===node.id;
-    c.fillStyle='#2d1a0d';c.fillRect(r.x-3,r.y-3,r.w+6,r.h+6);
+    c.fillStyle='#2d1a0d';c.fillRect(r.x-2,r.y-2,r.w+4,r.h+4);
     c.fillStyle=current?'#efd27a':kind.color;
     c.fillRect(r.x,r.y,r.w,r.h);
-    c.globalAlpha=0.24;
+    c.globalAlpha=0.18;
     c.fillStyle='#fff0b8';
-    c.fillRect(r.x+4,r.y+4,Math.max(4,r.w-8),3);
+    c.fillRect(r.x+3,r.y+3,Math.max(3,r.w-6),2);
     c.globalAlpha=1;
     c.fillStyle='#3a2414';
-    c.fillRect(r.x+4,r.y+r.h-7,r.w-8,3);
-    drawWaterfallCaveMapText(c,node.short||node.id.slice(0,2).toUpperCase(),r.cx,r.y+Math.max(5,Math.floor(r.h/2)-6),10,'#201107','center');
+    c.fillRect(r.x+3,r.y+r.h-5,r.w-6,2);
+    drawWaterfallCaveMapText(c,node.short||node.id.slice(0,2).toUpperCase(),r.cx,r.y+Math.max(5,Math.floor(r.h/2)-5),2,'#201107','center');
   }
 
   const currentNode=nodesById[cave&&cave.scene];
@@ -312,8 +320,8 @@ function drawWaterfallCaveMapOverlay(c,cave,tk){
     c.fillStyle='#2444cc';c.fillRect(Math.round(px)-1,Math.round(py)-1,2,2);
   }
 
-  let ly=y+62;
-  drawWaterfallCaveMapText(c,'Legend',legendX,ly,11,'#201107','left');ly+=18;
+  let ly=y+66;
+  drawWaterfallCaveMapText(c,'Tecken',legendX,ly,2,'#201107','left');ly+=18;
   const usedKinds={};
   for(const id in visibleIds){
     const node=nodesById[id];
@@ -323,26 +331,18 @@ function drawWaterfallCaveMapOverlay(c,cave,tk){
   for(const kind of kindOrder){
     if(!usedKinds[kind])continue;
     const info=(graph.kinds&&graph.kinds[kind])||{label:kind,color:'#8a7658'};
-    c.fillStyle='#3a2414';c.fillRect(legendX,ly+2,11,11);
-    c.fillStyle=info.color;c.fillRect(legendX+2,ly+4,7,7);
-    drawWaterfallCaveMapText(c,info.label,legendX+16,ly,9,'#2b1a0d','left');
-    ly+=14;
+    c.fillStyle='#3a2414';c.fillRect(legendX,ly+1,12,12);
+    c.fillStyle=info.color;c.fillRect(legendX+3,ly+4,6,6);
+    drawWaterfallCaveMapText(c,info.label,legendX+18,ly+1,2,'#2b1a0d','left');
+    ly+=17;
   }
-  ly+=4;
-  c.fillStyle='#f8f8e8';c.fillRect(legendX+2,ly+4,7,7);
-  c.fillStyle='#2444cc';c.fillRect(legendX+4,ly+6,3,3);
-  drawWaterfallCaveMapText(c,'Du',legendX+16,ly,9,'#2b1a0d','left');
-  ly+=14;
-  c.fillStyle='#8a6335';c.fillRect(legendX+1,ly+7,14,3);
-  drawWaterfallCaveMapText(c,'Passage',legendX+20,ly,9,'#2b1a0d','left');
-
-  ly=y+h-66;
-  drawWaterfallCaveMapText(c,'Besokt',legendX,ly,10,'#201107','left');ly+=14;
-  for(const node of (graph.nodes||[]).filter(n=>visibleIds[n.id]).slice(0,5)){
-    const mark=node.id===(cave&&cave.scene)?'> ':'- ';
-    drawWaterfallCaveMapText(c,mark+(node.label||node.id),legendX,ly,8,'#2b1a0d','left');
-    ly+=11;
-  }
+  ly+=7;
+  c.fillStyle='#f8f8e8';c.fillRect(legendX+3,ly+3,8,8);
+  c.fillStyle='#2444cc';c.fillRect(legendX+5,ly+5,4,4);
+  drawWaterfallCaveMapText(c,'Du',legendX+18,ly+1,2,'#2b1a0d','left');
+  ly+=17;
+  c.fillStyle='#8a6335';c.fillRect(legendX+1,ly+6,16,3);
+  drawWaterfallCaveMapText(c,'Passage',legendX+22,ly+1,2,'#2b1a0d','left');
   c.restore();
 }
 
