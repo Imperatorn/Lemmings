@@ -4,6 +4,10 @@ function waterfallCaveActiveBounds(cave){
   if(cave&&cave.scene==='camp')return cave.campBounds||cave.deepBounds||cave.bounds||{};
   return cave&&cave.scene==='deep'&&(cave.deepBounds||cave.bounds)?(cave.deepBounds||cave.bounds):(cave&&cave.bounds||{});
 }
+function waterfallCaveRenderKey(cave){
+  if(typeof waterfallCaveSceneRenderKey==='function')return waterfallCaveSceneRenderKey(cave);
+  return cave&&cave.scene||'main';
+}
 function waterfallCaveLemmingScale(cave){
   const b=waterfallCaveActiveBounds(cave);
   const far=Number.isFinite(b.exitY)?b.exitY:218;
@@ -343,8 +347,9 @@ function drawWaterfallCaveCampView(c,cave,tk){
 function drawWaterfallCaveView(c,tk){
   const cave=G.waterfallCave;
   if(!cave||!cave.active)return false;
-  if(cave.scene==='camp')return drawWaterfallCaveCampView(c,cave,tk);
-  if(cave.scene==='deep')return drawWaterfallCaveDeepView(c,cave,tk);
+  const renderKey=waterfallCaveRenderKey(cave);
+  if(renderKey==='camp')return drawWaterfallCaveCampView(c,cave,tk);
+  if(renderKey==='deep')return drawWaterfallCaveDeepView(c,cave,tk);
   const wf=cave.wf||{}, t=cave.t||0;
   c.save();
   c.fillStyle='#030508';

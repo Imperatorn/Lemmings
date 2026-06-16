@@ -72,6 +72,12 @@ function waterfallCaveSceneDef(id){
   return WATERFALL_CAVE_SCENES[id]||WATERFALL_CAVE_SCENES.main;
 }
 
+function waterfallCaveSceneRenderKey(caveOrId){
+  const id=typeof caveOrId==='string'?caveOrId:(caveOrId&&caveOrId.scene)||'main';
+  const def=waterfallCaveSceneDef(id);
+  return def.render||def.id||'main';
+}
+
 function waterfallCaveSceneBoundsFor(cave,sceneId){
   const def=waterfallCaveSceneDef(sceneId||(cave&&cave.scene)||'main');
   return (cave&&def.boundsKey&&cave[def.boundsKey])||def.bounds||{};

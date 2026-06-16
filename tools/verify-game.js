@@ -14,7 +14,7 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
@@ -37,6 +37,7 @@ if (debugHtml) {
   const debugGameIdx = debugScripts.indexOf('js/07_game.js');
   const debugRopeIdx = debugScripts.indexOf('js/07_rope.js');
   const debugManualIdx = debugScripts.indexOf('js/07_manual_control.js');
+  const debugWaterfallScenesIdx = debugScripts.indexOf('js/07_waterfall_cave_scenes.js');
   const debugWaterfallIdx = debugScripts.indexOf('js/07_waterfall_cave.js');
   const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
   const debugCutsceneIdx = debugScripts.indexOf('js/07_cutscenes.js');
@@ -44,7 +45,7 @@ if (debugHtml) {
   const debugWaterfallRenderIdx = debugScripts.indexOf('js/11_waterfall_cave_render.js');
   const debugPlayRenderIdx = debugScripts.indexOf('js/11_play_render.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallIdx <= debugManualIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugWaterfallIdx <= debugWaterfallScenesIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
@@ -86,9 +87,20 @@ if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
 }
 const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
+const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
 const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
+}
+for (const token of ['WATERFALL_CAVE_SCENES','main:{','deep:{','camp:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveObjectDefault']) {
+  if (!waterfallScenesCode.includes(token)) {
+    throw new Error(`Waterfall cave scene registry is missing ${token}`);
+  }
+}
+for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject']) {
+  if (!waterfallRuntimeCode.includes(token)) {
+    throw new Error(`Waterfall cave runtime is missing scene-system method ${token}`);
+  }
 }
 if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('clearTransientText') || waterfallRuntimeCode.includes('BAKOM VATTENFALLET')) {
   throw new Error('Entering the waterfall cave should clear existing text instead of showing cave instruction toasts');
@@ -121,7 +133,7 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
   throw new Error('Campfire audio should use softer, less sharp crackles');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
@@ -289,7 +301,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveHitObject','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','closeWaterfallCaveDeepItem','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -640,6 +652,26 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.findWaterfallCaveEntrance(caveLem)) throw new Error('Manual lemming did not find waterfall cave entrance');
   if (!G.tryEnterWaterfallCaveFromManual() || !G.waterfallCaveActive()) {
     throw new Error('Manual up near a waterfall did not enter the waterfall cave');
+  }
+  const caveSceneIds = G.waterfallCaveSceneIds();
+  for (const id of ['main','deep','camp']) {
+    if (!caveSceneIds.includes(id)) throw new Error(`Waterfall cave scene registry is missing scene ${id}`);
+  }
+  if (G.waterfallCaveSceneDef('main').render !== 'main' || G.waterfallCaveSceneDef('camp').audio !== 'campfire') {
+    throw new Error('Waterfall cave scene registry did not expose scene metadata');
+  }
+  if (G.waterfallCaveSceneRenderKey(G.waterfallCave) !== 'main') {
+    throw new Error('Waterfall cave scene render key did not come from the active scene');
+  }
+  if (G.waterfallCaveSceneBounds(G.waterfallCave).maxY !== G.waterfallCave.bounds.maxY) {
+    throw new Error('Waterfall cave scene bounds helper did not return the active scene bounds');
+  }
+  if (!G.waterfallCaveSceneObjects(G.waterfallCave).some(hit => hit && hit.def && hit.def.id === 'chest')) {
+    throw new Error('Waterfall cave scene objects did not expose the main cave chest');
+  }
+  G.handleWaterfallCaveInput({x:G.waterfallCave.chest.x,y:G.waterfallCave.chest.y}, 'click');
+  if (G.waterfallCave.hoverObject !== 'chest') {
+    throw new Error('Waterfall cave object hit testing did not find the chest');
   }
   if ((G.toasts && G.toasts.length) || G.msgT > 0 || G.msg) {
     throw new Error('Entering waterfall cave did not clear existing toast text');

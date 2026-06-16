@@ -16,17 +16,18 @@ Behall laddningsordningen i `LEMMEL.html`:
 9. `07_rope.js` - repkrok/rephantering for `G`
 10. `07_save_state.js` - spara/ladda-metoder for `G`
 11. `07_manual_control.js` - direktstyrning och manual-skill helpers
-12. `07_waterfall_cave.js` - vattenfallsgrottans state, input, scenbyten och loot
-13. `07_living_world.js` - levande varld-effekter som svamp, mumier och meteorer
-14. `07_cutscenes.js` - cutscene-API, tidslinjer och overlayrendering
-15. `07_cutscene_scenes.js` - registrerade cutscene-scener och pixelart-innehall
-16. `08_render.js` - varlds- och figur-rendering
-17. `09_hud.js` - HUD och knappar
-18. `10_screens.js` - titel, meny, briefing och overlays
-19. `11_waterfall_cave_render.js` - rendering for vattenfallsgrottans scener
-20. `11_play_render.js` - huvudrendering for spelvyn
-21. `12_input.js` - mus, touch och tangentbord
-22. `13_boot.js` - initiering och huvudloop
+12. `07_waterfall_cave_scenes.js` - scenregister, bounds, exits och objekt for vattenfallsgrottan
+13. `07_waterfall_cave.js` - vattenfallsgrottans runtime-state, input och loot
+14. `07_living_world.js` - levande varld-effekter som svamp, mumier och meteorer
+15. `07_cutscenes.js` - cutscene-API, tidslinjer och overlayrendering
+16. `07_cutscene_scenes.js` - registrerade cutscene-scener och pixelart-innehall
+17. `08_render.js` - varlds- och figur-rendering
+18. `09_hud.js` - HUD och knappar
+19. `10_screens.js` - titel, meny, briefing och overlays
+20. `11_waterfall_cave_render.js` - rendering for vattenfallsgrottans scener
+21. `11_play_render.js` - huvudrendering for spelvyn
+22. `12_input.js` - mus, touch och tangentbord
+23. `13_boot.js` - initiering och huvudloop
 
 Om en fil flyttas tidigare kan den sakna globala bindningar fran filerna ovanfor.
 
@@ -44,8 +45,14 @@ bygger alla banor och gor en render-/save-smoketest.
 - `07_game.js` ar fortfarande navet for globalt spelstate, men flera delar ar
   brutna till tillaggsfiler som monterar metoder pa `G`: rep i `07_rope.js`,
   save/load i `07_save_state.js`, direktstyrning i `07_manual_control.js`,
-  vattenfallsgrottan i `07_waterfall_cave.js` och levande varld-effekter i
-  `07_living_world.js`.
+  vattenfallsgrottans scen-data i `07_waterfall_cave_scenes.js`,
+  vattenfallsgrottans runtime i `07_waterfall_cave.js` och levande
+  varld-effekter i `07_living_world.js`.
+- Vattenfallsgrottan ar forberedd som ett eget litet adventure-lage. Nya rum
+  bor i `WATERFALL_CAVE_SCENES` med `bounds`, `spawns`, `exits` och `objects`.
+  Runtime-koden ska i forsta hand anvanda `G.setWaterfallCaveScene(...)`,
+  `G.waterfallCaveSceneObjects(...)` och `G.waterfallCaveHitObject(...)`
+  istallet for att hardkoda scenbyten i update-loopen.
 - Cutscene-motorn monteras i `07_cutscenes.js`; sceninnehall och registrering
   ligger i `07_cutscene_scenes.js`. Anvand `G.registerCutscene(...)` for
   ateranvandbara scener och `G.playCutscene(spec)` for engangsscener. `mode:
