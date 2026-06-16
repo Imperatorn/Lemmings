@@ -495,9 +495,11 @@ Object.assign(G,{
   },
   handleWaterfallCaveKeyUp(key){
     if(!this.waterfallCaveActive())return false;
-    this.setWaterfallCaveMoveKey(this.waterfallCave,key,false);
-    const it=this.waterfallCave.deepItem;
-    if(it&&it.coverOpen&&!it.coverCloseArmed&&!this.waterfallCaveMovementHeld(this.waterfallCave))it.coverCloseArmed=true;
+    const cave=this.waterfallCave;
+    this.setWaterfallCaveMoveKey(cave,key,false);
+    if(key==='Shift'||!this.waterfallCaveMovementHeld(cave))cave.running=false;
+    const it=cave.deepItem;
+    if(it&&it.coverOpen&&!it.coverCloseArmed&&!this.waterfallCaveMovementHeld(cave))it.coverCloseArmed=true;
     this.releaseWaterfallCaveEntryBlock(key);
     return true;
   },
