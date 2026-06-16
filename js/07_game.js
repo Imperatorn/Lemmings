@@ -443,6 +443,66 @@ const G={
     const killDepth=z.lava?2:Math.max(3,Math.round(10*sc*0.25));
     return contactDepth>=killDepth?z:null;
   },
+  holyLemmingSafeSpot(l){
+    const T=this.T;
+    if(!T||!l)return null;
+    const cx=clamp(Math.round(l.x||0),4,T.W-5);
+    let best=null,bestScore=Infinity;
+    const tryX=x=>{
+      x=clamp(Math.round(x),4,T.W-5);
+      for(let y=8;y<T.H-5;y++){
+        if(T.solid(x,y)||!T.solid(x,y+1))continue;
+        if(this.liquidAt(x,y,0)||this.liquidAt(x,y+4,0))continue;
+        const score=Math.abs(x-cx)+Math.abs(y-(l.y||y))*0.18;
+        if(score<bestScore){best={x,y};bestScore=score}
+      }
+    };
+    for(let r=0;r<=Math.max(180,T.W);r+=4){
+      tryX(cx-r);
+      if(r)tryX(cx+r);
+      if(best&&r>72)break;
+    }
+    if(best)return best;
+    const h=this.level&&this.level.hatch;
+    return h?{x:clamp(Math.round(h.x),4,T.W-5),y:clamp(Math.round(h.y+6),8,T.H-8)}:null;
+  },
+  holyLemmingGlow(l,kind){
+    if(!l)return;
+    for(let i=0;i<18&&this.parts.length<MAX_PARTICLES;i++){
+      const a=RND()*6.283,sp=0.35+RND()*1.4;
+      this.parts.push({x:l.x+RND()*8-4,y:l.y-8+RND()*6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.45,life:14+RND()*18,g:0.05,col:RND()<0.55?'#fff3a0':'#d8ecff',glow:true});
+    }
+    const now=this.timeT||0;
+    if(kind!=='blessing'&&(!Number.isFinite(l.holySaveT)||now-l.holySaveT>28)){
+      l.holySaveT=now;
+      this.toast(kind==='bomb'?'DEN HELIGA LÄMMELN ÖVERLEVDE SMÄLLEN!':'DEN HELIGA LÄMMELN ÖVERLEVDE!');
+      if(AU.sSaved)AU.sSaved();
+    }
+  },
+  holyLemmingSurvive(l,kind){
+    if(!l||!l.holy)return false;
+    l.dead=false;
+    l.busyT=0;
+    l.fall=0;
+    l.chute=false;
+    l.soft=false;
+    l.swimRing=false;
+    l.fishRingTried=false;
+    l.bombT=-1;
+    l.ropeId=null;
+    l.jumpT=0;
+    l.jumpVy=0;
+    l.manualVy=0;
+    const liquid=kind==='drown'||kind==='burn'||!!this.lemmingLiquidHazard(l);
+    const out=kind==='out'||(this.T&&l.y>this.T.H+2);
+    if(liquid||out||kind==='bomb'){
+      const spot=this.holyLemmingSafeSpot(l);
+      if(spot){l.x=spot.x;l.y=spot.y}
+    }
+    l.state=(this.T&&this.T.solid(l.x,l.y+1))?'WALK':'FALL';
+    this.holyLemmingGlow(l,kind);
+    return true;
+  },
   visibleLiquidAtX(x,pad){
     if(!this.T)return false;
     const p=Math.max(0,pad||0), xx=Math.round(x);
@@ -1485,6 +1545,7 @@ const G={
     if(!this.level||!this.T)return false;
     const l=this.findTrollTransformTarget(wx,wy);
     if(!l){this.toast('KLICKA PÅ EN LEMMEL');AU.sShrug();return false}
+    if(l.holy){this.toast('EN HELIG LÄMMEL KAN INTE FÖRVANDLAS');AU.sShrug();return false}
     const y=this.trollGroundY(l.x,l.y);
     const t=this.makeTroll(l.x,y,l.dir||1,Math.max(1,l.scale||1),{playerMade:true});
     if(!t){this.toast('TROLLFÖRVANDLING MISSLYCKADES');AU.sShrug();return false}

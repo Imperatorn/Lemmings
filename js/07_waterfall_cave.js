@@ -130,6 +130,19 @@ Object.assign(G,{
     const st=this.waterfallCaveChurchBlessingState(cave);
     return !!(st&&st.active);
   },
+  blessWaterfallCaveLemming(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave)return false;
+    const l=this.findLemById?this.findLemById(cave.lemId):null;
+    cave.flags=cave.flags||{};
+    cave.flags.priestBlessed=true;
+    if(!l||l.holy)return false;
+    l.holy=true;
+    l.holySaveT=-999;
+    if(this.holyLemmingGlow)this.holyLemmingGlow(l,'blessing');
+    this.toast('LÄMMELN ÄR VÄLSIGNAD');
+    return true;
+  },
   startWaterfallCaveChurchBlessing(cave){
     cave=cave||this.waterfallCave;
     const st=this.waterfallCaveChurchBlessingState(cave);
@@ -184,6 +197,7 @@ Object.assign(G,{
       st.priestX-=sp;
       st.priestY=st.targetY;
       if(st.priestX<(this.waterfallCaveSceneBounds(cave).minX||78)-42){
+        this.blessWaterfallCaveLemming(cave);
         st.active=false;
         st.done=true;
         st.phase='done';

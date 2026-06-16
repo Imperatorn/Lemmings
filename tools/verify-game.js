@@ -114,10 +114,13 @@ for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldam
     throw new Error(`Waterfall cave map text is missing Swedish label ${token}`);
   }
 }
-for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing']) {
+for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing','blessWaterfallCaveLemming']) {
   if (!waterfallRuntimeCode.includes(token)) {
     throw new Error(`Waterfall cave runtime is missing scene-system method ${token}`);
   }
+}
+if (!gameCode.includes('holyLemmingSurvive') || !gameCode.includes('holyLemmingSafeSpot') || !gameCode.includes('EN HELIG LÄMMEL KAN INTE FÖRVANDLAS')) {
+  throw new Error('Blessed lemmels should have world survival logic and resist troll transformation');
 }
 if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('clearTransientText') || waterfallRuntimeCode.includes('BAKOM VATTENFALLET')) {
   throw new Error('Entering the waterfall cave should clear existing text instead of showing cave instruction toasts');
@@ -153,6 +156,9 @@ if (!caveRenderCode.includes('const fallH=oh+8') || caveRenderCode.includes('oh+
 }
 if (!caveRenderCode.includes('faceLit') || !caveRenderCode.includes("globalCompositeOperation='lighter'")) {
   throw new Error('Campfire cave lemming should use subtle fire-side rim lighting');
+}
+if (!fs.readFileSync(path.join(root, 'js/08_render.js'), 'utf8').includes('drawHolyLemmingAura')) {
+  throw new Error('Holy lemmels should have a visible aura in the normal world');
 }
 const audioCode = fs.readFileSync(path.join(root, 'js/02_audio.js'), 'utf8');
 if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850') || !audioCode.includes('0.65+Math.random()*1.55')) {
@@ -1210,6 +1216,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   for (let i = 0; i < 360; i++) G.tick();
   if (blessing.active || !blessing.done || blessing.phase !== 'done') {
     throw new Error('Priest blessing sequence should finish and mark itself done');
+  }
+  const blessedLem = G.findLemById(G.waterfallCave.lemId);
+  if (!blessedLem || !blessedLem.holy) {
+    throw new Error('Priest blessing should make the cave lemmel holy');
+  }
+  const holyProbe = new Lemming(blessedLem.x, blessedLem.y);
+  holyProbe.holy = true;
+  holyProbe.state = 'FALL';
+  holyProbe.kill('splat');
+  if (holyProbe.dead || holyProbe.state === 'BURN' || holyProbe.state === 'DROWN' || holyProbe.state === 'SPLAT') {
+    throw new Error('Holy lemmel should magically survive lethal world hazards');
   }
   if (!drawWaterfallCaveView(WCTX, 57)) {
     throw new Error('Church blessing view did not render');

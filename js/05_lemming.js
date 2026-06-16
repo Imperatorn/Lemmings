@@ -13,12 +13,16 @@ class Lemming{
     this.jumpT=0;this.jumpVy=0;this.manualVy=0;this.ropeId=null;this.ropeT=0;this.ropeCooldown=0;
     this.vaultRockId=null;this.vaultDur=0;this.vaultStartX=0;this.vaultStartY=0;this.vaultEndX=0;this.vaultEndY=0;this.vaultRockScale=1;
     this.scale=1;this.manualMoving=false;this.climbCutscene=null;this.skipClimbCutsceneT=0;
-    this.anim=Math.floor(RND()*4);this.dead=false;
+    this.anim=Math.floor(RND()*4);this.dead=false;this.holy=false;this.holySaveT=-999;
   }
   alive(){return !this.dead&&this.state!=='SPLAT'&&this.state!=='DROWN'&&this.state!=='BURN'&&this.state!=='EXITING'}
   actionScale(){return Math.max(1,this.scale||1)}
+  holySurvive(kind){
+    return !!(this.holy&&typeof G!=='undefined'&&G.holyLemmingSurvive&&G.holyLemmingSurvive(this,kind));
+  }
   kill(kind){
     if(this.dead)return;
+    if(this.holySurvive(kind))return;
     if(kind==='splat'){this.state='SPLAT';this.busyT=0;AU.sSplat()}
     else if(kind==='drown'){this.state='DROWN';this.busyT=0;AU.sDrown()}
     else if(kind==='burn'){this.state='BURN';this.busyT=0;AU.sSizzle()}
@@ -36,6 +40,7 @@ class Lemming{
       if(this.bombT===0&&!this.dead&&this.state!=='EXITING'){
         const sc=this.actionScale();
         G.explode(this.x,this.y-4*sc,26*sc,true,'lemming');
+        if(this.holySurvive('bomb'))return;
         G.dropLampIfCarrier(this);
         this.dead=true;
         return;
@@ -72,11 +77,11 @@ class Lemming{
         if(--this.busyT<=0){this.state='WALK';this.busyT=0}
         break;
       case 'EXITING': if(++this.busyT>14)G.finishLemmingExit(this); break;
-      case 'SPLAT': if(++this.busyT>18)this.dead=true; break;
+      case 'SPLAT': if(this.holySurvive('splat'))break; if(++this.busyT>18)this.dead=true; break;
       case 'DROWN': this.y+=1; if(this.anim%3===0)G.bubble(this.x,this.y-6);
-        if(++this.busyT>16)this.dead=true; break;
+        if(this.holySurvive('drown'))break; if(++this.busyT>16)this.dead=true; break;
       case 'BURN': if(this.anim%2===0)G.flame(this.x,this.y-4);
-        if(++this.busyT>10)this.dead=true; break;
+        if(this.holySurvive('burn'))break; if(++this.busyT>10)this.dead=true; break;
     }
     this.enforceWorldActionBoundary(T);
     if(this.y>T.H+6&&!this.dead){this.kill('out');}

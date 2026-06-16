@@ -4,6 +4,7 @@ const COL={hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb',
 
 function drawLemming(c,l,sx,sy){
   const sc=Math.max(1,l&&l.scale||1);
+  drawHolyLemmingAura(c,l,sx,sy,sc);
   if(sc>1.01){
     c.save();
     c.translate(Math.round(sx),Math.round(sy));
@@ -13,6 +14,31 @@ function drawLemming(c,l,sx,sy){
     return;
   }
   drawLemmingCore(c,l,sx,sy);
+}
+
+function drawHolyLemmingAura(c,l,sx,sy,sc){
+  if(!l||!l.holy||l.dead)return;
+  const x=Math.round(sx),y=Math.round(sy),s=Math.max(1,sc||1);
+  const pulse=0.55+0.45*Math.sin((l.anim||0)*0.18);
+  c.save();
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.16+0.10*pulse;
+  c.fillStyle='#fff3a0';
+  fillPixelPoly(c,[
+    [x-Math.round(8*s),y-Math.round(20*s)],
+    [x-Math.round(3*s),y-Math.round(27*s)],
+    [x+Math.round(5*s),y-Math.round(27*s)],
+    [x+Math.round(9*s),y-Math.round(20*s)],
+    [x+Math.round(5*s),y-Math.round(15*s)],
+    [x-Math.round(5*s),y-Math.round(15*s)]
+  ]);
+  c.globalAlpha=0.55+0.18*pulse;
+  c.fillStyle='#fff8c8';
+  c.fillRect(x-Math.round(4*s),y-Math.round(23*s),Math.round(8*s),Math.max(1,Math.round(1.2*s)));
+  c.globalAlpha=0.22;
+  c.fillStyle='#ffe070';
+  c.fillRect(x-Math.round(6*s),y+Math.round(1*s),Math.round(12*s),Math.max(1,Math.round(1.4*s)));
+  c.restore();
 }
 
 function drawLemmingCore(c,l,sx,sy){
