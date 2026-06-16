@@ -340,7 +340,10 @@
     l.state='MANUAL';l.dir=1;
     G.lems=[l];G.out=1;
     G.manual={used:true,active:true,lemId:l.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    G.decor=G.decor.filter(d=>!d||d.t!=='waterfall');
     const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
+    G.decor.push(wf);
+    focusWorldX(l.x);
     if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte oppna vattenfallsgrottan.','warn');return}
     if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry')){
       setStatus('Kunde inte ga till grottscen: '+sceneId,'warn');
@@ -763,8 +766,8 @@
     e.preventDefault();
     audioReady();
     const p=debugCanvasPos(e);
-    if(G.waterfallCaveActive&&G.waterfallCaveActive())G.handleWaterfallCaveInput(p,kind||'click');
-    else if(G.cutsceneActive&&G.cutsceneActive())G.handleCutsceneInput(p,kind||'click');
+    if(G.cutsceneActive&&G.cutsceneActive())G.handleCutsceneInput(p,kind||'click');
+    else if(G.waterfallCaveActive&&G.waterfallCaveActive())G.handleWaterfallCaveInput(p,kind||'click');
     renderDebug();
     ensureLoop();
     return true;
@@ -772,16 +775,16 @@
 
   function handleDebugCaveKeyDown(e){
     if(debugTypingTarget(e.target))return;
-    if(G.waterfallCaveActive&&G.waterfallCaveActive()){
-      audioReady();
-      G.handleWaterfallCaveKey(e.key);
+    if(G.cutsceneActive&&G.cutsceneActive()){
+      if(G.handleCutsceneKey)G.handleCutsceneKey(e.key);
       e.preventDefault();
       renderDebug();
       ensureLoop();
       return;
     }
-    if(G.cutsceneActive&&G.cutsceneActive()){
-      if(G.handleCutsceneKey)G.handleCutsceneKey(e.key);
+    if(G.waterfallCaveActive&&G.waterfallCaveActive()){
+      audioReady();
+      G.handleWaterfallCaveKey(e.key);
       e.preventDefault();
       renderDebug();
       ensureLoop();

@@ -516,25 +516,19 @@ function drawWaterfallCaveTeleportStone(c,x,y,scale,tk,pulse){
   c.restore();
 }
 
-function drawWaterfallCaveChurchAltarForeground(c,tk){
-  c.save();
-  c.globalAlpha=0.46;
-  c.fillStyle='#000000';
-  fillPixelPoly(c,[[204,118],[276,118],[286,124],[272,130],[208,130],[194,124]]);
-  c.globalAlpha=1;
+function drawWaterfallCaveChurchAltar(c){
   c.fillStyle='#7b5a30';
   c.fillRect(210,92,60,24);
   c.fillStyle='#d8c58a';
   c.fillRect(214,88,52,4);
-  c.fillStyle='#6a4724';
-  c.fillRect(210,104,60,12);
-  c.fillStyle='#4d321b';
-  c.fillRect(210,114,60,4);
-  c.fillStyle='#b9914c';
-  c.fillRect(222,106,36,2);
-  c.globalAlpha=0.22+0.08*Math.sin(tk*0.12);
-  c.fillStyle='#d8ecff';
-  c.fillRect(224,101,32,1);
+  c.fillStyle='#f0d880';
+  c.fillRect(237,70,5,20);
+  c.fillRect(229,78,21,4);
+}
+
+function drawWaterfallCaveChurchAltarForeground(c){
+  c.save();
+  drawWaterfallCaveChurchAltar(c);
   c.restore();
 }
 
@@ -1411,13 +1405,7 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   fillPixelPoly(c,[[196,72],[208,48],[272,48],[284,72],[274,124],[206,124]]);
   const teleportStone=waterfallCaveTeleportStoneRenderState(cave);
   if(teleportStone)drawWaterfallCaveTeleportStone(c,teleportStone.x||240,teleportStone.y||118,1.65,tk,clamp((teleportStone.pulseT||0)/120,0,1));
-  c.fillStyle='#7b5a30';
-  c.fillRect(210,92,60,24);
-  c.fillStyle='#d8c58a';
-  c.fillRect(214,88,52,4);
-  c.fillStyle='#f0d880';
-  c.fillRect(237,70,5,20);
-  c.fillRect(229,78,21,4);
+  drawWaterfallCaveChurchAltar(c);
   c.globalAlpha=0.58;
   c.fillStyle='#2d2117';
   for(let row=0;row<4;row++){
@@ -1451,7 +1439,7 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
   drawWaterfallCaveBlessedLemmingOverlay(c,cave,lx,ly,lemScale,blessing,tk);
   if(blessing&&blessing.active&&blessing.priestY>=(cave.lemY||264))drawWaterfallCavePriest(c,blessing,tk);
-  if(!(blessing&&blessing.active)&&ly<=140&&lx>=198&&lx<=282)drawWaterfallCaveChurchAltarForeground(c,tk);
+  if(!(blessing&&blessing.active)&&ly<=140&&lx>=198&&lx<=282)drawWaterfallCaveChurchAltarForeground(c);
   drawWaterfallCaveChurchBlessingText(c,cave,blessing,tk);
   drawWaterfallCaveTeleportStoneMessage(c,cave,tk);
   c.restore();

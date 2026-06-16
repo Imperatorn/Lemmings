@@ -169,6 +169,9 @@ if (!caveRenderCode.includes('drawWaterfallCaveTeleportStone') || !caveRenderCod
 if (caveRenderCode.includes('[[202,100],[278,100],[288,138],[192,138]]') || caveRenderCode.includes('ly<=150&&lx>=190&&lx<=290')) {
   throw new Error('Church altar foreground should not redraw as an oversized altar when the lemmel walks behind it');
 }
+if (!caveRenderCode.includes('function drawWaterfallCaveChurchAltar(c)') || caveRenderCode.includes("#6a4724") || caveRenderCode.includes("#4d321b") || caveRenderCode.includes("#b9914c")) {
+  throw new Error('Church altar foreground should reuse the same altar drawing instead of changing shape or color');
+}
 if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.includes("c.fillRect(x-74,y-54,148,84)")) {
   throw new Error('Glyph archive should use the finished rune wall rendering instead of the old flat rectangle');
 }
