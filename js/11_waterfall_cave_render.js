@@ -390,9 +390,21 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
       drawWaterfallCaveWallTorch(c,x,y,tk,obj);
     }else if(kind==='stone'){
       const off=obj.shifted?4:0;
+      if(active){
+        c.globalAlpha=0.18+0.18*pulse;
+        c.fillStyle='#ffb45a';
+        fillPixelPoly(c,[[x-34,y+10],[x-18,y-18],[x+18,y-16],[x+36,y+10],[x+16,y+22],[x-18,y+22]]);
+        c.globalAlpha=1;
+      }
       c.globalAlpha=0.36;c.fillStyle='#000';c.fillRect(x-22+off,y+5,44,5);c.globalAlpha=1;
       c.fillStyle='#242d32';fillPixelPoly(c,[[x-22+off,y+4],[x-10+off,y-10],[x+16+off,y-8],[x+24+off,y+4],[x+12+off,y+12],[x-16+off,y+12]]);
       c.fillStyle=near?'#52606a':'#3a454c';c.fillRect(x-10+off,y-4,22,4);
+      if(active){
+        c.fillStyle='#d99a54';
+        c.fillRect(x-5+off,y-7,2,9);
+        c.fillRect(x+4+off,y-4,10,2);
+        c.fillRect(x-13+off,y+1,8,2);
+      }
     }else if(kind==='crystal'){
       c.globalAlpha=0.18+0.30*pulse;
       c.fillStyle='#75eaff';fillPixelPoly(c,[[x-58,y+18],[x-34,y-30],[x+4,y-46],[x+46,y-18],[x+62,y+20]]);

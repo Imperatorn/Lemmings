@@ -391,7 +391,9 @@ Object.assign(G,{
       if(AU.sWaterfallCaveStep&&(cave.t-(Number.isFinite(cave.lastStepT)?cave.lastStepT:-999))>=10){
         cave.lastStepT=cave.t;
         cave.stepSide=1-(cave.stepSide||0);
-        const depth=clamp(((cave.lemY||0)-b.exitY)/Math.max(1,b.maxY-b.exitY),0,1);
+        const far=Number.isFinite(b.exitY)?b.exitY:(Number.isFinite(b.minY)?b.minY:176);
+        const near=Number.isFinite(b.maxY)?b.maxY:304;
+        const depth=clamp(((cave.lemY||0)-far)/Math.max(1,near-far),0,1);
         AU.sWaterfallCaveStep(depth,cave.stepSide);
       }
     }else{
