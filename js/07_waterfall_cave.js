@@ -268,8 +268,8 @@ Object.assign(G,{
   waterfallCaveBehindChurchAltar(cave){
     if(!cave||cave.scene!=='churchInterior')return false;
     const x=cave.lemX||0,y=cave.lemY||999;
-    const fromBehind=cave.facing==='front';
-    return x>=206&&x<=274&&y>=132&&y<=140&&fromBehind;
+    const fromBehind=cave.facing!=='back';
+    return x>=202&&x<=278&&y>=132&&y<=140&&fromBehind;
   },
   discoverWaterfallCaveTeleportStone(cave,stone,l){
     if(!cave||!stone||!l||!l.holy||stone.found)return false;

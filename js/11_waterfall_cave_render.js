@@ -518,24 +518,23 @@ function drawWaterfallCaveTeleportStone(c,x,y,scale,tk,pulse){
 
 function drawWaterfallCaveChurchAltarForeground(c,tk){
   c.save();
-  c.globalAlpha=0.78;
+  c.globalAlpha=0.46;
   c.fillStyle='#000000';
-  fillPixelPoly(c,[[194,139],[212,132],[270,132],[288,139],[270,146],[210,146]]);
+  fillPixelPoly(c,[[204,118],[276,118],[286,124],[272,130],[208,130],[194,124]]);
   c.globalAlpha=1;
-  c.fillStyle='#5b3d20';
-  fillPixelPoly(c,[[202,100],[278,100],[288,138],[192,138]]);
   c.fillStyle='#7b5a30';
-  fillPixelPoly(c,[[210,96],[270,96],[278,105],[202,105]]);
+  c.fillRect(210,92,60,24);
   c.fillStyle='#d8c58a';
-  c.fillRect(212,98,56,4);
-  c.fillStyle='#3a2616';
-  c.fillRect(202,132,76,6);
-  c.fillStyle='#a47a3d';
-  c.fillRect(218,111,44,2);
-  c.fillRect(224,122,32,2);
+  c.fillRect(214,88,52,4);
+  c.fillStyle='#6a4724';
+  c.fillRect(210,104,60,12);
+  c.fillStyle='#4d321b';
+  c.fillRect(210,114,60,4);
+  c.fillStyle='#b9914c';
+  c.fillRect(222,106,36,2);
   c.globalAlpha=0.22+0.08*Math.sin(tk*0.12);
   c.fillStyle='#d8ecff';
-  c.fillRect(226,106,28,1);
+  c.fillRect(224,101,32,1);
   c.restore();
 }
 
@@ -1452,7 +1451,7 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
   drawWaterfallCaveBlessedLemmingOverlay(c,cave,lx,ly,lemScale,blessing,tk);
   if(blessing&&blessing.active&&blessing.priestY>=(cave.lemY||264))drawWaterfallCavePriest(c,blessing,tk);
-  if(!(blessing&&blessing.active)&&ly<=150&&lx>=190&&lx<=290)drawWaterfallCaveChurchAltarForeground(c,tk);
+  if(!(blessing&&blessing.active)&&ly<=140&&lx>=198&&lx<=282)drawWaterfallCaveChurchAltarForeground(c,tk);
   drawWaterfallCaveChurchBlessingText(c,cave,blessing,tk);
   drawWaterfallCaveTeleportStoneMessage(c,cave,tk);
   c.restore();
