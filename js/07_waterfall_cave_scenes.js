@@ -137,7 +137,7 @@ const WATERFALL_CAVE_SCENES={
       {id:'toChurch',key:'down',x0:154,x1:326,yMin:282,target:'church',spawn:'fromGlyph'}
     ],
     objects:[
-      {id:'runeWall',kind:'runeWall',runeSet:{id:'waterfall.glyphArchive',title:'Runarkivets budskap',source:'Runarkivet',world:'Bakom vattenfallet',order:1},default:{x:238,y:182,near:false,activated:false,pulseT:0,readT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read'],
+      {id:'runeWall',kind:'runeWall',runeSetSource:'levelSecret',runeSet:{id:'waterfall.glyphArchive',title:'Brobyggarens runor',source:'Runarkivet',world:'Bakom vattenfallet',order:1},default:{x:238,y:182,near:false,activated:false,pulseT:0,readT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read'],
         runes:[
           {id:'water',title:'Vattnet',dx:-26,dy:-22,rx:19,ry:28,lines:['Runa 1/6','När vattnet döljer porten','börjar den dolda vägen.']},
           {id:'dark',title:'Mörkret',dx:-7,dy:-22,rx:19,ry:28,lines:['Runa 2/6','I mörkret prövas modet,','men hjärtat söker ljus.']},
@@ -193,6 +193,86 @@ const WATERFALL_CAVE_SCENES={
   }
 };
 
+const WATERFALL_CAVE_RUNE_LAYOUT=[
+  {id:'water',title:'Vattnet',dx:-26,dy:-22,rx:19,ry:28},
+  {id:'dark',title:'Mörkret',dx:-7,dy:-22,rx:19,ry:28},
+  {id:'altar',title:'Altaret',dx:15,dy:-22,rx:19,ry:28},
+  {id:'fire',title:'Elden',dx:-27,dy:7,rx:20,ry:24},
+  {id:'fall',title:'Djupet',dx:6,dy:8,rx:20,ry:24},
+  {id:'hope',title:'Hoppet',dx:27,dy:9,rx:20,ry:24}
+];
+
+const WATERFALL_CAVE_RUNE_SETS={
+  'waterfall.glyphArchive':waterfallCaveMakeRuneSet('waterfall.glyphArchive','Brobyggarens runor',1,[
+    ['När första bron läggs över vattnet','vågar flocken följa efter.'],
+    ['Håll en vän vid kanten','så hinner de andra tänka.'],
+    ['Två plankor räddar fler','än ett förhastat språng.'],
+    ['Vattnet prövar tålamodet','mer än styrkan.'],
+    ['Den som bygger för högt','glömmer vägen hem.'],
+    ['Så börjar färden:','med mod, bro och mål.']
+  ]),
+  'waterfall.darkForest':waterfallCaveMakeRuneSet('waterfall.darkForest','Skogens nattbudskap',2,[
+    ['När träden sluter leden','blir lyktan flockens hjärta.'],
+    ['Mörkret skrämmer bara den','som springer utan riktning.'],
+    ['Rötterna minns varje steg','och släpper den varsamt fram.'],
+    ['Vattnet tar den som glömmer','att ljus också kan falla.'],
+    ['Facklorna viskar: stanna','innan ravinen svarar.'],
+    ['I nattens skog bär modet','en liten blå låga.']
+  ]),
+  'waterfall.marbleCave':waterfallCaveMakeRuneSet('waterfall.marbleCave','Marmorns hemliga rad',3,[
+    ['Vit sten döljer gamla hål','under den blanka ytan.'],
+    ['Den som tar höjd ser knappen','som marken inte berättar om.'],
+    ['Tunneln ska vara lagom låg','så flocken inte tappar takten.'],
+    ['Vattenfallet mäter stilla','vem som vågar gå bakom.'],
+    ['Marmor sjunger långsamt','när hackan hittar rätt ådra.'],
+    ['Bakom den kalla stenen','finns en varm väg vidare.']
+  ]),
+  'waterfall.forestRavine':waterfallCaveMakeRuneSet('waterfall.forestRavine','Ravinens reptecken',4,[
+    ['Ravinen är bredare','än första blicken lovar.'],
+    ['Ett rep över djupet','kan bli en bro av mod.'],
+    ['Bygg ned där marken sjunker','inte där paniken pekar.'],
+    ['Vattnet samlar ekon','från steg som nästan föll.'],
+    ['Träden böjer sig över kanten','men håller inte flocken.'],
+    ['Den som fäster repet väl','binder dagen vid andra sidan.']
+  ]),
+  'waterfall.doublePonds':waterfallCaveMakeRuneSet('waterfall.doublePonds','Dammarnas dubbla sång',5,[
+    ['Två vatten delar vägen','men inte viljan.'],
+    ['Den första bron lär försiktighet','den andra kräver rytm.'],
+    ['Lågt byggda steg håller','fler lämlar kvar på marken.'],
+    ['Mellan dammarna hörs','den kortaste pausen.'],
+    ['Stenarna vid kanten vet','var strömmen blir stark.'],
+    ['När båda speglar tystnar','öppnas runans mening.']
+  ]),
+  'waterfall.chaosMap':waterfallCaveMakeRuneSet('waterfall.chaosMap','Kaosets ordning',6,[
+    ['När allt händer samtidigt','måste första valet vara enkelt.'],
+    ['Vatten, lava och murar','lyder den som ser mönstret.'],
+    ['Flyg inte från planen','förrän marken har svarat.'],
+    ['Repet minns avståndet','som bron inte når.'],
+    ['Kaos är bara karta','innan tecknen har lästs.'],
+    ['Samla vägarna till en','och flocken följer.']
+  ]),
+  'waterfall.masterTrial':waterfallCaveMakeRuneSet('waterfall.masterTrial','Mästarprovets sista runor',7,[
+    ['Det sista provet bär','alla tidigare misstag.'],
+    ['Den heliga gnistan skyddar','men löser inte vägen.'],
+    ['Lava, vatten, stad och sand','är delar av samma fråga.'],
+    ['Looten lockar, målet väntar','och flocken räknar stegen.'],
+    ['När sista runan tänds','blir minnet större än banan.'],
+    ['Alla tecken tillsammans','pekar mot nästa värld.']
+  ])
+};
+
+function waterfallCaveMakeRuneSet(id,title,order,parts){
+  const total=WATERFALL_CAVE_RUNE_LAYOUT.length;
+  return {
+    runeSet:{id,title,source:'Runarkivet',world:'Bakom vattenfallet',order},
+    readLines:['Runorna viskar:',title,'Läs varje tecken i stenen.'],
+    runes:WATERFALL_CAVE_RUNE_LAYOUT.map((base,i)=>{
+      const text=Array.isArray(parts&&parts[i])?parts[i]:['Runorna viskar.'];
+      return Object.assign({},base,{lines:['Runa '+(i+1)+'/'+total].concat(text)});
+    })
+  };
+}
+
 const WATERFALL_CAVE_MAP_KINDS={
   entrance:{label:'Vattenfall',color:'#6bb6d8'},
   cave:{label:'Grotta',color:'#8a7658'},
@@ -245,6 +325,20 @@ function waterfallCaveSceneExits(sceneId){
 function waterfallCaveObjectDefault(sceneId,objectId){
   const obj=(waterfallCaveSceneObjects(sceneId)||[]).find(o=>o&&o.id===objectId);
   return waterfallCaveCloneData(obj&&obj.default||null);
+}
+
+function waterfallCaveRuneSet(id){
+  return waterfallCaveCloneData(WATERFALL_CAVE_RUNE_SETS[String(id||'')]||null);
+}
+
+function waterfallCaveRuneObjectForSet(sceneId,obj,setId){
+  const out=waterfallCaveCloneData(obj||{});
+  const selected=waterfallCaveRuneSet(setId)||(out.runeSet&&waterfallCaveRuneSet(out.runeSet.id));
+  if(!selected)return out;
+  out.runeSet=selected.runeSet;
+  out.runes=selected.runes;
+  if(selected.readLines)out.readLines=selected.readLines;
+  return out;
 }
 
 function waterfallCaveMapKind(kind){
@@ -311,8 +405,16 @@ function waterfallCaveRuneEntry(sceneId,obj,rune,index,total){
 
 function waterfallCaveRuneCatalog(){
   const sets={},runes=[];
+  for(const setId in WATERFALL_CAVE_RUNE_SETS){
+    const obj=waterfallCaveRuneObjectForSet('glyphArchive',{id:'runeWall',kind:'runeWall'},setId);
+    const set=waterfallCaveRuneSetMeta('glyphArchive',obj);
+    set.total=obj.runes.length;
+    sets[set.id]=set;
+    for(let i=0;i<obj.runes.length;i++)runes.push(waterfallCaveRuneEntry('glyphArchive',obj,obj.runes[i],i,obj.runes.length));
+  }
   for(const sceneId of waterfallCaveSceneIds()){
     for(const obj of waterfallCaveSceneObjects(sceneId)){
+      if(obj&&obj.runeSetSource==='levelSecret')continue;
       if(!obj||!Array.isArray(obj.runes)||!obj.runes.length)continue;
       const set=waterfallCaveRuneSetMeta(sceneId,obj);
       set.total=obj.runes.length;

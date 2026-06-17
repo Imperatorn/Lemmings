@@ -118,7 +118,7 @@ for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{'
 if (waterfallScenesCode.includes('rootSanctum') || waterfallScenesCode.includes('rootHeart') || waterfallScenesCode.includes("audio:'root-mystery'")) {
   throw new Error('Waterfall cave scene registry should rename the old root sanctum to the church scene');
 }
-if (!waterfallScenesCode.includes("runes:[") || !waterfallScenesCode.includes('runeSet:{') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog') || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
+if (!waterfallScenesCode.includes('WATERFALL_CAVE_RUNE_SETS') || !waterfallScenesCode.includes('waterfallCaveRuneSet') || !waterfallScenesCode.includes('waterfallCaveRuneObjectForSet') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog') || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
   throw new Error('Glyph archive rune wall should define separate readable rune text segments');
 }
 for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldamm','Kyrkan']) {
@@ -162,8 +162,9 @@ for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneD
 if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\(')) {
   throw new Error('Rune requirements should use explicit level secrets metadata, not decor string inspection');
 }
-if (!levelsCode.includes("secrets:{runeSets:['waterfall.glyphArchive']}")) {
-  throw new Error('Waterfall levels should declare explicit rune set requirements in secrets.runeSets');
+const runeSetMatches = [...levelsCode.matchAll(/secrets:\{runeSets:\['([^']+)'\]\}/g)].map(m => m[1]);
+if (!runeSetMatches.includes('waterfall.glyphArchive') || new Set(runeSetMatches).size < 7) {
+  throw new Error('Waterfall levels should declare distinct explicit rune set requirements in secrets.runeSets');
 }
 if (!screensCode.includes('RUNOR KVAR') || !screensCode.includes('BANA FULLBORDAD - ALLA RUNOR FUNNA') || !screensCode.includes('BANA KLARAD - RUNOR SAKNAS')) {
   throw new Error('Menu, briefing, and result screens should expose rune-based full-completion status');
@@ -442,7 +443,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'waterfallCaveRuneAt','waterfallCaveRuneLines','waterfallCaveRuneDescriptor','syncWaterfallCaveRuneObjectProgress','readWaterfallCaveRune',
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
@@ -839,14 +840,27 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (waterfallIdx < 0) throw new Error('Missing waterfall cave fixture level');
   const hasRuneSecrets = L => !!(L && L.secrets && Array.isArray(L.secrets.runeSets) && L.secrets.runeSets.length);
   const plainIdx = LEVELS.findIndex(L => L && !hasRuneSecrets(L));
-  if (!hasRuneSecrets(LEVELS[waterfallIdx]) || !G.levelSecretRuneSets(waterfallIdx).includes('waterfall.glyphArchive')) {
-    throw new Error('Waterfall cave fixture level should declare secrets.runeSets metadata');
-  }
-  for (const name of ['BYGG EN BRO','MÖRK SKOG','MARMORGROTTAN','SKOGSRAVINEN','DUBBLA DAMMAR','KAOSKARTAN','LEMMELMÄSTARPROVET']) {
+  const expectedRuneSetsByLevel = {
+    'BYGG EN BRO':'waterfall.glyphArchive',
+    'MÖRK SKOG':'waterfall.darkForest',
+    'MARMORGROTTAN':'waterfall.marbleCave',
+    'SKOGSRAVINEN':'waterfall.forestRavine',
+    'DUBBLA DAMMAR':'waterfall.doublePonds',
+    'KAOSKARTAN':'waterfall.chaosMap',
+    'LEMMELMÄSTARPROVET':'waterfall.masterTrial'
+  };
+  const seenWaterfallRuneSets = new Set();
+  const runeCatalogSets = new Set((G.runeCatalog().sets || []).map(s => s && s.id));
+  for (const [name, setId] of Object.entries(expectedRuneSetsByLevel)) {
     const idx = LEVELS.findIndex(L => L && L.name === name);
-    if (idx < 0 || !hasRuneSecrets(LEVELS[idx]) || !G.levelHasWaterfallSecrets(idx) || G.levelRuneRequirements(idx).length !== 1) {
+    const req = idx >= 0 ? G.levelRuneRequirements(idx) : [];
+    if (idx < 0 || !hasRuneSecrets(LEVELS[idx]) || !G.levelHasWaterfallSecrets(idx) || G.levelSecretRuneSets(idx)[0] !== setId || req.length !== 1 || !req[0] || req[0].id !== setId || !runeCatalogSets.has(setId)) {
       throw new Error(`Waterfall rune metadata is missing or wrong for ${name}`);
     }
+    seenWaterfallRuneSets.add(setId);
+  }
+  if (seenWaterfallRuneSets.size !== Object.keys(expectedRuneSetsByLevel).length) {
+    throw new Error('Waterfall levels should not share the same rune text set');
   }
   if (!G.levelHasWaterfallSecrets(waterfallIdx) || !G.levelRuneStatus(waterfallIdx).hasRequirements || G.levelRuneStatus(waterfallIdx).completeAll) {
     throw new Error('Waterfall levels should start as clearable but not rune-complete before their rune set is discovered');
@@ -1288,6 +1302,21 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!Array.isArray(runeWall.def.runes) || runeWall.def.runes.length < 6) {
     throw new Error('Rune wall should define several individually readable runes');
   }
+  if (!runeWall.def.runeSet || runeWall.def.runeSet.id !== expectedRuneSetsByLevel['BYGG EN BRO']) {
+    throw new Error('Rune wall did not select the active level rune set');
+  }
+  const firstLevelFirstRuneText = (runeWall.def.runes[0].lines || []).join(' ');
+  const darkForestIdx = LEVELS.findIndex(L => L && L.name === 'MÖRK SKOG');
+  const rawRuneWallDef = (G.waterfallCaveSceneDef('glyphArchive').objects || []).find(o => o && o.id === 'runeWall');
+  const prevRuneLevelIdx = G.levelIdx, prevRuneLevel = G.level;
+  G.levelIdx = darkForestIdx;
+  G.level = LEVELS[darkForestIdx];
+  const darkForestRuneWallDef = G.waterfallCaveResolvedObjectDef(G.waterfallCave, rawRuneWallDef);
+  G.levelIdx = prevRuneLevelIdx;
+  G.level = prevRuneLevel;
+  if (!darkForestRuneWallDef || !darkForestRuneWallDef.runeSet || darkForestRuneWallDef.runeSet.id !== expectedRuneSetsByLevel['MÖRK SKOG'] || (darkForestRuneWallDef.runes[0].lines || []).join(' ') === firstLevelFirstRuneText) {
+    throw new Error('Different waterfall levels should resolve to different rune wall text');
+  }
   const runeTexts = new Set();
   const runeDiscoverSoundsBeforeAll = runeDiscoverSounds;
   for (let i = 0; i < runeWall.def.runes.length; i++) {
@@ -1316,7 +1345,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Reading glyph archive runes should complete a persistent rune set on the active profile state');
   }
   const firstRuneKey = 'waterfall.glyphArchive.' + runeWall.def.runes[0].id;
-  if (!runtimeRunes.discovered || !runtimeRunes.discovered[firstRuneKey] || runtimeRunes.discovered[firstRuneKey].setTitle !== 'Runarkivets budskap') {
+  if (!runtimeRunes.discovered || !runtimeRunes.discovered[firstRuneKey] || runtimeRunes.discovered[firstRuneKey].setTitle !== runeWall.def.runeSet.title) {
     throw new Error('Rune discovery should keep stable keys and rune metadata');
   }
   if (!G.levelRuneStatus(waterfallIdx).completeAll) {

@@ -53,7 +53,7 @@ const LEVELS=[
   skills:{climb:3,float:2,bomb:2,block:2,build:6,bash:4,mine:0,dig:2,baz:0,jet:0},
   hatch:{x:100,y:150}, exit:{x:900,y:199},
   water:[{x:480,w:40,y:210,lava:false}],
-  secrets:{runeSets:['waterfall.glyphArchive']},
+  secrets:{runeSets:['waterfall.darkForest']},
   hint:'NATT! FÖRSTA LEMMELN BÄR LYKTAN. TAPPA DEN INTE I DAMMEN.',
   build(P){ P.rect(0,200,1000,40);
     P.erase.rect(480,200,40,40);
@@ -93,7 +93,7 @@ const LEVELS=[
   skills:{climb:2,float:2,bomb:2,block:2,build:4,bash:5,mine:2,dig:0,baz:0,jet:0},
   hatch:{x:90,y:150}, exit:{x:1000,y:199},
   water:[{x:700,w:40,y:212,lava:false}],
-  secrets:{runeSets:['waterfall.glyphArchive']},
+  secrets:{runeSets:['waterfall.marbleCave']},
   rescues:[{button:{x:420,y:134},release:{x:360,y:112},open:{x:354,y:136,w:14,h:64},count:2,dir:1}],
   hint:'SLÅ EN TUNNEL GENOM KULLEN. BONUSKNAPPEN KRÄVER EN LEMMEL SOM TAR HÖJD.',
   build(P){ P.rect(0,200,1100,40);
@@ -137,7 +137,7 @@ const LEVELS=[
   skills:{climb:2,float:3,bomb:2,block:2,build:7,downbuild:4,bash:3,mine:1,dig:3,baz:0,jet:1,rope:3},
   hatch:{x:80,y:120}, exit:{x:1110,y:159},
   water:[{x:374,w:170,y:224,lava:false}],
-  secrets:{runeSets:['waterfall.glyphArchive']},
+  secrets:{runeSets:['waterfall.forestRavine']},
   hint:'EN RAVIN, EN DAMM OCH EN HÖG SLUTPLATÅ. REP OCH NEDBYGGARE HJÄLPER MYCKET.',
   build(P){ P.rect(0,180,230,60); P.ramp(230,205,90,25,-1);
     P.rect(320,205,44,35); P.disc(356,205,14);
@@ -219,7 +219,7 @@ const LEVELS=[
   skills:{climb:1,float:5,bomb:3,block:3,build:10,downbuild:5,bash:3,mine:2,dig:3,baz:1,jet:1,rope:3},
   hatch:{x:90,y:140}, exit:{x:1220,y:189},
   water:[{x:320,w:135,y:212,lava:false},{x:685,w:175,y:212,lava:false}],
-  secrets:{runeSets:['waterfall.glyphArchive']},
+  secrets:{runeSets:['waterfall.doublePonds']},
   hint:'TVÅ DAMMAR DELAR BANAN. BLOCKERA FLODEN OCH BYGG LÅGA, SÄKRA BROAR.',
   build(P){ P.rect(0,185,285,55); P.rect(455,160,230,80); P.rect(920,190,380,50);
     P.ramp(285,205,55,20,-1); P.ramp(860,190,80,30,1);
@@ -255,7 +255,7 @@ const LEVELS=[
   skills:{climb:5,float:7,bomb:6,block:5,build:12,downbuild:7,bash:8,mine:5,dig:5,baz:6,jet:6,rope:5},
   hatch:{x:90,y:90}, exit:{x:1510,y:139},
   water:[{x:505,w:60,y:212,lava:false},{x:885,w:115,y:212,lava:true},{x:1225,w:70,y:212,lava:false}],
-  secrets:{runeSets:['waterfall.glyphArchive']},
+  secrets:{runeSets:['waterfall.chaosMap']},
   hint:'EN STOR BLANDNING AV ALLT: HÖJD, VATTEN, LAVA, MURAR, REP OCH FLYGNING.',
   build(P){ P.rect(0,140,260,20); P.rect(0,190,360,50);
     P.rect(420,205,240,35); P.erase.rect(505,205,60,35);
@@ -417,7 +417,7 @@ const LEVELS=[
   skills:{climb:5,float:8,bomb:6,block:6,build:14,downbuild:8,bash:8,mine:6,dig:6,baz:4,jet:4,flame:3,rope:6},
   hatch:{x:90,y:92}, exit:{x:1810,y:154},
   water:[{x:360,w:120,y:212,lava:false},{x:980,w:105,y:212,lava:true},{x:1380,w:120,y:214,lava:false}],
-  secrets:{runeSets:['waterfall.glyphArchive']},
+  secrets:{runeSets:['waterfall.masterTrial']},
   materialZones:[{x:480,w:500,theme:'cave'},{x:980,w:520,theme:'desert'},{x:1500,w:400,theme:'city'}],
   loot:[{x:585,y:205,skill:'rope'},{x:1274,y:159,skill:'flame'},{x:1580,y:205,skill:'baz'}],
   rescues:[{button:{x:615,y:129},release:{x:815,y:104},open:{x:704,y:132,w:28,h:38},count:3,dir:1}],

@@ -66,17 +66,39 @@ Object.assign(G,{
     if(obj.runtimeKey)return cave[obj.runtimeKey]||null;
     cave.sceneState=cave.sceneState||{};
     const bucket=cave.sceneState[cave.scene]||(cave.sceneState[cave.scene]={});
-    if(!bucket[obj.id]){
+    const activeRuneSetId=obj.kind==='runeWall'&&obj.runeSet?String(obj.runeSet.id||''):null;
+    if(!bucket[obj.id]||(activeRuneSetId&&bucket[obj.id].runeSetId&&bucket[obj.id].runeSetId!==activeRuneSetId)){
       bucket[obj.id]=this.cloneWaterfallCaveData(obj.default||{});
       bucket[obj.id].id=obj.id;
     }
+    if(activeRuneSetId)bucket[obj.id].runeSetId=activeRuneSetId;
     if(obj.kind==='runeWall'&&this.syncWaterfallCaveRuneObjectProgress)this.syncWaterfallCaveRuneObjectProgress(obj,bucket[obj.id]);
     return bucket[obj.id];
+  },
+  waterfallCaveActiveRuneSetId(cave,def){
+    cave=cave||this.waterfallCave;
+    if(!def||def.kind!=='runeWall')return null;
+    if(def.runeSetSource==='levelSecret'&&this.levelSecretRuneSets){
+      const ids=this.levelSecretRuneSets(this.levelIdx);
+      for(const id of ids){
+        if(typeof waterfallCaveRuneSet!=='function'||waterfallCaveRuneSet(id))return id;
+      }
+    }
+    return def.runeSet&&def.runeSet.id?String(def.runeSet.id):null;
+  },
+  waterfallCaveResolvedObjectDef(cave,def){
+    cave=cave||this.waterfallCave;
+    if(!def||def.kind!=='runeWall'||typeof waterfallCaveRuneObjectForSet!=='function')return def;
+    const setId=this.waterfallCaveActiveRuneSetId(cave,def);
+    return waterfallCaveRuneObjectForSet(cave&&cave.scene,def,setId);
   },
   waterfallCaveSceneObjects(cave){
     cave=cave||this.waterfallCave;
     const defs=typeof waterfallCaveSceneObjects==='function'?waterfallCaveSceneObjects(cave&&cave.scene):[];
-    return defs.map(def=>({def,obj:this.waterfallCaveRuntimeObject(cave,def)})).filter(hit=>!!hit.obj);
+    return defs.map(raw=>{
+      const def=this.waterfallCaveResolvedObjectDef(cave,raw);
+      return {def,obj:this.waterfallCaveRuntimeObject(cave,def)};
+    }).filter(hit=>!!hit.obj);
   },
   waterfallCaveObjectContains(def,obj,x,y,scale){
     if(!def||!obj)return false;
