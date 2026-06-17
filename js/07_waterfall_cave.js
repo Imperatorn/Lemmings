@@ -70,6 +70,7 @@ Object.assign(G,{
       bucket[obj.id]=this.cloneWaterfallCaveData(obj.default||{});
       bucket[obj.id].id=obj.id;
     }
+    if(obj.kind==='runeWall'&&this.syncWaterfallCaveRuneObjectProgress)this.syncWaterfallCaveRuneObjectProgress(obj,bucket[obj.id]);
     return bucket[obj.id];
   },
   waterfallCaveSceneObjects(cave){
@@ -115,25 +116,56 @@ Object.assign(G,{
     const text=rune&&rune.text?String(rune.text):'Runorna viskar.';
     return ['Runa '+((index||0)+1)+'/'+Math.max(1,total||1),text];
   },
+  waterfallCaveRuneDescriptor(def,rune,index,total){
+    const cave=this.waterfallCave;
+    if(typeof waterfallCaveRuneEntry==='function')return waterfallCaveRuneEntry(cave&&cave.scene,def,rune,index,total);
+    const runeId=String(rune&&rune.id||('rune'+(index||0)));
+    const setId='waterfall.'+String(cave&&cave.scene||'scene')+'.'+String(def&&def.id||'runes');
+    const lines=this.waterfallCaveRuneLines(rune,index,total);
+    return {key:setId+'.'+runeId,setId,runeId,title:runeId,setTitle:'Runor',order:(index||0)+1,total:Math.max(1,total||1),sceneId:String(cave&&cave.scene||''),objectId:String(def&&def.id||''),source:'',world:'Bakom vattenfallet',lines,text:lines.join('\n')};
+  },
+  syncWaterfallCaveRuneObjectProgress(def,obj){
+    const runes=Array.isArray(def&&def.runes)?def.runes:[];
+    if(!obj||!runes.length)return false;
+    obj.readRunes=obj.readRunes||{};
+    const progress=this.normalizeRuneProgress?this.normalizeRuneProgress(this.runeProgress):null;
+    let readCount=0;
+    for(let i=0;i<runes.length;i++){
+      const desc=this.waterfallCaveRuneDescriptor(def,runes[i],i,runes.length);
+      const id=desc.runeId||runes[i].id||('rune'+i);
+      if(progress&&progress.discovered&&progress.discovered[desc.key])obj.readRunes[id]=true;
+      if(obj.readRunes[id])readCount++;
+    }
+    obj.readComplete=readCount>=runes.length;
+    if(obj.readComplete)obj.completeAnnounced=true;
+    return true;
+  },
   readWaterfallCaveRune(hit){
     const cave=this.waterfallCave;
     const def=hit&&hit.def||{},obj=hit&&hit.obj;
     if(!cave||!obj)return false;
+    this.syncWaterfallCaveRuneObjectProgress(def,obj);
     const picked=this.waterfallCaveRuneAt(def,obj,cave.lemX||0,cave.lemY||0);
     if(!picked)return false;
     const runes=Array.isArray(def.runes)?def.runes:[];
-    const id=picked.rune.id||('rune'+picked.index);
+    const desc=this.waterfallCaveRuneDescriptor(def,picked.rune,picked.index,runes.length);
+    const id=desc.runeId||picked.rune.id||('rune'+picked.index);
     const wasComplete=!!obj.readComplete;
     obj.activeRuneId=id;
     obj.activeRuneIndex=picked.index;
     obj.readRunes=obj.readRunes||{};
-    const newlyRead=!obj.readRunes[id];
+    const discovery=this.recordRuneDiscovery?this.recordRuneDiscovery(desc):null;
+    const newlyRead=discovery?!!discovery.newly:!obj.readRunes[id];
     obj.readRunes[id]=true;
     obj.readT=Math.max(obj.readT||0,110);
     obj.readLines=this.waterfallCaveRuneLines(picked.rune,picked.index,runes.length);
     obj.readComplete=Object.keys(obj.readRunes).length>=runes.length;
+    if(obj.readComplete){
+      cave.flags=cave.flags||{};
+      cave.flags.runesComplete=true;
+    }
     if(newlyRead&&AU.sWaterfallCaveRuneDiscover)AU.sWaterfallCaveRuneDiscover(picked.index,runes.length);
-    if(obj.readComplete&&!wasComplete&&!obj.completeAnnounced){
+    if(obj.readComplete&&(discovery&&discovery.setCompletedNow||!wasComplete)&&!obj.completeAnnounced){
       obj.completeAnnounced=true;
       obj.completeT=Math.max(obj.completeT||0,150);
       cave.flags=cave.flags||{};

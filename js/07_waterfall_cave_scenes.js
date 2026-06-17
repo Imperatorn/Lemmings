@@ -137,14 +137,14 @@ const WATERFALL_CAVE_SCENES={
       {id:'toChurch',key:'down',x0:154,x1:326,yMin:282,target:'church',spawn:'fromGlyph'}
     ],
     objects:[
-      {id:'runeWall',kind:'runeWall',default:{x:238,y:182,near:false,activated:false,pulseT:0,readT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read'],
+      {id:'runeWall',kind:'runeWall',runeSet:{id:'waterfall.glyphArchive',title:'Runarkivets budskap',source:'Runarkivet',world:'Bakom vattenfallet',order:1},default:{x:238,y:182,near:false,activated:false,pulseT:0,readT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read'],
         runes:[
-          {id:'water',dx:-26,dy:-22,rx:19,ry:28,lines:['Runa 1/6','När vattnet döljer porten','börjar den dolda vägen.']},
-          {id:'dark',dx:-7,dy:-22,rx:19,ry:28,lines:['Runa 2/6','I mörkret prövas modet,','men hjärtat söker ljus.']},
-          {id:'altar',dx:15,dy:-22,rx:19,ry:28,lines:['Runa 3/6','Vid altaret väntar handen','som stilla ger välsignelse.']},
-          {id:'fire',dx:-27,dy:7,rx:20,ry:24,lines:['Runa 4/6','Då mister elden sin hunger','och lågan viker undan.']},
-          {id:'fall',dx:6,dy:8,rx:20,ry:24,lines:['Runa 5/6','Djupet kan inte krossa','den som bär heligt ljus.']},
-          {id:'hope',dx:27,dy:9,rx:20,ry:24,lines:['Runa 6/6','Så vandrar lämmeln vidare','och hoppet följer flocken.']}
+          {id:'water',title:'Vattnet',dx:-26,dy:-22,rx:19,ry:28,lines:['Runa 1/6','När vattnet döljer porten','börjar den dolda vägen.']},
+          {id:'dark',title:'Mörkret',dx:-7,dy:-22,rx:19,ry:28,lines:['Runa 2/6','I mörkret prövas modet,','men hjärtat söker ljus.']},
+          {id:'altar',title:'Altaret',dx:15,dy:-22,rx:19,ry:28,lines:['Runa 3/6','Vid altaret väntar handen','som stilla ger välsignelse.']},
+          {id:'fire',title:'Elden',dx:-27,dy:7,rx:20,ry:24,lines:['Runa 4/6','Då mister elden sin hunger','och lågan viker undan.']},
+          {id:'fall',title:'Djupet',dx:6,dy:8,rx:20,ry:24,lines:['Runa 5/6','Djupet kan inte krossa','den som bär heligt ljus.']},
+          {id:'hope',title:'Hoppet',dx:27,dy:9,rx:20,ry:24,lines:['Runa 6/6','Så vandrar lämmeln vidare','och hoppet följer flocken.']}
         ],
         readLines:['Runorna viskar:','Läs varje tecken i stenen','så formas hela budskapet.']},
       {id:'churchCard',kind:'viewCard',displayScale:0.5,default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:22,ry:15},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Floda kyrka']}}
@@ -269,4 +269,56 @@ function waterfallCaveMapGraph(){
     }
   }
   return {nodes,links,kinds:WATERFALL_CAVE_MAP_KINDS};
+}
+
+function waterfallCaveRuneSetMeta(sceneId,obj){
+  const raw=obj&&obj.runeSet||{};
+  const objectId=String(obj&&obj.id||'runes');
+  const id=String(raw.id||obj&&obj.setId||('waterfall.'+String(sceneId||'scene')+'.'+objectId));
+  return {
+    id,
+    title:String(raw.title||obj&&obj.title||'Runor'),
+    source:String(raw.source||waterfallCaveSceneDef(sceneId).label||sceneId||'Okänd plats'),
+    world:String(raw.world||'Bakom vattenfallet'),
+    order:Number.isFinite(raw.order)?raw.order:0,
+    sceneId:String(sceneId||''),
+    objectId
+  };
+}
+
+function waterfallCaveRuneEntry(sceneId,obj,rune,index,total){
+  const set=waterfallCaveRuneSetMeta(sceneId,obj);
+  const r=rune||{};
+  const runeId=String(r.id||('rune'+(index||0)));
+  const key=String(r.key||set.id+'.'+runeId);
+  const lines=waterfallCaveCloneData(Array.isArray(r.lines)&&r.lines.length?r.lines:[]);
+  return {
+    key,
+    setId:set.id,
+    setTitle:set.title,
+    runeId,
+    title:String(r.title||('Runa '+((index||0)+1))),
+    order:Number.isFinite(r.order)?r.order:((index||0)+1),
+    total:Math.max(1,total||1),
+    sceneId:set.sceneId,
+    objectId:set.objectId,
+    source:set.source,
+    world:set.world,
+    lines,
+    text:lines.length?lines.join('\n'):String(r.text||'')
+  };
+}
+
+function waterfallCaveRuneCatalog(){
+  const sets={},runes=[];
+  for(const sceneId of waterfallCaveSceneIds()){
+    for(const obj of waterfallCaveSceneObjects(sceneId)){
+      if(!obj||!Array.isArray(obj.runes)||!obj.runes.length)continue;
+      const set=waterfallCaveRuneSetMeta(sceneId,obj);
+      set.total=obj.runes.length;
+      sets[set.id]=set;
+      for(let i=0;i<obj.runes.length;i++)runes.push(waterfallCaveRuneEntry(sceneId,obj,obj.runes[i],i,obj.runes.length));
+    }
+  }
+  return {sets:Object.keys(sets).map(k=>sets[k]).sort((a,b)=>(a.order-b.order)||a.title.localeCompare(b.title)),runes};
 }

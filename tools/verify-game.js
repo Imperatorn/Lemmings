@@ -112,7 +112,7 @@ for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{'
 if (waterfallScenesCode.includes('rootSanctum') || waterfallScenesCode.includes('rootHeart') || waterfallScenesCode.includes("audio:'root-mystery'")) {
   throw new Error('Waterfall cave scene registry should rename the old root sanctum to the church scene');
 }
-if (!waterfallScenesCode.includes("runes:[") || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
+if (!waterfallScenesCode.includes("runes:[") || !waterfallScenesCode.includes('runeSet:{') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog') || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
   throw new Error('Glyph archive rune wall should define separate readable rune text segments');
 }
 for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldamm','Kyrkan']) {
@@ -142,6 +142,9 @@ if (!gameCode.includes('PORTAL_STONE_MAX_DIST') || !gameCode.includes('beginPort
 }
 for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','recordLevelResult','profileLeaderboardRows','profileStats']) {
   if (!gameCode.includes(token)) throw new Error(`Profile runtime is missing ${token}`);
+}
+for (const token of ['runeProgress','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','runeCatalog']) {
+  if (!gameCode.includes(token)) throw new Error(`Rune progress runtime is missing ${token}`);
 }
 if (!hudCode.includes("k:'portal'") || !hudCode.includes('hudButtons') || !hudCode.includes('drawPortalStonePortal')) {
   throw new Error('HUD should expose the teleport stone as a special non-counted tool with portal preview');
@@ -390,6 +393,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
+  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
@@ -417,7 +421,7 @@ const requiredRuntimeMethods = [
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
   'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
-  'waterfallCaveRuneAt','waterfallCaveRuneLines','readWaterfallCaveRune',
+  'waterfallCaveRuneAt','waterfallCaveRuneLines','waterfallCaveRuneDescriptor','syncWaterfallCaveRuneObjectProgress','readWaterfallCaveRune',
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
@@ -1250,9 +1254,27 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (runeCompleteSounds !== 1 || !G.waterfallCave.flags.runesComplete || !runeWall.obj.completeAnnounced) {
     throw new Error('Completing all rune readings should trigger exactly one completion sound and cave flag');
   }
+  const runeSummary = G.runeProgressSummary();
+  const runtimeRunes = G.runeProgress;
+  if (runeSummary.discovered < runeWall.def.runes.length || runeSummary.completeSets < 1 || !runtimeRunes || !runtimeRunes.sets || !runtimeRunes.sets['waterfall.glyphArchive'] || !runtimeRunes.sets['waterfall.glyphArchive'].complete) {
+    throw new Error('Reading glyph archive runes should complete a persistent rune set on the active profile state');
+  }
+  const firstRuneKey = 'waterfall.glyphArchive.' + runeWall.def.runes[0].id;
+  if (!runtimeRunes.discovered || !runtimeRunes.discovered[firstRuneKey] || runtimeRunes.discovered[firstRuneKey].setTitle !== 'Runarkivets budskap') {
+    throw new Error('Rune discovery should keep stable keys and rune metadata');
+  }
   G.tick();
   if (runeCompleteSounds !== 1 || runeDiscoverSounds !== runeWall.def.runes.length) {
     throw new Error('Rune discovery and completion sounds should not repeat while standing by the rune wall');
+  }
+  const soundsBeforeRuneRevisit = runeDiscoverSounds;
+  delete G.waterfallCave.sceneState.glyphArchive.runeWall;
+  const revisitedRuneWall = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'runeWall');
+  G.waterfallCave.lemX = revisitedRuneWall.obj.x + (revisitedRuneWall.def.runes[0].dx || 0);
+  G.waterfallCave.lemY = revisitedRuneWall.obj.y + (revisitedRuneWall.def.runes[0].dy || 0);
+  G.tick();
+  if (!revisitedRuneWall.obj.readComplete || !revisitedRuneWall.obj.completeAnnounced || runeDiscoverSounds !== soundsBeforeRuneRevisit) {
+    throw new Error('Persisted rune discoveries should restore rune wall state without replaying discovery sounds');
   }
   const churchCard = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchCard');
   if (!churchCard) throw new Error('Glyph archive is missing the Dala-Floda church card');
@@ -2689,12 +2711,13 @@ withLocalStorage({
     money:7,
     holyBlessingUnlocked:true,
     holyTeleportStoneUnlocked:true,
+    runeProgress:{v:1,discovered:{'legacy.rune.one':{key:'legacy.rune.one',setId:'legacy.runes',runeId:'one',title:'Legacyruna',setTitle:'Legacyrunor',total:1,lines:['Legacyruna']}},sets:{'legacy.runes':{id:'legacy.runes',title:'Legacyrunor',total:1,readCount:1,complete:true}}},
     savedStates:[savedState],
     mode:'classic'
   })
 }, store => {
   const p = loadPersisted();
-  if (!p || p.money !== 7 || !p.holyBlessingUnlocked || !p.holyTeleportStoneUnlocked) {
+  if (!p || p.money !== 7 || !p.holyBlessingUnlocked || !p.holyTeleportStoneUnlocked || !p.runeProgress || !p.runeProgress.discovered || !p.runeProgress.discovered['legacy.rune.one']) {
     throw new Error('Legacy save should migrate into the first profile');
   }
   if (!store[SAVE_KEY]) throw new Error('Legacy save key should be preserved as backup during profile migration');
@@ -2720,24 +2743,25 @@ withLocalStorage({}, store => {
   G.holyBlessingUnlocked = true;
   G.holyTeleportStoneUnlocked = true;
   G.profileStats = {levels:{0:{attempts:3,wins:1,bestPct:100,bestSaved:10,bestTimeLeft:42,bestSeed:123,last:null}}};
+  G.recordRuneDiscovery({key:'profileA.runes.one',setId:'profileA.runes',runeId:'one',title:'Profilruna',setTitle:'Profilrunor',total:1,lines:['Profilruna']});
   G.savePrefs();
   if (!writeGameSlots([savedState])) throw new Error('Could not write profile A save slots');
   const bMeta = createProfile('Beta');
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch active profile in storage');
   G.loadPrefs();
-  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || saveGameSlots().length !== 0) {
-    throw new Error('New profile should not inherit progress, money, holy state, or save slots');
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
+    throw new Error('New profile should not inherit progress, money, holy state, runes, or save slots');
   }
   G.money = 2;
   G.savePrefs();
   if (!setActiveProfile(a)) throw new Error('Could not switch back to profile A');
   G.loadPrefs();
-  if (G.money !== 9 || !G.cleared[0] || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || saveGameSlots().length !== 1) {
+  if (G.money !== 9 || !G.cleared[0] || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 1 || saveGameSlots().length !== 1) {
     throw new Error('Profile A progress was not restored after switching back');
   }
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch back to profile B');
   G.loadPrefs();
-  if (G.money !== 2 || G.cleared[0] || saveGameSlots().length !== 0) {
+  if (G.money !== 2 || G.cleared[0] || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
     throw new Error('Profile B should stay isolated after profile A is restored');
   }
 });

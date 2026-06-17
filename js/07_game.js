@@ -82,7 +82,7 @@ const G={
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1, cutscenesOn:true,
-  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
+  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
   holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneLemId:null, portalStone:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
@@ -534,6 +534,134 @@ const G={
     }
     return out;
   },
+  runeCatalog(){
+    if(typeof waterfallCaveRuneCatalog==='function')return waterfallCaveRuneCatalog();
+    return {sets:[],runes:[]};
+  },
+  normalizeRuneProgress(data){
+    const src=data&&typeof data==='object'?data:{};
+    const out={v:1,discovered:{},sets:{}};
+    const rawSets=src.sets&&typeof src.sets==='object'?src.sets:{};
+    for(const id in rawSets){
+      const s=rawSets[id]||{}, sid=String(s.id||id);
+      if(!sid)continue;
+      out.sets[sid]={
+        id:sid,
+        title:String(s.title||sid),
+        source:String(s.source||''),
+        world:String(s.world||''),
+        total:Math.max(0,Number(s.total)|0),
+        readCount:0,
+        complete:!!s.complete,
+        completedAt:Number.isFinite(s.completedAt)?s.completedAt:null
+      };
+    }
+    const raw=src.discovered&&typeof src.discovered==='object'?src.discovered:{};
+    for(const key0 in raw){
+      const value=raw[key0];
+      const entry=value&&typeof value==='object'?value:{key:key0};
+      const key=String(entry.key||key0);
+      if(!key)continue;
+      const setId=String(entry.setId||'unknown');
+      const runeId=String(entry.runeId||key.split('.').pop()||key);
+      const lines=Array.isArray(entry.lines)?entry.lines.map(v=>String(v)).slice(0,8):[];
+      out.discovered[key]={
+        key,setId,runeId,
+        title:String(entry.title||runeId),
+        setTitle:String(entry.setTitle||entry.title||setId),
+        order:Math.max(0,Number(entry.order)|0),
+        total:Math.max(0,Number(entry.total)|0),
+        sceneId:String(entry.sceneId||''),
+        objectId:String(entry.objectId||''),
+        source:String(entry.source||''),
+        world:String(entry.world||''),
+        lines,
+        text:String(entry.text||lines.join('\n')||''),
+        discoveredAt:Number.isFinite(entry.discoveredAt)?entry.discoveredAt:0,
+        levelIdx:Number.isFinite(entry.levelIdx)?entry.levelIdx:null,
+        levelName:String(entry.levelName||'')
+      };
+      const e=out.discovered[key];
+      const set=out.sets[setId]||(out.sets[setId]={id:setId,title:e.setTitle||setId,source:e.source||'',world:e.world||'',total:0,readCount:0,complete:false,completedAt:null});
+      if(e.setTitle)set.title=e.setTitle;
+      if(e.source)set.source=e.source;
+      if(e.world)set.world=e.world;
+      set.total=Math.max(set.total||0,e.total||0);
+    }
+    const readBySet={};
+    for(const key in out.discovered){
+      const e=out.discovered[key], sid=e.setId||'unknown';
+      readBySet[sid]=readBySet[sid]||{};
+      readBySet[sid][key]=true;
+    }
+    for(const sid in out.sets){
+      const set=out.sets[sid];
+      set.readCount=Object.keys(readBySet[sid]||{}).length;
+      if(set.total>0&&set.readCount>=set.total)set.complete=true;
+      if(set.complete&&!Number.isFinite(set.completedAt))set.completedAt=null;
+    }
+    return out;
+  },
+  recordRuneDiscovery(desc){
+    if(!desc||typeof desc!=='object')return {newly:false,setCompletedNow:false,set:null,key:null};
+    const key=String(desc.key||'');
+    if(!key)return {newly:false,setCompletedNow:false,set:null,key:null};
+    let progress=this.normalizeRuneProgress(this.runeProgress);
+    const setId=String(desc.setId||'unknown');
+    const wasKnown=!!progress.discovered[key];
+    const descTotal=Math.max(0,Number(desc.total)|0);
+    const oldSet=progress.sets[setId]||null;
+    const wasComplete=!!(oldSet&&oldSet.complete&&(!descTotal||(oldSet.total||0)>=descTotal));
+    if(!wasKnown){
+      const now=Date.now?Date.now():0;
+      progress.discovered[key]={
+        key,setId,
+        runeId:String(desc.runeId||key.split('.').pop()||key),
+        title:String(desc.title||desc.runeId||key),
+        setTitle:String(desc.setTitle||setId),
+        order:Math.max(0,Number(desc.order)|0),
+        total:descTotal,
+        sceneId:String(desc.sceneId||''),
+        objectId:String(desc.objectId||''),
+        source:String(desc.source||''),
+        world:String(desc.world||''),
+        lines:Array.isArray(desc.lines)?desc.lines.map(v=>String(v)).slice(0,8):[],
+        text:String(desc.text||''),
+        discoveredAt:now,
+        levelIdx:this.level?this.levelIdx:null,
+        levelName:this.level&&this.level.name?String(this.level.name):''
+      };
+    }
+    progress=this.normalizeRuneProgress(progress);
+    const set=progress.sets[setId]||null;
+    const setCompletedNow=!!(set&&set.complete&&!wasComplete);
+    if(setCompletedNow)set.completedAt=Date.now?Date.now():0;
+    this.runeProgress=progress;
+    if(!wasKnown||setCompletedNow)this.savePrefs();
+    return {key,newly:!wasKnown,setCompletedNow,set,entry:progress.discovered[key]||null};
+  },
+  runeProgressSummary(data){
+    const progress=this.normalizeRuneProgress(data||this.runeProgress);
+    const catalog=this.runeCatalog();
+    const knownTotal=Array.isArray(catalog.runes)?catalog.runes.length:0;
+    let completeSets=0,totalSets=0;
+    const seenSets={};
+    if(Array.isArray(catalog.sets)){
+      totalSets=catalog.sets.length;
+      for(const s of catalog.sets||[])seenSets[s&&s.id]=true;
+    }
+    for(const id in progress.sets){
+      if(!seenSets[id])totalSets++;
+      if(progress.sets[id]&&progress.sets[id].complete)completeSets++;
+    }
+    return {
+      discovered:Object.keys(progress.discovered).length,
+      knownTotal,
+      completeSets,
+      totalSets,
+      sets:progress.sets
+    };
+  },
   profileLevelStats(idx){
     this.profileStats=this.normalizeProfileStats(this.profileStats);
     const key=clamp(idx|0,0,LEVELS.length-1);
@@ -546,6 +674,7 @@ const G={
     this.money=0;
     this.pendingSkillBonus={};
     this.profileStats={levels:{}};
+    this.runeProgress={v:1,discovered:{},sets:{}};
     this.holyBlessingUnlocked=false;
     this.holyTeleportStoneUnlocked=false;
     this.holyLevelLemId=null;
@@ -671,6 +800,7 @@ const G={
     for(const meta of list){
       const data=loadProfileData(meta.id)||{};
       const stats=this.normalizeProfileStats(data.stats);
+      const runeSummary=this.runeProgressSummary(data.runeProgress);
       const cleared=Array.isArray(data.cleared)?data.cleared.filter(Boolean).length:0;
       let attempts=0,wins=0,sumPct=0,bestSaved=0;
       for(const key in stats.levels){
@@ -680,7 +810,7 @@ const G={
         sumPct+=s.bestPct||0;
         bestSaved+=s.bestSaved||0;
       }
-      rows.push({id:meta.id,name:meta.name,cleared,attempts,wins,sumPct,bestSaved,money:Math.max(0,data.money|0),holy:!!data.holyBlessingUnlocked,stone:!!data.holyTeleportStoneUnlocked});
+      rows.push({id:meta.id,name:meta.name,cleared,attempts,wins,sumPct,bestSaved,money:Math.max(0,data.money|0),holy:!!data.holyBlessingUnlocked,stone:!!data.holyTeleportStoneUnlocked,runes:runeSummary.discovered,runeSets:runeSummary.completeSets});
     }
     rows.sort((a,b)=>(b.cleared-a.cleared)||(b.sumPct-a.sumPct)||(b.wins-a.wins)||a.name.localeCompare(b.name));
     return rows;
@@ -718,6 +848,7 @@ const G={
     if(Number.isFinite(p.money))this.money=Math.max(0,p.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus(p.pendingSkillBonus);
     this.profileStats=this.normalizeProfileStats(p.stats);
+    this.runeProgress=this.normalizeRuneProgress(p.runeProgress);
     this.holyBlessingUnlocked=!!p.holyBlessingUnlocked;
     this.holyTeleportStoneUnlocked=!!p.holyTeleportStoneUnlocked;
     this.holyLevelLemId=null;
@@ -734,7 +865,7 @@ const G={
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.runeProgress=this.normalizeRuneProgress(this.runeProgress);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
