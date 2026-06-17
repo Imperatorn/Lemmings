@@ -517,13 +517,36 @@ function drawWaterfallCaveTeleportStone(c,x,y,scale,tk,pulse){
 }
 
 function drawWaterfallCaveChurchAltar(c){
+  c.globalAlpha=0.34;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[198,118],[214,111],[268,111],[284,118],[270,124],[210,124]]);
+  c.globalAlpha=1;
+  c.fillStyle='#5b4328';
+  c.fillRect(204,110,72,8);
   c.fillStyle='#7b5a30';
   c.fillRect(210,92,60,24);
+  c.fillStyle='#9a7a42';
+  c.fillRect(214,96,52,3);
+  c.fillStyle='#5d3f22';
+  c.fillRect(210,114,60,3);
   c.fillStyle='#d8c58a';
   c.fillRect(214,88,52,4);
+  c.fillStyle='#f6e8a8';
+  c.fillRect(218,86,44,2);
   c.fillStyle='#f0d880';
   c.fillRect(237,70,5,20);
   c.fillRect(229,78,21,4);
+  c.globalAlpha=0.34;
+  c.fillStyle='#fff0a8';
+  c.fillRect(235,68,9,24);
+  c.fillRect(227,76,25,8);
+  c.globalAlpha=1;
+  c.fillStyle='#f3d47a';
+  c.fillRect(219,83,2,7);
+  c.fillRect(259,83,2,7);
+  c.fillStyle='#ffe8a0';
+  c.fillRect(218,81,4,2);
+  c.fillRect(258,81,4,2);
 }
 
 function drawWaterfallCaveChurchAltarForeground(c){
@@ -923,10 +946,15 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   c.globalAlpha=0.40;
   c.fillStyle='#000000';
   fillPixelPoly(c,[[x-116,y+34],[x-78,y+18],[x+96,y+18],[x+138,y+34],[x+96,y+48],[x-96,y+48]]);
+  c.globalAlpha=0.18;
+  c.fillStyle='#d8ecff';
+  fillPixelPoly(c,[[x-142,y+40],[x-90,y+24],[x+112,y+24],[x+154,y+39],[x+96,y+56],[x-102,y+56]]);
   c.globalAlpha=1;
 
   c.fillStyle='#2b3032';
   fillPixelPoly(c,[[x-112,y+20],[x-72,y+10],[x+102,y+12],[x+128,y+24],[x+96,y+34],[x-100,y+34]]);
+  c.fillStyle='#404a50';
+  fillPixelPoly(c,[[x-108,y+18],[x-72,y+12],[x+98,y+14],[x+120,y+22],[x+92,y+29],[x-98,y+29]]);
   c.fillStyle='#59646a';
   for(let i=0;i<16;i++){
     const sx=x-102+i*13;
@@ -937,6 +965,8 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   c.fillStyle='#728087';
   c.fillRect(x-98,y+21,26,2);
   c.fillRect(x+44,y+23,42,2);
+  c.fillStyle='#8a969b';
+  for(let i=0;i<9;i++)c.fillRect(x-86+i*18,y+30+(i%2),10,1);
 
   c.fillStyle='#9b3f1d';
   fillPixelPoly(c,[[x-62,y-58],[x+16,y-80],[x+104,y-56],[x+88,y-43],[x-74,y-42]]);
@@ -944,8 +974,13 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   fillPixelPoly(c,[[x+104,y-56],[x+136,y-39],[x+124,y-28],[x+88,y-43]]);
   c.fillStyle='#c8642c';
   for(let i=0;i<10;i++)c.fillRect(x-54+i*14,y-55+Math.floor(i/3),10,3);
+  c.fillStyle='#7f2d17';
+  for(let i=0;i<7;i++)c.fillRect(x-48+i*20,y-47+Math.floor(i/2),14,2);
   c.fillStyle='#e0904c';
   c.fillRect(x-42,y-61,114,2);
+  c.fillStyle='#f0a05a';
+  c.fillRect(x-34,y-65,70,2);
+  c.fillRect(x+40,y-63,32,2);
   c.fillStyle='#5a1d12';
   c.fillRect(x-69,y-43,160,4);
   c.fillStyle='#b95528';
@@ -961,8 +996,17 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   c.fillRect(x+24,y-38,60,55);
   c.fillStyle='#c9b77f';
   c.fillRect(x+88,y-38,3,56);
+  c.fillStyle='#b8a46d';
+  c.fillRect(x-58,y-43,2,61);
+  c.fillRect(x+22,y-40,3,58);
+  c.fillRect(x+84,y-38,2,55);
   c.fillStyle='#f8edc4';
   c.fillRect(x-52,y-36,32,51);
+  c.fillStyle='#fff6d2';
+  c.fillRect(x-50,y-34,14,47);
+  c.fillStyle='#e0cf9b';
+  c.fillRect(x-22,y-38,2,55);
+  c.fillRect(x+55,y-37,2,54);
   c.fillStyle='#b39d6b';
   c.fillRect(x-58,y-2,146,2);
   c.fillRect(x-58,y+17,146,3);
@@ -974,12 +1018,18 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   fillPixelPoly(c,[[x-108,y-78],[x-72,y-88],[x-50,y-76],[x-58,y-65],[x-112,y-64]]);
   c.fillStyle='#8f351b';
   fillPixelPoly(c,[[x-106,y-77],[x-72,y-86],[x-54,y-76],[x-59,y-70],[x-110,y-68]]);
+  c.fillStyle='#c65a28';
+  c.fillRect(x-98,y-78,34,2);
   c.fillStyle='#e9ddb4';
   fillPixelPoly(c,[[x-106,y-64],[x-58,y-64],[x-58,y+18],[x-106,y+18]]);
   c.fillStyle='#cdbb88';
   fillPixelPoly(c,[[x-58,y-64],[x-42,y-54],[x-42,y+16],[x-58,y+18]]);
   c.fillStyle='#fff0c2';
   c.fillRect(x-103,y-60,42,42);
+  c.fillStyle='#fff8d8';
+  c.fillRect(x-100,y-57,18,37);
+  c.fillStyle='#d8c997';
+  c.fillRect(x-80,y-59,2,40);
   c.fillStyle='#d8c997';
   c.fillRect(x-60,y-54,3,70);
   c.fillStyle='#b49e70';
@@ -994,6 +1044,10 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   fillPixelPoly(c,[[x-95,y-158],[x-82,y-184],[x-70,y-158],[x-62,y-118],[x-102,y-118]]);
   c.fillStyle='#252629';
   fillPixelPoly(c,[[x-82,y-184],[x-68,y-154],[x-58,y-118],[x-62,y-118],[x-70,y-158]]);
+  c.fillStyle='#636158';
+  c.fillRect(x-90,y-150,8,2);
+  c.fillRect(x-88,y-138,12,2);
+  c.fillRect(x-86,y-126,16,2);
   c.fillStyle='#d4a843';
   c.fillRect(x-84,y-190,4,10);
   c.fillRect(x-90,y-186,16,3);
@@ -1003,6 +1057,8 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
     c.fillRect(x-95+i*7,y-110,4,24);
     c.fillRect(x-96+i*7,y-108,6,2);
   }
+  c.fillStyle='#2b2826';
+  for(let i=0;i<4;i++)c.fillRect(x-94+i*9,y-102,2,14);
 
   function arch(wx,wy,w,h,lit){
     c.fillStyle='#1a2026';
@@ -1016,15 +1072,27 @@ function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   arch(x-28,y-24,16,31,light>0.2);
   arch(x+42,y-24,16,31,light>0.2);
   arch(x+100,y-12,12,22,light>0.2);
+  c.fillStyle='#a48f64';
+  c.fillRect(x-30,y+8,20,2);
+  c.fillRect(x+40,y+8,20,2);
+  c.fillRect(x+99,y+11,15,2);
   c.fillStyle='#6a351f';
   fillPixelPoly(c,[[x-1,y+16],[x-1,y-10],[x+12,y-19],[x+25,y-10],[x+25,y+16]]);
+  c.fillStyle='#8a4a2a';
+  fillPixelPoly(c,[[x+2,y+15],[x+2,y-8],[x+12,y-15],[x+22,y-8],[x+22,y+15]]);
   c.fillStyle='#3d2014';
   c.fillRect(x+5,y-8,14,24);
+  c.fillStyle='#24130d';
+  c.fillRect(x+11,y-14,2,30);
   c.fillStyle='#d1a45a';
   c.fillRect(x+17,y+3,2,2);
   c.fillStyle='#8d7350';
   c.fillRect(x+1,y+18,22,3);
   c.fillRect(x-2,y+21,28,2);
+  c.fillStyle='#4a514e';
+  fillPixelPoly(c,[[x-8,y+23],[x+34,y+23],[x+46,y+30],[x-18,y+30]]);
+  c.fillStyle='#748078';
+  c.fillRect(x-2,y+24,30,2);
 
   c.globalAlpha=0.28+0.20*light;
   c.fillStyle='#d8ecff';
@@ -1397,15 +1465,48 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   fillPixelPoly(c,[[58,CH],[118,92],[184,48],[296,48],[362,92],[422,CH]]);
   c.fillStyle='#191713';
   fillPixelPoly(c,[[114,CH],[160,136],[208,98],[272,98],[322,136],[366,CH]]);
+  c.fillStyle='#2b261f';
+  fillPixelPoly(c,[[74,CH],[132,116],[178,72],[188,94],[146,148],[112,CH]]);
+  fillPixelPoly(c,[[406,CH],[348,116],[302,72],[292,94],[334,148],[368,CH]]);
+  c.fillStyle='#3a3328';
+  fillPixelPoly(c,[[108,CH],[150,144],[188,112],[196,130],[166,178],[140,CH]]);
+  fillPixelPoly(c,[[372,CH],[330,144],[292,112],[284,130],[314,178],[340,CH]]);
   c.globalAlpha=0.18;
   c.fillStyle='#d8ecff';
   fillPixelPoly(c,[[204,52],[238,28],[276,52],[266,118],[214,118]]);
+  c.globalAlpha=0.10;
+  c.fillStyle='#f0d880';
+  fillPixelPoly(c,[[232,58],[248,58],[278,CH],[202,CH]]);
   c.globalAlpha=1;
   c.fillStyle='#090806';
   fillPixelPoly(c,[[196,72],[208,48],[272,48],[284,72],[274,124],[206,124]]);
+  c.fillStyle='#12100d';
+  fillPixelPoly(c,[[207,120],[220,78],[260,78],[273,120],[260,136],[220,136]]);
+  c.globalAlpha=0.34;
+  c.fillStyle='#6f7e86';
+  c.fillRect(226,84,8,32);
+  c.fillRect(246,84,8,32);
+  c.fillStyle='#d8ecff';
+  c.fillRect(230,86,2,28);
+  c.fillRect(250,86,2,28);
+  c.globalAlpha=1;
   const teleportStone=waterfallCaveTeleportStoneRenderState(cave);
   if(teleportStone)drawWaterfallCaveTeleportStone(c,teleportStone.x||240,teleportStone.y||118,1.65,tk,clamp((teleportStone.pulseT||0)/120,0,1));
   drawWaterfallCaveChurchAltar(c);
+  c.globalAlpha=0.82;
+  c.fillStyle='#211910';
+  fillPixelPoly(c,[[116,CH],[154,154],[170,154],[142,CH]]);
+  fillPixelPoly(c,[[364,CH],[326,154],[310,154],[338,CH]]);
+  c.fillStyle='#4a3926';
+  c.fillRect(150,132,14,116);
+  c.fillRect(316,132,14,116);
+  c.fillStyle='#7b5f38';
+  c.fillRect(148,128,18,5);
+  c.fillRect(314,128,18,5);
+  c.fillStyle='#2c2117';
+  c.fillRect(154,138,4,100);
+  c.fillRect(322,138,4,100);
+  c.globalAlpha=1;
   c.globalAlpha=0.58;
   c.fillStyle='#2d2117';
   for(let row=0;row<4;row++){
@@ -1415,6 +1516,9 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
     c.fillStyle='#6e4b25';
     fillPixelPoly(c,[[82,y+9],[164,y],[164,y+5],[82,y+15]]);
     fillPixelPoly(c,[[398,y+9],[316,y],[316,y+5],[398,y+15]]);
+    c.fillStyle='#9b6f35';
+    fillPixelPoly(c,[[92,y+10],[156,y+2],[156,y+4],[92,y+13]]);
+    fillPixelPoly(c,[[388,y+10],[324,y+2],[324,y+4],[388,y+13]]);
     c.fillStyle='#2d2117';
   }
   c.globalAlpha=0.36;
@@ -1422,6 +1526,15 @@ function drawWaterfallCaveChurchInteriorView(c,cave,tk){
   fillPixelPoly(c,[[196,CH],[214,268],[240,256],[268,268],[288,CH]]);
   c.fillStyle='#d8c58a';
   c.fillRect(216,270,48,2);
+  c.globalAlpha=0.46;
+  c.fillStyle='#4d3a24';
+  fillPixelPoly(c,[[178,CH],[218,214],[262,214],[302,CH]]);
+  c.globalAlpha=0.26;
+  c.fillStyle='#d8c58a';
+  for(let i=0;i<5;i++){
+    const yy=222+i*17;
+    c.fillRect(222-i*7,yy,36+i*14,1);
+  }
   c.globalAlpha=1;
   for(let i=0;i<16;i++){
     const x=84+Math.round(hash2(i+1501,7)*312);
