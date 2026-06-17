@@ -1364,6 +1364,35 @@ function drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse,def,obj){
   c.restore();
 }
 
+function drawWaterfallCaveStoneGlyph(c,x,y,glyph,color,scale){
+  const sc=Number.isFinite(scale)?scale:1,col=color||'#d99a54';
+  function r(dx,dy,w,h,fill){c.fillStyle=fill||col;c.fillRect(Math.round(x+dx*sc),Math.round(y+dy*sc),Math.max(1,Math.round(w*sc)),Math.max(1,Math.round(h*sc)))}
+  c.save();
+  if(glyph==='root'){
+    r(-10,3,20,2);r(-6,-6,3,11);r(-1,-4,3,9);r(5,-7,3,12);
+    r(-14,7,8,2);r(6,7,10,2);r(-12,-2,6,2);r(8,-1,7,2);
+  }else if(glyph==='vein'){
+    r(-12,2,24,2);r(-8,-5,2,8);r(-2,-8,2,12);r(5,-5,2,9);
+    r(-14,8,10,1);r(4,7,12,1);
+  }else if(glyph==='rope'){
+    r(-12,-2,24,2);r(-10,3,20,2);r(-8,-7,2,16);r(8,-7,2,16);
+    r(-2,-5,4,4);r(-3,4,6,3);
+  }else if(glyph==='waves'){
+    r(-13,-5,9,2);r(-1,-5,9,2);r(9,-5,5,2);
+    r(-10,1,10,2);r(3,1,10,2);
+    r(-13,7,9,2);r(-1,7,9,2);r(9,7,5,2);
+  }else if(glyph==='fracture'){
+    r(-2,-10,3,8);r(1,-3,3,6);r(-5,2,4,8);
+    r(-14,4,9,2);r(5,-5,11,2);r(5,8,8,2);
+  }else if(glyph==='crown'){
+    r(-12,5,24,3);r(-9,-5,3,10);r(-1,-9,3,14);r(8,-5,3,10);
+    r(-11,2,6,2);r(5,2,7,2);
+  }else{
+    r(-2,-10,4,22);r(2,2,20,4);r(16,-2,4,12);r(-22,6,18,3);
+  }
+  c.restore();
+}
+
 function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
   const objects=G.waterfallCaveSceneObjects?G.waterfallCaveSceneObjects(cave):[];
   for(const hit of objects){
@@ -1373,21 +1402,19 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
       drawWaterfallCaveWallTorch(c,x,y,tk,obj);
     }else if(kind==='stone'){
       const off=obj.shifted?4:0;
+      const ins=def.inscription||{}, glyph=ins.glyph||'bridge', markColor=ins.color||'#d99a54';
       if(active){
         c.globalAlpha=0.18+0.18*pulse;
-        c.fillStyle='#ffb45a';
+        c.fillStyle=markColor;
         fillPixelPoly(c,[[x-34,y+10],[x-18,y-18],[x+18,y-16],[x+36,y+10],[x+16,y+22],[x-18,y+22]]);
         c.globalAlpha=1;
       }
       c.globalAlpha=0.36;c.fillStyle='#000';c.fillRect(x-22+off,y+5,44,5);c.globalAlpha=1;
       c.fillStyle='#242d32';fillPixelPoly(c,[[x-22+off,y+4],[x-10+off,y-10],[x+16+off,y-8],[x+24+off,y+4],[x+12+off,y+12],[x-16+off,y+12]]);
       c.fillStyle=near?'#52606a':'#3a454c';c.fillRect(x-10+off,y-4,22,4);
-      if(active){
-        c.fillStyle='#d99a54';
-        c.fillRect(x-5+off,y-7,2,9);
-        c.fillRect(x+4+off,y-4,10,2);
-        c.fillRect(x-13+off,y+1,8,2);
-      }
+      c.globalAlpha=active?1:0.42;
+      drawWaterfallCaveStoneGlyph(c,x+off,y-1,glyph,markColor,0.55);
+      c.globalAlpha=1;
     }else if(kind==='crystal'){
       c.globalAlpha=0.18+0.30*pulse;
       c.fillStyle='#75eaff';fillPixelPoly(c,[[x-58,y+18],[x-34,y-30],[x+4,y-46],[x+46,y-18],[x+62,y+20]]);
@@ -1422,8 +1449,11 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
 function drawWaterfallCaveStoneInspect(c,cave,tk){
   if(!cave||cave.scene!=='emberPassage')return false;
   const hit=((G.waterfallCaveSceneObjects&&G.waterfallCaveSceneObjects(cave))||[]).find(h=>h.def&&h.def.id==='looseStone');
-  const obj=hit&&hit.obj;
+  const def=hit&&hit.def||{},obj=hit&&hit.obj;
   if(!obj||(!obj.near&&!(obj.lastInteractT!=null&&(cave.t||0)-obj.lastInteractT<70)))return false;
+  const ins=def.inscription||{},title=String(ins.title||'RISTAD STEN');
+  const lines=Array.isArray(ins.lines)&&ins.lines.length?ins.lines:['Stenen bär ett gammalt tecken.'];
+  const markColor=ins.color||'#d99a54',glyph=ins.glyph||'bridge';
   const x=156,y=24,w=168,h=86;
   c.save();
   c.globalAlpha=0.72;
@@ -1437,19 +1467,18 @@ function drawWaterfallCaveStoneInspect(c,cave,tk){
   fillPixelPoly(c,[[x+42,y+56],[x+58,y+30],[x+102,y+26],[x+126,y+50],[x+112,y+70],[x+56,y+72]]);
   c.fillStyle='#536066';
   fillPixelPoly(c,[[x+52,y+52],[x+64,y+36],[x+96,y+34],[x+114,y+50],[x+102,y+62],[x+60,y+64]]);
-  c.fillStyle='#d99a54';
-  c.fillRect(x+78,y+38,4,22);
-  c.fillRect(x+82,y+50,24,4);
-  c.fillRect(x+98,y+46,4,12);
-  c.fillRect(x+58,y+54,18,3);
+  drawWaterfallCaveStoneGlyph(c,x+84,y+49,glyph,markColor,1.15);
   c.fillStyle='#ffcf74';
-  c.fillRect(x+80,y+39,2,20);
-  c.fillRect(x+84,y+51,19,2);
+  c.fillRect(x+56,y+62,18,2);
+  c.fillRect(x+98,y+62,22,2);
   c.globalAlpha=0.22;
-  c.fillStyle='#ffb45a';
+  c.fillStyle=markColor;
   fillPixelPoly(c,[[x+34,y+66],[x+62,y+18],[x+114,y+18],[x+140,y+58],[x+112,y+82],[x+58,y+82]]);
   c.globalAlpha=1;
-  if(typeof drawTextC==='function')drawTextC(c,'RISTAD STEN',x+w/2,y+h-13,1,'#f1c275');
+  if(typeof drawTextC==='function'){
+    drawTextC(c,title,x+w/2,y+12,1,markColor);
+    for(let i=0;i<Math.min(2,lines.length);i++)drawTextC(c,String(lines[i]).toUpperCase(),x+w/2,y+h-29+i*12,1,'#f1c275');
+  }
   c.restore();
   return true;
 }

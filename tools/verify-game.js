@@ -122,6 +122,9 @@ if (waterfallScenesCode.includes('rootSanctum') || waterfallScenesCode.includes(
 if (!waterfallScenesCode.includes('WATERFALL_CAVE_RUNE_SETS') || !waterfallScenesCode.includes('waterfallCaveRuneSet') || !waterfallScenesCode.includes('waterfallCaveRuneObjectForSet') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog') || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
   throw new Error('Glyph archive rune wall should define separate readable rune text segments');
 }
+if (!waterfallScenesCode.includes('stoneInscription') || !waterfallScenesCode.includes('BROSTENEN') || !waterfallScenesCode.includes('KAOSSTENEN') || !waterfallRenderCode.includes('drawWaterfallCaveStoneGlyph')) {
+  throw new Error('Waterfall cave variants should define and render unique engraved stones');
+}
 for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldamm','Kyrkan']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave map text is missing Swedish label ${token}`);
@@ -987,6 +990,30 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
       if (!def || def.archiveStyle !== styleKey) throw new Error(`Cave variant ${variantId} did not apply style ${styleKey} to ${scene}`);
       if (!drawWaterfallCaveView(WCTX, 12)) throw new Error(`Cave variant ${variantId} did not render scene ${scene}`);
     }
+  }
+  const stoneVariantChecks = [
+    ['flodaChurch','BROSTENEN','bridge'],
+    ['darkForestArchive','ROTSTENEN','root'],
+    ['marbleArchive','MARMORSTENEN','vein'],
+    ['forestRavineArchive','RAVINSTENEN','rope'],
+    ['doublePondsArchive','DAMMSTENEN','waves'],
+    ['chaosArchive','KAOSSTENEN','fracture'],
+    ['masterTrialArchive','MÄSTARSTENEN','crown']
+  ];
+  const seenStoneTitles = new Set();
+  const seenStoneGlyphs = new Set();
+  for (const [variantId, title, glyph] of stoneVariantChecks) {
+    const cave = {variantId,scene:'emberPassage',sceneState:{},flags:{},visited:{emberPassage:true},lemX:236,lemY:254,t:0};
+    const stone = G.waterfallCaveSceneObjects(cave).find(hit => hit && hit.def && hit.def.id === 'looseStone');
+    const inscription = stone && stone.def && stone.def.inscription;
+    if (!inscription || inscription.title !== title || inscription.glyph !== glyph || !Array.isArray(inscription.lines) || inscription.lines.length < 2) {
+      throw new Error(`Cave variant ${variantId} is missing its unique loose stone inscription`);
+    }
+    if (seenStoneTitles.has(inscription.title) || seenStoneGlyphs.has(inscription.glyph)) {
+      throw new Error(`Cave variant ${variantId} reused a loose stone inscription`);
+    }
+    seenStoneTitles.add(inscription.title);
+    seenStoneGlyphs.add(inscription.glyph);
   }
   Object.assign(G.waterfallCave, {variantId:'flodaChurch',scene:'main',mapOpen:false,lemX:240,lemY:232});
   G.ensureWaterfallCaveSceneState(G.waterfallCave);

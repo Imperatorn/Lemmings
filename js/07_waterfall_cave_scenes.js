@@ -198,6 +198,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'flodaChurch',
     label:'Floda kyrkgrotta',
     archiveStyle:'floda',
+    stoneInscription:{title:'BROSTENEN',glyph:'bridge',color:'#d99a54',lines:['Två plankor över vattnet.','En dold port lyssnar.']},
     hiddenScenes:[],
     scenes:{}
   },
@@ -205,6 +206,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'darkForestArchive',
     label:'Skogens runarkiv',
     archiveStyle:'forest',
+    stoneInscription:{title:'ROTSTENEN',glyph:'root',color:'#8fb96a',lines:['Rötterna bär natten.','Lyktan får inte slockna.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -212,6 +214,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'marbleArchive',
     label:'Marmorns runarkiv',
     archiveStyle:'marble',
+    stoneInscription:{title:'MARMORSTENEN',glyph:'vein',color:'#e6dcc2',lines:['Vit ådra, svart spricka.','Knappen sover ovanför.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -219,6 +222,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'forestRavineArchive',
     label:'Ravinens runarkiv',
     archiveStyle:'ravine',
+    stoneInscription:{title:'RAVINSTENEN',glyph:'rope',color:'#b9d68a',lines:['Repet minns andra sidan.','Djupet svarar långsamt.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -226,6 +230,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'doublePondsArchive',
     label:'Dammarnas runarkiv',
     archiveStyle:'water',
+    stoneInscription:{title:'DAMMSTENEN',glyph:'waves',color:'#9eefff',lines:['Två speglar delar vägen.','Bygg lågt där vattnet väntar.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -233,6 +238,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'chaosArchive',
     label:'Kaosets runarkiv',
     archiveStyle:'chaos',
+    stoneInscription:{title:'KAOSSTENEN',glyph:'fracture',color:'#ff6a80',lines:['Mönstret gömmer sig skevt.','Samla vägarna till en.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -240,6 +246,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'masterTrialArchive',
     label:'Mästarprovets runarkiv',
     archiveStyle:'master',
+    stoneInscription:{title:'MÄSTARSTENEN',glyph:'crown',color:'#d8b65a',lines:['Alla prov lämnar spår.','Sista tecknet pekar vidare.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   }
@@ -366,6 +373,11 @@ function waterfallCaveApplySceneVariant(raw,variantId){
   const cfg=waterfallCaveSceneVariantConfig(v.id,out.id);
   out.variantId=v.id;
   out.archiveStyle=v.archiveStyle||'floda';
+  if(out.id==='emberPassage'&&v.stoneInscription&&Array.isArray(out.objects)){
+    for(const obj of out.objects){
+      if(obj&&obj.id==='looseStone')obj.inscription=waterfallCaveCloneData(v.stoneInscription);
+    }
+  }
   for(const key of ['label','render','audio']){
     if(cfg[key]!=null)out[key]=cfg[key];
   }
