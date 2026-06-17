@@ -39,7 +39,8 @@ const AU={
   sfxDest(){return this.sfxGain||this.master},
   applyVolumes(){
     const t=this.now();
-    const mv=MUSIC_GAIN_BASE*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    const mystery=this.mus&&this.mus.kind==='caveMystery';
+    const mv=MUSIC_GAIN_BASE*(mystery?CAVE_MYSTERY_GAIN_BOOST:1)*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
     const sv=clamp(Number.isFinite(this.sfxVol)?this.sfxVol:1,0,1);
     if(this.musGain&&this.musGain.gain)this.gainRamp(this.musGain,this.musGain.gain,t,mv,'linear');
     if(this.sfxGain&&this.sfxGain.gain)this.gainRamp(this.sfxGain,this.sfxGain.gain,t,sv,'linear');
@@ -1273,8 +1274,9 @@ const AU={
   startMusic(kind){
     this.stopMusic();
     if(!this.ctx||!this.on||!this.musicOn)return;
+    this.mus.kind=kind;
     this.applyVolumes();
-    this.mus.kind=kind; this.mus.step=0; this.mus.next=this.now()+0.1;
+    this.mus.step=0; this.mus.next=this.now()+0.1;
     this.mus.timer=setInterval(()=>this.pump(),50);
   },
   stopMusic(){ if(this.mus.timer){clearInterval(this.mus.timer);this.mus.timer=null} },
@@ -1294,7 +1296,7 @@ const AU={
   startWaterfallCaveMysteryMusic(fade){
     this.init();
     if(!this.ctx||!this.on||!this.musicOn)return false;
-    if(this.mus&&this.mus.timer&&this.mus.kind==='caveMystery')return true;
+    if(this.mus&&this.mus.timer&&this.mus.kind==='caveMystery'){this.applyVolumes();return true}
     this.startMusic('caveMystery');
     if(!this.musGain||!this.musGain.gain)return true;
     const t=this.now(), dur=fade==null?1.2:Math.max(0.05,fade);

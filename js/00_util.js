@@ -199,7 +199,7 @@ function loadPersisted(){
   return loadProfileData(activeProfileId());
 }
 function savePersisted(data){
-  saveProfileData(activeProfileId(),data||{});
+  return saveProfileData(activeProfileId(),data||{});
 }
 function jsonClone(v){return v==null?v:JSON.parse(JSON.stringify(v))}
 function encodeMask(mask){

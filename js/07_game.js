@@ -564,7 +564,7 @@ const G={
   savePrefs(){
     const p=loadPersisted();
     p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.runeProgress=this.normalizeRuneProgress(this.runeProgress);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
-    savePersisted(p);
+    return savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
   toggleCutscenes(){

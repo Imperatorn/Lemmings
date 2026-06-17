@@ -655,6 +655,58 @@ G.setSfxVolume(0.37);
 if (Math.abs(AU.musicVol - 0.42) > 0.001 || Math.abs(AU.sfxVol - 0.37) > 0.001) {
   throw new Error('Audio volume setters failed');
 }
+{
+  const prevMus = AU.mus;
+  const prevMusGain = AU.musGain;
+  const prevMusicVol = AU.musicVol;
+  AU.mus = {kind:'caveMystery'};
+  AU.musicVol = 0.5;
+  AU.musGain = {gain:{
+    value:0.00005,
+    setValueAtTime(v){this.value = v},
+    linearRampToValueAtTime(v){this.value = v},
+    cancelScheduledValues(){}
+  }};
+  AU.applyVolumes();
+  if (Math.abs(AU.musGain.gain.value - 0.3375) > 0.0001) {
+    throw new Error('Cave mystery music should keep its volume boost when applyVolumes runs');
+  }
+  AU.mus = prevMus;
+  AU.musGain = prevMusGain;
+  AU.musicVol = prevMusicVol;
+}
+{
+  const prevCtx = AU.ctx;
+  const prevOn = AU.on;
+  const prevMusicOn = AU.musicOn;
+  const prevMus = AU.mus;
+  const prevMusGain = AU.musGain;
+  const prevSfxGain = AU.sfxGain;
+  const prevMusicVol = AU.musicVol;
+  AU.ctx = {currentTime:0};
+  AU.on = true;
+  AU.musicOn = true;
+  AU.musicVol = 0.5;
+  AU.mus = {timer:1,step:0,next:0,kind:'caveMystery'};
+  AU.musGain = {gain:{
+    value:0.00005,
+    setValueAtTime(v){this.value = v},
+    linearRampToValueAtTime(v){this.value = v},
+    cancelScheduledValues(){}
+  }};
+  AU.sfxGain = null;
+  AU.startMusic('menu');
+  if (AU.mus.kind !== 'menu' || Math.abs(AU.musGain.gain.value - 0.25) > 0.0001) {
+    throw new Error('Starting regular music after cave mystery should not inherit the mystery volume boost');
+  }
+  AU.ctx = prevCtx;
+  AU.on = prevOn;
+  AU.musicOn = prevMusicOn;
+  AU.mus = prevMus;
+  AU.musGain = prevMusGain;
+  AU.sfxGain = prevSfxGain;
+  AU.musicVol = prevMusicVol;
+}
 if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCutsceneOverlay');
 {
   const registeredCutscenes = G.cutsceneList({debug:true});
@@ -2974,6 +3026,12 @@ withLocalStorage({}, store => {
   const list = profileList();
   if (list.length !== 1 || activeProfileName() !== 'Spelare 1') {
     throw new Error('Empty storage should create one default profile');
+  }
+  if (savePersisted({money:3}) !== true || loadPersisted().money !== 3) {
+    throw new Error('savePersisted should return success and write active profile data');
+  }
+  if (G.savePrefs() !== true) {
+    throw new Error('G.savePrefs should return the profile write result');
   }
   G.state = 'MENU';
   G.loadPrefs();
