@@ -118,7 +118,8 @@ const WATERFALL_CAVE_SCENES={
       {id:'toGlyphArchive',key:'left',x1:76,yMin:196,yMax:268,target:'glyphArchive',spawn:'fromPool'}
     ],
     objects:[
-      {id:'mirrorPool',kind:'pool',default:{x:250,y:246,near:false,activated:false,pulseT:0,rippleT:0},hit:{type:'ellipse',rx:78,ry:24,dy:2},blocker:true,verbs:['look','touch']}
+      {id:'mirrorPool',kind:'pool',default:{x:250,y:246,near:false,activated:false,pulseT:0,rippleT:0,splashT:0,splashX:0,splashY:0,splashSeed:0},hit:{type:'ellipse',rx:78,ry:24,dy:2},blocker:true,verbs:['look','touch']},
+      {id:'mirrorThrowStones',kind:'throwStonePile',default:{x:132,y:262,near:false,activated:false,pulseT:0,pickedT:0},hit:{type:'ellipse',rx:28,ry:16},verbs:['take','throw']}
     ]
   },
   glyphArchive:{

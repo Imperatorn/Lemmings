@@ -425,6 +425,120 @@ Object.assign(G,{
     if(stone.near&&l&&l.holy&&!stone.found)return this.discoverWaterfallCaveTeleportStone(cave,stone,l);
     return false;
   },
+  waterfallCaveMirrorPoolHit(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='mirrorPool')return null;
+    return this.waterfallCaveSceneObjects(cave).find(hit=>hit&&hit.def&&hit.def.id==='mirrorPool')||null;
+  },
+  waterfallCaveMirrorThrowStonePile(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='mirrorPool')return null;
+    return this.waterfallCaveSceneObjects(cave).find(hit=>hit&&hit.def&&hit.def.id==='mirrorThrowStones')||null;
+  },
+  waterfallCaveMirrorStoneHeld(cave){
+    return !!(cave&&cave.scene==='mirrorPool'&&cave.mirrorStoneHeld);
+  },
+  waterfallCaveMirrorStoneThrowLocks(cave){
+    const st=cave&&cave.mirrorStoneThrow;
+    return !!(st&&st.active&&st.t<18);
+  },
+  pickWaterfallCaveMirrorStone(cave,pile){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='mirrorPool'||cave.mirrorStoneHeld||(cave.mirrorStoneThrow&&cave.mirrorStoneThrow.active))return false;
+    pile=pile||((this.waterfallCaveMirrorThrowStonePile(cave)||{}).obj);
+    cave.mirrorStoneHeld=true;
+    cave.mirrorStonePickedT=42;
+    cave.mirrorStoneSpaceBlocked=true;
+    if(pile){
+      pile.activated=true;
+      pile.pulseT=Math.max(pile.pulseT||0,46);
+      pile.pickedT=Math.max(pile.pickedT||0,24);
+      pile.near=true;
+    }
+    if(AU.sWaterfallCaveStonePickup)AU.sWaterfallCaveStonePickup();
+    else if(AU.sClick)AU.sClick();
+    return true;
+  },
+  throwWaterfallCaveMirrorStone(cave){
+    cave=cave||this.waterfallCave;
+    if(!this.waterfallCaveMirrorStoneHeld(cave)||(cave.mirrorStoneThrow&&cave.mirrorStoneThrow.active))return false;
+    const poolHit=this.waterfallCaveMirrorPoolHit(cave);
+    const pool=poolHit&&poolHit.obj;
+    if(!pool)return false;
+    const scale=typeof waterfallCaveLemmingScale==='function'?waterfallCaveLemmingScale(cave):2;
+    const facing=cave.facing||'front';
+    const side=facing==='left'?-1:(facing==='right'?1:0);
+    const sx=(cave.lemX||240)+side*Math.round(8*scale)+(facing==='front'?Math.round(4*scale):0);
+    const sy=(cave.lemY||220)-Math.round(23*scale);
+    const drift=clamp(((cave.lemX||240)-(pool.x||250))*0.24,-42,42);
+    const wobble=((cave.t||0)*13)%17-8;
+    const tx=(pool.x||250)+drift+wobble;
+    const ty=(pool.y||246)+2+(((cave.t||0)*7)%7-3);
+    const dist=Math.hypot(tx-sx,ty-sy);
+    cave.mirrorStoneHeld=false;
+    cave.mirrorStonePickedT=0;
+    cave.mirrorStoneSpaceBlocked=true;
+    cave.walking=false;
+    cave.running=false;
+    cave.facing=Math.abs(tx-(cave.lemX||240))>24?(tx>(cave.lemX||240)?'right':'left'):(ty<(cave.lemY||220)?'back':'front');
+    cave.mirrorStoneThrow={
+      active:true,t:0,releaseT:10,dur:clamp(Math.round(dist/5)+26,32,52),
+      sx,sy,tx,ty,peak:34+dist*0.10,landed:false
+    };
+    if(AU.sWaterfallCaveStoneThrow)AU.sWaterfallCaveStoneThrow();
+    return true;
+  },
+  handleWaterfallCaveMirrorStoneAction(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='mirrorPool'||cave.mirrorStoneSpaceBlocked)return false;
+    if(this.waterfallCaveMirrorStoneHeld(cave))return this.throwWaterfallCaveMirrorStone(cave);
+    const pileHit=this.waterfallCaveMirrorThrowStonePile(cave);
+    if(!pileHit||!pileHit.obj)return false;
+    if(!this.waterfallCaveObjectContains(pileHit.def,pileHit.obj,cave.lemX||0,cave.lemY||0,1.35))return false;
+    return this.pickWaterfallCaveMirrorStone(cave,pileHit.obj);
+  },
+  clearWaterfallCaveMirrorStone(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave)return false;
+    cave.mirrorStoneHeld=false;
+    cave.mirrorStonePickedT=0;
+    cave.mirrorStoneThrow=null;
+    cave.mirrorStoneSpaceBlocked=false;
+    return true;
+  },
+  updateWaterfallCaveMirrorStone(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave)return false;
+    if(cave.scene!=='mirrorPool')return this.clearWaterfallCaveMirrorStone(cave);
+    if(cave.mirrorStonePickedT>0)cave.mirrorStonePickedT--;
+    const st=cave.mirrorStoneThrow;
+    if(!st)return false;
+    if(!st.active){
+      if(st.landed){
+        st.t++;
+        if(st.t>st.dur+36)cave.mirrorStoneThrow=null;
+      }
+      return false;
+    }
+    st.t++;
+    if(st.t>=st.dur&&!st.landed){
+      st.landed=true;
+      st.active=false;
+      const poolHit=this.waterfallCaveMirrorPoolHit(cave);
+      const pool=poolHit&&poolHit.obj;
+      if(pool){
+        pool.activated=true;
+        pool.rippleT=Math.max(pool.rippleT||0,128);
+        pool.pulseT=Math.max(pool.pulseT||0,72);
+        pool.splashT=34;
+        pool.splashX=st.tx;
+        pool.splashY=st.ty;
+        pool.splashSeed=((pool.splashSeed||0)+1)&1023;
+      }
+      if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash();
+    }
+    return true;
+  },
   waterfallCaveNearestObject(cave){
     cave=cave||this.waterfallCave;
     if(!cave)return null;
@@ -448,6 +562,7 @@ Object.assign(G,{
     obj.lastInteractT=cave.t||0;
     if(def.kind==='pool')obj.rippleT=Math.max(obj.rippleT||0,96);
     if(def.kind==='stone'&&mode)obj.shifted=true;
+    if(def.kind==='throwStonePile'&&mode!=='near')return this.pickWaterfallCaveMirrorStone(cave,obj);
     if(def.kind==='torch')obj.flameT=Math.max(obj.flameT||0,96);
     if(def.kind==='crystal'&&AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(mode==='near'?0.85:1);
     if(def.kind==='runeWall'){
@@ -474,6 +589,8 @@ Object.assign(G,{
       if(Number.isFinite(obj.flameT))obj.flameT=Math.max(0,obj.flameT-1);
       if(Number.isFinite(obj.readT))obj.readT=Math.max(0,obj.readT-1);
       if(Number.isFinite(obj.completeT))obj.completeT=Math.max(0,obj.completeT-1);
+      if(Number.isFinite(obj.splashT))obj.splashT=Math.max(0,obj.splashT-1);
+      if(Number.isFinite(obj.pickedT))obj.pickedT=Math.max(0,obj.pickedT-1);
       const nearScale=def.kind==='viewCard'?1.0:1.08;
       const near=this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,nearScale);
       if(def.kind==='viewCard'){
@@ -486,7 +603,8 @@ Object.assign(G,{
       }
       const passiveInspect=def.kind==='viewCard'||def.kind==='inspectable';
       const passiveCanOpen=passiveInspect&&near&&!this.waterfallCaveMovementHeld(cave)&&!(def.kind==='viewCard'&&(obj.cardOpen||obj.dismissedNear));
-      if((near&&!obj.near&&!passiveInspect)||passiveCanOpen)this.interactWaterfallCaveObject(hit,'near');
+      const manualOnly=def.kind==='throwStonePile';
+      if((near&&!obj.near&&!passiveInspect&&!manualOnly)||passiveCanOpen)this.interactWaterfallCaveObject(hit,'near');
       if(def.kind==='runeWall'&&near){
         if(!this.readWaterfallCaveRune(hit)&&!obj.readLines){
           obj.readT=Math.max(obj.readT||0,70);
@@ -547,6 +665,7 @@ Object.assign(G,{
       if(spawn.facing)cave.facing=spawn.facing;
       if(Number.isFinite(spawn.dir))cave.dir=spawn.dir;
     }
+    if(prevScene==='mirrorPool'&&def.id!=='mirrorPool'&&this.clearWaterfallCaveMirrorStone)this.clearWaterfallCaveMirrorStone(cave);
     cave.walking=false;
     cave.running=false;
     cave.lastStepT=cave.t||0;
@@ -863,18 +982,20 @@ Object.assign(G,{
     if(cave.mapOpen){
       cave.walking=false;
       cave.running=false;
+      this.updateWaterfallCaveMirrorStone(cave);
       if(cave.scene==='camp'&&AU.updateWaterfallCaveCampfire)AU.updateWaterfallCaveCampfire();
       return true;
     }
     if(this.updateWaterfallCaveChurchBlessing(cave))return true;
     if(this.updateWaterfallCaveTeleportStone(cave))return true;
+    this.updateWaterfallCaveMirrorStone(cave);
     const b=this.waterfallCaveSceneBounds(cave);
     let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     const waitingForCoverRelease=cave.scene==='deep'&&cave.deepItem&&cave.deepItem.coverOpen&&!cave.deepItem.coverCloseArmed;
     const viewCard=this.waterfallCaveActiveViewCard(cave);
     const waitingForViewCardRelease=viewCard&&viewCard.obj&&viewCard.obj.cardOpen&&!viewCard.obj.cardCloseArmed;
-    if(waitingForCoverRelease||waitingForViewCardRelease){dx=0;dy=0}
+    if(waitingForCoverRelease||waitingForViewCardRelease||this.waterfallCaveMirrorStoneThrowLocks(cave)){dx=0;dy=0}
     if(dx||dy){
       const inv=Math.hypot(dx,dy)>1?1/Math.hypot(dx,dy):1;
       dx*=inv;dy*=inv;
@@ -1029,6 +1150,7 @@ Object.assign(G,{
       this.openWaterfallCaveMap(cave);
       return true;
     }
+    if((key===' '||key==='Spacebar')&&this.handleWaterfallCaveMirrorStoneAction(cave))return true;
     if(this.setWaterfallCaveMoveKey(cave,key,true))return true;
     if(key===' '||key==='Spacebar'||key==='Enter'){
       const hit=this.waterfallCaveNearestObject(cave);
@@ -1048,6 +1170,7 @@ Object.assign(G,{
       cave.sceneExitBlockedTarget=null;
     }
     if(key==='Shift'||!this.waterfallCaveMovementHeld(cave))cave.running=false;
+    if(key===' '||key==='Spacebar')cave.mirrorStoneSpaceBlocked=false;
     const it=cave.deepItem;
     if(it&&it.coverOpen&&!it.coverCloseArmed&&!this.waterfallCaveMovementHeld(cave))it.coverCloseArmed=true;
     const viewCard=this.waterfallCaveActiveViewCard(cave);

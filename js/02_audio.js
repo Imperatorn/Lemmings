@@ -497,6 +497,25 @@ const AU={
     this.tone(1760,0.22,'triangle',0.014,0.84,t+0.26);
     this.softNoise(0.45,0.010,1800,0.55,t+0.03,{type:'bandpass',q:0.60,smooth:0.76,attack:0.07,release:0.28});
   },
+  sWaterfallCaveStonePickup(){
+    if(!this.rateFx('waterfall-cave-stone-pickup',0.10))return;
+    const t=this.now();
+    this.softNoise(0.045,0.010,620,0.42,t,{type:'bandpass',q:0.55,smooth:0.34,attack:0.004,release:0.035});
+    this.tone(210,0.040,'triangle',0.014,0.92,t+0.010);
+  },
+  sWaterfallCaveStoneThrow(){
+    if(!this.rateFx('waterfall-cave-stone-throw',0.12))return;
+    const t=this.now();
+    this.softNoise(0.060,0.006,880,0.30,t,{type:'bandpass',q:0.50,smooth:0.52,attack:0.010,release:0.045});
+    this.tone(330,0.035,'triangle',0.008,1.06,t+0.018);
+  },
+  sWaterfallCaveStoneSplash(){
+    if(!this.rateFx('waterfall-cave-stone-splash',0.12))return;
+    const t=this.now();
+    this.softNoise(0.18,0.018,1550,0.42,t,{type:'bandpass',q:0.65,smooth:0.70,attack:0.006,release:0.110});
+    this.softNoise(0.24,0.010,520,0.34,t+0.018,{type:'lowpass',smooth:0.82,attack:0.010,release:0.18});
+    this.tone(245,0.055,'sine',0.010,0.82,t+0.015);
+  },
   sPortalStoneOpen(){
     if(!this.rateFx('portal-stone-open',0.18))return;
     const t=this.now();

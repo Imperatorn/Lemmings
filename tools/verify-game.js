@@ -459,6 +459,7 @@ const requiredRuntimeMethods = [
   'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','levelWaterfallCaveVariant','waterfallCaveVariantId','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneFallback','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneExits','waterfallCaveSceneArchiveStyle','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'waterfallCaveRuneAt','waterfallCaveRuneLines','waterfallCaveRuneDescriptor','syncWaterfallCaveRuneObjectProgress','readWaterfallCaveRune',
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone',
+  'waterfallCaveMirrorPoolHit','waterfallCaveMirrorThrowStonePile','waterfallCaveMirrorStoneHeld','waterfallCaveMirrorStoneThrowLocks','pickWaterfallCaveMirrorStone','throwWaterfallCaveMirrorStone','handleWaterfallCaveMirrorStoneAction','clearWaterfallCaveMirrorStone','updateWaterfallCaveMirrorStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
@@ -468,7 +469,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sPortalStoneOpen','sPortalStoneTravel']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -1361,6 +1362,34 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!mirrorPool.obj.activated || mirrorPool.obj.rippleT <= 0) {
     throw new Error('Mirror pool did not ripple when approached');
   }
+  const throwStonePile = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'mirrorThrowStones');
+  if (!throwStonePile) throw new Error('Mirror pool is missing throwable stones');
+  G.waterfallCave.lemX = throwStonePile.obj.x;
+  G.waterfallCave.lemY = throwStonePile.obj.y;
+  G.tick();
+  if (throwStonePile.obj.activated || G.waterfallCave.mirrorStoneHeld) {
+    throw new Error('Mirror pool stones should not be picked up just by walking over them');
+  }
+  G.handleWaterfallCaveKey(' ');
+  if (!G.waterfallCave.mirrorStoneHeld || !throwStonePile.obj.activated || !(throwStonePile.obj.pickedT > 0)) {
+    throw new Error('Mirror pool stone was not picked up with Space');
+  }
+  if (!drawWaterfallCaveView(WCTX, 44)) throw new Error('Mirror pool carried stone view did not render');
+  G.handleWaterfallCaveKeyUp(' ');
+  G.handleWaterfallCaveKey(' ');
+  if (G.waterfallCave.mirrorStoneHeld || !G.waterfallCave.mirrorStoneThrow || !G.waterfallCave.mirrorStoneThrow.active) {
+    throw new Error('Mirror pool carried stone was not thrown with Space');
+  }
+  if (!G.waterfallCaveMirrorStoneThrowLocks(G.waterfallCave)) {
+    throw new Error('Mirror pool stone throw should briefly lock movement for the throw animation');
+  }
+  if (!drawWaterfallCaveView(WCTX, 45)) throw new Error('Mirror pool thrown stone view did not render');
+  for (let i = 0; i < 70 && G.waterfallCave.mirrorStoneThrow && G.waterfallCave.mirrorStoneThrow.active; i++) G.tick();
+  if (!(mirrorPool.obj.splashT > 0) || !(mirrorPool.obj.rippleT > 0)) {
+    throw new Error('Mirror pool thrown stone did not splash and ripple in the pool');
+  }
+  if (!drawWaterfallCaveView(WCTX, 46)) throw new Error('Mirror pool splash view did not render');
+  G.handleWaterfallCaveKeyUp(' ');
   G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).minX;
   G.waterfallCave.lemY = 230;
   G.handleWaterfallCaveKey('ArrowLeft');

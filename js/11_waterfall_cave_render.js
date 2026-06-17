@@ -1128,6 +1128,126 @@ function drawWaterfallCaveGroundCard(c,x,y,def,obj,style,near,pulse){
   c.restore();
 }
 
+function drawWaterfallCaveThrowStonePile(c,x,y,obj,style,near,pulse){
+  const lift=clamp((obj&&obj.pickedT||0)/24,0,1);
+  c.save();
+  c.globalAlpha=0.30;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[x-30,y+8],[x-14,y+2],[x+18,y+2],[x+32,y+8],[x+18,y+13],[x-20,y+13]]);
+  if(near||lift>0){
+    c.globalAlpha=0.10+0.16*Math.max(pulse,lift);
+    c.fillStyle=style.glow||'#baf8ff';
+    fillPixelPoly(c,[[x-40,y+8],[x-24,y-12],[x+24,y-12],[x+42,y+8],[x+18,y+20],[x-24,y+20]]);
+  }
+  c.globalAlpha=1;
+  const stones=[
+    [-17,0,8,5,'#53616a'],[-8,-4,9,6,'#334149'],[4,-3,10,7,'#65747a'],
+    [14,1,8,5,'#46545a'],[-2,3,8,5,'#758087'],[9,5,7,4,'#2d383e']
+  ];
+  for(let i=0;i<stones.length;i++){
+    const s=stones[i],dy=lift&&i===2?-Math.round(5*lift):0;
+    c.fillStyle='#171d20';
+    fillPixelPoly(c,[[x+s[0]-2,y+s[1]+dy+4],[x+s[0]+s[2],y+s[1]+dy+4],[x+s[0]+s[2]+2,y+s[1]+dy+s[3]],[x+s[0]-1,y+s[1]+dy+s[3]+1]]);
+    c.fillStyle=s[4];
+    fillPixelPoly(c,[[x+s[0],y+s[1]+dy],[x+s[0]+s[2]-2,y+s[1]+dy-1],[x+s[0]+s[2],y+s[1]+dy+s[3]-2],[x+s[0]+2,y+s[1]+dy+s[3]]]);
+    c.fillStyle='rgba(210,230,230,0.55)';
+    c.fillRect(x+s[0]+2,y+s[1]+dy+1,Math.max(1,Math.floor(s[2]/2)),1);
+  }
+  c.restore();
+}
+
+function drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk){
+  const splashT=obj&&obj.splashT||0;
+  if(!(splashT>0))return false;
+  const life=clamp(splashT/34,0,1),p=1-life;
+  const sx=Math.round(obj.splashX||x),sy=Math.round(obj.splashY||y);
+  c.save();
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.72*life;
+  c.fillStyle='#d8fbff';
+  const spread=8+Math.round(p*34);
+  for(let i=0;i<13;i++){
+    const a=(i-6)/6;
+    const px=sx+Math.round(a*spread);
+    const py=sy-Math.round(Math.sin((1-Math.abs(a))*Math.PI*0.5)*(10+p*16))-Math.round((i%3)*p*3);
+    c.fillRect(px,py,2,2);
+    if(i%2===0)c.fillRect(px+(a<0?-2:2),py+3,2,1);
+  }
+  c.globalAlpha=0.54*life;
+  c.fillStyle='#7ee8ff';
+  fillPixelPoly(c,[[sx-spread,sy+2],[sx-Math.round(spread*0.52),sy-2],[sx+Math.round(spread*0.52),sy-2],[sx+spread,sy+2],[sx+Math.round(spread*0.55),sy+5],[sx-Math.round(spread*0.55),sy+5]]);
+  c.globalAlpha=0.24*life;
+  c.fillRect(sx-Math.round(spread*0.75),sy+8,Math.round(spread*1.5),1);
+  c.restore();
+  return true;
+}
+
+function waterfallCaveMirrorStoneProjectilePos(st){
+  const rel=Number.isFinite(st&&st.releaseT)?st.releaseT:10;
+  const dur=Math.max(1,(st&&st.dur||40)-rel);
+  const p=clamp(((st&&st.t||0)-rel)/dur,0,1);
+  const x=(st.sx||0)+((st.tx||0)-(st.sx||0))*p;
+  const baseY=(st.sy||0)+((st.ty||0)-(st.sy||0))*p;
+  const y=baseY-Math.sin(p*Math.PI)*(st.peak||38);
+  return {x,y,p};
+}
+
+function drawWaterfallCaveMirrorStoneProjectile(c,cave,tk){
+  const st=cave&&cave.mirrorStoneThrow;
+  if(!st||st.landed||st.t<st.releaseT)return false;
+  const pos=waterfallCaveMirrorStoneProjectilePos(st);
+  const x=Math.round(pos.x),y=Math.round(pos.y),p=pos.p;
+  c.save();
+  c.globalAlpha=0.16+0.16*p;
+  c.fillStyle='#000000';
+  c.fillRect(Math.round((st.sx||x)+((st.tx||x)-(st.sx||x))*p)-5,Math.round((st.sy||y)+((st.ty||y)-(st.sy||y))*p)+3,10,2);
+  c.globalAlpha=1;
+  const s=Math.max(2,Math.round(5-p*2));
+  c.fillStyle='#11181c';
+  c.fillRect(x-Math.ceil(s/2),y-Math.ceil(s/2)+1,s+1,s);
+  c.fillStyle='#6c7a80';
+  fillPixelPoly(c,[[x-2,y-3],[x+3,y-2],[x+4,y+2],[x-1,y+4],[x-4,y+1]]);
+  c.fillStyle='#c8d4d4';
+  c.fillRect(x-1,y-2,2,1);
+  c.restore();
+  return true;
+}
+
+function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
+  if(!cave||cave.scene!=='mirrorPool')return false;
+  const st=cave.mirrorStoneThrow;
+  const holding=!!cave.mirrorStoneHeld;
+  const preRelease=st&&st.active&&st.t<st.releaseT;
+  if(!holding&&!preRelease)return false;
+  const facing=cave.facing||'front';
+  const throwP=preRelease?clamp(st.t/Math.max(1,st.releaseT),0,1):0;
+  c.save();
+  c.translate(lx,ly);
+  c.scale(scale,scale);
+  function r(x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h)}
+  const colors=typeof COL==='object'&&COL?COL:{skin:'#ffd9a8'};
+  const skin=colors.skin||'#ffd9a8';
+  if(facing==='left'||facing==='right'){
+    const d=facing==='right'?1:-1;
+    const handX=d*(3+Math.round(5*throwP));
+    const handY=-7-Math.round(Math.sin(throwP*Math.PI)*5);
+    r(d>0?2:-4,-7,2,2,skin);
+    r(handX,handY,2,2,skin);
+    r(handX+d,handY-2,3,3,'#6c7a80');
+    r(handX+d,handY-2,2,1,'#c8d4d4');
+  }else{
+    const side=facing==='back'?-1:1;
+    const handX=side*(3+Math.round(2*throwP));
+    const handY=-6-Math.round(5*throwP);
+    r(side>0?2:-4,-7,2,2,skin);
+    r(handX,handY,2,2,skin);
+    r(handX-1,handY-3,4,3,'#6c7a80');
+    r(handX,handY-3,2,1,'#c8d4d4');
+  }
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveChurchModel(c,x,y,tk,obj,style,near,pulse){
   const active=!!(obj&&obj.activated);
   const light=active||near?1:clamp(pulse||0,0,1);
@@ -1436,6 +1556,9 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
         c.fillRect(x-Math.round(w/2),y-3+i*4,w,1);
       }
       c.globalAlpha=1;
+      drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk);
+    }else if(kind==='throwStonePile'){
+      drawWaterfallCaveThrowStonePile(c,x,y,obj,style,near,pulse);
     }else if(kind==='runeWall'){
       drawWaterfallCaveRuneWall(c,x,y,tk,active,pulse,def,obj);
     }else if(kind==='viewCard'){
@@ -1529,6 +1652,8 @@ function drawWaterfallCaveAdventureView(c,cave,tk){
   const lemScale=waterfallCaveLemmingScale(cave);
   drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.30);
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
+  drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,lemScale);
+  drawWaterfallCaveMirrorStoneProjectile(c,cave,tk);
   drawWaterfallCaveChurchLemmingOcclusion(c,cave,tk,style,lx,ly,lemScale);
   if(cave.scene==='emberPassage'){
     drawWaterfallCaveLemmingFireLight(c,cave,lx,ly,lemScale,430);
