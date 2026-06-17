@@ -14,7 +14,7 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_runes.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_runes.js','js/07_portal_stone.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
@@ -39,6 +39,7 @@ if (debugHtml) {
   const debugManualIdx = debugScripts.indexOf('js/07_manual_control.js');
   const debugWaterfallScenesIdx = debugScripts.indexOf('js/07_waterfall_cave_scenes.js');
   const debugRunesIdx = debugScripts.indexOf('js/07_runes.js');
+  const debugPortalStoneIdx = debugScripts.indexOf('js/07_portal_stone.js');
   const debugWaterfallIdx = debugScripts.indexOf('js/07_waterfall_cave.js');
   const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
   const debugCutsceneIdx = debugScripts.indexOf('js/07_cutscenes.js');
@@ -46,7 +47,7 @@ if (debugHtml) {
   const debugWaterfallRenderIdx = debugScripts.indexOf('js/11_waterfall_cave_render.js');
   const debugPlayRenderIdx = debugScripts.indexOf('js/11_play_render.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugRunesIdx <= debugWaterfallScenesIdx || debugWaterfallIdx <= debugRunesIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugRunesIdx <= debugWaterfallScenesIdx || debugPortalStoneIdx <= debugRunesIdx || debugWaterfallIdx <= debugPortalStoneIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
@@ -100,6 +101,7 @@ for (const token of ['PROFILE_INDEX_KEY','PROFILE_KEY_PREFIX','ensureProfileInde
 }
 const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
 const runeCode = fs.readFileSync(path.join(root, 'js/07_runes.js'), 'utf8');
+const portalStoneCode = fs.readFileSync(path.join(root, 'js/07_portal_stone.js'), 'utf8');
 const levelsCode = fs.readFileSync(path.join(root, 'js/06_levels.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
 const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
@@ -138,11 +140,14 @@ if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('
 if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHolyLemmingForLevel') || !gameCode.includes('normalizeHolyLemmings')) {
   throw new Error('Blessed lemmels should unlock exactly one persistent holy hatch lemmel for future levels');
 }
-if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('unlockHolyTeleportStone') || !gameCode.includes('teleportStone')) {
-  throw new Error('Teleport stone should be persisted as a holy lemmel property');
+if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('portalStone:null')) {
+  throw new Error('Teleport stone profile and runtime state should remain in js/07_game.js');
 }
-if (!gameCode.includes('PORTAL_STONE_MAX_DIST') || !gameCode.includes('beginPortalStonePlacement') || !gameCode.includes('placePortalStoneExit') || !gameCode.includes('updatePortalStone')) {
-  throw new Error('Unlocked teleport stone should create active world portals from the holy lemmel');
+for (const token of ['PORTAL_STONE_MAX_DIST','PORTAL_STONE_ENTER_COOLDOWN','unlockHolyTeleportStone','beginPortalStonePlacement','placePortalStoneExit','updatePortalStone']) {
+  if (!portalStoneCode.includes(token)) throw new Error(`Teleport stone module is missing ${token}`);
+}
+for (const token of ['const PORTAL_STONE_MAX_DIST','  unlockHolyTeleportStone(l){','  portalStoneButtonVisible(){','  portalStoneOwner(){','  portalStoneSurfaceClear(x,y){','  beginPortalStonePlacement(l){','  placePortalStoneExit(wx,wy){','  updatePortalStone(){']) {
+  if (gameCode.includes(token)) throw new Error(`07_game.js should not own portal-stone implementation: ${token}`);
 }
 for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','recordLevelResult','profileLeaderboardRows','profileStats']) {
   if (!gameCode.includes(token)) throw new Error(`Profile runtime is missing ${token}`);
@@ -1318,13 +1323,23 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Rune discovery and completion sounds should not repeat while standing by the rune wall');
   }
   const soundsBeforeRuneRevisit = runeDiscoverSounds;
+  const completeSoundsBeforeRuneRevisit = runeCompleteSounds;
   delete G.waterfallCave.sceneState.glyphArchive.runeWall;
   const revisitedRuneWall = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'runeWall');
   G.waterfallCave.lemX = revisitedRuneWall.obj.x + (revisitedRuneWall.def.runes[0].dx || 0);
   G.waterfallCave.lemY = revisitedRuneWall.obj.y + (revisitedRuneWall.def.runes[0].dy || 0);
   G.tick();
-  if (!revisitedRuneWall.obj.readComplete || !revisitedRuneWall.obj.completeAnnounced || runeDiscoverSounds !== soundsBeforeRuneRevisit) {
-    throw new Error('Persisted rune discoveries should restore rune wall state without replaying discovery sounds');
+  if (!revisitedRuneWall.obj.readComplete || revisitedRuneWall.obj.completeAnnounced || runeDiscoverSounds !== soundsBeforeRuneRevisit + 1 || runeCompleteSounds !== completeSoundsBeforeRuneRevisit) {
+    throw new Error('Persisted rune discoveries should restore rune wall state but still play local read feedback on revisit');
+  }
+  for (let i = 1; i < revisitedRuneWall.def.runes.length; i++) {
+    const rune = revisitedRuneWall.def.runes[i];
+    G.waterfallCave.lemX = revisitedRuneWall.obj.x + (rune.dx || 0);
+    G.waterfallCave.lemY = revisitedRuneWall.obj.y + (rune.dy || 0);
+    G.tick();
+  }
+  if (!revisitedRuneWall.obj.completeAnnounced || runeDiscoverSounds !== soundsBeforeRuneRevisit + revisitedRuneWall.def.runes.length || runeCompleteSounds !== completeSoundsBeforeRuneRevisit + 1) {
+    throw new Error('Reading all persisted runes again should play one local completion chime for the room visit');
   }
   const churchCard = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchCard');
   if (!churchCard) throw new Error('Glyph archive is missing the Dala-Floda church card');

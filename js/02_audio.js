@@ -474,18 +474,19 @@ const AU={
     const t=this.now(), i=Math.max(0,Number.isFinite(index)?index:0);
     const step=Number.isFinite(total)&&total>1?i/(total-1):0;
     const base=740+step*250;
-    this.tone(base,0.050,'triangle',0.016,1.04,t);
-    this.tone(base*1.5,0.060,'sine',0.009,0.98,t+0.035);
+    this.tone(base,0.060,'triangle',0.034,1.04,t);
+    this.tone(base*1.5,0.075,'sine',0.018,0.98,t+0.035);
+    this.softNoise(0.055,0.006,2600,0.72,t+0.010,{type:'bandpass',q:0.8,smooth:0.42,attack:0.006,release:0.038});
   },
   sWaterfallCaveRunesComplete(){
     if(!this.rateFx('waterfall-cave-runes-complete',1.4))return;
     const t=this.now();
-    this.padTone(523,0.72,'sine',0.016,t);
-    this.padTone(784,0.82,'triangle',0.018,t+0.06);
-    this.padTone(1047,0.90,'sine',0.014,t+0.16);
-    this.tone(1568,0.18,'triangle',0.024,1.02,t+0.30);
-    this.tone(2093,0.16,'sine',0.014,0.98,t+0.44);
-    this.softNoise(0.34,0.006,2200,0.62,t+0.08,{type:'bandpass',q:0.70,smooth:0.78,attack:0.05,release:0.24});
+    this.padTone(523,0.82,'sine',0.030,t);
+    this.padTone(784,0.92,'triangle',0.034,t+0.06);
+    this.padTone(1047,1.02,'sine',0.026,t+0.16);
+    this.tone(1568,0.22,'triangle',0.044,1.02,t+0.30);
+    this.tone(2093,0.20,'sine',0.026,0.98,t+0.44);
+    this.softNoise(0.42,0.012,2200,0.62,t+0.08,{type:'bandpass',q:0.70,smooth:0.78,attack:0.05,release:0.28});
   },
   sWaterfallCaveTeleportStone(){
     if(!this.rateFx('waterfall-cave-teleport-stone',1.2))return;

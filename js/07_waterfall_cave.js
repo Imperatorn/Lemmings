@@ -137,7 +137,6 @@ Object.assign(G,{
       if(obj.readRunes[id])readCount++;
     }
     obj.readComplete=readCount>=runes.length;
-    if(obj.readComplete)obj.completeAnnounced=true;
     return true;
   },
   readWaterfallCaveRune(hit){
@@ -154,18 +153,22 @@ Object.assign(G,{
     obj.activeRuneId=id;
     obj.activeRuneIndex=picked.index;
     obj.readRunes=obj.readRunes||{};
+    obj.localReadRunes=obj.localReadRunes||{};
     const discovery=this.recordRuneDiscovery?this.recordRuneDiscovery(desc):null;
-    const newlyRead=discovery?!!discovery.newly:!obj.readRunes[id];
+    const localNew=!obj.localReadRunes[id];
+    const newlyRead=localNew||(discovery?!!discovery.newly:!obj.readRunes[id]);
+    obj.localReadRunes[id]=true;
     obj.readRunes[id]=true;
     obj.readT=Math.max(obj.readT||0,110);
     obj.readLines=this.waterfallCaveRuneLines(picked.rune,picked.index,runes.length);
     obj.readComplete=Object.keys(obj.readRunes).length>=runes.length;
+    const localComplete=Object.keys(obj.localReadRunes).length>=runes.length;
     if(obj.readComplete){
       cave.flags=cave.flags||{};
       cave.flags.runesComplete=true;
     }
     if(newlyRead&&AU.sWaterfallCaveRuneDiscover)AU.sWaterfallCaveRuneDiscover(picked.index,runes.length);
-    if(obj.readComplete&&(discovery&&discovery.setCompletedNow||!wasComplete)&&!obj.completeAnnounced){
+    if((obj.readComplete||localComplete)&&(localComplete||discovery&&discovery.setCompletedNow||!wasComplete)&&!obj.completeAnnounced){
       obj.completeAnnounced=true;
       obj.completeT=Math.max(obj.completeT||0,150);
       cave.flags=cave.flags||{};
