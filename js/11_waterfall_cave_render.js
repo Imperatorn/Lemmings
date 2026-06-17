@@ -321,7 +321,6 @@ function drawWaterfallCaveMapOverlay(c,cave,tk){
   }
 
   let ly=y+66;
-  drawWaterfallCaveMapText(c,'Tecken',legendX,ly,2,'#201107','left');ly+=18;
   const usedKinds={};
   for(const id in visibleIds){
     const node=nodesById[id];
