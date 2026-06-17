@@ -1380,6 +1380,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.waterfallCave.mirrorStoneHeld || !G.waterfallCave.mirrorStoneThrow || !G.waterfallCave.mirrorStoneThrow.active) {
     throw new Error('Mirror pool carried stone was not thrown with Space');
   }
+  const firstStoneTarget = {x:G.waterfallCave.mirrorStoneThrow.tx, y:G.waterfallCave.mirrorStoneThrow.ty};
   if (!G.waterfallCaveMirrorStoneThrowLocks(G.waterfallCave)) {
     throw new Error('Mirror pool stone throw should briefly lock movement for the throw animation');
   }
@@ -1390,6 +1391,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (!drawWaterfallCaveView(WCTX, 46)) throw new Error('Mirror pool splash view did not render');
   G.handleWaterfallCaveKeyUp(' ');
+  G.waterfallCave.lemX = throwStonePile.obj.x;
+  G.waterfallCave.lemY = throwStonePile.obj.y;
+  G.handleWaterfallCaveKey(' ');
+  G.handleWaterfallCaveKeyUp(' ');
+  G.handleWaterfallCaveKey(' ');
+  const secondThrow = G.waterfallCave.mirrorStoneThrow;
+  if (!secondThrow || !secondThrow.active || Math.hypot((secondThrow.tx || 0) - firstStoneTarget.x, (secondThrow.ty || 0) - firstStoneTarget.y) < 3) {
+    throw new Error('Mirror pool stone throws should land at varied points in the pool');
+  }
+  G.handleWaterfallCaveKeyUp(' ');
+  for (let i = 0; i < 70 && G.waterfallCave.mirrorStoneThrow && G.waterfallCave.mirrorStoneThrow.active; i++) G.tick();
   G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).minX;
   G.waterfallCave.lemY = 230;
   G.handleWaterfallCaveKey('ArrowLeft');

@@ -512,9 +512,10 @@ const AU={
   sWaterfallCaveStoneSplash(){
     if(!this.rateFx('waterfall-cave-stone-splash',0.12))return;
     const t=this.now();
-    this.softNoise(0.18,0.018,1550,0.42,t,{type:'bandpass',q:0.65,smooth:0.70,attack:0.006,release:0.110});
-    this.softNoise(0.24,0.010,520,0.34,t+0.018,{type:'lowpass',smooth:0.82,attack:0.010,release:0.18});
-    this.tone(245,0.055,'sine',0.010,0.82,t+0.015);
+    this.softNoise(0.14,0.010,1250,0.30,t,{type:'bandpass',q:0.55,smooth:0.80,attack:0.006,release:0.085});
+    this.softNoise(0.30,0.018,360,0.44,t+0.012,{type:'lowpass',smooth:0.88,attack:0.012,release:0.22});
+    this.softNoise(0.18,0.006,820,0.22,t+0.060,{type:'bandpass',q:0.45,smooth:0.72,attack:0.018,release:0.12});
+    this.tone(150,0.070,'sine',0.014,0.76,t+0.012);
   },
   sPortalStoneOpen(){
     if(!this.rateFx('portal-stone-open',0.18))return;

@@ -440,7 +440,7 @@ Object.assign(G,{
   },
   waterfallCaveMirrorStoneThrowLocks(cave){
     const st=cave&&cave.mirrorStoneThrow;
-    return !!(st&&st.active&&st.t<18);
+    return !!(st&&st.active&&st.t<((st.releaseT||14)+8));
   },
   pickWaterfallCaveMirrorStone(cave,pile){
     cave=cave||this.waterfallCave;
@@ -468,12 +468,15 @@ Object.assign(G,{
     const scale=typeof waterfallCaveLemmingScale==='function'?waterfallCaveLemmingScale(cave):2;
     const facing=cave.facing||'front';
     const side=facing==='left'?-1:(facing==='right'?1:0);
-    const sx=(cave.lemX||240)+side*Math.round(8*scale)+(facing==='front'?Math.round(4*scale):0);
-    const sy=(cave.lemY||220)-Math.round(23*scale);
-    const drift=clamp(((cave.lemX||240)-(pool.x||250))*0.24,-42,42);
-    const wobble=((cave.t||0)*13)%17-8;
-    const tx=(pool.x||250)+drift+wobble;
-    const ty=(pool.y||246)+2+(((cave.t||0)*7)%7-3);
+    const releaseSide=side||(facing==='back'?-1:1);
+    const sx=(cave.lemX||240)+(side?releaseSide*12:releaseSide*5)*scale;
+    const sy=(cave.lemY||220)-(side?13:15)*scale;
+    const seq=(cave.mirrorStoneThrowSeq=(cave.mirrorStoneThrowSeq||0)+1);
+    const seed=seq*97+(cave.t||0)*13+Math.round((cave.lemX||0)*3)+Math.round((cave.lemY||0)*5);
+    const angle=(typeof hash2==='function'?hash2(seed,17):Math.random())*Math.PI*2;
+    const radius=Math.sqrt(0.12+0.78*(typeof hash2==='function'?hash2(seed,31):Math.random()));
+    const tx=(pool.x||250)+Math.cos(angle)*radius*56;
+    const ty=(pool.y||246)+2+Math.sin(angle)*radius*14;
     const dist=Math.hypot(tx-sx,ty-sy);
     cave.mirrorStoneHeld=false;
     cave.mirrorStonePickedT=0;
@@ -482,7 +485,7 @@ Object.assign(G,{
     cave.running=false;
     cave.facing=Math.abs(tx-(cave.lemX||240))>24?(tx>(cave.lemX||240)?'right':'left'):(ty<(cave.lemY||220)?'back':'front');
     cave.mirrorStoneThrow={
-      active:true,t:0,releaseT:10,dur:clamp(Math.round(dist/5)+26,32,52),
+      active:true,t:0,releaseT:14,dur:clamp(Math.round(dist/5)+34,42,62),
       sx,sy,tx,ty,peak:34+dist*0.10,landed:false
     };
     if(AU.sWaterfallCaveStoneThrow)AU.sWaterfallCaveStoneThrow();

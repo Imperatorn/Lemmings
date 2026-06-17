@@ -1185,28 +1185,31 @@ function drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk){
 function waterfallCaveMirrorStoneProjectilePos(st){
   const rel=Number.isFinite(st&&st.releaseT)?st.releaseT:10;
   const dur=Math.max(1,(st&&st.dur||40)-rel);
-  const p=clamp(((st&&st.t||0)-rel)/dur,0,1);
+  const raw=clamp(((st&&st.t||0)-rel)/dur,0,1);
+  const p=raw*raw*(3-2*raw);
   const x=(st.sx||0)+((st.tx||0)-(st.sx||0))*p;
   const baseY=(st.sy||0)+((st.ty||0)-(st.sy||0))*p;
-  const y=baseY-Math.sin(p*Math.PI)*(st.peak||38);
-  return {x,y,p};
+  const arc=Math.sin(raw*Math.PI);
+  const y=baseY-Math.pow(Math.max(0,arc),0.86)*(st.peak||38);
+  return {x,y,p,raw};
 }
 
 function drawWaterfallCaveMirrorStoneProjectile(c,cave,tk){
   const st=cave&&cave.mirrorStoneThrow;
   if(!st||st.landed||st.t<st.releaseT)return false;
   const pos=waterfallCaveMirrorStoneProjectilePos(st);
-  const x=Math.round(pos.x),y=Math.round(pos.y),p=pos.p;
+  const x=Math.round(pos.x),y=Math.round(pos.y),p=pos.p,raw=pos.raw;
   c.save();
-  c.globalAlpha=0.16+0.16*p;
+  c.globalAlpha=0.14+0.18*p;
   c.fillStyle='#000000';
   c.fillRect(Math.round((st.sx||x)+((st.tx||x)-(st.sx||x))*p)-5,Math.round((st.sy||y)+((st.ty||y)-(st.sy||y))*p)+3,10,2);
   c.globalAlpha=1;
-  const s=Math.max(2,Math.round(5-p*2));
+  const s=Math.max(2,Math.round(5-raw*2));
   c.fillStyle='#11181c';
   c.fillRect(x-Math.ceil(s/2),y-Math.ceil(s/2)+1,s+1,s);
   c.fillStyle='#6c7a80';
-  fillPixelPoly(c,[[x-2,y-3],[x+3,y-2],[x+4,y+2],[x-1,y+4],[x-4,y+1]]);
+  const roll=((st.t||0)>>2)&1;
+  fillPixelPoly(c,[[x-2+roll,y-3],[x+3,y-2+roll],[x+4-roll,y+2],[x-1,y+4-roll],[x-4,y+1]]);
   c.fillStyle='#c8d4d4';
   c.fillRect(x-1,y-2,2,1);
   c.restore();
@@ -1220,7 +1223,8 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
   const preRelease=st&&st.active&&st.t<st.releaseT;
   if(!holding&&!preRelease)return false;
   const facing=cave.facing||'front';
-  const throwP=preRelease?clamp(st.t/Math.max(1,st.releaseT),0,1):0;
+  const rawP=preRelease?clamp(st.t/Math.max(1,st.releaseT),0,1):0;
+  const throwP=rawP*rawP*(3-2*rawP);
   c.save();
   c.translate(lx,ly);
   c.scale(scale,scale);
@@ -1229,17 +1233,25 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
   const skin=colors.skin||'#ffd9a8';
   if(facing==='left'||facing==='right'){
     const d=facing==='right'?1:-1;
-    const handX=d*(3+Math.round(5*throwP));
-    const handY=-7-Math.round(Math.sin(throwP*Math.PI)*5);
-    r(d>0?2:-4,-7,2,2,skin);
+    const lift=Math.sin(rawP*Math.PI);
+    const shoulderX=d*2,shoulderY=-6;
+    const elbowX=d*(4+3*throwP),elbowY=-8-3*lift;
+    const handX=d*(5+6*throwP),handY=-8-4*lift-3*throwP;
+    c.fillStyle=skin;
+    fillPixelPoly(c,[[shoulderX,shoulderY],[shoulderX+d*2,shoulderY],[elbowX+d,elbowY+1],[elbowX,elbowY+3]]);
+    fillPixelPoly(c,[[elbowX,elbowY],[elbowX+d*2,elbowY],[handX+d,handY+2],[handX,handY+3]]);
     r(handX,handY,2,2,skin);
     r(handX+d,handY-2,3,3,'#6c7a80');
     r(handX+d,handY-2,2,1,'#c8d4d4');
   }else{
     const side=facing==='back'?-1:1;
-    const handX=side*(3+Math.round(2*throwP));
-    const handY=-6-Math.round(5*throwP);
-    r(side>0?2:-4,-7,2,2,skin);
+    const lift=Math.sin(rawP*Math.PI);
+    const shoulderX=side*2,shoulderY=-6;
+    const elbowX=side*(3+2*throwP),elbowY=-8-2*lift;
+    const handX=side*(4+2*throwP),handY=-8-4*lift-5*throwP;
+    c.fillStyle=skin;
+    fillPixelPoly(c,[[shoulderX,shoulderY],[shoulderX+side*2,shoulderY],[elbowX+side,elbowY+1],[elbowX,elbowY+3]]);
+    fillPixelPoly(c,[[elbowX,elbowY],[elbowX+side*2,elbowY],[handX+side,handY+2],[handX,handY+3]]);
     r(handX,handY,2,2,skin);
     r(handX-1,handY-3,4,3,'#6c7a80');
     r(handX,handY-3,2,1,'#c8d4d4');
