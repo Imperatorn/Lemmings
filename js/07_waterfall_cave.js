@@ -465,28 +465,28 @@ Object.assign(G,{
     const poolHit=this.waterfallCaveMirrorPoolHit(cave);
     const pool=poolHit&&poolHit.obj;
     if(!pool)return false;
-    const scale=typeof waterfallCaveLemmingScale==='function'?waterfallCaveLemmingScale(cave):2;
-    const facing=cave.facing||'front';
-    const side=facing==='left'?-1:(facing==='right'?1:0);
-    const releaseSide=side||(facing==='back'?-1:1);
-    const sx=(cave.lemX||240)+(side?releaseSide*12:releaseSide*5)*scale;
-    const sy=(cave.lemY||220)-(side?13:15)*scale;
     const seq=(cave.mirrorStoneThrowSeq=(cave.mirrorStoneThrowSeq||0)+1);
     const seed=seq*97+(cave.t||0)*13+Math.round((cave.lemX||0)*3)+Math.round((cave.lemY||0)*5);
     const angle=(typeof hash2==='function'?hash2(seed,17):Math.random())*Math.PI*2;
     const radius=Math.sqrt(0.12+0.78*(typeof hash2==='function'?hash2(seed,31):Math.random()));
     const tx=(pool.x||250)+Math.cos(angle)*radius*56;
     const ty=(pool.y||246)+2+Math.sin(angle)*radius*14;
+    const oldFacing=cave.facing||'front',lemX=cave.lemX||240;
+    const throwFacing=Math.abs(tx-lemX)>10?(tx>lemX?'right':'left'):((oldFacing==='left'||oldFacing==='right')?oldFacing:'right');
+    const scale=typeof waterfallCaveLemmingScale==='function'?waterfallCaveLemmingScale(cave):2;
+    const side=throwFacing==='left'?-1:1;
+    const sx=(cave.lemX||240)+side*12*scale;
+    const sy=(cave.lemY||220)-13*scale;
     const dist=Math.hypot(tx-sx,ty-sy);
     cave.mirrorStoneHeld=false;
     cave.mirrorStonePickedT=0;
     cave.mirrorStoneSpaceBlocked=true;
     cave.walking=false;
     cave.running=false;
-    cave.facing=Math.abs(tx-(cave.lemX||240))>24?(tx>(cave.lemX||240)?'right':'left'):(ty<(cave.lemY||220)?'back':'front');
+    cave.facing=throwFacing;
     cave.mirrorStoneThrow={
       active:true,t:0,releaseT:14,dur:clamp(Math.round(dist/5)+34,42,62),
-      sx,sy,tx,ty,peak:34+dist*0.10,landed:false
+      sx,sy,tx,ty,peak:34+dist*0.10,landed:false,facing:throwFacing
     };
     if(AU.sWaterfallCaveStoneThrow)AU.sWaterfallCaveStoneThrow();
     return true;

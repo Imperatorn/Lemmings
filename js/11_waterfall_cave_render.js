@@ -1222,7 +1222,7 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
   const holding=!!cave.mirrorStoneHeld;
   const preRelease=st&&st.active&&st.t<st.releaseT;
   if(!holding&&!preRelease)return false;
-  const facing=cave.facing||'front';
+  const facing=(preRelease&&st&&st.facing)||cave.facing||'front';
   const rawP=preRelease?clamp(st.t/Math.max(1,st.releaseT),0,1):0;
   const throwP=rawP*rawP*(3-2*rawP);
   c.save();
