@@ -260,6 +260,11 @@ function drawMenu(c,tk){
     if(hov){c.fillStyle='rgba(80,140,255,0.15)';c.fillRect(x,y-4,w,18)}
     drawText(c,String(i+1).padStart(2,'0'),x+8,y,2,hov?'#fff':(active?'#80ffb0':'#8090b0'));
     drawText(c,L.name,x+58,y,2,hov?'#ffffff':'#c0c8e0');
+    const comp=G.levelCompletionStatus?G.levelCompletionStatus(i):null;
+    if(comp&&comp.hasExtra){
+      const label=comp.full?'FULL':(comp.cleared?'RUNOR KVAR':'RUNOR');
+      drawText(c,label,x+w-164,y+1,1,comp.full?'#ffe880':'#caa0ff');
+    }
     if(L.cave)drawText(c,'GROTTA',x+w-84,y+1,1,'#a8b8c8');
     else if(L.theme==='desert')drawText(c,'ÖKEN',x+w-64,y+1,1,'#ffd070');
     else if(L.theme==='city')drawText(c,'STAD',x+w-64,y+1,1,'#a8d8ff');
@@ -312,6 +317,11 @@ function drawBrief(c,tk){
   drawTextC(c,'VÄDER SLUMPAS VARJE FÖRSÖK: SOL, REGN/SKURAR/ÅSKA ELLER SNÖ',CW/2,178,1,'#80b8ff');
   drawTextC(c,'TEMPO: '+G.tempoName()+'  +/- ÄNDRAR',CW/2,190,1,'#ffd080');
   let infoY=202;
+  const runeStatus=G.levelRuneStatus?G.levelRuneStatus(G.levelIdx):null;
+  if(runeStatus&&runeStatus.hasRequirements){
+    drawTextC(c,runeStatus.completeAll?'RUNORNA I VATTENFALLSGROTTAN ÄR FUNNA':'HEMLIGHET: RUNOR FINNS BAKOM VATTNET',CW/2,infoY,1,runeStatus.completeAll?'#ffe880':'#caa0ff');
+    infoY+=12;
+  }
   const money=Math.max(0,G.money|0);
   const bonus=(G.pendingSkillBonus&&G.pendingSkillBonus[G.levelIdx])||{};
   const shopActive=money>0||Object.keys(bonus).length>0;
@@ -353,12 +363,14 @@ function drawBrief(c,tk){
 
 function drawResult(c,tk){
   const L=G.level,win=G.saved>=L.save;
+  const comp=G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
   c.fillStyle='#000008';c.fillRect(0,0,CW,CH);
   drawTextC(c,win?'BRA JOBBAT!':'OJDÅ...',CW/2,50,3,win?'#40ff40':'#ff5050');
   const pct=Math.floor(G.saved/L.lem*100),need=Math.ceil(L.save/L.lem*100);
   drawTextC(c,'DU RÄDDADE '+pct+'%',CW/2,100,2,'#fff');
   drawTextC(c,'KRAVET VAR '+need+'%',CW/2,122,2,'#a0a0b0');
   if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,'#ffd040');
+  if(win&&comp&&comp.hasExtra)drawTextC(c,comp.full?'BANA FULLBORDAD - ALLA RUNOR FUNNA':'BANA KLARAD - RUNOR SAKNAS',CW/2,G.saved>L.lem?158:146,1,comp.full?'#ffe880':'#caa0ff');
   if(win&&G.levelIdx<LEVELS.length-1)
     drawTextC(c,'KLICKA / ENTER: NÄSTA BANA',CW/2,170,1,'#ffd040');
   else if(win)

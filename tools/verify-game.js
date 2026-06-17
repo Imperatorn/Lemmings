@@ -101,6 +101,7 @@ const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
 const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
 const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
+const screensCode = fs.readFileSync(path.join(root, 'js/10_screens.js'), 'utf8');
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
@@ -145,6 +146,12 @@ for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','r
 }
 for (const token of ['runeProgress','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','runeCatalog']) {
   if (!gameCode.includes(token)) throw new Error(`Rune progress runtime is missing ${token}`);
+}
+for (const token of ['levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus']) {
+  if (!gameCode.includes(token)) throw new Error(`Level completion runtime is missing ${token}`);
+}
+if (!screensCode.includes('RUNOR KVAR') || !screensCode.includes('BANA FULLBORDAD - ALLA RUNOR FUNNA') || !screensCode.includes('BANA KLARAD - RUNOR SAKNAS')) {
+  throw new Error('Menu, briefing, and result screens should expose rune-based full-completion status');
 }
 if (!hudCode.includes("k:'portal'") || !hudCode.includes('hudButtons') || !hudCode.includes('drawPortalStonePortal')) {
   throw new Error('HUD should expose the teleport stone as a special non-counted tool with portal preview');
@@ -393,7 +400,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
-  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary',
+  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
@@ -769,6 +776,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevSfxOn = AU.sfxOn;
   const prevMoney = G.money;
   const prevPendingSkillBonus = G.pendingSkillBonus;
+  const prevRuneProgress = G.runeProgress;
+  const prevCleared = G.cleared;
   const prevWaterfallLooted = G.waterfallCaveLooted;
   const prevToasts = G.toasts;
   const prevMsg = G.msg;
@@ -808,9 +817,23 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWaterfallCaveChurchHymn = fade => { churchHymnStopped++; churchHymnFadeDurations.push(fade); };
   AU.musicOn = true;
   AU.sfxOn = true;
+  G.runeProgress = {v:1, discovered:{}, sets:{}};
+  G.cleared = new Array(LEVELS.length).fill(false);
   G.cutscenesOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
   if (waterfallIdx < 0) throw new Error('Missing waterfall cave fixture level');
+  const plainIdx = LEVELS.findIndex(L => L && L.decor && !/\bwaterfall\s*\(/.test(String(L.decor)));
+  if (!G.levelHasWaterfallSecrets(waterfallIdx) || !G.levelRuneStatus(waterfallIdx).hasRequirements || G.levelRuneStatus(waterfallIdx).completeAll) {
+    throw new Error('Waterfall levels should start as clearable but not rune-complete before their rune set is discovered');
+  }
+  if (plainIdx >= 0 && (G.levelHasWaterfallSecrets(plainIdx) || G.levelRuneRequirements(plainIdx).length !== 0)) {
+    throw new Error('Levels without waterfall secrets should not inherit rune requirements');
+  }
+  G.cleared[waterfallIdx] = true;
+  if (G.levelFullyCompleted(waterfallIdx) || G.levelCompletionStatus(waterfallIdx).label !== 'RUNOR SAKNAS') {
+    throw new Error('A cleared waterfall level should remain not fully completed while its runes are missing');
+  }
+  G.cleared[waterfallIdx] = false;
   G.startLevel(waterfallIdx);
   const wf = (G.decor || []).find(d => d && d.t === 'waterfall');
   if (!wf) throw new Error('Waterfall cave fixture is missing waterfall decor');
@@ -1262,6 +1285,13 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const firstRuneKey = 'waterfall.glyphArchive.' + runeWall.def.runes[0].id;
   if (!runtimeRunes.discovered || !runtimeRunes.discovered[firstRuneKey] || runtimeRunes.discovered[firstRuneKey].setTitle !== 'Runarkivets budskap') {
     throw new Error('Rune discovery should keep stable keys and rune metadata');
+  }
+  if (!G.levelRuneStatus(waterfallIdx).completeAll) {
+    throw new Error('A waterfall level rune requirement should be fulfilled after the waterfall rune set is discovered');
+  }
+  G.cleared[waterfallIdx] = true;
+  if (!G.levelFullyCompleted(waterfallIdx) || G.levelCompletionStatus(waterfallIdx).label !== 'FULLBORDAD') {
+    throw new Error('A cleared waterfall level should become fully completed once its rune requirements are fulfilled');
   }
   G.tick();
   if (runeCompleteSounds !== 1 || runeDiscoverSounds !== runeWall.def.runes.length) {
@@ -1727,6 +1757,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.sfxOn = prevSfxOn;
   G.money = prevMoney;
   G.pendingSkillBonus = prevPendingSkillBonus;
+  G.runeProgress = prevRuneProgress;
+  G.cleared = prevCleared;
   G.waterfallCaveLooted = prevWaterfallLooted;
   G.toasts = prevToasts;
   G.msg = prevMsg;

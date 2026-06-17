@@ -662,6 +662,67 @@ const G={
       sets:progress.sets
     };
   },
+  levelHasWaterfallSecrets(idx){
+    const L=LEVELS[clamp(idx|0,0,LEVELS.length-1)];
+    if(!L)return false;
+    if(L.waterfallSecrets===true)return true;
+    if(L.waterfallSecrets===false)return false;
+    if(Array.isArray(L.runeSets)&&L.runeSets.length)return true;
+    return !!(L.decor&&/\bwaterfall\s*\(/.test(String(L.decor)));
+  },
+  levelRuneRequirements(idx){
+    const L=LEVELS[clamp(idx|0,0,LEVELS.length-1)];
+    if(!L)return [];
+    const catalog=this.runeCatalog();
+    const sets=Array.isArray(catalog.sets)?catalog.sets:[];
+    const explicit=Array.isArray(L.runeSets)?L.runeSets.map(String):null;
+    if(explicit&&explicit.length)return sets.filter(s=>s&&explicit.includes(String(s.id)));
+    if(!this.levelHasWaterfallSecrets(idx))return [];
+    return sets.filter(s=>s&&(String(s.id||'').indexOf('waterfall.')===0||String(s.world||'')==='Bakom vattenfallet'));
+  },
+  levelRuneStatus(idx){
+    const requirements=this.levelRuneRequirements(idx);
+    const progress=this.normalizeRuneProgress(this.runeProgress);
+    let complete=0,read=0,total=0;
+    const missing=[];
+    for(const req of requirements){
+      const set=progress.sets&&progress.sets[req.id];
+      const setTotal=Math.max(0,(req.total||0),(set&&set.total)||0);
+      const setRead=Math.max(0,(set&&set.readCount)||0);
+      total+=setTotal;
+      read+=Math.min(setRead,setTotal||setRead);
+      if(set&&set.complete)complete++;
+      else missing.push(req);
+    }
+    const required=requirements.length;
+    return {
+      required,
+      complete,
+      missing,
+      read,
+      total,
+      hasRequirements:required>0,
+      completeAll:required===0||complete>=required,
+      label:required===0?'INGA RUNOR':(complete>=required?'RUNOR FUNNA':'RUNOR SAKNAS')
+    };
+  },
+  levelFullyCompleted(idx){
+    idx=clamp(idx|0,0,LEVELS.length-1);
+    const status=this.levelRuneStatus(idx);
+    return !!(this.cleared&&this.cleared[idx]&&status.completeAll);
+  },
+  levelCompletionStatus(idx){
+    idx=clamp(idx|0,0,LEVELS.length-1);
+    const rune=this.levelRuneStatus(idx);
+    const cleared=!!(this.cleared&&this.cleared[idx]);
+    return {
+      cleared,
+      full:cleared&&rune.completeAll,
+      rune,
+      hasExtra:rune.hasRequirements,
+      label:!cleared?'EJ KLARAD':(rune.hasRequirements?(rune.completeAll?'FULLBORDAD':'RUNOR SAKNAS'):'KLARAD')
+    };
+  },
   profileLevelStats(idx){
     this.profileStats=this.normalizeProfileStats(this.profileStats);
     const key=clamp(idx|0,0,LEVELS.length-1);
