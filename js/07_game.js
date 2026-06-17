@@ -1027,7 +1027,7 @@ const G={
     }
   },
 
-  startLevel(idx){
+  startLevel(idx,opts){
     if(this.clearCutscene)this.clearCutscene('level-start');
     if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     AU.stopWeather();
@@ -1097,11 +1097,13 @@ const G={
     this.initCaveDrips();
     this.buildAmbientLife();
     this.state='PLAY';
-    AU.sLetsGo();
-    AU.startMusic(this.musicKindForLevel(idx));
-    AU.startWeather(this.weatherKind);
     this.scheduleThunder(true);
-    this.toast('VÄDER: '+this.weatherName());
+    if(!opts||opts.audio!==false){
+      AU.sLetsGo();
+      AU.startMusic(this.musicKindForLevel(idx));
+      AU.startWeather(this.weatherKind);
+      this.toast('VÄDER: '+this.weatherName());
+    }
   },
 
   findSolidBelowSurface(x,minDepth,maxDepth){

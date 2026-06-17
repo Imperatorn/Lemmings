@@ -242,21 +242,22 @@ const AU={
     bank.fireOn=false;
     bank.nextFireCrackle=0;
   },
-  startWaterfallCave(){
+  startWaterfallCave(level){
     this.init();
     this.stopWaterfallCave(0.05);
     if(!this.ctx||!this.on||!this.sfxOn)return;
     const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
-    const body=this.loopNoise(6.4,0.035,460,{type:'lowpass',smooth:0.90,attack:0.9});
-    const wash=this.loopNoise(5.6,0.021,880,{type:'bandpass',q:0.38,smooth:0.88,attack:1.2});
-    const spray=this.loopNoise(4.8,0.011,2400,{type:'bandpass',q:0.50,smooth:0.68,attack:1.1});
+    const waterLevel=clamp(Number.isFinite(level)?level:1,0.05,1);
+    const body=this.loopNoise(6.4,0.035*waterLevel,460,{type:'lowpass',smooth:0.90,attack:0.9});
+    const wash=this.loopNoise(5.6,0.021*waterLevel,880,{type:'bandpass',q:0.38,smooth:0.88,attack:1.2});
+    const spray=this.loopNoise(4.8,0.011*waterLevel,2400,{type:'bandpass',q:0.50,smooth:0.68,attack:1.1});
     if(body)body.baseVol=0.035;
     if(wash)wash.baseVol=0.021;
     if(spray)spray.baseVol=0.011;
     if(body)bank.loopNodes.push(body);
     if(wash)bank.loopNodes.push(wash);
     if(spray)bank.loopNodes.push(spray);
-    bank.waterLevel=1;
+    bank.waterLevel=waterLevel;
   },
   setWaterfallCaveWaterLevel(level,fade){
     const bank=this.waterfallCave||(this.waterfallCave={loopNodes:[],fireNodes:[]});
@@ -459,6 +460,16 @@ const AU={
     this.padTone(1175,0.66,'triangle',0.013*s,t+0.05);
     this.tone(1568,0.20,'sine',0.020*s,1.01,t+0.12);
     this.tone(2093,0.16,'triangle',0.010*s,0.98,t+0.24);
+  },
+  sWaterfallCaveRunesComplete(){
+    if(!this.rateFx('waterfall-cave-runes-complete',1.4))return;
+    const t=this.now();
+    this.padTone(523,0.72,'sine',0.016,t);
+    this.padTone(784,0.82,'triangle',0.018,t+0.06);
+    this.padTone(1047,0.90,'sine',0.014,t+0.16);
+    this.tone(1568,0.18,'triangle',0.024,1.02,t+0.30);
+    this.tone(2093,0.16,'sine',0.014,0.98,t+0.44);
+    this.softNoise(0.34,0.006,2200,0.62,t+0.08,{type:'bandpass',q:0.70,smooth:0.78,attack:0.05,release:0.24});
   },
   sWaterfallCaveTeleportStone(){
     if(!this.rateFx('waterfall-cave-teleport-stone',1.2))return;

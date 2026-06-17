@@ -123,6 +123,7 @@ Object.assign(G,{
     if(!picked)return false;
     const runes=Array.isArray(def.runes)?def.runes:[];
     const id=picked.rune.id||('rune'+picked.index);
+    const wasComplete=!!obj.readComplete;
     obj.activeRuneId=id;
     obj.activeRuneIndex=picked.index;
     obj.readRunes=obj.readRunes||{};
@@ -130,6 +131,15 @@ Object.assign(G,{
     obj.readT=Math.max(obj.readT||0,110);
     obj.readLines=this.waterfallCaveRuneLines(picked.rune,picked.index,runes.length);
     obj.readComplete=Object.keys(obj.readRunes).length>=runes.length;
+    if(obj.readComplete&&!wasComplete&&!obj.completeAnnounced){
+      obj.completeAnnounced=true;
+      obj.completeT=Math.max(obj.completeT||0,150);
+      cave.flags=cave.flags||{};
+      cave.flags.runesComplete=true;
+      if(AU.sWaterfallCaveRunesComplete)AU.sWaterfallCaveRunesComplete();
+      else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
+      this.toast('RUNORNAS BUDSKAP ÄR HELT',150);
+    }
     return true;
   },
   waterfallCaveHitObject(p){
@@ -356,6 +366,7 @@ Object.assign(G,{
       if(Number.isFinite(obj.rippleT))obj.rippleT=Math.max(0,obj.rippleT-1);
       if(Number.isFinite(obj.flameT))obj.flameT=Math.max(0,obj.flameT-1);
       if(Number.isFinite(obj.readT))obj.readT=Math.max(0,obj.readT-1);
+      if(Number.isFinite(obj.completeT))obj.completeT=Math.max(0,obj.completeT-1);
       const nearScale=def.kind==='viewCard'?1.0:1.08;
       const near=this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,nearScale);
       if(def.kind==='viewCard'){
@@ -494,7 +505,7 @@ Object.assign(G,{
     const wf=this.findWaterfallCaveEntrance(l);
     return wf?this.enterWaterfallCave(l,wf):false;
   },
-  enterWaterfallCave(l,wf){
+  enterWaterfallCave(l,wf,opts){
     if(!l||!wf)return false;
     if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
     if(this.manual)this.manual.jumpQueued=null;
@@ -524,10 +535,11 @@ Object.assign(G,{
     if(AU.silenceMusicForWaterfallCave)AU.silenceMusicForWaterfallCave(1.0);
     else if(AU.stopMusic)AU.stopMusic();
     if(AU.stopWeather)AU.stopWeather();
-    if(AU.startWaterfallCave)AU.startWaterfallCave();
+    const startWaterLevel=opts&&Number.isFinite(opts.waterLevel)?opts.waterLevel:null;
+    if(AU.startWaterfallCave)AU.startWaterfallCave(startWaterLevel);
     if(this.clearTransientText)this.clearTransientText();
     else{this.toasts=[];this.msg='';this.msgT=0}
-    AU.sClick();
+    if(!opts||opts.click!==false)AU.sClick();
     return true;
   },
   exitWaterfallCave(reason){

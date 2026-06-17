@@ -206,14 +206,15 @@
     if(G.clearPortalStone)G.clearPortalStone();
   }
 
-  function startSelectedLevel(){
-    audioReady();
+  function startSelectedLevel(opts){
+    const levelAudio=!(opts&&opts.audio===false);
+    if(levelAudio)audioReady();
     stopLoop();
     DBG.gameInput=false;
     const idx=clamp(Number(DBG.levelSelect.value)||0,0,LEVELS.length-1);
     DBG.lastLevelIdx=idx;
     G.state='PLAY';
-    G.startLevel(idx);
+    G.startLevel(idx,{audio:levelAudio});
     G.paused=false;
     renderDebug();
     setStatus('Startade: '+LEVELS[idx].name,'ok');
@@ -341,7 +342,7 @@
 
   function setupWaterfallCaveScene(sceneId,spawnId,label){
     if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
-    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel({audio:false});
     clearDebugActors();
     const x=worldCenterX();
     const l=firstLiveLemming();
@@ -353,7 +354,7 @@
     const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
     G.decor.push(wf);
     focusWorldX(l.x);
-    if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
+    if(!G.enterWaterfallCave(l,wf,{waterLevel:0.12,click:false})){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
     if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry')){
       setStatus('Kunde inte ga till grottscen: '+sceneId,'warn');
       return;
@@ -586,10 +587,14 @@
   }
 
   function doAction(action){
+    if(action==='caveGlyphArchive'){
+      audioReady();
+      setupWaterfallCaveScene('glyphArchive','fromChurch','Runarkivet');
+      return;
+    }
     if(action!=='camLeft'&&action!=='camRight'&&!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
     audioReady();
     if(action&&action.indexOf('anim')===0){doAnimation(action);return}
-    if(action==='caveGlyphArchive'){setupWaterfallCaveScene('glyphArchive','fromChurch','Runarkivet');return}
     if(action==='portalStoneTest'){setupPortalStoneTest();return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;
