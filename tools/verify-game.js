@@ -110,7 +110,7 @@ const screensCode = fs.readFileSync(path.join(root, 'js/10_screens.js'), 'utf8')
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
-for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_MAP_KINDS','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','church:{','churchInterior:{','toCrystalGallery','churchCard','churchModel','viewCard','map:{','exits:[','objects:[','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveObjectDefault']) {
+for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_VARIANTS','WATERFALL_CAVE_MAP_KINDS','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','church:{','churchInterior:{','toCrystalGallery','churchCard','churchModel','viewCard','map:{','exits:[','objects:[','waterfallCaveVariantId','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveObjectDefault']) {
   if (!waterfallScenesCode.includes(token)) {
     throw new Error(`Waterfall cave scene registry is missing ${token}`);
   }
@@ -162,9 +162,13 @@ for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneD
 if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\(')) {
   throw new Error('Rune requirements should use explicit level secrets metadata, not decor string inspection');
 }
-const runeSetMatches = [...levelsCode.matchAll(/secrets:\{runeSets:\['([^']+)'\]\}/g)].map(m => m[1]);
+const runeSetMatches = [...levelsCode.matchAll(/secrets:\{[^}]*runeSets:\['([^']+)'\][^}]*\}/g)].map(m => m[1]);
+const caveVariantMatches = [...levelsCode.matchAll(/secrets:\{[^}]*runeSets:\['([^']+)'\][^}]*caveVariant:'([^']+)'[^}]*\}/g)].map(m => ({setId:m[1],variant:m[2]}));
 if (!runeSetMatches.includes('waterfall.glyphArchive') || new Set(runeSetMatches).size < 7) {
   throw new Error('Waterfall levels should declare distinct explicit rune set requirements in secrets.runeSets');
+}
+if (caveVariantMatches.length < 7 || !caveVariantMatches.some(v => v.setId === 'waterfall.glyphArchive' && v.variant === 'flodaChurch') || caveVariantMatches.filter(v => v.variant === 'flodaChurch').length !== 1) {
+  throw new Error('Waterfall rune levels should declare explicit cave variants, with only the first rune cave using flodaChurch');
 }
 if (!screensCode.includes('RUNOR KVAR') || !screensCode.includes('BANA FULLBORDAD - ALLA RUNOR FUNNA') || !screensCode.includes('BANA KLARAD - RUNOR SAKNAS')) {
   throw new Error('Menu, briefing, and result screens should expose rune-based full-completion status');
@@ -443,7 +447,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','levelWaterfallCaveVariant','waterfallCaveVariantId','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneFallback','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneExits','waterfallCaveSceneArchiveStyle','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'waterfallCaveRuneAt','waterfallCaveRuneLines','waterfallCaveRuneDescriptor','syncWaterfallCaveRuneObjectProgress','readWaterfallCaveRune',
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
@@ -849,12 +853,22 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     'KAOSKARTAN':'waterfall.chaosMap',
     'LEMMELMÄSTARPROVET':'waterfall.masterTrial'
   };
+  const expectedCaveVariantByRuneSet = {
+    'waterfall.glyphArchive':'flodaChurch',
+    'waterfall.darkForest':'darkForestArchive',
+    'waterfall.marbleCave':'marbleArchive',
+    'waterfall.forestRavine':'forestRavineArchive',
+    'waterfall.doublePonds':'doublePondsArchive',
+    'waterfall.chaosMap':'chaosArchive',
+    'waterfall.masterTrial':'masterTrialArchive'
+  };
   const seenWaterfallRuneSets = new Set();
   const runeCatalogSets = new Set((G.runeCatalog().sets || []).map(s => s && s.id));
   for (const [name, setId] of Object.entries(expectedRuneSetsByLevel)) {
     const idx = LEVELS.findIndex(L => L && L.name === name);
     const req = idx >= 0 ? G.levelRuneRequirements(idx) : [];
-    if (idx < 0 || !hasRuneSecrets(LEVELS[idx]) || !G.levelHasWaterfallSecrets(idx) || G.levelSecretRuneSets(idx)[0] !== setId || req.length !== 1 || !req[0] || req[0].id !== setId || !runeCatalogSets.has(setId)) {
+    const expectedVariant = expectedCaveVariantByRuneSet[setId];
+    if (idx < 0 || !hasRuneSecrets(LEVELS[idx]) || !G.levelHasWaterfallSecrets(idx) || G.levelSecretRuneSets(idx)[0] !== setId || req.length !== 1 || !req[0] || req[0].id !== setId || !runeCatalogSets.has(setId) || !LEVELS[idx].secrets || LEVELS[idx].secrets.caveVariant !== expectedVariant || G.levelWaterfallCaveVariant(idx) !== expectedVariant) {
       throw new Error(`Waterfall rune metadata is missing or wrong for ${name}`);
     }
     seenWaterfallRuneSets.add(setId);
@@ -933,6 +947,23 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const caveMap = G.waterfallCaveMapGraph();
   if (!caveMap.nodes.some(n => n.id === 'main' && Number.isFinite(n.x) && Number.isFinite(n.y)) || !caveMap.links.some(l => l.from === 'main' || l.to === 'main')) {
     throw new Error('Waterfall cave map graph is missing mapped cave rooms and links');
+  }
+  if (G.waterfallCave.variantId !== 'flodaChurch' || !G.waterfallCaveSceneIds().includes('churchInterior') || !caveMap.nodes.some(n => n.id === 'church')) {
+    throw new Error('The first waterfall rune cave should use the Floda church variant and show the church map branch');
+  }
+  const archiveOnlyCave = {scene:'glyphArchive', variantId:'darkForestArchive', sceneState:{}, flags:{}, visited:{glyphArchive:true}, lemX:240, lemY:220};
+  const archiveOnlyIds = G.waterfallCaveSceneIds(archiveOnlyCave);
+  const archiveOnlyMap = G.waterfallCaveMapGraph(archiveOnlyCave);
+  const archiveOnlyObjects = G.waterfallCaveSceneObjects(archiveOnlyCave);
+  const archiveOnlyExits = G.waterfallCaveSceneExits(archiveOnlyCave);
+  if (archiveOnlyIds.includes('church') || archiveOnlyIds.includes('churchInterior') || archiveOnlyMap.nodes.some(n => n.id === 'church' || n.id === 'churchInterior')) {
+    throw new Error('Archive-only cave variants should hide the church branch from scene ids and the map');
+  }
+  if (archiveOnlyObjects.some(hit => hit && hit.def && hit.def.id === 'churchCard') || !archiveOnlyObjects.some(hit => hit && hit.def && hit.def.id === 'runeWall')) {
+    throw new Error('Archive-only cave variants should keep the rune wall but remove the Floda church card');
+  }
+  if (archiveOnlyExits.some(exit => exit && exit.target === 'church') || G.waterfallCaveSceneDef('church', archiveOnlyCave) || G.waterfallCaveSceneFallback('church', archiveOnlyCave) !== 'glyphArchive') {
+    throw new Error('Archive-only cave variants should remove the church exit and safely fall back from hidden church scenes');
   }
   for (const id of caveSceneIds) {
     const scene = G.waterfallCaveSceneDef(id);

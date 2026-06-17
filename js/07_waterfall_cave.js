@@ -33,25 +33,50 @@ Object.assign(G,{
     if(typeof waterfallCaveCloneData==='function')return waterfallCaveCloneData(value);
     return value==null?value:JSON.parse(JSON.stringify(value));
   },
-  waterfallCaveObjectDefaultData(sceneId,objectId,fallback){
-    const value=typeof waterfallCaveObjectDefault==='function'?waterfallCaveObjectDefault(sceneId,objectId):null;
+  levelWaterfallCaveVariant(idx){
+    const L=LEVELS[clamp(idx|0,0,LEVELS.length-1)];
+    const secrets=L&&L.secrets&&typeof L.secrets==='object'?L.secrets:null;
+    const id=secrets&&secrets.caveVariant?String(secrets.caveVariant):'flodaChurch';
+    return typeof waterfallCaveVariantId==='function'?waterfallCaveVariantId(id):id;
+  },
+  waterfallCaveVariantId(cave){
+    const id=(cave&&cave.variantId)||this.levelWaterfallCaveVariant(this.levelIdx);
+    return typeof waterfallCaveVariantId==='function'?waterfallCaveVariantId(id):id;
+  },
+  waterfallCaveObjectDefaultData(sceneId,objectId,fallback,variantId){
+    const value=typeof waterfallCaveObjectDefault==='function'?waterfallCaveObjectDefault(sceneId,objectId,variantId||this.waterfallCaveVariantId(this.waterfallCave)):null;
     return value||this.cloneWaterfallCaveData(fallback);
   },
-  waterfallCaveSceneIds(){
-    return typeof waterfallCaveSceneIds==='function'?waterfallCaveSceneIds():['main','deep','camp'];
+  waterfallCaveSceneIds(cave){
+    return typeof waterfallCaveSceneIds==='function'?waterfallCaveSceneIds(this.waterfallCaveVariantId(cave||this.waterfallCave)):['main','deep','camp'];
   },
-  waterfallCaveSceneDef(id){
-    return typeof waterfallCaveSceneDef==='function'?waterfallCaveSceneDef(id):null;
+  waterfallCaveSceneDef(id,cave){
+    return typeof waterfallCaveSceneDef==='function'?waterfallCaveSceneDef(id,this.waterfallCaveVariantId(cave||this.waterfallCave)):null;
+  },
+  waterfallCaveSceneFallback(scene,cave){
+    cave=cave||this.waterfallCave;
+    if(this.waterfallCaveSceneDef(scene,cave))return scene;
+    if((scene==='church'||scene==='churchInterior')&&this.waterfallCaveSceneDef('glyphArchive',cave))return 'glyphArchive';
+    return this.waterfallCaveSceneDef('main',cave)?'main':'';
   },
   waterfallCaveSceneRenderKey(caveOrId){
-    if(typeof waterfallCaveSceneRenderKey==='function')return waterfallCaveSceneRenderKey(caveOrId||this.waterfallCave);
+    if(typeof waterfallCaveSceneRenderKey==='function')return waterfallCaveSceneRenderKey(caveOrId||this.waterfallCave,this.waterfallCaveVariantId(typeof caveOrId==='object'?caveOrId:this.waterfallCave));
     return typeof caveOrId==='string'?caveOrId:((caveOrId&&caveOrId.scene)||'main');
   },
-  waterfallCaveMapGraph(){
-    return typeof waterfallCaveMapGraph==='function'?waterfallCaveMapGraph():{nodes:[],links:[],kinds:{}};
+  waterfallCaveMapGraph(cave){
+    return typeof waterfallCaveMapGraph==='function'?waterfallCaveMapGraph(this.waterfallCaveVariantId(cave||this.waterfallCave)):{nodes:[],links:[],kinds:{}};
   },
-  waterfallCaveSceneMapNode(sceneId){
-    return typeof waterfallCaveSceneMapNode==='function'?waterfallCaveSceneMapNode(sceneId):null;
+  waterfallCaveSceneMapNode(sceneId,cave){
+    return typeof waterfallCaveSceneMapNode==='function'?waterfallCaveSceneMapNode(sceneId,this.waterfallCaveVariantId(cave||this.waterfallCave)):null;
+  },
+  waterfallCaveSceneExits(cave){
+    cave=cave||this.waterfallCave;
+    return typeof waterfallCaveSceneExits==='function'?waterfallCaveSceneExits(cave&&cave.scene,this.waterfallCaveVariantId(cave)):[];
+  },
+  waterfallCaveSceneArchiveStyle(cave){
+    cave=cave||this.waterfallCave;
+    const def=this.waterfallCaveSceneDef(cave&&cave.scene,cave)||{};
+    return def.archiveStyle||'floda';
   },
   waterfallCaveSceneBounds(cave,sceneId){
     cave=cave||this.waterfallCave;
@@ -94,7 +119,7 @@ Object.assign(G,{
   },
   waterfallCaveSceneObjects(cave){
     cave=cave||this.waterfallCave;
-    const defs=typeof waterfallCaveSceneObjects==='function'?waterfallCaveSceneObjects(cave&&cave.scene):[];
+    const defs=typeof waterfallCaveSceneObjects==='function'?waterfallCaveSceneObjects(cave):[];
     return defs.map(raw=>{
       const def=this.waterfallCaveResolvedObjectDef(cave,raw);
       return {def,obj:this.waterfallCaveRuntimeObject(cave,def)};
@@ -490,7 +515,12 @@ Object.assign(G,{
     cave.inputMode=cave.inputMode||'direct';
     cave.mapOpen=!!cave.mapOpen;
     cave.hoverObject=cave.hoverObject||null;
+    cave.variantId=this.waterfallCaveVariantId(cave);
     if(!cave.scene)cave.scene='main';
+    if(!this.waterfallCaveSceneDef(cave.scene,cave)){
+      cave.scene=this.waterfallCaveSceneFallback(cave.scene,cave)||'main';
+      cave.hoverObject=null;
+    }
     if(cave.sceneExitBlockedKey&&(!cave.keys||!cave.keys[cave.sceneExitBlockedKey])){
       cave.sceneExitBlockedKey=null;
       cave.sceneExitBlockedTarget=null;
@@ -501,7 +531,8 @@ Object.assign(G,{
   setWaterfallCaveScene(scene,spawnId,opts){
     const cave=this.ensureWaterfallCaveSceneState(this.waterfallCave);
     if(!cave)return false;
-    const def=this.waterfallCaveSceneDef(scene);
+    scene=this.waterfallCaveSceneFallback(scene,cave);
+    const def=this.waterfallCaveSceneDef(scene,cave);
     if(!def)return false;
     const prevScene=cave.scene;
     cave.scene=def.id;
@@ -510,7 +541,7 @@ Object.assign(G,{
     cave.hoverObject=null;
     cave.sceneExitBlockedKey=opts&&opts.fromExitKey?opts.fromExitKey:null;
     cave.sceneExitBlockedTarget=cave.sceneExitBlockedKey?prevScene:null;
-    const spawn=typeof waterfallCaveSceneSpawn==='function'?waterfallCaveSceneSpawn(def.id,spawnId):null;
+    const spawn=typeof waterfallCaveSceneSpawn==='function'?waterfallCaveSceneSpawn(def.id,spawnId,cave.variantId):null;
     if(spawn){
       cave.lemX=spawn.x;cave.lemY=spawn.y;
       if(spawn.facing)cave.facing=spawn.facing;
@@ -550,7 +581,7 @@ Object.assign(G,{
   tryWaterfallCaveSceneExit(cave){
     cave=this.ensureWaterfallCaveSceneState(cave);
     if(!cave)return false;
-    const exits=typeof waterfallCaveSceneExits==='function'?waterfallCaveSceneExits(cave.scene):[];
+    const exits=this.waterfallCaveSceneExits(cave);
     for(const exit of exits){
       if(!this.waterfallCaveExitReady(cave,exit))continue;
       const it=cave.deepItem;
@@ -601,18 +632,19 @@ Object.assign(G,{
     this.clearRopeAim();
     const lootKey=this.waterfallCaveLootKey?this.waterfallCaveLootKey(wf):((this.levelIdx||0)+':'+Math.round(wf.x||0)+','+Math.round(wf.y||0));
     const looted=!!(this.waterfallCaveLooted&&this.waterfallCaveLooted[lootKey]);
-    const main=this.waterfallCaveSceneDef('main')||{},deep=this.waterfallCaveSceneDef('deep')||{},camp=this.waterfallCaveSceneDef('camp')||{};
-    const spawn=typeof waterfallCaveSceneSpawn==='function'?waterfallCaveSceneSpawn('main','entry'):{x:240,y:232,facing:'front'};
-    const chest=this.waterfallCaveObjectDefaultData('main','chest',{x:342,y:226,coins:3,opened:false,collected:false,near:false,glowT:0});
+    const variantId=this.levelWaterfallCaveVariant(this.levelIdx);
+    const main=this.waterfallCaveSceneDef('main',{variantId})||{},deep=this.waterfallCaveSceneDef('deep',{variantId})||{},camp=this.waterfallCaveSceneDef('camp',{variantId})||{};
+    const spawn=typeof waterfallCaveSceneSpawn==='function'?waterfallCaveSceneSpawn('main','entry',variantId):{x:240,y:232,facing:'front'};
+    const chest=this.waterfallCaveObjectDefaultData('main','chest',{x:342,y:226,coins:3,opened:false,collected:false,near:false,glowT:0},variantId);
     chest.collected=looted;chest.lootKey=lootKey;
     this.waterfallCave={
-      active:true,t:0,scene:'main',inputMode:'direct',lemId:l.id,lemX:spawn.x,lemY:spawn.y,dir:l.dir||1,facing:spawn.facing||'front',walking:false,running:false,walkAnim:0,lastStepT:-999,stepSide:0,
+      active:true,t:0,scene:'main',variantId,inputMode:'direct',lemId:l.id,lemX:spawn.x,lemY:spawn.y,dir:l.dir||1,facing:spawn.facing||'front',walking:false,running:false,walkAnim:0,lastStepT:-999,stepSide:0,
       keys:{left:false,right:false,up:false,down:false,run:false},
       bounds:this.cloneWaterfallCaveData(main.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298}),
       deepBounds:this.cloneWaterfallCaveData(deep.bounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276}),
       campBounds:this.cloneWaterfallCaveData(camp.bounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182}),
-      campFire:this.waterfallCaveObjectDefaultData('camp','campFire',{x:318,y:244,rx:54,ry:30}),
-      deepItem:this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false}),
+      campFire:this.waterfallCaveObjectDefaultData('camp','campFire',{x:318,y:244,rx:54,ry:30},variantId),
+      deepItem:this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},variantId),
       chest,
       inventory:[],flags:{},visited:{main:true},hoverObject:null,sceneState:{},mapOpen:false,
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},

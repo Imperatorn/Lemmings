@@ -193,6 +193,58 @@ const WATERFALL_CAVE_SCENES={
   }
 };
 
+const WATERFALL_CAVE_VARIANTS={
+  flodaChurch:{
+    id:'flodaChurch',
+    label:'Floda kyrkgrotta',
+    archiveStyle:'floda',
+    hiddenScenes:[],
+    scenes:{}
+  },
+  darkForestArchive:{
+    id:'darkForestArchive',
+    label:'Skogens runarkiv',
+    archiveStyle:'forest',
+    hiddenScenes:['church','churchInterior'],
+    scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
+  },
+  marbleArchive:{
+    id:'marbleArchive',
+    label:'Marmorns runarkiv',
+    archiveStyle:'marble',
+    hiddenScenes:['church','churchInterior'],
+    scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
+  },
+  forestRavineArchive:{
+    id:'forestRavineArchive',
+    label:'Ravinens runarkiv',
+    archiveStyle:'ravine',
+    hiddenScenes:['church','churchInterior'],
+    scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
+  },
+  doublePondsArchive:{
+    id:'doublePondsArchive',
+    label:'Dammarnas runarkiv',
+    archiveStyle:'water',
+    hiddenScenes:['church','churchInterior'],
+    scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
+  },
+  chaosArchive:{
+    id:'chaosArchive',
+    label:'Kaosets runarkiv',
+    archiveStyle:'chaos',
+    hiddenScenes:['church','churchInterior'],
+    scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
+  },
+  masterTrialArchive:{
+    id:'masterTrialArchive',
+    label:'Mästarprovets runarkiv',
+    archiveStyle:'master',
+    hiddenScenes:['church','churchInterior'],
+    scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
+  }
+};
+
 const WATERFALL_CAVE_RUNE_LAYOUT=[
   {id:'water',title:'Vattnet',dx:-26,dy:-22,rx:19,ry:28},
   {id:'dark',title:'Mörkret',dx:-7,dy:-22,rx:19,ry:28},
@@ -288,42 +340,101 @@ function waterfallCaveCloneData(v){
   return v==null?v:JSON.parse(JSON.stringify(v));
 }
 
-function waterfallCaveSceneIds(){
-  return Object.keys(WATERFALL_CAVE_SCENES);
+function waterfallCaveVariant(id){
+  return WATERFALL_CAVE_VARIANTS[String(id||'flodaChurch')]||WATERFALL_CAVE_VARIANTS.flodaChurch;
 }
 
-function waterfallCaveSceneDef(id){
-  return WATERFALL_CAVE_SCENES[id]||WATERFALL_CAVE_SCENES.main;
+function waterfallCaveVariantId(id){
+  return waterfallCaveVariant(id).id;
 }
 
-function waterfallCaveSceneRenderKey(caveOrId){
+function waterfallCaveSceneVariantConfig(variantId,sceneId){
+  const v=waterfallCaveVariant(variantId);
+  return (v.scenes&&v.scenes[sceneId])||{};
+}
+
+function waterfallCaveSceneAllowed(sceneId,variantId){
+  if(!WATERFALL_CAVE_SCENES[sceneId])return false;
+  const hidden=waterfallCaveVariant(variantId).hiddenScenes||[];
+  return !hidden.includes(sceneId);
+}
+
+function waterfallCaveApplySceneVariant(raw,variantId){
+  if(!raw||!waterfallCaveSceneAllowed(raw.id,variantId))return null;
+  const out=waterfallCaveCloneData(raw);
+  const v=waterfallCaveVariant(variantId);
+  const cfg=waterfallCaveSceneVariantConfig(v.id,out.id);
+  out.variantId=v.id;
+  if(out.id==='glyphArchive')out.archiveStyle=v.archiveStyle||'floda';
+  for(const key of ['label','render','audio']){
+    if(cfg[key]!=null)out[key]=cfg[key];
+  }
+  if(cfg.map)out.map=Object.assign({},out.map||{},waterfallCaveCloneData(cfg.map));
+  if(cfg.bounds)out.bounds=Object.assign({},out.bounds||{},waterfallCaveCloneData(cfg.bounds));
+  if(Array.isArray(cfg.removeExits)&&cfg.removeExits.length){
+    out.exits=(out.exits||[]).filter(e=>e&&!cfg.removeExits.includes(e.id));
+  }
+  if(Array.isArray(cfg.addExits)&&cfg.addExits.length){
+    out.exits=(out.exits||[]).concat(waterfallCaveCloneData(cfg.addExits));
+  }
+  if(Array.isArray(cfg.removeObjects)&&cfg.removeObjects.length){
+    out.objects=(out.objects||[]).filter(o=>o&&!cfg.removeObjects.includes(o.id));
+  }
+  if(Array.isArray(cfg.addObjects)&&cfg.addObjects.length){
+    out.objects=(out.objects||[]).concat(waterfallCaveCloneData(cfg.addObjects));
+  }
+  return out;
+}
+
+function waterfallCaveSceneIds(variantId){
+  return Object.keys(WATERFALL_CAVE_SCENES).filter(id=>waterfallCaveSceneAllowed(id,variantId));
+}
+
+function waterfallCaveSceneDef(id,variantId){
+  const sceneId=WATERFALL_CAVE_SCENES[id]?id:'main';
+  return waterfallCaveApplySceneVariant(WATERFALL_CAVE_SCENES[sceneId],variantId);
+}
+
+function waterfallCaveSceneRenderKey(caveOrId,variantId){
   const id=typeof caveOrId==='string'?caveOrId:(caveOrId&&caveOrId.scene)||'main';
-  const def=waterfallCaveSceneDef(id);
-  return def.render||def.id||'main';
+  const def=waterfallCaveSceneDef(id,variantId||(caveOrId&&caveOrId.variantId));
+  return def?(def.render||def.id||'main'):(id||'main');
 }
 
 function waterfallCaveSceneBoundsFor(cave,sceneId){
-  const def=waterfallCaveSceneDef(sceneId||(cave&&cave.scene)||'main');
+  const def=waterfallCaveSceneDef(sceneId||(cave&&cave.scene)||'main',cave&&cave.variantId);
+  if(!def)return {};
   return (cave&&def.boundsKey&&cave[def.boundsKey])||def.bounds||{};
 }
 
-function waterfallCaveSceneSpawn(sceneId,spawnId){
-  const def=waterfallCaveSceneDef(sceneId);
+function waterfallCaveSceneSpawn(sceneId,spawnId,variantId){
+  const def=waterfallCaveSceneDef(sceneId,variantId);
+  if(!def)return null;
   return waterfallCaveCloneData((def.spawns&&(def.spawns[spawnId]||def.spawns.entry||def.spawns.fromDeep))||null);
 }
 
-function waterfallCaveSceneObjects(sceneId){
-  const def=waterfallCaveSceneDef(sceneId);
+function waterfallCaveSceneObjects(sceneId,variantId){
+  if(sceneId&&typeof sceneId==='object'){
+    variantId=variantId||sceneId.variantId;
+    sceneId=sceneId.scene;
+  }
+  const def=waterfallCaveSceneDef(sceneId,variantId);
+  if(!def)return [];
   return def.objects||[];
 }
 
-function waterfallCaveSceneExits(sceneId){
-  const def=waterfallCaveSceneDef(sceneId);
+function waterfallCaveSceneExits(sceneId,variantId){
+  if(sceneId&&typeof sceneId==='object'){
+    variantId=variantId||sceneId.variantId;
+    sceneId=sceneId.scene;
+  }
+  const def=waterfallCaveSceneDef(sceneId,variantId);
+  if(!def)return [];
   return def.exits||[];
 }
 
-function waterfallCaveObjectDefault(sceneId,objectId){
-  const obj=(waterfallCaveSceneObjects(sceneId)||[]).find(o=>o&&o.id===objectId);
+function waterfallCaveObjectDefault(sceneId,objectId,variantId){
+  const obj=(waterfallCaveSceneObjects(sceneId,variantId)||[]).find(o=>o&&o.id===objectId);
   return waterfallCaveCloneData(obj&&obj.default||null);
 }
 
@@ -345,17 +456,17 @@ function waterfallCaveMapKind(kind){
   return WATERFALL_CAVE_MAP_KINDS[kind]||WATERFALL_CAVE_MAP_KINDS.cave;
 }
 
-function waterfallCaveSceneMapNode(sceneId){
-  const def=waterfallCaveSceneDef(sceneId);
+function waterfallCaveSceneMapNode(sceneId,variantId){
+  const def=waterfallCaveSceneDef(sceneId,variantId);
   return def&&def.map?Object.assign({id:def.id,label:def.label||def.id},waterfallCaveCloneData(def.map)):null;
 }
 
-function waterfallCaveMapGraph(){
-  const nodes=waterfallCaveSceneIds().map(id=>waterfallCaveSceneMapNode(id)).filter(Boolean);
+function waterfallCaveMapGraph(variantId){
+  const nodes=waterfallCaveSceneIds(variantId).map(id=>waterfallCaveSceneMapNode(id,variantId)).filter(Boolean);
   const links=[],seen={};
-  for(const id of waterfallCaveSceneIds()){
-    for(const exit of waterfallCaveSceneExits(id)){
-      if(!exit||!exit.target||!waterfallCaveSceneMapNode(exit.target))continue;
+  for(const id of waterfallCaveSceneIds(variantId)){
+    for(const exit of waterfallCaveSceneExits(id,variantId)){
+      if(!exit||!exit.target||!waterfallCaveSceneMapNode(exit.target,variantId))continue;
       const a=id<exit.target?id:exit.target,b=id<exit.target?exit.target:id,key=a+'>'+b;
       if(seen[key])continue;
       seen[key]=true;
