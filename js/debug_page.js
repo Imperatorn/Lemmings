@@ -13,6 +13,15 @@
     ['cave','Grotta'],['desert','Öken'],['lava','Lava'],['city','Stad']
   ];
   const WEATHER=[['sun','Sol/fåglar'],['rain','Regn'],['snow','Snö'],['cave','Dropp'],['stop','Stoppa väder']];
+  const CAVE_ARCHIVE_TESTS={
+    caveGlyphArchive:{level:'BYGG EN BRO',variant:'flodaChurch',label:'Runarkivet: Floda/Kyrkan'},
+    caveDarkForestArchive:{level:'MÖRK SKOG',variant:'darkForestArchive',label:'Runarkivet: Mörk skog'},
+    caveMarbleArchive:{level:'MARMORGROTTAN',variant:'marbleArchive',label:'Runarkivet: Marmor'},
+    caveForestRavineArchive:{level:'SKOGSRAVINEN',variant:'forestRavineArchive',label:'Runarkivet: Skogsravinen'},
+    caveDoublePondsArchive:{level:'DUBBLA DAMMAR',variant:'doublePondsArchive',label:'Runarkivet: Dubbla dammar'},
+    caveChaosArchive:{level:'KAOSKARTAN',variant:'chaosArchive',label:'Runarkivet: Kaos'},
+    caveMasterArchive:{level:'LEMMELMÄSTARPROVET',variant:'masterTrialArchive',label:'Runarkivet: Mästarprov'}
+  };
   const SFX_GROUPS=[
     ['Radio',[
       ['Mission accomplished',()=>playRadioSpeechTest('Mission accomplished')]
@@ -235,7 +244,8 @@
     if(levelAudio)audioReady();
     stopLoop();
     DBG.gameInput=false;
-    const idx=clamp(Number(DBG.levelSelect.value)||0,0,LEVELS.length-1);
+    const idx=clamp(Number.isFinite(opts&&opts.levelIdx)?opts.levelIdx:(Number(DBG.levelSelect.value)||0),0,LEVELS.length-1);
+    if(DBG.levelSelect)DBG.levelSelect.value=String(idx);
     DBG.lastLevelIdx=idx;
     G.state='PLAY';
     G.startLevel(idx,{audio:levelAudio});
@@ -367,7 +377,14 @@
   function setupWaterfallCaveScene(sceneId,spawnId,label,opts){
     opts=opts||{};
     if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
-    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel({audio:false});
+    let levelIdx=Number.isFinite(opts.levelIdx)?opts.levelIdx:null;
+    if(levelIdx==null&&opts.levelName){
+      const wanted=String(opts.levelName);
+      const found=LEVELS.findIndex(L=>L&&L.name===wanted);
+      if(found>=0)levelIdx=found;
+    }
+    if(levelIdx!=null)startSelectedLevel({audio:false,levelIdx});
+    else if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel({audio:false});
     clearDebugActors();
     const x=worldCenterX();
     const l=firstLiveLemming();
@@ -380,6 +397,7 @@
     G.decor.push(wf);
     focusWorldX(l.x);
     if(!G.enterWaterfallCave(l,wf,{audio:opts.audio!==false,waterLevel:0.05,click:false,musicFade:0})){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
+    if(opts.caveVariant&&G.waterfallCave)G.waterfallCave.variantId=String(opts.caveVariant);
     if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry',{audio:opts.audio!==false})){
       setStatus('Kunde inte ga till grottscen: '+sceneId,'warn');
       return;
@@ -612,9 +630,10 @@
   }
 
   function doAction(action){
-    if(action==='caveGlyphArchive'){
+    if(CAVE_ARCHIVE_TESTS[action]){
+      const spec=CAVE_ARCHIVE_TESTS[action];
       quietRunArchiveAudioStart();
-      setupWaterfallCaveScene('glyphArchive','fromChurch','Runarkivet',{audio:false});
+      setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false,levelName:spec.level,caveVariant:spec.variant});
       return;
     }
     if(action!=='camLeft'&&action!=='camRight'&&!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
