@@ -196,14 +196,14 @@ function drawProfileOverlay(c,tk){
     c.fillStyle=isActive?'rgba(80,220,120,0.14)':'rgba(255,255,255,0.04)';
     c.fillRect(52,y-2,376,16);
     drawText(c,(isActive?'> ':'  ')+p.name,62,y+3,1,isActive?'#b8ffb8':'#ffffff');
-    drawProfileOverlayButton(c,buttons,'select',isActive?'VALD':'VALJ',238,y,46,14,p.id,isActive);
+    drawProfileOverlayButton(c,buttons,'select',isActive?'VALD':'VÄLJ',238,y,46,14,p.id,isActive);
     drawProfileOverlayButton(c,buttons,'rename','NAMN',292,y,48,14,p.id,false);
     drawProfileOverlayButton(c,buttons,'delete','RADERA',348,y,64,14,p.id,false);
   }
   if(profiles.length>=8)drawTextC(c,'MAX 8 PROFILER',CW/2,215,1,'#8090a0');
   drawProfileOverlayButton(c,buttons,'new','NY PROFIL',52,226,86,17,null,false);
   drawProfileOverlayButton(c,buttons,'leaderboard','TOPPLISTA',148,226,86,17,null,false);
-  drawProfileOverlayButton(c,buttons,'close','STANG',346,226,72,17,null,false);
+  drawProfileOverlayButton(c,buttons,'close','STÄNG',346,226,72,17,null,false);
 }
 
 function drawLeaderboardOverlay(c,tk){
@@ -214,7 +214,7 @@ function drawLeaderboardOverlay(c,tk){
   drawText(c,'AVK',188,77,1,'#8090b0');
   drawText(c,'BEST',226,77,1,'#8090b0');
   drawText(c,'VIN',276,77,1,'#8090b0');
-  drawText(c,'FORS',318,77,1,'#8090b0');
+  drawText(c,'FÖRS',318,77,1,'#8090b0');
   drawText(c,'MYNT',366,77,1,'#8090b0');
   for(let i=0;i<rows.length&&i<7;i++){
     const r=rows[i], y=94+i*17;
@@ -230,7 +230,7 @@ function drawLeaderboardOverlay(c,tk){
   }
   drawText(c,'H=HELIG  S=STEN',54,214,1,'#708090');
   drawProfileOverlayButton(c,buttons,'profiles','PROFILER',52,226,84,17,null,false);
-  drawProfileOverlayButton(c,buttons,'close','STANG',346,226,72,17,null,false);
+  drawProfileOverlayButton(c,buttons,'close','STÄNG',346,226,72,17,null,false);
 }
 
 function drawMenu(c,tk){
@@ -348,7 +348,7 @@ function drawBrief(c,tk){
     }
     drawTextC(c,L.hint,CW/2,263,1,'#40c040');
   }else drawTextC(c,L.hint,CW/2,Math.min(infoY,L.night?226:228),1,'#40c040');
-  if((tk>>4)&1)drawTextC(c,shopActive?'KLICKA UTANFOR BUTIKEN FOR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,shopActive?282:236,shopActive?1:2,'#ffd040');
+  if((tk>>4)&1)drawTextC(c,shopActive?'KLICKA UTANFÖR BUTIKEN FÖR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,shopActive?282:236,shopActive?1:2,'#ffd040');
 }
 
 function drawResult(c,tk){

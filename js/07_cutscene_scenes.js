@@ -97,32 +97,32 @@
     if(kind==='fish'){
       pool=ev.rescueOnly?[
         {title:'BADRING UR DJUPET',text:['UR VATTNET KOMMER EN FISK MED BADRING.']},
-        {title:'OVANTAD HJALP',text:['EN GLIMT UNDER YTAN - EN BADRING!']},
-        {title:'SISTA SEKUNDEN',text:['FISKEN RUSAR FRAM MED EN ROD BADRING.']}
+        {title:'OVÄNTAD HJÄLP',text:['EN GLIMT UNDER YTAN - EN BADRING!']},
+        {title:'SISTA SEKUNDEN',text:['FISKEN RUSAR FRAM MED EN RÖD BADRING.']}
       ]:[
-        {title:'FISKEN HJALPER TILL',text:['PLASK! EN BADRING TILL LEMMELN.']},
+        {title:'FISKEN HJÄLPER TILL',text:['PLASK! EN BADRING TILL LEMMELN.']},
         {title:'SNABB FISK',text:['FISKEN KASTAR UT EN BADRING PRECIS I TID.']},
-        {title:'RADDNING I VATTNET',text:['EN LITEN FENA BLIR STOR HJALP.']}
+        {title:'RÄDDNING I VATTNET',text:['EN LITEN FENA BLIR STOR HJÄLP.']}
       ];
     }else if(kind==='dolphin'){
       pool=[
-        {title:'DELFINEN RADDAR',text:['DELFINEN TAR FART UNDERIFRAN OCH SKJUTER UPP LEMMELN.']},
-        {title:'UPP UR DJUPET',text:['ETT KRAFTIGT SPRANG LYFTER LEMMELN TILL LAND.']},
-        {title:'VATTNET EXPLODERAR',text:['DELFINEN BRYTER YTAN OCH BAR LEMMELN MOT KANTEN.']}
+        {title:'DELFINEN RÄDDAR',text:['DELFINEN TAR FART UNDERIFRÅN OCH SKJUTER UPP LEMMELN.']},
+        {title:'UPP UR DJUPET',text:['ETT KRAFTIGT SPRÅNG LYFTER LEMMELN TILL LAND.']},
+        {title:'VATTNET EXPLODERAR',text:['DELFINEN BRYTER YTAN OCH BÄR LEMMELN MOT KANTEN.']}
       ];
     }else{
       pool=ev.fromWater===false?[
-        {title:'UPPFOR VAGGEN',text:['LEMMELN SOKER FAST GREPP OCH BORJAR KLATTRA.']},
-        {title:'KLATTERTAG',text:['HAND FOR HAND TAR SIG LEMMELN UPPAT.']},
-        {title:'MOT TOPPEN',text:['VAGGEN HALLER, OCH LEMMELN KLATTRAR VIDARE.']}
+        {title:'UPPFÖR VÄGGEN',text:['LEMMELN SÖKER FAST GREPP OCH BÖRJAR KLÄTTRA.']},
+        {title:'KLÄTTERTAG',text:['HAND FÖR HAND TAR SIG LEMMELN UPPÅT.']},
+        {title:'MOT TOPPEN',text:['VÄGGEN HÅLLER, OCH LEMMELN KLÄTTRAR VIDARE.']}
       ]:[
-        {title:'GREPP I VAGGEN',text:['LEMMELN FANGAR EN KANT OCH BORJAR KLATTRA.']},
+        {title:'GREPP I VÄGGEN',text:['LEMMELN FÅNGAR EN KANT OCH BÖRJAR KLÄTTRA.']},
         {title:'UPP UR VATTNET',text:['ETT STEG I TAGET TAR SIG LEMMELN MOT TOPPEN.']},
-        {title:'NARA LAND',text:['VAGGEN HALLER, OCH LEMMELN KLATTRAR VIDARE.']}
+        {title:'NÄRA LAND',text:['VÄGGEN HÅLLER, OCH LEMMELN KLÄTTRAR VIDARE.']}
       ];
     }
-    if(cave&&kind!=='dolphin')pool=pool.concat([{title:'I GROTTMORKRET',text:['DROPPAR FALLER MEDAN LEMMELN TAR SIG UPP.']}]);
-    else if(night)pool=pool.concat([{title:'RADDAD I NATTEN',text:[rain?'REGNET PISKAR, MEN HJALPEN KOMMER FRAM.':(snow?'SNON FALLER NAR LEMMELN RADDAS.':'MORKRET STOPPAR INTE RADDNINGEN.')]}]);
+    if(cave&&kind!=='dolphin')pool=pool.concat([{title:'I GROTTMÖRKRET',text:['DROPPAR FALLER MEDAN LEMMELN TAR SIG UPP.']}]);
+    else if(night)pool=pool.concat([{title:'RÄDDAD I NATTEN',text:[rain?'REGNET PISKAR, MEN HJÄLPEN KOMMER FRAM.':(snow?'SNÖN FALLER NÄR LEMMELN RÄDDAS.':'MÖRKRET STOPPAR INTE RÄDDNINGEN.')]}]);
     const pick=pool[rescueTextIndex(kind,ev,pool.length)]||pool[0];
     return {title:pick.title,text:pick.text.slice()};
   }
@@ -381,7 +381,7 @@
     c.fillStyle='rgba(0,0,0,0.24)';
     c.fillRect(x-14*sc,y+29*sc,30*sc,3*sc);
 
-    // Bakifran: inga ansiktsdetaljer, bara nacke/har och rygg mot kameran.
+    // Bakifrån: inga ansiktsdetaljer, bara nacke/hår och rygg mot kameran.
     c.fillStyle='#f0c090';
     c.fillRect(x+8*sc,y-(19+reach*5)*sc,6*sc,20*sc);
     c.fillRect(x+13*sc,y-(25+reach*5)*sc,9*sc,5*sc);
@@ -515,7 +515,7 @@
         const a=i*0.78+tk*0.05, d=16+joy*38;
         c.fillRect(Math.round(lemX+Math.cos(a)*d),Math.round(lemY-18+Math.sin(a)*d*0.70),i%2?3:5,i%2?3:5);
       }
-      if(((tk>>2)&1)===0)drawTextC(c,'RADDAD!',lemX+4,lemY-58,2,'#fff7b0');
+      if(((tk>>2)&1)===0)drawTextC(c,'RÄDDAD!',lemX+4,lemY-58,2,'#fff7b0');
     }
     for(let i=0;i<9;i++){
       const bp=(p*1.2+i*0.13)%1;
@@ -702,7 +702,7 @@
     mode=(mode==='fullscreen'||mode==='full')?'fullscreen':'box';
     return {
       id:'cutscene-preview-'+mode,
-      label:mode==='fullscreen'?'Test: fullskarm':'Test: ruta',
+      label:mode==='fullscreen'?'Test: fullskärm':'Test: ruta',
       group:'Teknik',
       order:mode==='fullscreen'?20:10,
       title:'CUTSCENE TEST',
@@ -711,8 +711,8 @@
       respectPrefs:false,
       skippable:true,
       shots:[
-        {seconds:1.5,title:'CUTSCENE MODUL',text:['Spelet ar stoppat medan filmen spelar.'],scene:'field',bg:'#111b2e'},
-        {seconds:1.5,title:mode==='fullscreen'?'FULLSKARM':'RUTA',text:['Samma API kan rita i ruta eller over hela skarmen.'],scene:mode==='fullscreen'?'city':'cave',bg:mode==='fullscreen'?'#070b18':'#101014'}
+        {seconds:1.5,title:'CUTSCENE MODUL',text:['Spelet är stoppat medan filmen spelar.'],scene:'field',bg:'#111b2e'},
+        {seconds:1.5,title:mode==='fullscreen'?'FULLSKÄRM':'RUTA',text:['Samma API kan rita i ruta eller över hela skärmen.'],scene:mode==='fullscreen'?'city':'cave',bg:mode==='fullscreen'?'#070b18':'#101014'}
       ]
     };
   }
@@ -721,16 +721,16 @@
     return {
       id:'fish-ring-closeup',
       label:'Fisk ger badring',
-      group:'Raddningar',
+      group:'Räddningar',
       order:10,
-      title:'FISKEN HJALPER TILL',
+      title:'FISKEN HJÄLPER TILL',
       mode,
       pauseGame:true,
       skippable:true,
       advanceOnInput:false,
       shots:[{
         duration:Math.max(1,Math.floor(3000/TICK)),
-        title:'FISKEN HJALPER TILL',
+        title:'FISKEN HJÄLPER TILL',
         text:['PLASK! EN BADRING TILL LEMMELN.'],
         draw:drawFishRingCutscene
       }]
@@ -740,17 +740,17 @@
     mode=(mode==='box')?'box':'fullscreen';
     return {
       id:'dolphin-rescue-closeup',
-      label:'Delfinraddning',
-      group:'Raddningar',
+      label:'Delfinräddning',
+      group:'Räddningar',
       order:20,
-      title:'DELFINEN RADDAR',
+      title:'DELFINEN RÄDDAR',
       mode,
       pauseGame:true,
       skippable:true,
       advanceOnInput:false,
       shots:[{
         duration:Math.max(1,Math.floor(3000/TICK)),
-        title:'DELFINEN RADDAR',
+        title:'DELFINEN RÄDDAR',
         text:['EN DELFIN LYFTER LEMMELN UR VATTNET!'],
         draw:drawDolphinRescueCutscene
       }]
@@ -760,8 +760,8 @@
     mode=(mode==='box')?'box':'fullscreen';
     return {
       id:'water-climb-closeup',
-      label:'Klattrar ur vatten',
-      group:'Raddningar',
+      label:'Klättrar ur vatten',
+      group:'Räddningar',
       order:30,
       title:'UPP UR VATTNET',
       mode,
@@ -771,7 +771,7 @@
       shots:[{
         duration:Math.max(1,Math.floor(3000/TICK)),
         title:'UPP UR VATTNET',
-        text:['LEMMELN FAR GREPP OCH KLATTRAR UPPFOR VAGGEN.'],
+        text:['LEMMELN FÅR GREPP OCH KLÄTTRAR UPPFÖR VÄGGEN.'],
         draw:drawWaterClimbCutscene
       }]
     };
@@ -779,14 +779,14 @@
   function makeClimbCutsceneSpec(mode){
     const spec=makeWaterClimbCutsceneSpec(mode);
     spec.id='wall-climb-closeup';
-    spec.label='Klattrar pa vagg';
+    spec.label='Klättrar på vägg';
     spec.group='Skills';
     spec.order=35;
-    spec.title='UPPFOR VAGGEN';
+    spec.title='UPPFÖR VÄGGEN';
     spec.event={fromWater:false};
     if(spec.shots&&spec.shots[0]){
-      spec.shots[0].title='UPPFOR VAGGEN';
-      spec.shots[0].text=['LEMMELN TAR SIG UPPFOR VAGGEN.'];
+      spec.shots[0].title='UPPFÖR VÄGGEN';
+      spec.shots[0].text=['LEMMELN TAR SIG UPPFÖR VÄGGEN.'];
     }
     return spec;
   }

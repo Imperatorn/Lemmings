@@ -143,7 +143,7 @@ function drawCutsceneCaption(c,r,shot,cs,tk){
   if(title)drawText(c,title,r.x+12,y+8,1,'#ffd060');
   const lines=cutsceneWrappedLines(shot.text,r.w-24,1,cs.mode==='fullscreen'?3:2);
   for(let i=0;i<lines.length;i++)drawText(c,lines[i],r.x+12,y+22+i*11,1,'#f0f4ff');
-  const hint=cs.spec.skippable?'KLICK/ENTER: NASTA   ESC: HOPPA OVER':'';
+  const hint=cs.spec.skippable?'KLICK/ENTER: NÄSTA   ESC: HOPPA ÖVER':'';
   if(hint)drawTextC(c,hint,r.x+r.w/2,r.y+r.h-11,1,'#8090a8');
 }
 function drawCutsceneFrame(c,r,cs,shot,tk){

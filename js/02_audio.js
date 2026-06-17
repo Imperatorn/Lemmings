@@ -2,6 +2,8 @@
 // Procedurell chiptune-motor. All musik är egenkomponerad.
 const MUSIC_GAIN_BASE=0.50;
 const CAVE_MYSTERY_GAIN_BOOST=1.35;
+const CHURCH_HYMN_LOOP_SECONDS=32;
+const CHURCH_HYMN_LOOP_FADE_SECONDS=1;
 const AU={
   ctx:null, master:null, musGain:null, sfxGain:null, on:true, musicOn:true, sfxOn:true, musicVol:1, sfxVol:1, started:false,
   weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, waterfallCave:{loopNodes:[]}, churchHymn:null, fxLast:{},
@@ -298,12 +300,66 @@ const AU={
     if(typeof Audio==='undefined')return null;
     try{
       const el=new Audio('assets/blessthelord.mp3');
-      el.loop=true;
+      el.loop=false;
       el.preload='auto';
       el.volume=0;
-      this.churchHymn={el,timer:null,on:false,mode:'inside',distantLevel:1};
+      this.churchHymn={el,timer:null,loopTimer:null,loopStep:null,loopReady:false,on:false,mode:'inside',distantLevel:1,loopSeconds:CHURCH_HYMN_LOOP_SECONDS,loopFadeSeconds:CHURCH_HYMN_LOOP_FADE_SECONDS,baseVolume:0};
+      this.setupWaterfallCaveChurchHymnLoop();
       return el;
     }catch(_){return null}
+  },
+  waterfallCaveChurchHymnLoopGain(){
+    const bank=this.churchHymn, el=bank&&bank.el;
+    if(!bank||!el)return 1;
+    const end=Math.max(1,Number.isFinite(bank.loopSeconds)?bank.loopSeconds:CHURCH_HYMN_LOOP_SECONDS);
+    const fade=clamp(Number.isFinite(bank.loopFadeSeconds)?bank.loopFadeSeconds:CHURCH_HYMN_LOOP_FADE_SECONDS,0,end*0.5);
+    if(fade<=0)return 1;
+    let t=0;
+    try{t=Number(el.currentTime)||0}catch(_){return 1}
+    if(t<end-fade)return 1;
+    return clamp((end-t)/fade,0,1);
+  },
+  applyWaterfallCaveChurchHymnVolume(value){
+    const bank=this.churchHymn, el=bank&&bank.el;
+    if(!bank||!el)return false;
+    if(Number.isFinite(value))bank.baseVolume=clamp(value,0,1);
+    const base=clamp(Number.isFinite(bank.baseVolume)?bank.baseVolume:0,0,1);
+    const loopGain=this.waterfallCaveChurchHymnLoopGain();
+    try{el.volume=clamp(base*loopGain,0,1)}catch(_){}
+    return true;
+  },
+  setupWaterfallCaveChurchHymnLoop(){
+    const bank=this.churchHymn, el=bank&&bank.el;
+    if(!el||bank.loopReady)return !!el;
+    const step=()=>this.enforceWaterfallCaveChurchHymnLoop();
+    bank.loopStep=step;
+    bank.loopReady=true;
+    try{el.loop=false}catch(_){}
+    try{
+      if(el.addEventListener){
+        el.addEventListener('timeupdate',step);
+        el.addEventListener('ended',step);
+      }
+    }catch(_){}
+    return true;
+  },
+  enforceWaterfallCaveChurchHymnLoop(){
+    const bank=this.churchHymn, el=bank&&bank.el;
+    if(!bank||!el||!bank.on)return false;
+    const end=Math.max(1,Number.isFinite(bank.loopSeconds)?bank.loopSeconds:CHURCH_HYMN_LOOP_SECONDS);
+    let t=0;
+    try{t=Number(el.currentTime)||0}catch(_){return false}
+    this.applyWaterfallCaveChurchHymnVolume();
+    if(t<end&&!el.ended)return false;
+    try{el.currentTime=0}catch(_){}
+    this.applyWaterfallCaveChurchHymnVolume();
+    try{
+      if(el.paused&&bank.on){
+        const p=el.play();
+        if(p&&p.catch)p.catch(()=>{});
+      }
+    }catch(_){}
+    return true;
   },
   fadeWaterfallCaveChurchHymn(target,fade,done){
     const bank=this.churchHymn;
@@ -311,10 +367,10 @@ const AU={
     if(!el)return false;
     if(bank.timer){clearInterval(bank.timer);bank.timer=null}
     target=clamp(Number.isFinite(target)?target:0,0,1);
-    const start=clamp(Number.isFinite(el.volume)?el.volume:0,0,1);
+    const start=clamp(Number.isFinite(bank.baseVolume)?bank.baseVolume:el.volume,0,1);
     const dur=Math.max(0,fade==null?0.65:fade)*1000;
     if(dur<=16){
-      try{el.volume=target}catch(_){}
+      this.applyWaterfallCaveChurchHymnVolume(target);
       if(done)done();
       return true;
     }
@@ -323,7 +379,7 @@ const AU={
       const now=Date.now?Date.now():startT+dur;
       const p=clamp((now-startT)/dur,0,1);
       const v=start+(target-start)*p;
-      try{el.volume=clamp(v,0,1)}catch(_){}
+      this.applyWaterfallCaveChurchHymnVolume(v);
       if(p>=1){
         clearInterval(bank.timer);
         bank.timer=null;
@@ -346,6 +402,9 @@ const AU={
     bank.on=true;
     bank.mode=mode==='distant'?'distant':'inside';
     if(bank.mode!=='distant')bank.distantLevel=1;
+    this.setupWaterfallCaveChurchHymnLoop();
+    if(bank.loopTimer==null&&bank.loopStep)bank.loopTimer=setInterval(bank.loopStep,250);
+    this.enforceWaterfallCaveChurchHymnLoop();
     try{
       if(el.paused){
         const p=el.play();
@@ -374,6 +433,7 @@ const AU={
     bank.on=false;
     bank.mode='inside';
     bank.distantLevel=1;
+    if(bank.loopTimer!=null){clearInterval(bank.loopTimer);bank.loopTimer=null}
     return this.fadeWaterfallCaveChurchHymn(0,fade==null?0.65:fade,()=>{
       try{
         el.pause();

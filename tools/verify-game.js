@@ -214,7 +214,7 @@ if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850
 if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCaveMysteryMusic') || !audioCode.includes('CAVE_MYSTERY_GAIN_BOOST')) {
   throw new Error('Church scene should have an audible dedicated mystery music variant');
 }
-if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
+if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('CHURCH_HYMN_LOOP_SECONDS=32') || !audioCode.includes('CHURCH_HYMN_LOOP_FADE_SECONDS=1') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');
 }
 if (!audioCode.includes('sWaterfallCaveTeleportStone')) {
@@ -321,6 +321,27 @@ const sandbox = {
   cancelAnimationFrame(){},
   performance:{now(){return 0}},
   Image:function(){},
+  Audio:function(src){
+    this.src = src;
+    this.loop = false;
+    this.preload = '';
+    this.volume = 1;
+    this.currentTime = 0;
+    this.paused = true;
+    this.ended = false;
+    this._listeners = {};
+    this.addEventListener = (type, fn) => {
+      (this._listeners[type] = this._listeners[type] || []).push(fn);
+    };
+    this.play = () => {
+      this.paused = false;
+      this.ended = false;
+      return {catch(){}};
+    };
+    this.pause = () => {
+      this.paused = true;
+    };
+  },
   AudioContext:function(){},
   webkitAudioContext:function(){},
   window:{
@@ -407,11 +428,35 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveTeleportStone','sPortalStoneOpen','sPortalStoneTravel']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveTeleportStone','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU lemming warmth sfx method: ${name}`);
+}
+{
+  const prevChurchHymn = AU.churchHymn;
+  AU.churchHymn = null;
+  const hymnEl = AU.waterfallCaveChurchHymnElement();
+  if (!hymnEl || hymnEl.src !== 'assets/blessthelord.mp3' || hymnEl.loop !== false) {
+    throw new Error('Church hymn should use a custom 32 second loop instead of full-file HTMLAudio looping');
+  }
+  if (!AU.churchHymn || AU.churchHymn.loopSeconds !== 32 || AU.churchHymn.loopFadeSeconds !== 1) {
+    throw new Error('Church hymn loop should end at 32 seconds and fade out during the last second');
+  }
+  AU.churchHymn.on = true;
+  AU.churchHymn.baseVolume = 0.5;
+  hymnEl.currentTime = 31.5;
+  AU.applyWaterfallCaveChurchHymnVolume();
+  if (Math.abs(hymnEl.volume - 0.25) > 0.001) {
+    throw new Error('Church hymn should fade down during the final second before looping');
+  }
+  hymnEl.currentTime = 32.25;
+  hymnEl.paused = false;
+  if (!AU.enforceWaterfallCaveChurchHymnLoop() || hymnEl.currentTime !== 0 || Math.abs(hymnEl.volume - 0.5) > 0.001) {
+    throw new Error('Church hymn did not restart after the first 32 seconds');
+  }
+  AU.churchHymn = prevChurchHymn;
 }
 {
   const prevT = G.T;
@@ -571,13 +616,13 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     if (!registeredIds.has(id)) throw new Error(`Cutscene registry is missing debug scene: ${id}`);
   }
   const fishMeta = registeredCutscenes.find(s => s.id === 'fish-ring-closeup');
-  if (!fishMeta || fishMeta.group !== 'Raddningar' || !fishMeta.label) {
+  if (!fishMeta || fishMeta.group !== 'Räddningar' || !fishMeta.label) {
     throw new Error('Fish ring cutscene metadata is incomplete');
   }
   const fallbackFishSpec = G.makeFishRingCutsceneSpec('fullscreen');
   fallbackFishSpec.event = {rescueOnly:true, levelName:'VERIFY', themeKey:'dirt', weatherKind:'rain', lemX:20, lemY:128};
   G.applyRescueCutsceneText(fallbackFishSpec, 'fish');
-  if (!fallbackFishSpec.shots[0].text.join(' ').includes('FISK') || fallbackFishSpec.shots[0].title === 'FISKEN HJALPER TILL') {
+  if (!fallbackFishSpec.shots[0].text.join(' ').includes('FISK') || fallbackFishSpec.shots[0].title === 'FISKEN HJÄLPER TILL') {
     throw new Error('Fallback fish cutscene text was not specialized');
   }
   if (typeof G.rescueToastText('dolphin', {x:80, y:120}) !== 'string' || !G.rescueToastText('climb', {x:80, y:120})) {

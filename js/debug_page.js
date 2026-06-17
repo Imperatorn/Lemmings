@@ -1,5 +1,5 @@
 // --------------------------- DEBUG PAGE -----------------------------
-// Separat kontrollpanel for att provkora spelmoment och alla ljud utan
+// Separat kontrollpanel för att provköra spelmoment och alla ljud utan
 // att starta den vanliga titel/meny-loopen i 13_boot.js.
 (function(){
   const $=id=>document.getElementById(id);
@@ -150,14 +150,14 @@
       }
       ctx.fillStyle='#05070d';ctx.fillRect(0,HUDY,CW,CH-HUDY);
       drawText(ctx,'DEBUG',8,248,1,'#63d0ff');
-      drawText(ctx,(G.level.name||'NIVA').slice(0,34),70,248,1,'#dce8ff');
+      drawText(ctx,(G.level.name||'NIVÅ').slice(0,34),70,248,1,'#dce8ff');
       drawText(ctx,'LEM '+G.lems.length+'  CAM '+Math.round(G.cam),8,266,1,'#94a4ba');
-      drawText(ctx,DBG.running?'KOR':'PAUS',365,266,1,DBG.running?'#78dd86':'#ffd166');
+      drawText(ctx,DBG.running?'KÖR':'PAUS',365,266,1,DBG.running?'#78dd86':'#ffd166');
       if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
     }else{
       ctx.fillStyle='#05070d';ctx.fillRect(0,0,CW,CH);
       drawTextC(ctx,'LEMMEL DEBUG',CW/2,104,2,'#63d0ff');
-      drawTextC(ctx,'STARTA EN NIVA FOR ATT VISA SPELET',CW/2,144,1,'#94a4ba');
+      drawTextC(ctx,'STARTA EN NIVÅ FÖR ATT VISA SPELET',CW/2,144,1,'#94a4ba');
       if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
     }
   }
@@ -335,8 +335,8 @@
     const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
     G.decor.push(wf);
     focusWorldX(l.x);
-    if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte oppna vattenfallsgrottan.','warn');return}
-    finishAnimationSetup('Animation: direktstyrd lemming gar in bakom vattenfallet.');
+    if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
+    finishAnimationSetup('Animation: direktstyrd lemming går in bakom vattenfallet.');
   }
 
   function setupWaterfallCaveScene(sceneId,spawnId,label){
@@ -353,13 +353,13 @@
     const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
     G.decor.push(wf);
     focusWorldX(l.x);
-    if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte oppna vattenfallsgrottan.','warn');return}
+    if(!G.enterWaterfallCave(l,wf)){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
     if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry')){
       setStatus('Kunde inte ga till grottscen: '+sceneId,'warn');
       return;
     }
     if(G.clearWaterfallCaveMoveKeys)G.clearWaterfallCaveMoveKeys(G.waterfallCave);
-    finishAnimationSetup('Grottdebug: '+(label||sceneId)+'. Styr med piltangenterna, Shift gar snabbare, M visar kartan.');
+    finishAnimationSetup('Grottdebug: '+(label||sceneId)+'. Styr med piltangenterna, Shift går snabbare, M visar kartan.');
   }
 
   function setupPortalStoneTest(){
@@ -618,7 +618,7 @@
     }
     if(action==='plane'){
       const plane=G.spawnSupplyPlane(null,G.cam+VW/2);
-      renderDebug();setStatus(plane?'Paketflyg skickat.':'Flygplan ar avstangda i grottor.',plane?'ok':'warn');return;
+      renderDebug();setStatus(plane?'Paketflyg skickat.':'Flygplan är avstängda i grottor.',plane?'ok':'warn');return;
     }
     if(action==='monkey'){
       const before=G.monkeys.length;
@@ -643,7 +643,7 @@
     if(action==='spawnTree'){
       const x=clamp(Math.round(G.cam+VW/2),42,G.level.W-42);
       const baseY=G.findTreeGroundY?G.findTreeGroundY(x):groundYAt(x);
-      const tree=G.spawnGrowingTreeAt?G.spawnGrowingTreeAt(x,baseY,'DEBUG: TRAD VAXER!'):null;
+      const tree=G.spawnGrowingTreeAt?G.spawnGrowingTreeAt(x,baseY,'DEBUG: TRÄD VÄXER!'):null;
       renderDebug();setStatus(tree?'Trad skapat vid kamerans mitt.':'Kunde inte skapa trad har.',tree?'ok':'warn');return;
     }
   }
@@ -690,11 +690,11 @@
     if(kind==='waterClimb'&&G.makeWaterClimbCutsceneSpec){
       spec=G.makeWaterClimbCutsceneSpec(mode);
       spec.event=Object.assign(ctx,{lemX:x,lemY:waterY+6,dir:1,waterY,fromWater:true});
-      label='Klattrar ur vatten';
+      label='Klättrar ur vatten';
     }else if(kind==='climb'&&G.makeClimbCutsceneSpec){
       spec=G.makeClimbCutsceneSpec(mode);
       spec.event=Object.assign(ctx,{lemX:x,lemY:waterY-8,dir:1,waterY,fromWater:false});
-      label='Klattrar pa vagg';
+      label='Klättrar på vägg';
     }else if(kind==='fishRing'&&G.makeFishRingCutsceneSpec){
       spec=G.makeFishRingCutsceneSpec(mode);
       spec.event=Object.assign(ctx,{lemX:x+18,lemY:waterY+8,fishX:x-34,fishY:waterY+12,waterY,fromWater:true});
@@ -702,7 +702,7 @@
     }else if(kind==='dolphin'&&G.makeDolphinRescueCutsceneSpec){
       spec=G.makeDolphinRescueCutsceneSpec(mode);
       spec.event=Object.assign(ctx,{lemX:x+52,lemY:waterY-8,waterX:x-36,waterY:waterY+10,shoreX:x+82,shoreY:waterY-20,fromWater:true});
-      label='Delfinraddning';
+      label='Delfinräddning';
     }
     if(!spec){setStatus('Cutscene-variant saknas: '+kind,'warn');return}
     const textKind=kind==='fishRing'?'fish':(kind==='dolphin'?'dolphin':'climb');
@@ -737,7 +737,7 @@
     wrap.textContent='';
     const scenes=G.cutsceneList?G.cutsceneList({debug:true}):[];
     if(!scenes.length){
-      wrap.appendChild(makeButton('Inga scener',()=>setStatus('Inga cutscenes ar registrerade.','warn'),'danger'));
+      wrap.appendChild(makeButton('Inga scener',()=>setStatus('Inga cutscenes är registrerade.','warn'),'danger'));
       return;
     }
     for(const scene of scenes){

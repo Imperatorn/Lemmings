@@ -9,14 +9,14 @@ const TICK=62;            // ms per logik-steg (~16 fps, "chunkig" retrokänsla)
 const SPLAT_FALL=62;      // fallhöjd i pixlar som dödar
 const SILLY_JUMP_TICKS=Math.round(5000/TICK); // slump-hopp varar cirka 5 sekunder
 const DOLPHIN_RESCUE_CHANCE=0.20; // chans att en lemmel räddas ur vatten av en delfin
-const FISH_RING_CHANCE=0.33; // chans att en nara fisk ger en lemmel en badring i vatten
+const FISH_RING_CHANCE=0.33; // chans att en nära fisk ger en lemmel en badring i vatten
 const MEGA_MIN_PROGRESS=0.90; // !-paketet får tidigast komma när 90% av bantiden gått
 const MAX_PARTICLES=900;      // mjukt prestandaskydd mot partikelstormar
 const MAX_FLASHES=72;         // skydd om många explosioner råkar staplas
 const BUILD_STEP_TICKS=6;     // byggare/nedbyggare lagger plattor ca 33% snabbare an tidigare 8 tick
 const BUILD_MAX_BRICKS=12;    // antal plattor innan byggaren slutar och rycker pa axlarna
 const BUILD_BRICK_W=9, BUILD_BRICK_H=2, BUILD_ADVANCE_X=4, BUILD_STEP_Y=2;
-const TROLL_RAGE_TICKS=Math.round(3000/TICK); // trollet slar sonder en vagg i cirka 3 sekunder
+const TROLL_RAGE_TICKS=Math.round(3000/TICK); // trollet slår sönder en vägg i cirka 3 sekunder
 const TROLL_EVENT_SLOWDOWN=1.15, TROLL_LIFE_SCALE=0.94;
 const FLAME_TICKS=24, FLAME_RANGE=58;
 const MUMMY_SCARE_CHANCE=0.10;

@@ -284,7 +284,7 @@ Object.assign(G,{
     cave.flags=cave.flags||{};
     cave.flags.teleportStoneFound=true;
     cave.teleportStoneMessageT=180;
-    cave.teleportStoneMessageLines=['TELEPORTERINGSSTENEN HAR VAKNAT','DEN TILLHOR DEN HELIGA LAMMELN'];
+    cave.teleportStoneMessageLines=['TELEPORTERINGSSTENEN HAR VAKNAT','DEN TILLHÖR DEN HELIGA LÄMMELN'];
     this.unlockHolyTeleportStone(l);
     if(AU.sWaterfallCaveTeleportStone)AU.sWaterfallCaveTeleportStone();
     else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);

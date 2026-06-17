@@ -263,7 +263,7 @@ const G={
     return out;
   },
   shopOptions(){
-    const labels={climb:'KLATTR',float:'FALL',bomb:'BOMB',block:'BLOCK',build:'BYGG',downbuild:'NEDBYGG',bash:'HACKA',mine:'TUNNEL',dig:'GRAV',baz:'BAZ',jet:'JET',flame:'ELD',rope:'REP'};
+    const labels={climb:'KLÄTTR',float:'FALL',bomb:'BOMB',block:'BLOCK',build:'BYGG',downbuild:'NEDBYGG',bash:'HACKA',mine:'TUNNEL',dig:'GRÄV',baz:'BAZ',jet:'JET',flame:'ELD',rope:'REP'};
     return SKILLS.map(s=>({k:s.k,label:labels[s.k]||String(s.name||s.k).slice(0,7),cost:1}));
   },
   pendingBonusForLevel(idx){
@@ -279,7 +279,7 @@ const G={
     if(!opt)return false;
     this.money=Math.max(0,this.money|0);
     if(this.money<opt.cost){
-      this.toast('FOR LITE PENGAR');
+      this.toast('FÖR LITE PENGAR');
       AU.sShrug();
       return true;
     }
@@ -567,7 +567,7 @@ const G={
   },
   switchProfile(id,opts){
     if(!id||this.state==='PLAY'||(this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive())){
-      this.toast('BYT PROFIL FRAN MENYN');
+      this.toast('BYT PROFIL FRÅN MENYN');
       return false;
     }
     if(!opts||!opts.skipSave)this.savePrefs();
@@ -609,7 +609,7 @@ const G={
     if(existing.length>=8){this.toast('MAX 8 PROFILER');AU.sShrug();return false}
     let name='Spelare '+(existing.length+1);
     try{
-      const txt=window.prompt('Namn pa ny profil:',name);
+      const txt=window.prompt('Namn på ny profil:',name);
       if(txt==null)return false;
       name=txt;
     }catch(_){}
@@ -1624,21 +1624,21 @@ const G={
         'FISKEN KOM FRAM I SISTA SEKUNDEN!'
       ]:[
         'FISKEN KASTADE EN BADRING!',
-        'EN FISK GAV LEMMELN FLYTHJALP!',
+        'EN FISK GAV LEMMELN FLYTHJÄLP!',
         'BADRING LEVERERAD AV FISK!'
       ],
       dolphin:[
         'EN DELFIN SKJUTER UPP LEMMELN!',
-        'DELFINRADDNING VID VATTENKANTEN!',
+        'DELFINRÄDDNING VID VATTENKANTEN!',
         'DELFINEN LYFTE LEMMELN TILL LAND!'
       ],
       climb:[
-        'LEMMELN FICK GREPP I VAGGEN!',
+        'LEMMELN FICK GREPP I VÄGGEN!',
         'UPP UR VATTNET - ETT STEG I TAGET!',
-        'LEMMELN KLATTRAR MOT FAST MARK!'
+        'LEMMELN KLÄTTRAR MOT FAST MARK!'
       ]
     };
-    const pool=pools[kind]||['RADDNING!'];
+    const pool=pools[kind]||['RÄDDNING!'];
     const seed=[kind,this.level&&this.level.name,Math.round(ctx.x||ctx.lemX||0),Math.round(ctx.y||ctx.lemY||0),ctx.rescueOnly?'rescue':''].join('|');
     const idx=(typeof hashString==='function'?hashString(seed):seed.length)%pool.length;
     return pool[idx];
