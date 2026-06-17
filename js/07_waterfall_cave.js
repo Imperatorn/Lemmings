@@ -190,7 +190,7 @@ Object.assign(G,{
     this.holyLevelLemId=l.id;
     if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l);
     if(this.holyLemmingGlow)this.holyLemmingGlow(l,'blessing');
-    cave.blessingMessageT=180;
+    cave.blessingMessageT=240;
     cave.blessingMessageLines=['LÄMMELN HAR FÅTT GUDS VÄLSIGNELSE','OCH ÄR NU ODÖDLIG'];
     this.toast('LÄMMELN HAR FÅTT GUDS VÄLSIGNELSE OCH ÄR NU ODÖDLIG',180);
     return true;
@@ -211,8 +211,8 @@ Object.assign(G,{
     st.done=false;
     st.phase='enter';
     st.t=0;
-    const startX=clamp((cave.lemX||240)-82,(b.minX||78)+58,(cave.lemX||240)-36);
-    const startY=clamp(ly+58,(b.minY||132)+38,(b.maxY||276)-42);
+    const startX=clamp((cave.lemX||240)-86,(b.minX||78)+44,(cave.lemX||240)-38);
+    const startY=clamp(ly-46,(b.minY||108)+12,ly-24);
     st.priestX=startX;
     st.priestY=startY;
     st.startX=startX;
@@ -602,11 +602,11 @@ Object.assign(G,{
     if(!cave||!cave.churchHymnCarry)return 0;
     if(cave.scene==='church'){
       const d=Math.hypot((cave.lemX||258)-258,(cave.lemY||270)-270);
-      return clamp(1-d/150,0.32,1);
+      return clamp(1-d/150,0.36,1);
     }
     if(cave.scene==='glyphArchive'){
       const d=Math.hypot((cave.lemX||240)-240,(cave.lemY||282)-282);
-      return clamp(0.16-d/360,0.05,0.16);
+      return clamp(0.22-d/420,0.08,0.22);
     }
     return 0;
   },

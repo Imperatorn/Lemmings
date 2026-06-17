@@ -125,7 +125,7 @@ const WATERFALL_CAVE_SCENES={
     id:'glyphArchive',
     label:'Runarkivet',
     render:'glyphArchive',
-    audio:'deep-quiet',
+    audio:'church-mystery',
     bounds:{minX:76,maxX:398,minY:162,maxY:288},
     map:{x:-1,y:4,w:48,h:26,kind:'archive',short:'RU'},
     spawns:{
@@ -154,7 +154,7 @@ const WATERFALL_CAVE_SCENES={
     id:'church',
     label:'Kyrkan',
     render:'church',
-    audio:'church-mystery',
+    audio:'deep-quiet',
     bounds:{minX:86,maxX:394,minY:170,maxY:294},
     map:{x:-1,y:5,w:44,h:26,kind:'church',short:'KY'},
     spawns:{

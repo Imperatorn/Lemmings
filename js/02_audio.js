@@ -2,6 +2,7 @@
 // Procedurell chiptune-motor. All musik är egenkomponerad.
 const MUSIC_GAIN_BASE=0.50;
 const CAVE_MYSTERY_GAIN_BOOST=1.35;
+const CHURCH_HYMN_LOOP_START_SECONDS=1;
 const CHURCH_HYMN_LOOP_SECONDS=32;
 const CHURCH_HYMN_LOOP_FADE_SECONDS=1;
 const AU={
@@ -293,7 +294,7 @@ const AU={
   waterfallCaveChurchHymnVolume(mode){
     const bank=this.churchHymn||{};
     const distantLevel=clamp(Number.isFinite(bank.distantLevel)?bank.distantLevel:1,0.05,1);
-    const base=mode==='distant'?0.12*distantLevel:0.47;
+    const base=mode==='distant'?0.15*distantLevel:0.47;
     return base*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
   },
   waterfallCaveChurchHymnElement(){
@@ -304,7 +305,7 @@ const AU={
       el.loop=false;
       el.preload='auto';
       el.volume=0;
-      this.churchHymn={el,timer:null,loopTimer:null,loopStep:null,loopReady:false,on:false,mode:'inside',distantLevel:1,loopSeconds:CHURCH_HYMN_LOOP_SECONDS,loopFadeSeconds:CHURCH_HYMN_LOOP_FADE_SECONDS,baseVolume:0};
+      this.churchHymn={el,timer:null,loopTimer:null,loopStep:null,loopReady:false,on:false,mode:'inside',distantLevel:1,loopStartSeconds:CHURCH_HYMN_LOOP_START_SECONDS,loopSeconds:CHURCH_HYMN_LOOP_SECONDS,loopFadeSeconds:CHURCH_HYMN_LOOP_FADE_SECONDS,baseVolume:0};
       this.setupWaterfallCaveChurchHymnLoop();
       return el;
     }catch(_){return null}
@@ -312,8 +313,9 @@ const AU={
   waterfallCaveChurchHymnLoopGain(){
     const bank=this.churchHymn, el=bank&&bank.el;
     if(!bank||!el)return 1;
-    const end=Math.max(1,Number.isFinite(bank.loopSeconds)?bank.loopSeconds:CHURCH_HYMN_LOOP_SECONDS);
-    const fade=clamp(Number.isFinite(bank.loopFadeSeconds)?bank.loopFadeSeconds:CHURCH_HYMN_LOOP_FADE_SECONDS,0,end*0.5);
+    const start=clamp(Number.isFinite(bank.loopStartSeconds)?bank.loopStartSeconds:CHURCH_HYMN_LOOP_START_SECONDS,0,60);
+    const end=Math.max(start+0.1,Number.isFinite(bank.loopSeconds)?bank.loopSeconds:CHURCH_HYMN_LOOP_SECONDS);
+    const fade=clamp(Number.isFinite(bank.loopFadeSeconds)?bank.loopFadeSeconds:CHURCH_HYMN_LOOP_FADE_SECONDS,0,(end-start)*0.5);
     if(fade<=0)return 1;
     let t=0;
     try{t=Number(el.currentTime)||0}catch(_){return 1}
@@ -347,12 +349,18 @@ const AU={
   enforceWaterfallCaveChurchHymnLoop(){
     const bank=this.churchHymn, el=bank&&bank.el;
     if(!bank||!el||!bank.on)return false;
-    const end=Math.max(1,Number.isFinite(bank.loopSeconds)?bank.loopSeconds:CHURCH_HYMN_LOOP_SECONDS);
+    const start=clamp(Number.isFinite(bank.loopStartSeconds)?bank.loopStartSeconds:CHURCH_HYMN_LOOP_START_SECONDS,0,60);
+    const end=Math.max(start+0.1,Number.isFinite(bank.loopSeconds)?bank.loopSeconds:CHURCH_HYMN_LOOP_SECONDS);
     let t=0;
     try{t=Number(el.currentTime)||0}catch(_){return false}
     this.applyWaterfallCaveChurchHymnVolume();
+    if(t<start&&!el.ended){
+      try{el.currentTime=start}catch(_){}
+      this.applyWaterfallCaveChurchHymnVolume();
+      return true;
+    }
     if(t<end&&!el.ended)return false;
-    try{el.currentTime=0}catch(_){}
+    try{el.currentTime=start}catch(_){}
     this.applyWaterfallCaveChurchHymnVolume();
     try{
       if(el.paused&&bank.on){

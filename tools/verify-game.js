@@ -441,8 +441,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   if (!hymnEl || hymnEl.src !== 'assets/blessthelord.mp3' || hymnEl.loop !== false) {
     throw new Error('Church hymn should use a custom 32 second loop instead of full-file HTMLAudio looping');
   }
-  if (!AU.churchHymn || AU.churchHymn.loopSeconds !== 32 || AU.churchHymn.loopFadeSeconds !== 1) {
-    throw new Error('Church hymn loop should end at 32 seconds and fade out during the last second');
+  if (!AU.churchHymn || AU.churchHymn.loopStartSeconds !== 1 || AU.churchHymn.loopSeconds !== 32 || AU.churchHymn.loopFadeSeconds !== 1) {
+    throw new Error('Church hymn loop should run from 1 to 32 seconds and fade out during the last second');
   }
   AU.churchHymn.on = true;
   AU.churchHymn.baseVolume = 0.5;
@@ -453,8 +453,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   }
   hymnEl.currentTime = 32.25;
   hymnEl.paused = false;
-  if (!AU.enforceWaterfallCaveChurchHymnLoop() || hymnEl.currentTime !== 0 || Math.abs(hymnEl.volume - 0.5) > 0.001) {
-    throw new Error('Church hymn did not restart after the first 32 seconds');
+  if (!AU.enforceWaterfallCaveChurchHymnLoop() || hymnEl.currentTime !== 1 || Math.abs(hymnEl.volume - 0.5) > 0.001) {
+    throw new Error('Church hymn did not restart at second 1 after the first 32 seconds');
   }
   AU.churchHymn = prevChurchHymn;
 }
@@ -1310,8 +1310,8 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.waterfallCave.lemY > 190 || G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY)) {
     throw new Error('Entering the church scene from the glyph archive should place the lemmel at the upper back edge of the church yard');
   }
-  if (G.waterfallCaveSceneDef('church').audio !== 'church-mystery' || mysteryStarted < 1 || !waterLevels.some(w => w.level <= 0.09)) {
-    throw new Error('Church scene should start the mystery music variant and lower the waterfall sound');
+  if (G.waterfallCaveSceneDef('glyphArchive').audio !== 'church-mystery' || G.waterfallCaveSceneDef('church').audio === 'church-mystery' || mysteryStarted < 1 || !waterLevels.some(w => w.level <= 0.09)) {
+    throw new Error('Glyph archive should own the mystery music variant and lower the waterfall sound before the church');
   }
   if (!drawWaterfallCaveView(WCTX, 55)) throw new Error('Church cave view did not render');
   const churchModel = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchModel');
@@ -1367,6 +1367,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const blessing = G.waterfallCaveChurchBlessingState(G.waterfallCave);
   if (!blessing || !blessing.active || blessing.phase !== 'enter') {
     throw new Error('Walking near the church altar should start the priest blessing sequence');
+  }
+  if (!(blessing.startX < blessing.targetX && blessing.startY < blessing.targetY && blessing.priestY < blessing.targetY)) {
+    throw new Error('Priest blessing should enter diagonally from the upper-left aisle between pews and altar');
   }
   if (blessing.latinText !== 'BENEDICAT TE DOMINUS') {
     throw new Error('Priest blessing should prepare a Latin blessing phrase');
@@ -1493,8 +1496,29 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Distant church hymn volume should fall as the lemmel moves away from the church');
   }
   const glyphArchiveLevel = distanceLevels[distanceLevels.length - 1];
-  if (!(glyphArchiveLevel <= 0.17)) {
-    throw new Error('Distant church hymn should be very quiet once it reaches the glyph archive');
+  if (!(glyphArchiveLevel > 0.07 && glyphArchiveLevel <= 0.23)) {
+    throw new Error('Distant church hymn should be subdued but still audible once it reaches the glyph archive');
+  }
+  const hymnStoppedBeforeChurchReturn = churchHymnStopped;
+  const hymnDistantBeforeChurchReturn = churchHymnDistantStarted;
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'church') {
+    throw new Error('Glyph archive did not return to the church scene after the hymn became distant');
+  }
+  if (churchHymnStopped !== hymnStoppedBeforeChurchReturn || churchHymnDistantStarted <= hymnDistantBeforeChurchReturn || !G.waterfallCave.churchHymnDistant || !G.waterfallCave.churchHymnCarry) {
+    throw new Error('Returning from the glyph archive to the church should keep the distant hymn alive');
+  }
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).minY;
+  G.handleWaterfallCaveKey('ArrowUp');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowUp');
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'glyphArchive') {
+    throw new Error('Church scene did not return back to the glyph archive after revisiting the church yard');
   }
   const hymnStoppedBeforeLeavingArchive = churchHymnStopped;
   G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).maxX;
