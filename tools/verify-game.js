@@ -1555,6 +1555,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.portalStoneButtonVisible() || !G.portalStoneButtonAvailable() || G.portalStoneOwner() !== holyHatchLems[0]) {
     throw new Error('Teleport stone HUD button should be available for the holy hatch lemmel');
   }
+  G.paused = true;
+  if (!G.beginPortalStonePlacement(holyHatchLems[0]) || !G.portalStone || !G.portalStone.placingExit || !G.paused) {
+    throw new Error('Teleport stone should keep the game paused while placing an exit from an already paused state');
+  }
+  if (!G.cancelPortalStonePlacement() || !G.paused || G.portalStone) {
+    throw new Error('Cancelling teleport stone placement should restore the previous pause state');
+  }
+  G.paused = false;
   if (!G.beginPortalStonePlacement(holyHatchLems[0]) || !G.portalStone || !G.portalStone.placingExit || !G.paused || !G.portalStone.in) {
     throw new Error('Teleport stone should create an entrance portal and pause while placing the exit');
   }

@@ -430,7 +430,8 @@ const G={
     this.portalStone={
       placingExit:true,active:false,ownerId:l.id,t:0,
       in:{x:entry.x,y:entry.y,dir:entry.dir||1},
-      out:null
+      out:null,
+      prevPaused:!!this.paused
     };
     this.paused=true;
     this.selSkill='portal';
@@ -474,8 +475,9 @@ const G={
   },
   cancelPortalStonePlacement(){
     if(!this.portalStone||!this.portalStone.placingExit)return false;
+    const wasPaused=!!this.portalStone.prevPaused;
     this.portalStone=null;
-    this.paused=false;
+    this.paused=wasPaused;
     if(this.selSkill==='portal')this.selSkill=null;
     this.toast('PORTAL AVBRUTEN');
     AU.sShrug();
