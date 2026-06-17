@@ -1403,7 +1403,7 @@ function drawWaterfallCavePriest(c,st,tk){
   const bless=st.phase==='raise'||st.phase==='bless';
   const handReach=st.phase==='raise'?clamp(st.t/18,0,1):(st.phase==='bless'?1:0);
   const step=walking?((st.t>>3)&1):0;
-  const d=st.phase==='exit'?-1:1;
+  const d=(Number.isFinite(st.priestFacing)?st.priestFacing:(st.phase==='exit'?-1:1))<0?-1:1;
   c.save();
   c.globalAlpha=0.26;
   c.fillStyle='#000000';

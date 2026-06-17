@@ -1031,6 +1031,7 @@ const G={
     if(this.clearCutscene)this.clearCutscene('level-start');
     if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     AU.stopWeather();
+    if(opts&&opts.audio===false&&AU.stopMusic)AU.stopMusic();
     this.levelIdx=idx;
     this.levelSeed=this.makeLevelSeed(idx);
     this.levelRng=rndSeed(this.levelSeed||1337);

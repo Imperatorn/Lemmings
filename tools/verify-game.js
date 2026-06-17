@@ -217,8 +217,8 @@ if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCav
 if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('CHURCH_HYMN_LOOP_SECONDS=32') || !audioCode.includes('CHURCH_HYMN_LOOP_FADE_SECONDS=1') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');
 }
-if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
-  throw new Error('Teleport stone discovery and completed rune reading should have dedicated magical sounds');
+if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
+  throw new Error('Teleport stone discovery and rune reading should have dedicated magical sounds');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
@@ -428,7 +428,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sPortalStoneOpen','sPortalStoneTravel']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -748,6 +748,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStopWeather = AU.stopWeather;
   const prevCaveStep = AU.sWaterfallCaveStep;
   const prevCrystalChime = AU.sWaterfallCaveCrystalChime;
+  const prevRuneDiscoverSound = AU.sWaterfallCaveRuneDiscover;
   const prevRunesCompleteSound = AU.sWaterfallCaveRunesComplete;
   const prevTeleportStoneSound = AU.sWaterfallCaveTeleportStone;
   const prevWaterLevel = AU.setWaterfallCaveWaterLevel;
@@ -777,7 +778,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevPaused = G.paused;
   const prevCutscene = G.cutscene;
   const prevCutscenesOn = G.cutscenesOn;
-  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, runeCompleteSounds = 0, teleportStoneSounds = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, runeDiscoverSounds = 0, runeCompleteSounds = 0, teleportStoneSounds = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
   const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [], churchHymnLevels = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
@@ -788,6 +789,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWeather = () => { weatherStopped++; };
   AU.sWaterfallCaveStep = depth => { caveSteps.push(depth); };
   AU.sWaterfallCaveCrystalChime = () => { crystalChimes++; };
+  AU.sWaterfallCaveRuneDiscover = () => { runeDiscoverSounds++; };
   AU.sWaterfallCaveRunesComplete = () => { runeCompleteSounds++; };
   AU.sWaterfallCaveTeleportStone = () => { teleportStoneSounds++; };
   AU.setWaterfallCaveWaterLevel = (level, fade) => { waterLevels.push({level, fade}); };
@@ -1227,6 +1229,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Rune wall should define several individually readable runes');
   }
   const runeTexts = new Set();
+  const runeDiscoverSoundsBeforeAll = runeDiscoverSounds;
   for (let i = 0; i < runeWall.def.runes.length; i++) {
     const rune = runeWall.def.runes[i];
     G.waterfallCave.lemX = runeWall.obj.x + (rune.dx || 0);
@@ -1241,12 +1244,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (runeTexts.size !== runeWall.def.runes.length || !runeWall.obj.readComplete) {
     throw new Error('Reading all rune positions should reveal separate segments of the larger rune text');
   }
+  if (runeDiscoverSounds < runeWall.def.runes.length || runeDiscoverSounds - runeDiscoverSoundsBeforeAll > runeWall.def.runes.length) {
+    throw new Error('Each newly discovered rune should trigger one short discovery sound');
+  }
   if (runeCompleteSounds !== 1 || !G.waterfallCave.flags.runesComplete || !runeWall.obj.completeAnnounced) {
     throw new Error('Completing all rune readings should trigger exactly one completion sound and cave flag');
   }
   G.tick();
-  if (runeCompleteSounds !== 1) {
-    throw new Error('Completed rune reading sound should not repeat while standing by the rune wall');
+  if (runeCompleteSounds !== 1 || runeDiscoverSounds !== runeWall.def.runes.length) {
+    throw new Error('Rune discovery and completion sounds should not repeat while standing by the rune wall');
   }
   const churchCard = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'churchCard');
   if (!churchCard) throw new Error('Glyph archive is missing the Dala-Floda church card');
@@ -1658,6 +1664,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWeather = prevStopWeather;
   AU.sWaterfallCaveStep = prevCaveStep;
   AU.sWaterfallCaveCrystalChime = prevCrystalChime;
+  AU.sWaterfallCaveRuneDiscover = prevRuneDiscoverSound;
   AU.sWaterfallCaveRunesComplete = prevRunesCompleteSound;
   AU.sWaterfallCaveTeleportStone = prevTeleportStoneSound;
   AU.setWaterfallCaveWaterLevel = prevWaterLevel;

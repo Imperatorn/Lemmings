@@ -58,8 +58,32 @@
     AU.init();
     if(AU.ctx&&AU.ctx.state==='suspended'&&AU.ctx.resume)AU.ctx.resume();
     AU.on=true;AU.musicOn=true;AU.sfxOn=true;
+    setAudioParamNow(AU.master&&AU.master.gain,0.5);
     AU.setMusicVolume(Number($('musicVol').value)/100);
     AU.setSfxVolume(Number($('sfxVol').value)/100);
+  }
+
+  function setAudioParamNow(param,value){
+    if(!param)return;
+    const t=AU.now?AU.now():0;
+    try{
+      if(param.cancelScheduledValues)param.cancelScheduledValues(t);
+      if(param.setValueAtTime)param.setValueAtTime(Math.max(0.00005,value),t);
+      else param.value=Math.max(0.00005,value);
+    }catch(_){try{param.value=Math.max(0.00005,value)}catch(__){}}
+  }
+
+  function quietRunArchiveAudioStart(){
+    if(AU.stopMusic)AU.stopMusic();
+    if(AU.stopWeather)AU.stopWeather();
+    if(AU.stopWaterfallCave)AU.stopWaterfallCave(0);
+    if(AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0);
+    if(AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0);
+    AU.fxLast={};
+    setAudioParamNow(AU.master&&AU.master.gain,0.00005);
+    setAudioParamNow(AU.musGain&&AU.musGain.gain,0.00005);
+    setAudioParamNow(AU.sfxGain&&AU.sfxGain.gain,0.00005);
+    setAudioParamNow(AU.boomGain&&AU.boomGain.gain,0.00005);
   }
 
   function repeatChanceSfx(fn){
@@ -340,7 +364,8 @@
     finishAnimationSetup('Animation: direktstyrd lemming går in bakom vattenfallet.');
   }
 
-  function setupWaterfallCaveScene(sceneId,spawnId,label){
+  function setupWaterfallCaveScene(sceneId,spawnId,label,opts){
+    opts=opts||{};
     if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
     if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel({audio:false});
     clearDebugActors();
@@ -354,8 +379,8 @@
     const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
     G.decor.push(wf);
     focusWorldX(l.x);
-    if(!G.enterWaterfallCave(l,wf,{waterLevel:0.12,click:false})){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
-    if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry')){
+    if(!G.enterWaterfallCave(l,wf,{audio:opts.audio!==false,waterLevel:0.05,click:false,musicFade:0})){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
+    if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry',{audio:opts.audio!==false})){
       setStatus('Kunde inte ga till grottscen: '+sceneId,'warn');
       return;
     }
@@ -588,8 +613,8 @@
 
   function doAction(action){
     if(action==='caveGlyphArchive'){
-      audioReady();
-      setupWaterfallCaveScene('glyphArchive','fromChurch','Runarkivet');
+      quietRunArchiveAudioStart();
+      setupWaterfallCaveScene('glyphArchive','fromChurch','Runarkivet',{audio:false});
       return;
     }
     if(action!=='camLeft'&&action!=='camRight'&&!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();

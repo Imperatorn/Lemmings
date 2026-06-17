@@ -461,6 +461,14 @@ const AU={
     this.tone(1568,0.20,'sine',0.020*s,1.01,t+0.12);
     this.tone(2093,0.16,'triangle',0.010*s,0.98,t+0.24);
   },
+  sWaterfallCaveRuneDiscover(index,total){
+    if(!this.rateFx('waterfall-cave-rune-discover',0.10))return;
+    const t=this.now(), i=Math.max(0,Number.isFinite(index)?index:0);
+    const step=Number.isFinite(total)&&total>1?i/(total-1):0;
+    const base=740+step*250;
+    this.tone(base,0.050,'triangle',0.016,1.04,t);
+    this.tone(base*1.5,0.060,'sine',0.009,0.98,t+0.035);
+  },
   sWaterfallCaveRunesComplete(){
     if(!this.rateFx('waterfall-cave-runes-complete',1.4))return;
     const t=this.now();

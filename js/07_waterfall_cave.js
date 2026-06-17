@@ -127,10 +127,12 @@ Object.assign(G,{
     obj.activeRuneId=id;
     obj.activeRuneIndex=picked.index;
     obj.readRunes=obj.readRunes||{};
+    const newlyRead=!obj.readRunes[id];
     obj.readRunes[id]=true;
     obj.readT=Math.max(obj.readT||0,110);
     obj.readLines=this.waterfallCaveRuneLines(picked.rune,picked.index,runes.length);
     obj.readComplete=Object.keys(obj.readRunes).length>=runes.length;
+    if(newlyRead&&AU.sWaterfallCaveRuneDiscover)AU.sWaterfallCaveRuneDiscover(picked.index,runes.length);
     if(obj.readComplete&&!wasComplete&&!obj.completeAnnounced){
       obj.completeAnnounced=true;
       obj.completeT=Math.max(obj.completeT||0,150);
@@ -209,10 +211,17 @@ Object.assign(G,{
     st.done=false;
     st.phase='enter';
     st.t=0;
-    st.priestX=(b.minX||78)-34;
-    st.priestY=ly;
+    const startX=clamp((cave.lemX||240)-82,(b.minX||78)+58,(cave.lemX||240)-36);
+    const startY=clamp(ly+58,(b.minY||132)+38,(b.maxY||276)-42);
+    st.priestX=startX;
+    st.priestY=startY;
+    st.startX=startX;
+    st.startY=startY;
+    st.exitX=startX;
+    st.exitY=startY;
     st.targetX=clamp((cave.lemX||240)-24,b.minX||78,b.maxX||402);
     st.targetY=ly;
+    st.priestFacing=1;
     st.blessT=0;
     st.latinText='BENEDICAT TE DOMINUS';
     cave.lemY=ly;
@@ -239,26 +248,42 @@ Object.assign(G,{
     const sp=1.55;
     if(st.phase==='enter'){
       const dx=(st.targetX||206)-(st.priestX||0);
-      if(Math.abs(dx)<=sp){
+      const dy=(st.targetY||150)-(st.priestY||0);
+      const dist=Math.hypot(dx,dy);
+      st.priestFacing=dx<0?-1:1;
+      if(dist<=sp){
         st.priestX=st.targetX;
+        st.priestY=st.targetY;
+        st.priestFacing=1;
         st.phase='raise';
         st.t=0;
-      }else st.priestX+=Math.sign(dx)*sp;
-      st.priestY=st.targetY;
+      }else{
+        st.priestX+=dx/dist*sp;
+        st.priestY+=dy/dist*sp;
+      }
     }else if(st.phase==='raise'){
+      st.priestFacing=1;
       if(st.t>=18){st.phase='bless';st.t=0}
     }else if(st.phase==='bless'){
+      st.priestFacing=1;
       st.blessT=st.t;
       if(st.t>=86){st.phase='exit';st.t=0}
     }else if(st.phase==='exit'){
-      st.priestX-=sp;
-      st.priestY=st.targetY;
-      if(st.priestX<(this.waterfallCaveSceneBounds(cave).minX||78)-42){
+      const dx=(Number.isFinite(st.exitX)?st.exitX:((this.waterfallCaveSceneBounds(cave).minX||78)-42))-(st.priestX||0);
+      const dy=(Number.isFinite(st.exitY)?st.exitY:(st.targetY||150))-(st.priestY||0);
+      const dist=Math.hypot(dx,dy);
+      st.priestFacing=dx<0?-1:1;
+      if(dist<=sp){
+        st.priestX=Number.isFinite(st.exitX)?st.exitX:st.priestX;
+        st.priestY=Number.isFinite(st.exitY)?st.exitY:st.priestY;
         this.blessWaterfallCaveLemming(cave);
         st.active=false;
         st.done=true;
         st.phase='done';
         st.t=0;
+      }else{
+        st.priestX+=dx/dist*sp;
+        st.priestY+=dy/dist*sp;
       }
     }
     return st.active;
@@ -530,13 +555,21 @@ Object.assign(G,{
       wf:{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130,v:wf.v||0,theme:this.level&&this.level.theme},
       exitCam:this.cam,exitViewY:this.viewY,exitZoom:this.viewZoom
     };
-    this.waterfallCaveResumeMusic=!!AU.musicOn;
-    this.waterfallCaveResumeWeather=this.weatherKind||null;
-    if(AU.silenceMusicForWaterfallCave)AU.silenceMusicForWaterfallCave(1.0);
-    else if(AU.stopMusic)AU.stopMusic();
-    if(AU.stopWeather)AU.stopWeather();
-    const startWaterLevel=opts&&Number.isFinite(opts.waterLevel)?opts.waterLevel:null;
-    if(AU.startWaterfallCave)AU.startWaterfallCave(startWaterLevel);
+    const caveAudio=!opts||opts.audio!==false;
+    this.waterfallCaveResumeMusic=caveAudio&&!!AU.musicOn;
+    this.waterfallCaveResumeWeather=caveAudio?this.weatherKind||null:null;
+    if(caveAudio){
+      const musicFade=opts&&Number.isFinite(opts.musicFade)?Math.max(0,opts.musicFade):1.0;
+      if(AU.silenceMusicForWaterfallCave)AU.silenceMusicForWaterfallCave(musicFade);
+      else if(AU.stopMusic)AU.stopMusic();
+      if(AU.stopWeather)AU.stopWeather();
+      const startWaterLevel=opts&&Number.isFinite(opts.waterLevel)?opts.waterLevel:null;
+      if(AU.startWaterfallCave)AU.startWaterfallCave(startWaterLevel);
+    }else{
+      if(AU.stopMusic)AU.stopMusic();
+      if(AU.stopWeather)AU.stopWeather();
+      if(AU.stopWaterfallCave)AU.stopWaterfallCave(0);
+    }
     if(this.clearTransientText)this.clearTransientText();
     else{this.toasts=[];this.msg='';this.msgT=0}
     if(!opts||opts.click!==false)AU.sClick();
