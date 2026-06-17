@@ -1389,7 +1389,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.waterfallCave.mirrorStoneHeld || !G.waterfallCave.mirrorStoneThrow || !G.waterfallCave.mirrorStoneThrow.active) {
     throw new Error('Mirror pool carried stone was not thrown with Space');
   }
-  if (G.waterfallCave.mirrorStoneThrow.releaseT > 12) {
+  if (G.waterfallCave.mirrorStoneThrow.releaseT > 6) {
     throw new Error('Mirror pool stone throw wind-up should release quickly enough to avoid a stiff start');
   }
   const firstStoneTarget = {x:G.waterfallCave.mirrorStoneThrow.tx, y:G.waterfallCave.mirrorStoneThrow.ty};

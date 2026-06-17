@@ -1223,7 +1223,7 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
   const preRelease=st&&st.active&&st.t<st.releaseT;
   if(!holding&&!preRelease)return false;
   const facing=(preRelease&&st&&st.facing)||cave.facing||'front';
-  const rawP=preRelease?clamp(((st.t||0)+1.5)/Math.max(1,(st.releaseT||10)+1.5),0,1):0;
+  const rawP=preRelease?clamp((st.t||0)/Math.max(1,st.releaseT||4),0,1):0;
   const throwP=rawP*rawP*(3-2*rawP);
   c.save();
   c.translate(lx,ly);
@@ -1233,10 +1233,10 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
   const skin=colors.skin||'#ffd9a8';
   if(facing==='left'||facing==='right'){
     const d=facing==='right'?1:-1;
-    const lift=Math.sin(rawP*Math.PI);
+    const lift=Math.sin(rawP*Math.PI*0.5);
     const shoulderX=d*2,shoulderY=-6;
-    const elbowX=d*(4+3*throwP),elbowY=-8-3*lift;
-    const handX=d*(5+6*throwP),handY=-8-4*lift-3*throwP;
+    const elbowX=d*(3+2*throwP),elbowY=-8-3*lift;
+    const handX=d*(4+3*throwP),handY=-8-3*lift-2*throwP;
     c.fillStyle=skin;
     fillPixelPoly(c,[[shoulderX,shoulderY],[shoulderX+d*2,shoulderY],[elbowX+d,elbowY+1],[elbowX,elbowY+3]]);
     fillPixelPoly(c,[[elbowX,elbowY],[elbowX+d*2,elbowY],[handX+d,handY+2],[handX,handY+3]]);
@@ -1245,10 +1245,10 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
     r(handX+d,handY-2,2,1,'#c8d4d4');
   }else{
     const side=facing==='back'?-1:1;
-    const lift=Math.sin(rawP*Math.PI);
+    const lift=Math.sin(rawP*Math.PI*0.5);
     const shoulderX=side*2,shoulderY=-6;
     const elbowX=side*(3+2*throwP),elbowY=-8-2*lift;
-    const handX=side*(4+2*throwP),handY=-8-4*lift-5*throwP;
+    const handX=side*(4+2*throwP),handY=-8-3*lift-3*throwP;
     c.fillStyle=skin;
     fillPixelPoly(c,[[shoulderX,shoulderY],[shoulderX+side*2,shoulderY],[elbowX+side,elbowY+1],[elbowX,elbowY+3]]);
     fillPixelPoly(c,[[elbowX,elbowY],[elbowX+side*2,elbowY],[handX+side,handY+2],[handX,handY+3]]);
