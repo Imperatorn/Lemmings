@@ -437,7 +437,9 @@ Object.assign(G,{
           obj.cardCloseArmed=false;
         }
       }
-      if(near&&!obj.near)this.interactWaterfallCaveObject(hit,'near');
+      const passiveInspect=def.kind==='viewCard'||def.kind==='inspectable';
+      const passiveCanOpen=passiveInspect&&near&&!this.waterfallCaveMovementHeld(cave)&&!(def.kind==='viewCard'&&(obj.cardOpen||obj.dismissedNear));
+      if((near&&!obj.near&&!passiveInspect)||passiveCanOpen)this.interactWaterfallCaveObject(hit,'near');
       if(def.kind==='runeWall'&&near){
         if(!this.readWaterfallCaveRune(hit)&&!obj.readLines){
           obj.readT=Math.max(obj.readT||0,70);
@@ -467,7 +469,10 @@ Object.assign(G,{
     cave.mapOpen=!!cave.mapOpen;
     cave.hoverObject=cave.hoverObject||null;
     if(!cave.scene)cave.scene='main';
-    if(cave.sceneExitBlockedKey&&(!cave.keys||!cave.keys[cave.sceneExitBlockedKey]))cave.sceneExitBlockedKey=null;
+    if(cave.sceneExitBlockedKey&&(!cave.keys||!cave.keys[cave.sceneExitBlockedKey])){
+      cave.sceneExitBlockedKey=null;
+      cave.sceneExitBlockedTarget=null;
+    }
     cave.visited[cave.scene]=true;
     return cave;
   },
@@ -482,6 +487,7 @@ Object.assign(G,{
     cave.visited[def.id]=true;
     cave.hoverObject=null;
     cave.sceneExitBlockedKey=opts&&opts.fromExitKey?opts.fromExitKey:null;
+    cave.sceneExitBlockedTarget=cave.sceneExitBlockedKey?prevScene:null;
     const spawn=typeof waterfallCaveSceneSpawn==='function'?waterfallCaveSceneSpawn(def.id,spawnId):null;
     if(spawn){
       cave.lemX=spawn.x;cave.lemY=spawn.y;
@@ -512,7 +518,7 @@ Object.assign(G,{
     if(exit.key==='down'&&!cave.keys.down)return false;
     if(exit.key==='left'&&!cave.keys.left)return false;
     if(exit.key==='right'&&!cave.keys.right)return false;
-    if(cave.sceneExitBlockedKey===exit.key&&cave.keys&&cave.keys[exit.key])return false;
+    if(cave.sceneExitBlockedKey===exit.key&&cave.keys&&cave.keys[exit.key]&&(!cave.sceneExitBlockedTarget||exit.target===cave.sceneExitBlockedTarget))return false;
     if(Number.isFinite(exit.x0)&&(cave.lemX||0)<exit.x0)return false;
     if(Number.isFinite(exit.x1)&&(cave.lemX||0)>exit.x1)return false;
     if(Number.isFinite(exit.yMin)&&(cave.lemY||0)<exit.yMin)return false;
@@ -880,7 +886,7 @@ Object.assign(G,{
       if(it.coverReturnBlocked&&!this.waterfallCaveMovementHeld(cave)){
         it.coverReturnBlocked=false;
       }
-      if(it.near&&!it.dismissedNear&&!it.coverOpen&&!it.coverReturnBlocked){
+      if(it.near&&!it.dismissedNear&&!it.coverOpen&&!it.coverReturnBlocked&&!this.waterfallCaveMovementHeld(cave)){
         it.coverOpen=true;
         it.coverCloseArmed=!this.waterfallCaveMovementHeld(cave);
         it.coverSide='front';
@@ -983,7 +989,10 @@ Object.assign(G,{
     if(!this.waterfallCaveActive())return false;
     const cave=this.waterfallCave;
     this.setWaterfallCaveMoveKey(cave,key,false);
-    if(cave.sceneExitBlockedKey&&(!cave.keys||!cave.keys[cave.sceneExitBlockedKey]))cave.sceneExitBlockedKey=null;
+    if(cave.sceneExitBlockedKey&&(!cave.keys||!cave.keys[cave.sceneExitBlockedKey])){
+      cave.sceneExitBlockedKey=null;
+      cave.sceneExitBlockedTarget=null;
+    }
     if(key==='Shift'||!this.waterfallCaveMovementHeld(cave))cave.running=false;
     const it=cave.deepItem;
     if(it&&it.coverOpen&&!it.coverCloseArmed&&!this.waterfallCaveMovementHeld(cave))it.coverCloseArmed=true;

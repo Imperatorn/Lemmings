@@ -1016,6 +1016,21 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.waterfallCaveActive() || G.waterfallCave.lemY <= 232) {
     throw new Error('Waterfall cave lemming cannot walk deeper into the cave');
   }
+  G.setWaterfallCaveScene('main', 'entry', {audio:false});
+  G.waterfallCave.lemX = 240;
+  G.waterfallCave.lemY = G.waterfallCave.bounds.deepY + 1;
+  G.handleWaterfallCaveKey('Shift');
+  G.handleWaterfallCaveKey('ArrowDown');
+  for (let i = 0; i < 52 && G.waterfallCaveActive() && G.waterfallCave.scene !== 'camp'; i++) G.tick();
+  if (!G.waterfallCaveActive() || G.waterfallCave.scene !== 'camp' || !G.waterfallCave.keys.down || !G.waterfallCave.keys.run) {
+    throw new Error('Waterfall cave should allow continuous running between rooms while holding Shift and a direction');
+  }
+  if (G.waterfallCave.deepItem && G.waterfallCave.deepItem.coverOpen) {
+    throw new Error('Deep cave cover should not interrupt continuous room traversal while movement is held');
+  }
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  G.handleWaterfallCaveKeyUp('Shift');
+  G.setWaterfallCaveScene('main', 'entry', {audio:false});
   const caveMoney = Math.max(0, G.money | 0);
   G.waterfallCave.lemX = G.waterfallCave.chest.x;
   G.waterfallCave.lemY = G.waterfallCave.chest.y;
@@ -1086,27 +1101,20 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Deep cave game item did not reset after walking away');
   }
   G.handleWaterfallCaveKey('ArrowRight');
-  for (let i = 0; i < 40 && !deepItem.coverOpen; i++) G.tick();
-  if (!deepItem.coverOpen || deepItem.coverCloseArmed) {
-    throw new Error('Deep cave game cover should open unarmed while arrival movement is still held');
-  }
-  const heldCoverX = G.waterfallCave.lemX;
-  G.tick();
-  if (!deepItem.coverOpen || G.waterfallCave.lemX !== heldCoverX) {
-    throw new Error('Deep cave game cover should stay open and freeze arrival movement until key release');
-  }
-  G.handleWaterfallCaveKey('ArrowRight');
-  G.tick();
-  if (!deepItem.coverOpen) {
-    throw new Error('Deep cave game cover closed before the arrival key was released');
+  for (let i = 0; i < 90 && G.waterfallCave.lemX < deepItem.x + 48; i++) G.tick();
+  if (deepItem.coverOpen || G.waterfallCave.lemX < deepItem.x + 34) {
+    throw new Error('Deep cave game cover should not interrupt traversal while movement is held');
   }
   G.handleWaterfallCaveKeyUp('ArrowRight');
-  if (!deepItem.coverCloseArmed) {
-    throw new Error('Deep cave game cover did not arm closing after movement key release');
+  G.waterfallCave.lemX = deepItem.x + 18;
+  G.waterfallCave.lemY = deepItem.y + 8;
+  G.tick();
+  if (!deepItem.coverOpen || !deepItem.coverCloseArmed) {
+    throw new Error('Deep cave game cover should open armed when stopping near the item');
   }
   G.handleWaterfallCaveKey('ArrowRight');
   if (deepItem.coverOpen || !G.waterfallCave.keys.right) {
-    throw new Error('Deep cave game cover should close and begin movement on the first movement key after release');
+    throw new Error('Deep cave game cover should close and begin movement from an armed stopped inspection');
   }
   G.handleWaterfallCaveKeyUp('ArrowRight');
   G.waterfallCave.lemX = deepItem.x + 70;
