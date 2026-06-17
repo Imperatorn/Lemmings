@@ -82,19 +82,6 @@
     }catch(_){try{param.value=Math.max(0.00005,value)}catch(__){}}
   }
 
-  function quietRunArchiveAudioStart(){
-    if(AU.stopMusic)AU.stopMusic();
-    if(AU.stopWeather)AU.stopWeather();
-    if(AU.stopWaterfallCave)AU.stopWaterfallCave(0);
-    if(AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0);
-    if(AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0);
-    AU.fxLast={};
-    setAudioParamNow(AU.master&&AU.master.gain,0.00005);
-    setAudioParamNow(AU.musGain&&AU.musGain.gain,0.00005);
-    setAudioParamNow(AU.sfxGain&&AU.sfxGain.gain,0.00005);
-    setAudioParamNow(AU.boomGain&&AU.boomGain.gain,0.00005);
-  }
-
   function repeatChanceSfx(fn){
     for(let i=0;i<7;i++){
       setTimeout(()=>{AU.fxLast={};fn()},i*95);
@@ -632,8 +619,8 @@
   function doAction(action){
     if(CAVE_ARCHIVE_TESTS[action]){
       const spec=CAVE_ARCHIVE_TESTS[action];
-      quietRunArchiveAudioStart();
-      setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false,levelName:spec.level,caveVariant:spec.variant});
+      audioReady();
+      setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:true,levelName:spec.level,caveVariant:spec.variant});
       return;
     }
     if(action!=='camLeft'&&action!=='camRight'&&!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
