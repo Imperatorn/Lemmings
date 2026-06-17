@@ -152,6 +152,87 @@ function drawMenuVolumeBar(c,r,val,on){
   drawTextC(c,Math.round(val*100)+'%',r.x+r.w/2,r.y+2,1,on?'#ffffff':'#808080');
 }
 
+function drawMenuActionButton(c,r,label,on){
+  const hov=G.mx>=r.x&&G.mx<r.x+r.w&&G.my>=r.y&&G.my<r.y+r.h;
+  c.fillStyle=hov?'#26384f':(on?'#182a3e':'#111a28');
+  c.fillRect(r.x,r.y,r.w,r.h);
+  c.fillStyle=hov?'#78cfff':'#3d5878';
+  c.fillRect(r.x,r.y,r.w,1);c.fillRect(r.x,r.y,1,r.h);
+  c.fillStyle='#06090f';
+  c.fillRect(r.x,r.y+r.h-1,r.w,1);c.fillRect(r.x+r.w-1,r.y,1,r.h);
+  drawTextC(c,label,r.x+r.w/2,r.y+5,1,hov?'#ffffff':'#a8c8e8');
+}
+
+function drawProfileOverlayButton(c,buttons,action,label,x,y,w,h,id,active){
+  const r={action,label,x,y,w,h,id};
+  buttons.push(r);
+  const hov=G.mx>=x&&G.mx<x+w&&G.my>=y&&G.my<y+h;
+  c.fillStyle=active?'#244828':(hov?'#2a405a':'#151e2c');
+  c.fillRect(x,y,w,h);
+  c.fillStyle=active?'#80ff90':(hov?'#80d0ff':'#405068');
+  c.fillRect(x,y,w,1);c.fillRect(x,y,1,h);
+  c.fillStyle='#06080c';c.fillRect(x,y+h-1,w,1);c.fillRect(x+w-1,y,1,h);
+  drawTextC(c,label,x+w/2,y+5,1,active?'#e8ffe8':'#d8e8ff');
+}
+
+function drawProfileOverlayFrame(c,title){
+  c.save();
+  c.globalAlpha=0.90;c.fillStyle='#050912';c.fillRect(34,34,CW-68,218);c.globalAlpha=1;
+  c.strokeStyle='#7fbfff';c.strokeRect(34.5,34.5,CW-69,217);
+  c.fillStyle='#101928';c.fillRect(42,43,CW-84,24);
+  drawTextC(c,title,CW/2,51,2,'#d8ecff');
+  c.restore();
+}
+
+function drawProfileOverlay(c,tk){
+  drawProfileOverlayFrame(c,'PROFILER');
+  const buttons=G.profileOverlayButtons=[];
+  const profiles=typeof profileList==='function'?profileList():[];
+  const active=typeof activeProfileId==='function'?activeProfileId():null;
+  drawText(c,'AKTIV PROFIL: '+(G.activeProfileName?G.activeProfileName():'Spelare 1'),52,75,1,'#ffd880');
+  const y0=84;
+  for(let i=0;i<profiles.length&&i<8;i++){
+    const p=profiles[i], y=y0+i*17, isActive=p.id===active;
+    c.fillStyle=isActive?'rgba(80,220,120,0.14)':'rgba(255,255,255,0.04)';
+    c.fillRect(52,y-2,376,16);
+    drawText(c,(isActive?'> ':'  ')+p.name,62,y+3,1,isActive?'#b8ffb8':'#ffffff');
+    drawProfileOverlayButton(c,buttons,'select',isActive?'VALD':'VALJ',238,y,46,14,p.id,isActive);
+    drawProfileOverlayButton(c,buttons,'rename','NAMN',292,y,48,14,p.id,false);
+    drawProfileOverlayButton(c,buttons,'delete','RADERA',348,y,64,14,p.id,false);
+  }
+  if(profiles.length>=8)drawTextC(c,'MAX 8 PROFILER',CW/2,215,1,'#8090a0');
+  drawProfileOverlayButton(c,buttons,'new','NY PROFIL',52,226,86,17,null,false);
+  drawProfileOverlayButton(c,buttons,'leaderboard','TOPPLISTA',148,226,86,17,null,false);
+  drawProfileOverlayButton(c,buttons,'close','STANG',346,226,72,17,null,false);
+}
+
+function drawLeaderboardOverlay(c,tk){
+  drawProfileOverlayFrame(c,'LOKAL TOPPLISTA');
+  const buttons=G.leaderboardButtons=[];
+  const rows=G.profileLeaderboardRows?G.profileLeaderboardRows():[];
+  drawText(c,'PROFIL',54,77,1,'#8090b0');
+  drawText(c,'AVK',188,77,1,'#8090b0');
+  drawText(c,'BEST',226,77,1,'#8090b0');
+  drawText(c,'VIN',276,77,1,'#8090b0');
+  drawText(c,'FORS',318,77,1,'#8090b0');
+  drawText(c,'MYNT',366,77,1,'#8090b0');
+  for(let i=0;i<rows.length&&i<7;i++){
+    const r=rows[i], y=94+i*17;
+    c.fillStyle=i%2?'rgba(255,255,255,0.035)':'rgba(100,160,255,0.055)';
+    c.fillRect(48,y-3,384,15);
+    const mark=(r.holy?(r.stone?' HS':' H'):'');
+    drawText(c,String(i+1)+'. '+r.name+mark,54,y,1,i===0?'#ffe890':'#ffffff');
+    drawTextC(c,String(r.cleared),198,y,1,'#b8ffb8');
+    drawTextC(c,String(Math.round(r.sumPct))+'%',244,y,1,'#d8e8ff');
+    drawTextC(c,String(r.wins),288,y,1,'#d8e8ff');
+    drawTextC(c,String(r.attempts),334,y,1,'#d8e8ff');
+    drawTextC(c,String(r.money),386,y,1,'#ffd880');
+  }
+  drawText(c,'H=HELIG  S=STEN',54,214,1,'#708090');
+  drawProfileOverlayButton(c,buttons,'profiles','PROFILER',52,226,84,17,null,false);
+  drawProfileOverlayButton(c,buttons,'close','STANG',346,226,72,17,null,false);
+}
+
 function drawMenu(c,tk){
   c.fillStyle='#000010';c.fillRect(0,0,CW,CH);
   drawTextC(c,'VÄLJ BANA',CW/2,14,3,'#5fa8ff');
@@ -188,6 +269,8 @@ function drawMenu(c,tk){
   }
   const setY=258, volY=274;
   G.menuSettings={
+    profile:{x:10,y:8,w:126,h:18},
+    leaderboard:{x:344,y:8,w:126,h:18},
     mode:{x:18,y:setY-4,w:120,h:14},
     load:{x:146,y:setY-4,w:62,h:14},
     fs:{x:216,y:setY-4,w:100,h:14},
@@ -197,6 +280,8 @@ function drawMenu(c,tk){
     sfx:{x:238,y:volY-4,w:34,h:14},
     sfxVol:{x:276,y:volY-4,w:174,h:14}
   };
+  drawMenuActionButton(c,G.menuSettings.profile,'PROFIL: '+(G.activeProfileName?G.activeProfileName():'Spelare 1'),true);
+  drawMenuActionButton(c,G.menuSettings.leaderboard,'TOPPLISTA',true);
   for(const k in G.menuSettings){const r=G.menuSettings[k];
     if(G.mx>=r.x&&G.mx<r.x+r.w&&G.my>=r.y&&G.my<r.y+r.h){c.fillStyle='rgba(255,220,64,0.12)';c.fillRect(r.x,r.y,r.w,r.h)}
   }
@@ -209,6 +294,8 @@ function drawMenu(c,tk){
   drawText(c,'SFX',242,volY,1,AU.sfxOn?'#a0ffa0':'#808080');
   drawMenuVolumeBar(c,G.menuSettings.sfxVol,AU.sfxVol,AU.sfxOn);
   drawTextC(c,'K: LÄGE   M/S: AV/PÅ   KLICKA REGLAGE FÖR VOLYM   L: LADDA   H: HJÄLP',CW/2,290,1,'#607060');
+  if(G.profileOverlay==='profiles')drawProfileOverlay(c,tk);
+  else if(G.profileOverlay==='leaderboard')drawLeaderboardOverlay(c,tk);
 }
 
 function drawBrief(c,tk){

@@ -67,9 +67,16 @@ function pressAt(p){
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'click');return}
   if(G.state==='TITLE'){G.state='MENU';AU.sClick();AU.startMusic('menu');return}
   if(G.state==='MENU'){
+    if(G.profileOverlay){
+      G.handleProfileOverlayInput(p);
+      AU.sClick();
+      return;
+    }
     if(G.menuSettings)for(const k in G.menuSettings){const r=G.menuSettings[k];
       if(p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h){
-        if(k==='mode')G.toggleMode();
+        if(k==='profile')G.openProfileOverlay();
+        else if(k==='leaderboard')G.openLeaderboardOverlay();
+        else if(k==='mode')G.toggleMode();
         else if(k==='cutscenes')G.toggleCutscenes();
         else if(k==='music')G.toggleMusic();
         else if(k==='musicVol')G.setMusicVolume((p.x-r.x)/Math.max(1,r.w));
@@ -287,6 +294,13 @@ window.addEventListener('keydown',e=>{
     if(e.key==='r'||e.key==='R'){G.restartCurrentLevel();e.preventDefault();return}
     if(e.key==='Escape'||e.key==='b'||e.key==='B'){G.goToMenu();e.preventDefault();return}
   }else if(G.state==='MENU'){
+    if(G.profileOverlay){
+      if(e.key==='Escape'||e.key==='b'||e.key==='B'){G.closeProfileOverlay();e.preventDefault();return}
+      if(e.key==='l'||e.key==='L'){G.openLeaderboardOverlay();e.preventDefault();return}
+      if(e.key==='p'||e.key==='P'){G.openProfileOverlay();e.preventDefault();return}
+      e.preventDefault();
+      return;
+    }
     if(e.key==='l'||e.key==='L'){G.promptLoadGame();e.preventDefault();return}
     if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
       const n=menuChapters().length, d=e.key==='ArrowRight'?1:-1;

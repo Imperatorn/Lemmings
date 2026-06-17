@@ -94,6 +94,9 @@ if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
 if (!utilCode.includes("assets/dala-floda-kyrka-pixel.png")) {
   throw new Error('Dala-Floda church pixel-art asset is not registered');
 }
+for (const token of ['PROFILE_INDEX_KEY','PROFILE_KEY_PREFIX','ensureProfileIndex','createProfile','setActiveProfile','deleteProfile','loadProfileData','saveProfileData']) {
+  if (!utilCode.includes(token)) throw new Error(`Profile storage layer is missing ${token}`);
+}
 const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
 const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
@@ -136,6 +139,9 @@ if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('unloc
 }
 if (!gameCode.includes('PORTAL_STONE_MAX_DIST') || !gameCode.includes('beginPortalStonePlacement') || !gameCode.includes('placePortalStoneExit') || !gameCode.includes('updatePortalStone')) {
   throw new Error('Unlocked teleport stone should create active world portals from the holy lemmel');
+}
+for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','recordLevelResult','profileLeaderboardRows','profileStats']) {
+  if (!gameCode.includes(token)) throw new Error(`Profile runtime is missing ${token}`);
 }
 if (!hudCode.includes("k:'portal'") || !hudCode.includes('hudButtons') || !hudCode.includes('drawPortalStonePortal')) {
   throw new Error('HUD should expose the teleport stone as a special non-counted tool with portal preview');
@@ -345,12 +351,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,waterfallCaveLemmingScale,drawWaterfallCaveLemming,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,waterfallCaveLemmingScale,drawWaterfallCaveLemming,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK,SAVE_KEY,PROFILE_INDEX_KEY,profileList,activeProfileId,activeProfileName,loadProfileData,saveProfileData,createProfile,setActiveProfile,renameProfile,deleteProfile,loadPersisted,savePersisted,saveGameSlots,writeGameSlots};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, waterfallCaveLemmingScale, drawWaterfallCaveLemming, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, waterfallCaveLemmingScale, drawWaterfallCaveLemming, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK, SAVE_KEY, PROFILE_INDEX_KEY, profileList, activeProfileId, activeProfileName, loadProfileData, saveProfileData, createProfile, setActiveProfile, renameProfile, deleteProfile, loadPersisted, savePersisted, saveGameSlots, writeGameSlots} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -2504,6 +2510,18 @@ if (Math.max(...chapters.map(ch => ch.to - ch.from)) > 10) {
   throw new Error('Too many rows in a menu chapter');
 }
 
+function withLocalStorage(initial, fn) {
+  const prev = sandbox.window.localStorage;
+  const store = Object.assign({}, initial || {});
+  sandbox.window.localStorage = {
+    getItem(k){return Object.prototype.hasOwnProperty.call(store,k)?store[k]:null},
+    setItem(k,v){store[k]=String(v)},
+    removeItem(k){delete store[k]}
+  };
+  try { return fn(store); }
+  finally { sandbox.window.localStorage = prev; }
+}
+
 G.startLevel(0);
 const savedState = G.makeSaveState('VERIFY');
 if (!savedState || savedState.levelIdx !== 0 || !savedState.terrain || !savedState.fields || !savedState.arrays) {
@@ -2578,6 +2596,121 @@ if (!G.restoreSaveState(savedState) || G.cutsceneActive() || G.waterfallCaveActi
     AU.init = prevInit;
   }
 }
+
+withLocalStorage({
+  [SAVE_KEY]: JSON.stringify({
+    cleared:[true,false,true],
+    money:7,
+    holyBlessingUnlocked:true,
+    holyTeleportStoneUnlocked:true,
+    savedStates:[savedState],
+    mode:'classic'
+  })
+}, store => {
+  const p = loadPersisted();
+  if (!p || p.money !== 7 || !p.holyBlessingUnlocked || !p.holyTeleportStoneUnlocked) {
+    throw new Error('Legacy save should migrate into the first profile');
+  }
+  if (!store[SAVE_KEY]) throw new Error('Legacy save key should be preserved as backup during profile migration');
+  const idx = JSON.parse(store[PROFILE_INDEX_KEY] || '{}');
+  if (!idx.profiles || idx.profiles.length !== 1 || idx.profiles[0].name !== 'Spelare 1') {
+    throw new Error('Profile migration should create one default profile named Spelare 1');
+  }
+  if (saveGameSlots().length !== 1) {
+    throw new Error('Legacy manual save slots should belong to the migrated profile');
+  }
+});
+
+withLocalStorage({}, store => {
+  const list = profileList();
+  if (list.length !== 1 || activeProfileName() !== 'Spelare 1') {
+    throw new Error('Empty storage should create one default profile');
+  }
+  G.state = 'MENU';
+  G.loadPrefs();
+  const a = activeProfileId();
+  G.money = 9;
+  G.cleared[0] = true;
+  G.holyBlessingUnlocked = true;
+  G.holyTeleportStoneUnlocked = true;
+  G.profileStats = {levels:{0:{attempts:3,wins:1,bestPct:100,bestSaved:10,bestTimeLeft:42,bestSeed:123,last:null}}};
+  G.savePrefs();
+  if (!writeGameSlots([savedState])) throw new Error('Could not write profile A save slots');
+  const bMeta = createProfile('Beta');
+  if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch active profile in storage');
+  G.loadPrefs();
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || saveGameSlots().length !== 0) {
+    throw new Error('New profile should not inherit progress, money, holy state, or save slots');
+  }
+  G.money = 2;
+  G.savePrefs();
+  if (!setActiveProfile(a)) throw new Error('Could not switch back to profile A');
+  G.loadPrefs();
+  if (G.money !== 9 || !G.cleared[0] || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || saveGameSlots().length !== 1) {
+    throw new Error('Profile A progress was not restored after switching back');
+  }
+  if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch back to profile B');
+  G.loadPrefs();
+  if (G.money !== 2 || G.cleared[0] || saveGameSlots().length !== 0) {
+    throw new Error('Profile B should stay isolated after profile A is restored');
+  }
+});
+
+withLocalStorage({}, store => {
+  G.state = 'MENU';
+  G.loadPrefs();
+  G.startLevel(0);
+  let s = G.profileLevelStats(0);
+  if (s.attempts !== 1) throw new Error('Starting a level should record one profile attempt');
+  G.saved = G.level.lem;
+  G.timeT = Math.round(10 * 1000 / TICK);
+  const firstBestTime = Math.floor(G.timeT * TICK / 1000);
+  G.recordLevelResult(true);
+  s = G.profileLevelStats(0);
+  if (s.wins !== 1 || s.bestPct !== 100 || s.bestTimeLeft !== firstBestTime) {
+    throw new Error('Winning a level should record best percent, wins, and time left');
+  }
+  G.saved = Math.max(0, G.level.lem - 2);
+  G.timeT = Math.round(80 * 1000 / TICK);
+  G.recordLevelResult(false);
+  s = G.profileLevelStats(0);
+  if (s.bestPct !== 100 || s.bestTimeLeft !== firstBestTime) {
+    throw new Error('A lower result should not replace the best profile result');
+  }
+  G.saved = G.level.lem;
+  G.timeT = Math.round(80 * 1000 / TICK);
+  const betterBestTime = Math.floor(G.timeT * TICK / 1000);
+  G.recordLevelResult(true);
+  s = G.profileLevelStats(0);
+  if (s.bestPct !== 100 || s.bestTimeLeft !== betterBestTime) {
+    throw new Error('Equal percent with more time left should replace the best profile result');
+  }
+  G.cleared[0] = true;
+  G.savePrefs();
+  const firstId = activeProfileId();
+  const challenger = createProfile('Challenger');
+  setActiveProfile(challenger.id);
+  G.loadPrefs();
+  G.cleared[0] = true;
+  G.money = 1;
+  G.profileStats = {levels:{0:{attempts:1,wins:1,bestPct:150,bestSaved:15,bestTimeLeft:20,bestSeed:99,last:null}}};
+  G.savePrefs();
+  const rows = G.profileLeaderboardRows();
+  if (!rows.length || rows[0].id !== challenger.id || rows.find(r => r.id === firstId).attempts < 1) {
+    throw new Error('Leaderboard should sort local profiles by cleared levels, best percent total, and wins');
+  }
+  G.openProfileOverlay();
+  drawMenu(makeContext2d(), 1);
+  if (!G.profileOverlayButtons || !G.profileOverlayButtons.some(b => b.action === 'new') || !G.profileOverlayButtons.some(b => b.action === 'leaderboard')) {
+    throw new Error('Profile overlay should expose new-profile and leaderboard actions');
+  }
+  G.openLeaderboardOverlay();
+  drawMenu(makeContext2d(), 1);
+  if (!G.leaderboardButtons || !G.leaderboardButtons.some(b => b.action === 'profiles') || !G.leaderboardButtons.some(b => b.action === 'close')) {
+    throw new Error('Leaderboard overlay should expose profile and close actions');
+  }
+  G.closeProfileOverlay();
+});
 
 const fishSaveLevelIdx = LEVELS.findIndex(L => Array.isArray(L.water) && L.water.some(z => z && !z.lava));
 if (fishSaveLevelIdx < 0) throw new Error('Missing water level for fish save-state test');

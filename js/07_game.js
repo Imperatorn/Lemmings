@@ -82,9 +82,9 @@ const G={
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1, cutscenesOn:true,
-  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
+  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
   holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneLemId:null, portalStone:null,
-  mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0,
+  mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
   monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0, monkeyAirSupportPending:false, monkeyAirSupportTargetX:null,
   trollT:0, trollEvents:0, trollMax:0, trollLastX:null,
@@ -517,12 +517,207 @@ const G={
     }
     return true;
   },
+  normalizeProfileStats(data){
+    const out={levels:{}};
+    const levels=data&&data.levels&&typeof data.levels==='object'?data.levels:{};
+    for(const key in levels){
+      const idx=clamp(parseInt(key,10)||0,0,LEVELS.length-1);
+      const src=levels[key]||{}, dst={};
+      dst.attempts=Math.max(0,Number(src.attempts)|0);
+      dst.wins=Math.max(0,Number(src.wins)|0);
+      dst.bestPct=Number.isFinite(src.bestPct)?Math.max(0,src.bestPct):0;
+      dst.bestSaved=Math.max(0,Number(src.bestSaved)|0);
+      dst.bestTimeLeft=Math.max(0,Number(src.bestTimeLeft)|0);
+      dst.bestSeed=Number.isFinite(src.bestSeed)?(src.bestSeed>>>0):0;
+      dst.last=src.last&&typeof src.last==='object'?jsonClone(src.last):null;
+      if(dst.attempts||dst.wins||dst.bestPct||dst.last)out.levels[idx]=dst;
+    }
+    return out;
+  },
+  profileLevelStats(idx){
+    this.profileStats=this.normalizeProfileStats(this.profileStats);
+    const key=clamp(idx|0,0,LEVELS.length-1);
+    return this.profileStats.levels[key]||(this.profileStats.levels[key]={attempts:0,wins:0,bestPct:0,bestSaved:0,bestTimeLeft:0,bestSeed:0,last:null});
+  },
+  resetProfilePrefs(){
+    this.mode='chaos';
+    this.tempoIdx=1;
+    this.cleared=new Array(LEVELS.length).fill(false);
+    this.money=0;
+    this.pendingSkillBonus={};
+    this.profileStats={levels:{}};
+    this.holyBlessingUnlocked=false;
+    this.holyTeleportStoneUnlocked=false;
+    this.holyLevelLemId=null;
+    this.holyTeleportStoneLemId=null;
+    this.levelIdx=0;
+    this.menuChapter=0;
+    this.playCount=0;
+    this.cutscenesOn=true;
+    AU.musicOn=true;
+    AU.sfxOn=true;
+    AU.setMusicVolume(1);
+    AU.setSfxVolume(1);
+  },
+  activeProfileName(){
+    return typeof activeProfileName==='function'?activeProfileName():'Spelare 1';
+  },
+  activeProfileId(){
+    return typeof activeProfileId==='function'?activeProfileId():null;
+  },
+  switchProfile(id,opts){
+    if(!id||this.state==='PLAY'||(this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive())){
+      this.toast('BYT PROFIL FRAN MENYN');
+      return false;
+    }
+    if(!opts||!opts.skipSave)this.savePrefs();
+    if(!setActiveProfile(id)){this.toast('PROFIL SAKNAS');AU.sShrug();return false}
+    if(this.clearCutscene)this.clearCutscene('profile');
+    if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
+    this.clearRopeAim();
+    this.clearPortalStone();
+    this.paused=false;
+    this.profileOverlay=null;
+    this.profileOverlayButtons=[];
+    this.leaderboardButtons=[];
+    AU.stopWeather();
+    AU.stopMusic();
+    this.loadPrefs();
+    this.state='MENU';
+    if(AU.musicOn)AU.startMusic('menu');
+    this.toast('PROFIL: '+this.activeProfileName());
+    return true;
+  },
+  openProfileOverlay(){
+    this.profileOverlay='profiles';
+    this.profileOverlayButtons=[];
+    return true;
+  },
+  openLeaderboardOverlay(){
+    this.profileOverlay='leaderboard';
+    this.leaderboardButtons=[];
+    return true;
+  },
+  closeProfileOverlay(){
+    this.profileOverlay=null;
+    this.profileOverlayButtons=[];
+    this.leaderboardButtons=[];
+    return true;
+  },
+  promptCreateProfile(){
+    const existing=profileList();
+    if(existing.length>=8){this.toast('MAX 8 PROFILER');AU.sShrug();return false}
+    let name='Spelare '+(existing.length+1);
+    try{
+      const txt=window.prompt('Namn pa ny profil:',name);
+      if(txt==null)return false;
+      name=txt;
+    }catch(_){}
+    this.savePrefs();
+    const p=createProfile(name);
+    return this.switchProfile(p.id,{skipSave:true});
+  },
+  promptRenameProfile(id){
+    const list=profileList(), p=list.find(q=>q.id===id);
+    if(!p)return false;
+    let name=p.name;
+    try{
+      const txt=window.prompt('Nytt profilnamn:',p.name);
+      if(txt==null)return false;
+      name=txt;
+    }catch(_){}
+    if(renameProfile(id,name)){
+      this.toast('PROFIL NAMNGIVEN');
+      return true;
+    }
+    return false;
+  },
+  promptDeleteProfile(id){
+    const list=profileList(), p=list.find(q=>q.id===id);
+    if(!p)return false;
+    if(list.length<=1){this.toast('SISTA PROFILEN KAN INTE TAS BORT');AU.sShrug();return false}
+    let ok=true;
+    try{ok=window.confirm('Ta bort profilen "'+p.name+'"?')}catch(_){}
+    if(!ok)return false;
+    const wasActive=id===this.activeProfileId();
+    if(deleteProfile(id)){
+      if(wasActive){
+        this.loadPrefs();
+        this.state='MENU';
+      }
+      this.toast('PROFIL BORTTAGEN');
+      return true;
+    }
+    return false;
+  },
+  handleProfileOverlayInput(p){
+    if(!this.profileOverlay)return false;
+    const buttons=this.profileOverlay==='leaderboard'?this.leaderboardButtons:this.profileOverlayButtons;
+    for(const b of buttons||[]){
+      if(p.x<b.x||p.x>=b.x+b.w||p.y<b.y||p.y>=b.y+b.h)continue;
+      if(b.action==='close')return this.closeProfileOverlay();
+      if(b.action==='profiles')return this.openProfileOverlay();
+      if(b.action==='leaderboard')return this.openLeaderboardOverlay();
+      if(b.action==='new')return this.promptCreateProfile();
+      if(b.action==='select')return this.switchProfile(b.id);
+      if(b.action==='rename')return this.promptRenameProfile(b.id);
+      if(b.action==='delete')return this.promptDeleteProfile(b.id);
+    }
+    return true;
+  },
+  profileLeaderboardRows(){
+    const rows=[];
+    const list=typeof profileList==='function'?profileList():[];
+    for(const meta of list){
+      const data=loadProfileData(meta.id)||{};
+      const stats=this.normalizeProfileStats(data.stats);
+      const cleared=Array.isArray(data.cleared)?data.cleared.filter(Boolean).length:0;
+      let attempts=0,wins=0,sumPct=0,bestSaved=0;
+      for(const key in stats.levels){
+        const s=stats.levels[key]||{};
+        attempts+=s.attempts||0;
+        wins+=s.wins||0;
+        sumPct+=s.bestPct||0;
+        bestSaved+=s.bestSaved||0;
+      }
+      rows.push({id:meta.id,name:meta.name,cleared,attempts,wins,sumPct,bestSaved,money:Math.max(0,data.money|0),holy:!!data.holyBlessingUnlocked,stone:!!data.holyTeleportStoneUnlocked});
+    }
+    rows.sort((a,b)=>(b.cleared-a.cleared)||(b.sumPct-a.sumPct)||(b.wins-a.wins)||a.name.localeCompare(b.name));
+    return rows;
+  },
+  recordLevelAttempt(idx){
+    const s=this.profileLevelStats(idx);
+    s.attempts=(s.attempts||0)+1;
+    s.lastAttemptTs=Date.now?Date.now():0;
+    this.savePrefs();
+    return s;
+  },
+  recordLevelResult(win){
+    if(!this.level)return false;
+    const s=this.profileLevelStats(this.levelIdx);
+    const pct=Math.floor(this.saved/Math.max(1,this.level.lem)*100);
+    const timeLeft=Math.max(0,Math.floor((this.timeT||0)*TICK/1000));
+    const saved=Math.max(0,this.saved|0);
+    if(win)s.wins=(s.wins||0)+1;
+    const last={win:!!win,pct,saved,timeLeft,seed:this.levelSeed>>>0,ts:Date.now?Date.now():0};
+    s.last=last;
+    if(pct>(s.bestPct||0)||(pct===(s.bestPct||0)&&timeLeft>(s.bestTimeLeft||0))){
+      s.bestPct=pct;
+      s.bestSaved=saved;
+      s.bestTimeLeft=timeLeft;
+      s.bestSeed=this.levelSeed>>>0;
+    }
+    this.savePrefs();
+    return true;
+  },
   loadPrefs(){
+    this.resetProfilePrefs();
     const p=loadPersisted();
     if(p.mode==='classic'||p.mode==='chaos')this.mode=p.mode;
     if(Array.isArray(p.cleared))this.cleared=this.cleared.map((_,i)=>!!p.cleared[i]);
     if(Number.isFinite(p.money))this.money=Math.max(0,p.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus(p.pendingSkillBonus);
+    this.profileStats=this.normalizeProfileStats(p.stats);
     this.holyBlessingUnlocked=!!p.holyBlessingUnlocked;
     this.holyTeleportStoneUnlocked=!!p.holyTeleportStoneUnlocked;
     this.holyLevelLemId=null;
@@ -539,7 +734,7 @@ const G={
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},
@@ -840,6 +1035,7 @@ const G={
     this.levelSeed=this.makeLevelSeed(idx);
     this.levelRng=rndSeed(this.levelSeed||1337);
     this.savePrefs();
+    this.recordLevelAttempt(idx);
     const L=this.level=LEVELS[idx];
     this.liquidCache=null;
     const T=this.T=new Terrain(L.W,240);
@@ -3444,6 +3640,7 @@ const G={
         this.endT=0;
         this.state='RESULT';
         const win=this.saved>=L.save;
+        this.recordLevelResult(win);
         if(win)this.markLevelCleared(this.levelIdx);
         AU.stopMusic();AU.stopWeather();AU.jingle(win);
       }
