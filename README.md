@@ -132,6 +132,7 @@ js/04_terrain.js        destruerbar terrängmask
 js/05_lemming.js        lemmel-tillstånd och skill-logik
 js/06_levels.js         banor
 js/07_game.js           spelmotor, state, events och huvudflöde
+js/07_runes.js          runor, hemligheter och fullbordad-status
 js/07_save_state.js     spara/ladda-logik för spelstate
 js/07_manual_control.js direktstyrning, sikte och manual-skill helpers
 js/07_waterfall_cave_scenes.js scenregister, bounds, exits och objekt för vattenfallsgrottan

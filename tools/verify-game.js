@@ -14,7 +14,7 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_runes.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
@@ -38,6 +38,7 @@ if (debugHtml) {
   const debugRopeIdx = debugScripts.indexOf('js/07_rope.js');
   const debugManualIdx = debugScripts.indexOf('js/07_manual_control.js');
   const debugWaterfallScenesIdx = debugScripts.indexOf('js/07_waterfall_cave_scenes.js');
+  const debugRunesIdx = debugScripts.indexOf('js/07_runes.js');
   const debugWaterfallIdx = debugScripts.indexOf('js/07_waterfall_cave.js');
   const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
   const debugCutsceneIdx = debugScripts.indexOf('js/07_cutscenes.js');
@@ -45,7 +46,7 @@ if (debugHtml) {
   const debugWaterfallRenderIdx = debugScripts.indexOf('js/11_waterfall_cave_render.js');
   const debugPlayRenderIdx = debugScripts.indexOf('js/11_play_render.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugWaterfallIdx <= debugWaterfallScenesIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugRunesIdx <= debugWaterfallScenesIdx || debugWaterfallIdx <= debugRunesIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
@@ -98,6 +99,8 @@ for (const token of ['PROFILE_INDEX_KEY','PROFILE_KEY_PREFIX','ensureProfileInde
   if (!utilCode.includes(token)) throw new Error(`Profile storage layer is missing ${token}`);
 }
 const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
+const runeCode = fs.readFileSync(path.join(root, 'js/07_runes.js'), 'utf8');
+const levelsCode = fs.readFileSync(path.join(root, 'js/06_levels.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
 const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
 const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
@@ -144,11 +147,18 @@ if (!gameCode.includes('PORTAL_STONE_MAX_DIST') || !gameCode.includes('beginPort
 for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','recordLevelResult','profileLeaderboardRows','profileStats']) {
   if (!gameCode.includes(token)) throw new Error(`Profile runtime is missing ${token}`);
 }
-for (const token of ['runeProgress','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','runeCatalog']) {
-  if (!gameCode.includes(token)) throw new Error(`Rune progress runtime is missing ${token}`);
+if (!gameCode.includes('runeProgress')) throw new Error('Profile state is missing runeProgress');
+for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus']) {
+  if (!runeCode.includes(token)) throw new Error(`Rune module is missing ${token}`);
 }
-for (const token of ['levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus']) {
-  if (!gameCode.includes(token)) throw new Error(`Level completion runtime is missing ${token}`);
+for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneDiscovery(desc)','runeProgressSummary(data)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
+  if (gameCode.includes(token)) throw new Error(`07_game.js should not own rune/completion implementation: ${token}`);
+}
+if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\(')) {
+  throw new Error('Rune requirements should use explicit level secrets metadata, not decor string inspection');
+}
+if (!levelsCode.includes("secrets:{runeSets:['waterfall.glyphArchive']}")) {
+  throw new Error('Waterfall levels should declare explicit rune set requirements in secrets.runeSets');
 }
 if (!screensCode.includes('RUNOR KVAR') || !screensCode.includes('BANA FULLBORDAD - ALLA RUNOR FUNNA') || !screensCode.includes('BANA KLARAD - RUNOR SAKNAS')) {
   throw new Error('Menu, briefing, and result screens should expose rune-based full-completion status');
@@ -400,7 +410,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
-  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus',
+  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
@@ -822,7 +832,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.cutscenesOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
   if (waterfallIdx < 0) throw new Error('Missing waterfall cave fixture level');
-  const plainIdx = LEVELS.findIndex(L => L && L.decor && !/\bwaterfall\s*\(/.test(String(L.decor)));
+  const hasRuneSecrets = L => !!(L && L.secrets && Array.isArray(L.secrets.runeSets) && L.secrets.runeSets.length);
+  const plainIdx = LEVELS.findIndex(L => L && !hasRuneSecrets(L));
+  if (!hasRuneSecrets(LEVELS[waterfallIdx]) || !G.levelSecretRuneSets(waterfallIdx).includes('waterfall.glyphArchive')) {
+    throw new Error('Waterfall cave fixture level should declare secrets.runeSets metadata');
+  }
+  for (const name of ['BYGG EN BRO','MÖRK SKOG','MARMORGROTTAN','SKOGSRAVINEN','DUBBLA DAMMAR','KAOSKARTAN','LEMMELMÄSTARPROVET']) {
+    const idx = LEVELS.findIndex(L => L && L.name === name);
+    if (idx < 0 || !hasRuneSecrets(LEVELS[idx]) || !G.levelHasWaterfallSecrets(idx) || G.levelRuneRequirements(idx).length !== 1) {
+      throw new Error(`Waterfall rune metadata is missing or wrong for ${name}`);
+    }
+  }
   if (!G.levelHasWaterfallSecrets(waterfallIdx) || !G.levelRuneStatus(waterfallIdx).hasRequirements || G.levelRuneStatus(waterfallIdx).completeAll) {
     throw new Error('Waterfall levels should start as clearable but not rune-complete before their rune set is discovered');
   }
