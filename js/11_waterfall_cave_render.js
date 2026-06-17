@@ -1223,7 +1223,7 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
   const preRelease=st&&st.active&&st.t<st.releaseT;
   if(!holding&&!preRelease)return false;
   const facing=(preRelease&&st&&st.facing)||cave.facing||'front';
-  const rawP=preRelease?clamp(st.t/Math.max(1,st.releaseT),0,1):0;
+  const rawP=preRelease?clamp(((st.t||0)+1.5)/Math.max(1,(st.releaseT||10)+1.5),0,1):0;
   const throwP=rawP*rawP*(3-2*rawP);
   c.save();
   c.translate(lx,ly);
@@ -1952,9 +1952,13 @@ function drawWaterfallCaveView(c,tk){
   const cave=G.waterfallCave;
   if(!cave||!cave.active)return false;
   if(cave.mapOpen){
+    let ok=false;
     cave.mapOpen=false;
-    const ok=drawWaterfallCaveView(c,tk);
-    cave.mapOpen=true;
+    try{
+      ok=drawWaterfallCaveView(c,tk);
+    }finally{
+      cave.mapOpen=true;
+    }
     drawWaterfallCaveMapOverlay(c,cave,tk);
     return ok;
   }

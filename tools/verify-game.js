@@ -78,6 +78,9 @@ if (debugHtml) {
   if (debugPageCode.includes('quietRunArchiveAudioStart') || debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {
     throw new Error('Debug archive cave buttons should start glyphArchive with its real audio');
   }
+  if (!debugPageCode.includes("'caveMystery','Runarkiv'") || !debugPageCode.includes('if(withAudio)audioReady();')) {
+    throw new Error('debug_page.js should expose and initialize the glyph archive mystery music in debug mode');
+  }
 }
 const hudCode = fs.readFileSync(path.join(root, 'js/09_hud.js'), 'utf8');
 if (!hudCode.includes("'UTE '+G.out+'/'+L.lem")) {
@@ -1048,6 +1051,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!drawWaterfallCaveView(WCTX, 10)) {
     throw new Error('Waterfall cave map overlay did not render');
   }
+  if (!G.waterfallCave.mapOpen) {
+    throw new Error('Waterfall cave map rendering should preserve mapOpen state');
+  }
   G.handleWaterfallCaveKey('ArrowRight');
   for (let i = 0; i < 4; i++) G.tick();
   if (G.waterfallCave.lemX !== mapStartX || G.waterfallCave.keys.right || G.waterfallCave.walking) {
@@ -1382,6 +1388,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKey(' ');
   if (G.waterfallCave.mirrorStoneHeld || !G.waterfallCave.mirrorStoneThrow || !G.waterfallCave.mirrorStoneThrow.active) {
     throw new Error('Mirror pool carried stone was not thrown with Space');
+  }
+  if (G.waterfallCave.mirrorStoneThrow.releaseT > 12) {
+    throw new Error('Mirror pool stone throw wind-up should release quickly enough to avoid a stiff start');
   }
   const firstStoneTarget = {x:G.waterfallCave.mirrorStoneThrow.tx, y:G.waterfallCave.mirrorStoneThrow.ty};
   if (!G.waterfallCaveMirrorStoneThrowLocks(G.waterfallCave)) {

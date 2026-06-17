@@ -485,7 +485,7 @@ Object.assign(G,{
     cave.running=false;
     cave.facing=throwFacing;
     cave.mirrorStoneThrow={
-      active:true,t:0,releaseT:14,dur:clamp(Math.round(dist/5)+34,42,62),
+      active:true,t:0,releaseT:10,dur:clamp(Math.round(dist/5)+34,42,62),
       sx,sy,tx,ty,peak:34+dist*0.10,landed:false,facing:throwFacing
     };
     if(AU.sWaterfallCaveStoneThrow)AU.sWaterfallCaveStoneThrow();
