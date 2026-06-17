@@ -365,7 +365,7 @@ function waterfallCaveApplySceneVariant(raw,variantId){
   const v=waterfallCaveVariant(variantId);
   const cfg=waterfallCaveSceneVariantConfig(v.id,out.id);
   out.variantId=v.id;
-  if(out.id==='glyphArchive')out.archiveStyle=v.archiveStyle||'floda';
+  out.archiveStyle=v.archiveStyle||'floda';
   for(const key of ['label','render','audio']){
     if(cfg[key]!=null)out[key]=cfg[key];
   }

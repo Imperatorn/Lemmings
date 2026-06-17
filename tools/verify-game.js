@@ -106,6 +106,7 @@ const levelsCode = fs.readFileSync(path.join(root, 'js/06_levels.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
 const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
 const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
+const waterfallRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
 const screensCode = fs.readFileSync(path.join(root, 'js/10_screens.js'), 'utf8');
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
@@ -129,6 +130,11 @@ for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldam
 for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing','blessWaterfallCaveLemming','waterfallCaveTeleportStoneState','updateWaterfallCaveTeleportStone']) {
   if (!waterfallRuntimeCode.includes(token)) {
     throw new Error(`Waterfall cave runtime is missing scene-system method ${token}`);
+  }
+}
+for (const token of ['waterfallCaveVariantTheme','drawWaterfallCaveVariantMotifs','waterfallCaveAdventureStyle(cave.scene,cave)']) {
+  if (!waterfallRenderCode.includes(token)) {
+    throw new Error(`Waterfall cave renderer should apply cave variants beyond the rune archive: ${token}`);
   }
 }
 if (!gameCode.includes('holyLemmingSurvive') || !gameCode.includes('holyLemmingSafeSpot') || !gameCode.includes('EN HELIG LÄMMEL KAN INTE FÖRVANDLAS')) {
@@ -965,6 +971,25 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (archiveOnlyExits.some(exit => exit && exit.target === 'church') || G.waterfallCaveSceneDef('church', archiveOnlyCave) || G.waterfallCaveSceneFallback('church', archiveOnlyCave) !== 'glyphArchive') {
     throw new Error('Archive-only cave variants should remove the church exit and safely fall back from hidden church scenes');
   }
+  const variantRenderChecks = [
+    ['darkForestArchive','forest'],
+    ['marbleArchive','marble'],
+    ['forestRavineArchive','ravine'],
+    ['doublePondsArchive','water'],
+    ['chaosArchive','chaos'],
+    ['masterTrialArchive','master']
+  ];
+  for (const [variantId, styleKey] of variantRenderChecks) {
+    for (const scene of ['main','deep','camp','emberPassage','crystalGallery','mirrorPool','glyphArchive']) {
+      Object.assign(G.waterfallCave, {variantId,scene,mapOpen:false,lemX:240,lemY:220});
+      G.ensureWaterfallCaveSceneState(G.waterfallCave);
+      const def = G.waterfallCaveSceneDef(scene, G.waterfallCave);
+      if (!def || def.archiveStyle !== styleKey) throw new Error(`Cave variant ${variantId} did not apply style ${styleKey} to ${scene}`);
+      if (!drawWaterfallCaveView(WCTX, 12)) throw new Error(`Cave variant ${variantId} did not render scene ${scene}`);
+    }
+  }
+  Object.assign(G.waterfallCave, {variantId:'flodaChurch',scene:'main',mapOpen:false,lemX:240,lemY:232});
+  G.ensureWaterfallCaveSceneState(G.waterfallCave);
   for (const id of caveSceneIds) {
     const scene = G.waterfallCaveSceneDef(id);
     if (!scene || !scene.map) continue;
