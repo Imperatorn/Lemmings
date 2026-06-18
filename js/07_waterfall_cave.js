@@ -1,5 +1,5 @@
 // ------------------------ VATTENFALLSGROTTA ----------------------------
-const WATERFALL_CAVE_TELEPORT_CHARGE_TICKS=150;
+const WATERFALL_CAVE_TELEPORT_CHARGE_TICKS=126;
 
 Object.assign(G,{
   waterfallCaveLootKey(wf){
