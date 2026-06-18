@@ -144,8 +144,8 @@ Object.assign(G,{
   },
   waterfallCaveObjectNearScale(def){
     if(Number.isFinite(def&&def.nearScale))return Math.max(0.1,def.nearScale);
-    if(def&&def.kind==='viewCard')return 1.35;
-    if(def&&def.kind==='inspectable')return 1.38;
+    if(def&&def.kind==='viewCard')return 1.75;
+    if(def&&def.kind==='inspectable')return 1.75;
     return 1.08;
   },
   waterfallCaveObjectResetScale(def){
@@ -486,9 +486,9 @@ Object.assign(G,{
     const seq=(cave.mirrorStoneThrowSeq=(cave.mirrorStoneThrowSeq||0)+1);
     const seed=seq*97+(cave.t||0)*13+Math.round((cave.lemX||0)*3)+Math.round((cave.lemY||0)*5);
     const angle=(typeof hash2==='function'?hash2(seed,17):Math.random())*Math.PI*2;
-    const radius=Math.sqrt(0.12+0.78*(typeof hash2==='function'?hash2(seed,31):Math.random()));
-    const tx=(pool.x||250)+Math.cos(angle)*radius*56;
-    const ty=(pool.y||246)+2+Math.sin(angle)*radius*14;
+    const radius=Math.sqrt(0.10+0.76*(typeof hash2==='function'?hash2(seed,31):Math.random()));
+    const tx=(pool.x||250)+Math.cos(angle)*radius*50;
+    const ty=(pool.y||246)+2+Math.sin(angle)*radius*10;
     const oldFacing=cave.facing||'front',lemX=cave.lemX||240;
     const throwFacing=Math.abs(tx-lemX)>10?(tx>lemX?'right':'left'):((oldFacing==='left'||oldFacing==='right')?oldFacing:'right');
     const scale=typeof waterfallCaveLemmingScale==='function'?waterfallCaveLemmingScale(cave):2;
@@ -505,8 +505,8 @@ Object.assign(G,{
     const pileHit=this.waterfallCaveMirrorThrowStonePile(cave);
     if(pileHit&&pileHit.obj)pileHit.obj.pickedT=0;
     cave.mirrorStoneThrow={
-      active:true,t:0,releaseT:4,dur:clamp(Math.round(dist/5)+34,42,62),
-      sx,sy,tx,ty,peak:34+dist*0.10,landed:false,facing:throwFacing
+      active:true,t:0,releaseT:3,dur:clamp(Math.round(dist/7)+20,26,38),
+      sx,sy,tx,ty,peak:18+dist*0.055,landed:false,facing:throwFacing
     };
     if(AU.sWaterfallCaveStoneThrow)AU.sWaterfallCaveStoneThrow();
     return true;

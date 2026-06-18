@@ -422,8 +422,9 @@
     G.lems=[holy,...followers];
     G.out=G.lems.length;
     G.spawned=G.level.lem;
-    G.holyBlessingUnlocked=true;
-    G.holyTeleportStoneUnlocked=true;
+    G.holyBlessingUnlocked=false;
+    G.holyTeleportStoneUnlocked=false;
+    G.practiceHolyTeleportStoneUnlocked=true;
     G.holyLevelLemId=holy.id;
     G.holyTeleportStoneLemId=holy.id;
     G.selSkill=null;

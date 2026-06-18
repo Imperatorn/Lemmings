@@ -87,6 +87,9 @@ if (debugHtml) {
   if (!debugPageCode.includes("'caveMystery','Runarkiv'") || !debugPageCode.includes('if(withAudio)audioReady();')) {
     throw new Error('debug_page.js should expose and initialize the glyph archive mystery music in debug mode');
   }
+  if (!debugPageCode.includes('G.practiceHolyTeleportStoneUnlocked=true') || debugPageCode.includes('G.holyTeleportStoneUnlocked=true')) {
+    throw new Error('Debug portal-stone test should use temporary practice state, not permanent profile unlocks');
+  }
 }
 const hudCode = fs.readFileSync(path.join(root, 'js/09_hud.js'), 'utf8');
 if (!hudCode.includes("'UTE '+G.out+'/'+L.lem")) {
@@ -1322,7 +1325,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (deepItem.coverOpen || deepItem.near) {
     throw new Error('Deep cave game cover opens before the lemmel reaches the item');
   }
-  G.waterfallCave.lemX = deepItem.x + 34;
+  G.waterfallCave.lemX = deepItem.x + 42;
   G.waterfallCave.lemY = deepItem.y + 10;
   G.tick();
   if (!deepItem.coverOpen || !deepItem.near) {
@@ -1537,6 +1540,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.waterfallCave.mirrorStoneThrow.releaseT > 6) {
     throw new Error('Mirror pool stone throw wind-up should release quickly enough to avoid a stiff start');
   }
+  if (G.waterfallCave.mirrorStoneThrow.dur > 40 || G.waterfallCave.mirrorStoneThrow.peak > 32) {
+    throw new Error('Mirror pool stone throw should be short and use a grounded arc');
+  }
   if (throwStonePile.obj.pickedT > 0) {
     throw new Error('Mirror pool stone pile pickup lift should stop once the throw animation begins');
   }
@@ -1677,7 +1683,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (churchCard.obj.cardOpen || churchCard.obj.near) {
     throw new Error('Dala-Floda church card opened before the lemmel reached it');
   }
-  G.waterfallCave.lemX = churchCard.obj.x + 28;
+  G.waterfallCave.lemX = churchCard.obj.x + 36;
   G.waterfallCave.lemY = churchCard.obj.y;
   G.tick();
   if (!churchCard.obj.cardOpen || churchCard.obj.cardSide !== 'front' || !churchCard.obj.near) {
@@ -3195,6 +3201,21 @@ withLocalStorage({}, store => {
   if (!G.practiceHolyTeleportStoneUnlocked || !G.portalStoneButtonVisible()) {
     throw new Error('Practice teleport stone should be temporary and usable only during the run');
   }
+  if (G.T) {
+    G.T.clearRect(52, 120, 230, 76);
+    G.T.brick(48, 191, 250, 8, '#777777');
+  }
+  const practiceHoly = new Lemming(112, 190);
+  practiceHoly.holy = true;
+  practiceHoly.teleportStone = true;
+  practiceHoly.dir = 1;
+  practiceHoly.state = 'WALK';
+  G.lems = [practiceHoly];
+  G.holyTeleportStoneLemId = practiceHoly.id;
+  if (!G.handlePortalStoneClick(practiceHoly.x, practiceHoly.y - 6) || !G.portalStone || !G.portalStone.placingExit) {
+    throw new Error('Practice teleport stone should be usable through the normal portal HUD flow');
+  }
+  G.cancelPortalStonePlacement();
   G.savePrefs();
   G.loadPrefs();
   if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.practiceHolyTeleportStoneUnlocked) {

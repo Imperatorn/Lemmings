@@ -77,7 +77,8 @@ Object.assign(G,{
     return best;
   },
   handlePortalStoneClick(wx,wy){
-    if(!this.holyTeleportStoneUnlocked){this.toast('TELEPORTERINGSSTEN SAKNAS');AU.sShrug();return false}
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
+    if(!hasStone){this.toast('TELEPORTERINGSSTEN SAKNAS');AU.sShrug();return false}
     const l=this.findPortalStoneTarget(wx,wy);
     if(!l){this.toast('KLICKA PÅ DEN HELIGA LÄMMELN');AU.sShrug();return false}
     return this.beginPortalStonePlacement(l);
