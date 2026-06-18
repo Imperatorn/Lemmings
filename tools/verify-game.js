@@ -308,11 +308,14 @@ if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47'
 if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveTeleportCharge') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
   throw new Error('Teleport stone discovery and rune reading should have dedicated magical sounds');
 }
+if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',3.1)") || !audioCode.includes('t+2.72')) {
+  throw new Error('Teleport stone charging should use the longer dramatic crystal charge sound');
+}
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
   throw new Error('World render should draw active teleport stone portals before lemmels');
 }
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeEffect') || !caveRenderCode.includes('drawWaterfallCaveCrystalMessage') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeEffect') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeRoomLight') || !caveRenderCode.includes('drawWaterfallCaveCrystalMessage') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
@@ -1041,6 +1044,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (seenWaterfallRuneSets.size !== Object.keys(expectedRuneSetsByLevel).length) {
     throw new Error('Waterfall levels should not share the same rune text set');
   }
+  for (const variant of Object.values(expectedCaveVariantByRuneSet)) {
+    const variantCave = {scene:'crystalGallery', variantId:variant, sceneState:{}, flags:{}, visited:{crystalGallery:true}, lemX:240, lemY:220};
+    const ids = G.waterfallCaveSceneIds(variantCave);
+    const def = G.waterfallCaveSceneDef('crystalGallery', variantCave);
+    const objs = G.waterfallCaveSceneObjects(variantCave);
+    if (!ids.includes('crystalGallery') || !def || !objs.some(hit => hit && hit.def && hit.def.id === 'songCrystal' && hit.def.kind === 'crystal')) {
+      throw new Error(`Cave variant ${variant} should keep the crystal gallery and teleport-stone charging crystal`);
+    }
+  }
   if (!G.levelHasWaterfallSecrets(waterfallIdx) || !G.levelRuneStatus(waterfallIdx).hasRequirements || G.levelRuneStatus(waterfallIdx).completeAll) {
     throw new Error('Waterfall levels should start as clearable but not rune-complete before their rune set is discovered');
   }
@@ -1522,12 +1534,24 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.practiceHolyTeleportStoneCharged = false;
   songCrystal.obj.hintT = 0;
   G.handleWaterfallCaveKey(' ');
-  if (!G.practiceHolyTeleportStoneCharged || !(songCrystal.obj.chargeT > 0) || !(songCrystal.obj.hintT > 0) || crystalChargeSounds !== chargeSoundsBefore + 1) {
+  if (!G.practiceHolyTeleportStoneCharged || !(songCrystal.obj.chargeT >= 180) || !(songCrystal.obj.chargeDur >= 180) || !(songCrystal.obj.hintT > 0) || crystalChargeSounds !== chargeSoundsBefore + 1) {
     throw new Error('Song crystal did not charge an uncharged teleport stone with Space');
+  }
+  if (!(G.waterfallCave.crystalChargeLockT >= 180)) {
+    throw new Error('Crystal charging should briefly lock cave control during the dramatic charge sequence');
   }
   if (!drawWaterfallCaveView(WCTX, 38)) {
     throw new Error('Teleport stone crystal charging animation did not render');
   }
+  const lockX = G.waterfallCave.lemX, lockY = G.waterfallCave.lemY;
+  G.handleWaterfallCaveKey('ArrowRight');
+  G.tick();
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  if (G.waterfallCave.lemX !== lockX || G.waterfallCave.lemY !== lockY || !(songCrystal.obj.chargeT < songCrystal.obj.chargeDur)) {
+    throw new Error('Crystal charging should hold the lemmel still while the long animation advances');
+  }
+  songCrystal.obj.chargeT = 0;
+  G.waterfallCave.crystalChargeLockT = 0;
   G.practiceHolyTeleportStoneUnlocked = false;
   G.practiceHolyTeleportStoneCharged = false;
   if (!songCrystal.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, songCrystal.obj.x, songCrystal.obj.y + 8)) {

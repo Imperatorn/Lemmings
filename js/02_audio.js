@@ -499,15 +499,24 @@ const AU={
     this.softNoise(0.45,0.010,1800,0.55,t+0.03,{type:'bandpass',q:0.60,smooth:0.76,attack:0.07,release:0.28});
   },
   sWaterfallCaveTeleportCharge(){
-    if(!this.rateFx('waterfall-cave-teleport-charge',1.0))return;
+    if(!this.rateFx('waterfall-cave-teleport-charge',3.1))return;
     const t=this.now();
-    this.padTone(294,0.78,'sine',0.018,t);
-    this.padTone(440,0.86,'triangle',0.016,t+0.08);
-    this.tone(660,0.14,'sine',0.020,1.08,t+0.16);
-    this.tone(880,0.15,'triangle',0.024,1.10,t+0.27);
-    this.tone(1320,0.18,'sine',0.030,1.05,t+0.42);
-    this.softNoise(0.34,0.012,2400,0.62,t+0.10,{type:'bandpass',q:0.72,smooth:0.80,attack:0.08,release:0.22});
-    this.softNoise(0.18,0.007,5200,0.74,t+0.34,{type:'highpass',smooth:0.38,attack:0.03,release:0.12});
+    this.padTone(196,3.40,'sine',0.014,t);
+    this.padTone(294,3.20,'triangle',0.012,t+0.12);
+    this.padTone(392,2.70,'sine',0.010,t+0.42);
+    this.softNoise(2.75,0.010,980,1.78,t+0.12,{type:'bandpass',q:0.45,smooth:0.88,attack:0.28,release:0.72});
+    this.softNoise(2.10,0.006,4200,1.26,t+0.72,{type:'highpass',smooth:0.62,attack:0.32,release:0.54});
+    const notes=[440,554,659,831,988,1175];
+    for(let i=0;i<notes.length;i++){
+      const when=t+0.58+i*0.34;
+      this.tone(notes[i],0.18+(i%2)*0.04,i%2?'triangle':'sine',0.014+i*0.002,1.05,when);
+      this.tone(notes[i]*2,0.10,'sine',0.006+i*0.001,0.98,when+0.045);
+    }
+    this.padTone(523,0.92,'sine',0.018,t+2.35);
+    this.padTone(784,0.86,'triangle',0.016,t+2.42);
+    this.tone(1568,0.26,'sine',0.030,1.02,t+2.72);
+    this.tone(2093,0.20,'triangle',0.020,0.94,t+2.92);
+    this.softNoise(0.48,0.012,5600,0.62,t+2.66,{type:'bandpass',q:0.72,smooth:0.72,attack:0.08,release:0.28});
   },
   sWaterfallCaveStonePickup(){
     if(!this.rateFx('waterfall-cave-stone-pickup',0.10))return;

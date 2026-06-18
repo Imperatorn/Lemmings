@@ -1624,10 +1624,58 @@ function drawWaterfallCaveStoneGlyph(c,x,y,glyph,color,scale){
   c.restore();
 }
 
+function waterfallCaveEase01(v){
+  v=clamp(v,0,1);
+  return v*v*(3-2*v);
+}
+
+function waterfallCaveCrystalChargeState(cave,obj){
+  obj=obj||{};
+  const dur=Math.max(1,Number.isFinite(obj.chargeDur)?obj.chargeDur:216);
+  const rem=clamp(Number.isFinite(obj.chargeT)?obj.chargeT:0,0,dur);
+  if(rem<=0)return null;
+  const p=clamp((dur-rem)/dur,0,1);
+  return {dur,rem,p,fade:clamp(rem/28,0,1)};
+}
+
+function waterfallCaveCrystalChargeHit(cave){
+  if(!cave||cave.scene!=='crystalGallery'||!G.waterfallCaveSceneObjects)return null;
+  return (G.waterfallCaveSceneObjects(cave)||[]).find(h=>h&&h.def&&h.def.id==='songCrystal'&&h.obj&&h.obj.chargeT>0)||null;
+}
+
+function drawWaterfallCaveCrystalChargeRoomLight(c,cave,tk){
+  const hit=waterfallCaveCrystalChargeHit(cave);
+  const obj=hit&&hit.obj;
+  const st=waterfallCaveCrystalChargeState(cave,obj);
+  if(!st)return false;
+  const x=Math.round(obj.x||240),y=Math.round(obj.y||220),t=(tk+(cave&&cave.t||0));
+  const darken=waterfallCaveEase01(clamp(st.p/0.28,0,1))*(1-0.48*waterfallCaveEase01(clamp((st.p-0.76)/0.24,0,1)));
+  const bloom=waterfallCaveEase01(clamp((st.p-0.18)/0.70,0,1))*st.fade;
+  c.save();
+  c.globalAlpha=0.14+0.42*darken;
+  c.fillStyle='#00030a';
+  c.fillRect(0,0,CW,CH);
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=(0.08+0.22*bloom)*(0.78+0.22*Math.sin(t*0.08));
+  c.fillStyle='#3bdfff';
+  fillPixelPoly(c,[[x-28,y-46],[x+16,y-58],[CW,18],[CW,118],[x+52,y+34],[x-18,y+26]]);
+  c.globalAlpha=(0.06+0.18*bloom)*(0.76+0.24*Math.cos(t*0.07));
+  c.fillStyle='#ff55d8';
+  fillPixelPoly(c,[[x+6,y-54],[x+50,y-32],[CW,160],[CW,248],[x+34,y+46],[x-20,y+20]]);
+  c.globalAlpha=0.10+0.24*bloom;
+  c.fillStyle='#90f8ff';
+  fillPixelPoly(c,[[x-104,y+34],[x-56,y-30],[x+4,y-72],[x+64,y-34],[x+112,y+34],[x+44,y+64],[x-44,y+64]]);
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk){
-  const charge=clamp((obj&&obj.chargeT||0)/96,0,1);
-  if(charge<=0)return false;
-  const p=1-charge;
+  const st=waterfallCaveCrystalChargeState(cave,obj);
+  if(!st)return false;
+  const p=st.p;
+  const gather=waterfallCaveEase01(clamp(p/0.28,0,1));
+  const power=waterfallCaveEase01(clamp((p-0.18)/0.66,0,1))*st.fade;
+  const finalPulse=waterfallCaveEase01(clamp((p-0.72)/0.28,0,1))*st.fade;
   const pulse=0.55+0.45*Math.sin((tk+(cave&&cave.t||0))*0.22);
   const lx=Math.round(cave&&Number.isFinite(cave.lemX)?cave.lemX:240);
   const ly=Math.round(cave&&Number.isFinite(cave.lemY)?cave.lemY:220);
@@ -1636,28 +1684,36 @@ function drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk){
   const targetY=ly-Math.round(16*scale);
   c.save();
   c.globalCompositeOperation='lighter';
-  c.globalAlpha=0.18+0.42*charge;
+  c.globalAlpha=(0.14+0.50*power+0.20*finalPulse);
   c.fillStyle='#6ff0ff';
-  fillPixelPoly(c,[[x-78,y+20],[x-38,y-48],[x+2,y-64],[x+42,y-42],[x+80,y+18],[x+36,y+42],[x-36,y+42]]);
-  c.globalAlpha=0.16+0.34*charge;
+  fillPixelPoly(c,[[x-86,y+22],[x-42,y-56],[x+2,y-78],[x+48,y-48],[x+90,y+20],[x+40,y+52],[x-42,y+50]]);
+  c.globalAlpha=(0.10+0.38*power+0.18*finalPulse);
   c.fillStyle='#ff55d8';
-  fillPixelPoly(c,[[x-64,y+24],[x-18,y-58],[x+22,y-52],[x+66,y+20],[x+30,y+38],[x-28,y+40]]);
-  for(let i=0;i<5;i++){
-    const t=i/4;
-    const bx=x+(targetX-x)*t+Math.sin(p*4.8+i*1.7)*6;
-    const by=(y-34)+(targetY-(y-34))*t+Math.cos(p*4.2+i)*3;
-    c.globalAlpha=(0.22+0.30*charge)*(1-Math.abs(t-0.55)*0.7);
+  fillPixelPoly(c,[[x-70,y+28],[x-22,y-66],[x+24,y-62],[x+74,y+24],[x+34,y+46],[x-34,y+46]]);
+  const stream=waterfallCaveEase01(clamp((p-0.30)/0.46,0,1))*st.fade;
+  for(let i=0;i<9;i++){
+    const t=i/8;
+    const phase=p*8.4+i*1.35;
+    const bx=x+(targetX-x)*t+Math.sin(phase)*Math.round(5+7*stream);
+    const by=(y-42)+(targetY-(y-42))*t+Math.cos(phase*0.86+i)*Math.round(2+5*stream);
+    c.globalAlpha=(0.08+0.42*stream)*(1-Math.abs(t-0.58)*0.62);
     c.fillStyle=i%2?'#ff72e5':'#92f7ff';
     c.fillRect(Math.round(bx)-1,Math.round(by)-1,3,3);
     if(i>0){
-      const q=(i-1)/4;
-      const px=x+(targetX-x)*q+Math.sin(p*4.8+(i-1)*1.7)*6;
-      const py=(y-34)+(targetY-(y-34))*q+Math.cos(p*4.2+(i-1))*3;
+      const q=(i-1)/8,prevPhase=p*8.4+(i-1)*1.35;
+      const px=x+(targetX-x)*q+Math.sin(prevPhase)*Math.round(5+7*stream);
+      const py=(y-42)+(targetY-(y-42))*q+Math.cos(prevPhase*0.86+i-1)*Math.round(2+5*stream);
       pixelLine(c,Math.round(px),Math.round(py),Math.round(bx),Math.round(by),i%2?'#ff72e5':'#92f7ff');
     }
   }
-  c.globalAlpha=0.72+0.20*pulse;
-  drawWaterfallCaveTeleportStone(c,targetX,targetY,0.42+0.10*pulse,tk,1);
+  c.globalAlpha=(0.18+0.34*power+0.32*finalPulse);
+  c.fillStyle='#80f8ff';
+  fillPixelPoly(c,[[targetX-22,targetY+8],[targetX-9,targetY-11],[targetX+11,targetY-12],[targetX+24,targetY+8],[targetX+8,targetY+18],[targetX-10,targetY+18]]);
+  c.globalAlpha=(0.10+0.22*finalPulse);
+  c.fillStyle='#ff72e5';
+  fillPixelPoly(c,[[targetX-30,targetY+10],[targetX-10,targetY-18],[targetX+14,targetY-16],[targetX+32,targetY+10],[targetX+11,targetY+24],[targetX-14,targetY+23]]);
+  c.globalAlpha=0.62+0.28*pulse;
+  drawWaterfallCaveTeleportStone(c,targetX,targetY,0.34+0.20*power+0.12*finalPulse,tk,0.55+0.45*gather);
   c.globalCompositeOperation='source-over';
   c.globalAlpha=1;
   c.restore();
@@ -1823,6 +1879,7 @@ function drawWaterfallCaveAdventureView(c,cave,tk){
   drawWaterfallCaveAdventureBase(c,cave,tk,style);
   drawWaterfallCaveVariantMotifs(c,cave,tk,'adventure');
   drawWaterfallCaveAdventureDetails(c,cave,tk,style);
+  drawWaterfallCaveCrystalChargeRoomLight(c,cave,tk);
   drawWaterfallCaveAdventureObjects(c,cave,tk,style);
   const lx=Math.round(cave.lemX==null?240:cave.lemX),ly=Math.round(cave.lemY==null?210:cave.lemY);
   const lemScale=waterfallCaveLemmingScale(cave);

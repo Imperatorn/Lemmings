@@ -1,4 +1,6 @@
 // ------------------------ VATTENFALLSGROTTA ----------------------------
+const WATERFALL_CAVE_TELEPORT_CHARGE_TICKS=216;
+
 Object.assign(G,{
   waterfallCaveLootKey(wf){
     wf=wf&&wf.wf?wf.wf:wf;
@@ -467,13 +469,16 @@ Object.assign(G,{
     }
     if(this.chargeHolyTeleportStone&&!this.chargeHolyTeleportStone())return false;
     obj.activated=true;
-    obj.pulseT=Math.max(obj.pulseT||0,132);
-    obj.chargeT=96;
-    obj.hintT=130;
-    obj.hintLines=['STENEN FYLLS AV KRISTALLKRAFT','PORTALEN KAN ÖPPNAS EN GÅNG'];
+    obj.pulseT=Math.max(obj.pulseT||0,WATERFALL_CAVE_TELEPORT_CHARGE_TICKS+28);
+    obj.chargeDur=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS;
+    obj.chargeT=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS;
+    obj.hintT=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS+26;
+    obj.hintLines=['KRISTALLEN VÄCKER STENEN','PORTALEN KAN ÖPPNAS EN GÅNG'];
     cave.flags=cave.flags||{};
     cave.flags.teleportStoneCharged=true;
-    cave.teleportStoneChargeT=96;
+    cave.teleportStoneChargeT=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS;
+    cave.crystalChargeLockT=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS;
+    if(this.clearWaterfallCaveMoveKeys)this.clearWaterfallCaveMoveKeys(cave);
     if(AU.sWaterfallCaveTeleportCharge)AU.sWaterfallCaveTeleportCharge();
     else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
     this.toast('TELEPORTERINGSSTENEN ÄR LADDAD',150);
@@ -645,6 +650,7 @@ Object.assign(G,{
   updateWaterfallCaveSceneObjects(cave){
     cave=cave||this.waterfallCave;
     if(!cave)return false;
+    if(Number.isFinite(cave.teleportStoneChargeT))cave.teleportStoneChargeT=Math.max(0,cave.teleportStoneChargeT-1);
     for(const hit of this.waterfallCaveSceneObjects(cave)){
       const def=hit.def,obj=hit.obj;
       if(!def||def.runtimeKey)continue;
@@ -1101,9 +1107,15 @@ Object.assign(G,{
     if(this.updateWaterfallCaveChurchBlessing(cave))return true;
     if(this.updateWaterfallCaveTeleportStone(cave))return true;
     this.updateWaterfallCaveMirrorStone(cave);
+    const crystalChargeLocked=Number.isFinite(cave.crystalChargeLockT)&&cave.crystalChargeLockT>0;
+    if(crystalChargeLocked){
+      cave.crystalChargeLockT=Math.max(0,cave.crystalChargeLockT-1);
+      cave.keys.left=false;cave.keys.right=false;cave.keys.up=false;cave.keys.down=false;cave.keys.run=false;
+      cave.walking=false;cave.running=false;
+    }
     const b=this.waterfallCaveSceneBounds(cave);
-    let dx=(cave.keys.right?1:0)-(cave.keys.left?1:0);
-    let dy=(cave.keys.down?1:0)-(cave.keys.up?1:0);
+    let dx=crystalChargeLocked?0:(cave.keys.right?1:0)-(cave.keys.left?1:0);
+    let dy=crystalChargeLocked?0:(cave.keys.down?1:0)-(cave.keys.up?1:0);
     const waitingForCoverRelease=cave.scene==='deep'&&cave.deepItem&&cave.deepItem.coverOpen&&!cave.deepItem.coverCloseArmed;
     const viewCard=this.waterfallCaveActiveViewCard(cave);
     const waitingForViewCardRelease=viewCard&&viewCard.obj&&viewCard.obj.cardOpen&&!viewCard.obj.cardCloseArmed;
@@ -1181,7 +1193,7 @@ Object.assign(G,{
       if(AU.updateWaterfallCaveCampfire)AU.updateWaterfallCaveCampfire();
     }
     if(this.updateWaterfallCaveChurchBlessing(cave))return true;
-    if(this.tryWaterfallCaveSceneExit(cave))return true;
+    if(!crystalChargeLocked&&this.tryWaterfallCaveSceneExit(cave))return true;
     return true;
   },
   handleWaterfallCaveInput(p,kind){
@@ -1205,6 +1217,7 @@ Object.assign(G,{
       else this.closeWaterfallCaveViewCard(viewCard);
       return true;
     }
+    if(this.waterfallCave.crystalChargeLockT>0)return true;
     const hit=this.waterfallCaveHitObject(p);
     if(hit&&this.waterfallCave){
       this.waterfallCave.hoverObject=hit.def&&hit.def.id||null;
@@ -1256,6 +1269,7 @@ Object.assign(G,{
       }
       return true;
     }
+    if(cave.crystalChargeLockT>0)return true;
     if(key==='m'||key==='M'){
       this.openWaterfallCaveMap(cave);
       return true;
