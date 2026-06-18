@@ -171,7 +171,8 @@ for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','r
   if (!gameCode.includes(token)) throw new Error(`Profile runtime is missing ${token}`);
 }
 if (!gameCode.includes('levelSelectMode')) throw new Error('Profile state is missing levelSelectMode for campaign/free selection');
-for (const token of ['LEVEL_SELECT_MODE_CAMPAIGN','LEVEL_SELECT_MODE_FREE','normalizeLevelSelectMode','campaignModeEnabled','campaignUnlockedCount','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode']) {
+if (!gameCode.includes('levelRunMode')) throw new Error('Runtime state is missing levelRunMode for campaign/practice separation');
+for (const token of ['LEVEL_SELECT_MODE_CAMPAIGN','LEVEL_SELECT_MODE_FREE','LEVEL_RUN_MODE_CAMPAIGN','LEVEL_RUN_MODE_PRACTICE','normalizeLevelSelectMode','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode']) {
   if (!progressionCode.includes(token)) throw new Error(`Progression module is missing ${token}`);
 }
 for (const token of ['levelUnlocked(idx){','selectMenuLevel(idx){','toggleLevelSelectMode(){']) {
@@ -179,6 +180,9 @@ for (const token of ['levelUnlocked(idx){','selectMenuLevel(idx){','toggleLevelS
 }
 for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','progression:{']) {
   if (!screensCode.includes(token)) throw new Error(`Menu rendering should expose campaign locked-state visually: ${token}`);
+}
+for (const token of ['FRITT SPEL: ÖVNING','PROGRESSION SPARADES INTE']) {
+  if (!screensCode.includes(token)) throw new Error(`Practice mode should be visible in screens: ${token}`);
 }
 if (!inputCode.includes("G.selectMenuLevel") || !inputCode.includes("G.toggleLevelSelectMode")) {
   throw new Error('Menu input should route level selection through progression rules');
@@ -452,7 +456,7 @@ const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
   'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus',
-  'normalizeLevelSelectMode','levelSelectModeName','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
+  'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
@@ -2795,6 +2799,7 @@ if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol || !G.
 }
 {
   const prevMode = G.levelSelectMode;
+  const prevRunMode = G.levelRunMode;
   const prevCleared = G.cleared.slice();
   const prevLevelIdx = G.levelIdx;
   const prevMenuChapter = G.menuChapter;
@@ -2828,15 +2833,27 @@ if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol || !G.
     throw new Error('Clearing a level should unlock the next campaign level');
   }
   G.levelSelectMode = 'free';
+  if (G.selectedLevelAffectsProgress()) {
+    throw new Error('Free level selection should start non-progress practice runs');
+  }
   if (!G.levelUnlocked(LEVELS.length - 1) || !G.selectMenuLevel(LEVELS.length - 1)) {
     throw new Error('Free play should allow selecting every level');
   }
+  G.levelRunMode = 'practice';
+  if (G.currentRunAffectsProgress() || !G.practiceRunActive()) {
+    throw new Error('Practice runs should not affect campaign progression');
+  }
   G.levelSelectMode = 'campaign';
+  G.levelRunMode = 'campaign';
+  if (!G.selectedLevelAffectsProgress() || !G.currentRunAffectsProgress()) {
+    throw new Error('Campaign runs should affect campaign progression');
+  }
   G.clampLevelSelectionForProgression();
   if (G.levelIdx !== 1) {
     throw new Error('Returning to campaign should clamp selection back to the highest unlocked level');
   }
   G.levelSelectMode = prevMode;
+  G.levelRunMode = prevRunMode;
   G.cleared = prevCleared;
   G.levelIdx = prevLevelIdx;
   G.menuChapter = prevMenuChapter;
@@ -3079,6 +3096,43 @@ if (!G.restoreSaveState(savedState) || G.cutsceneActive() || G.waterfallCaveActi
     AU.init = prevInit;
   }
 }
+
+withLocalStorage({}, store => {
+  G.state = 'MENU';
+  G.loadPrefs();
+  G.levelSelectMode = 'free';
+  G.levelIdx = LEVELS.length - 1;
+  G.startLevel(G.levelIdx, {audio:false});
+  const idx = G.levelIdx;
+  if (G.levelRunMode !== 'practice' || G.currentRunAffectsProgress()) {
+    throw new Error('Starting a free-selected level should create a non-progress practice run');
+  }
+  if (G.profileStats.levels[idx]) {
+    throw new Error('Practice starts should not record profile attempts');
+  }
+  if (G.makeSaveState('VERIFY PRACTICE')) {
+    throw new Error('Practice runs should not create manual save states');
+  }
+  G.saved = G.level.save;
+  G.recordLevelResult(true);
+  G.markLevelCleared(idx);
+  G.recordRuneDiscovery({key:'practice.rune.one',setId:'practice.runes',runeId:'one',title:'Practice Rune',setTitle:'Practice',total:1,lines:['Practice']});
+  G.collectWaterfallCaveChest({chest:{coins:4}});
+  G.unlockHolyBlessing();
+  const fakeHoly = {id:9001, holy:true, dead:false, alive(){return true}};
+  G.unlockHolyTeleportStone(fakeHoly);
+  if (G.cleared[idx] || G.profileStats.levels[idx] || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked) {
+    throw new Error('Practice run rewards or results leaked into campaign profile state');
+  }
+  if (!G.practiceHolyTeleportStoneUnlocked || !G.portalStoneButtonVisible()) {
+    throw new Error('Practice teleport stone should be temporary and usable only during the run');
+  }
+  G.savePrefs();
+  G.loadPrefs();
+  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.practiceHolyTeleportStoneUnlocked) {
+    throw new Error('Practice state should not persist after save/load');
+  }
+});
 
 withLocalStorage({
   [SAVE_KEY]: JSON.stringify({

@@ -40,7 +40,7 @@ webbläsare.
 - I banmenyn: klicka på musik- och SFX-reglagen för att ändra volym.
 - I banmenyn: klicka på FILMER-knappen för att slå på/av cutscenes.
 - K: byt spelläge i titel/meny/briefing.
-- V: växla mellan kampanjläge och fritt banval i titel/meny.
+- V: växla mellan kampanjläge och fritt banval i titel/meny. Fritt banval är övning och sparar inte progression, fynd eller resultat.
 - `+` / `-`: ändra tempo innan en bana startas.
 
 ## Skills

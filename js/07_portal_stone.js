@@ -8,6 +8,11 @@ Object.assign(G,{
       l.teleportStone=true;
       this.holyTeleportStoneLemId=l.id;
     }
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress()){
+      this.practiceHolyTeleportStoneUnlocked=true;
+      if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l&&l.holy?l:null);
+      return true;
+    }
     const newly=!this.holyTeleportStoneUnlocked;
     this.holyTeleportStoneUnlocked=true;
     if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l&&l.holy?l:null);
@@ -15,10 +20,11 @@ Object.assign(G,{
     return newly;
   },
   portalStoneButtonVisible(){
-    return !!this.holyTeleportStoneUnlocked;
+    return this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
   },
   portalStoneOwner(){
-    if(!this.holyTeleportStoneUnlocked)return null;
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
+    if(!hasStone)return null;
     let l=this.holyTeleportStoneLemId!=null?this.findLemById(this.holyTeleportStoneLemId):null;
     if(!(l&&l.holy&&l.teleportStone&&l.alive&&l.alive())){
       l=(this.lems||[]).find(q=>q&&q.holy&&q.teleportStone&&q.alive&&q.alive())||null;

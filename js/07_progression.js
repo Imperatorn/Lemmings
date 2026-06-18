@@ -3,6 +3,8 @@
 // krav, till exempel runor eller hemliga världar, kan läggas till på ett ställe.
 const LEVEL_SELECT_MODE_CAMPAIGN='campaign';
 const LEVEL_SELECT_MODE_FREE='free';
+const LEVEL_RUN_MODE_CAMPAIGN='campaign';
+const LEVEL_RUN_MODE_PRACTICE='practice';
 
 Object.assign(G,{
   normalizeLevelSelectMode(mode){
@@ -11,8 +13,26 @@ Object.assign(G,{
   levelSelectModeName(mode){
     return this.normalizeLevelSelectMode(mode||this.levelSelectMode)===LEVEL_SELECT_MODE_FREE?'FRITT SPEL':'KAMPANJ';
   },
+  normalizeLevelRunMode(mode){
+    return String(mode||'')===LEVEL_RUN_MODE_PRACTICE?LEVEL_RUN_MODE_PRACTICE:LEVEL_RUN_MODE_CAMPAIGN;
+  },
+  levelRunModeName(mode){
+    return this.normalizeLevelRunMode(mode||this.levelRunMode)===LEVEL_RUN_MODE_PRACTICE?'ÖVNING':'KAMPANJ';
+  },
   campaignModeEnabled(){
     return this.normalizeLevelSelectMode(this.levelSelectMode)!==LEVEL_SELECT_MODE_FREE;
+  },
+  selectedLevelAffectsProgress(){
+    return this.normalizeLevelSelectMode(this.levelSelectMode)!==LEVEL_SELECT_MODE_FREE;
+  },
+  currentRunAffectsProgress(){
+    return this.normalizeLevelRunMode(this.levelRunMode)!==LEVEL_RUN_MODE_PRACTICE;
+  },
+  practiceRunActive(){
+    return !this.currentRunAffectsProgress();
+  },
+  hasHolyTeleportStone(){
+    return !!(this.holyTeleportStoneUnlocked||this.practiceHolyTeleportStoneUnlocked);
   },
   campaignUnlockedCount(){
     if(!this.campaignModeEnabled())return LEVELS.length;

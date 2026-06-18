@@ -75,6 +75,9 @@ Object.assign(G,{
     let progress=this.normalizeRuneProgress(this.runeProgress);
     const setId=String(desc.setId||'unknown');
     const wasKnown=!!progress.discovered[key];
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress()){
+      return {key,newly:!wasKnown,setCompletedNow:false,set:progress.sets[setId]||null,entry:progress.discovered[key]||null,practice:true};
+    }
     const descTotal=Math.max(0,Number(desc.total)|0);
     const oldSet=progress.sets[setId]||null;
     const wasComplete=!!(oldSet&&oldSet.complete&&(!descTotal||(oldSet.total||0)>=descTotal));

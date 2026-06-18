@@ -9,17 +9,22 @@ Object.assign(G,{
     const ch=cave&&cave.chest;
     if(!ch||ch.collected)return false;
     const key=ch.lootKey||this.waterfallCaveLootKey(cave);
+    const affectsProgress=this.currentRunAffectsProgress?this.currentRunAffectsProgress():true;
     this.waterfallCaveLooted=this.waterfallCaveLooted||{};
-    if(this.waterfallCaveLooted[key]){
+    if(affectsProgress&&this.waterfallCaveLooted[key]){
       ch.opened=true;ch.collected=true;
       return false;
     }
-    this.waterfallCaveLooted[key]=true;
+    if(affectsProgress)this.waterfallCaveLooted[key]=true;
     ch.opened=true;ch.collected=true;ch.glowT=Math.max(ch.glowT||0,70);
     const coins=Math.max(1,Math.round(ch.coins||3));
-    this.money=Math.max(0,this.money|0)+coins;
-    this.savePrefs();
-    this.toast('SKATTKISTA: +'+coins+' PENGAR',140);
+    if(affectsProgress){
+      this.money=Math.max(0,this.money|0)+coins;
+      this.savePrefs();
+      this.toast('SKATTKISTA: +'+coins+' PENGAR',140);
+    }else{
+      this.toast('ÖVNING: SKATTEN SPARAS INTE',140);
+    }
     if(AU.sSaved)AU.sSaved();else AU.sClick();
     return true;
   },
@@ -375,8 +380,9 @@ Object.assign(G,{
     if(!cave||cave.scene!=='churchInterior')return null;
     cave.sceneState=cave.sceneState||{};
     const bucket=cave.sceneState.churchInterior||(cave.sceneState.churchInterior={});
-    if(!bucket.teleportStone)bucket.teleportStone={x:240,y:118,found:!!this.holyTeleportStoneUnlocked,collected:!!this.holyTeleportStoneUnlocked,near:false,pulseT:0};
-    if(this.holyTeleportStoneUnlocked){
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():this.holyTeleportStoneUnlocked;
+    if(!bucket.teleportStone)bucket.teleportStone={x:240,y:118,found:!!hasStone,collected:!!hasStone,near:false,pulseT:0};
+    if(hasStone){
       bucket.teleportStone.found=true;
       bucket.teleportStone.collected=true;
     }
@@ -417,7 +423,8 @@ Object.assign(G,{
     if(stone.pulseT>0)stone.pulseT--;
     if(cave.teleportStoneMessageT>0)cave.teleportStoneMessageT--;
     const l=this.findLemById?this.findLemById(cave.lemId):null;
-    if(l&&l.holy&&this.holyTeleportStoneUnlocked&&!l.teleportStone){
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():this.holyTeleportStoneUnlocked;
+    if(l&&l.holy&&hasStone&&!l.teleportStone){
       l.teleportStone=true;
       this.holyTeleportStoneLemId=l.id;
     }

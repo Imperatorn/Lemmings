@@ -338,13 +338,18 @@ function drawBrief(c,tk){
   drawTextC(c,'VÄDER SLUMPAS VARJE FÖRSÖK: SOL, REGN/SKURAR/ÅSKA ELLER SNÖ',CW/2,178,1,'#80b8ff');
   drawTextC(c,'TEMPO: '+G.tempoName()+'  +/- ÄNDRAR',CW/2,190,1,'#ffd080');
   let infoY=202;
+  const affectsProgress=G.selectedLevelAffectsProgress?G.selectedLevelAffectsProgress():true;
   const runeStatus=G.levelRuneStatus?G.levelRuneStatus(G.levelIdx):null;
   if(runeStatus&&runeStatus.hasRequirements){
     drawTextC(c,runeStatus.completeAll?'RUNORNA I VATTENFALLSGROTTAN ÄR FUNNA':'HEMLIGHET: RUNOR FINNS BAKOM VATTNET',CW/2,infoY,1,runeStatus.completeAll?'#ffe880':'#caa0ff');
     infoY+=12;
   }
-  const money=Math.max(0,G.money|0);
-  const bonus=(G.pendingSkillBonus&&G.pendingSkillBonus[G.levelIdx])||{};
+  if(!affectsProgress){
+    drawTextC(c,'FRITT SPEL: ÖVNING - RESULTAT OCH FYND SPARAS INTE',CW/2,infoY,1,'#ffd080');
+    infoY+=12;
+  }
+  const money=affectsProgress?Math.max(0,G.money|0):0;
+  const bonus=affectsProgress?((G.pendingSkillBonus&&G.pendingSkillBonus[G.levelIdx])||{}):{};
   const shopActive=money>0||Object.keys(bonus).length>0;
   if(L.night){
     drawTextC(c,'NATTBANA: FÖRSTA LEMMELN BÄR LYKTAN.',CW/2,infoY,1,'#9090ff');
@@ -384,16 +389,18 @@ function drawBrief(c,tk){
 
 function drawResult(c,tk){
   const L=G.level,win=G.saved>=L.save;
-  const comp=G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
+  const practice=G.practiceRunActive&&G.practiceRunActive();
+  const comp=!practice&&G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
   c.fillStyle='#000008';c.fillRect(0,0,CW,CH);
   drawTextC(c,win?'BRA JOBBAT!':'OJDÅ...',CW/2,50,3,win?'#40ff40':'#ff5050');
   const pct=Math.floor(G.saved/L.lem*100),need=Math.ceil(L.save/L.lem*100);
   drawTextC(c,'DU RÄDDADE '+pct+'%',CW/2,100,2,'#fff');
   drawTextC(c,'KRAVET VAR '+need+'%',CW/2,122,2,'#a0a0b0');
   if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,'#ffd040');
+  if(practice)drawTextC(c,'ÖVNING - PROGRESSION SPARADES INTE',CW/2,G.saved>L.lem?158:146,1,'#ffd080');
   if(win&&comp&&comp.hasExtra)drawTextC(c,comp.full?'BANA FULLBORDAD - ALLA RUNOR FUNNA':'BANA KLARAD - RUNOR SAKNAS',CW/2,G.saved>L.lem?158:146,1,comp.full?'#ffe880':'#caa0ff');
   if(win&&G.levelIdx<LEVELS.length-1)
-    drawTextC(c,'KLICKA / ENTER: NÄSTA BANA',CW/2,170,1,'#ffd040');
+    drawTextC(c,practice?'KLICKA / ENTER: NÄSTA ÖVNING':'KLICKA / ENTER: NÄSTA BANA',CW/2,170,1,'#ffd040');
   else if(win)
     drawTextC(c,'DU KLARADE ALLA BANOR - LEMMEL-MÄSTARE!',CW/2,170,1,'#ffd040');
   else

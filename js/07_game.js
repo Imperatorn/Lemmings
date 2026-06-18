@@ -78,9 +78,9 @@ const G={
   state:'TITLE', levelIdx:0, level:null, T:null,
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
-  timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', tempoIdx:1, cutscenesOn:true,
+  timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', levelRunMode:'campaign', tempoIdx:1, cutscenesOn:true,
   lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
-  holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneLemId:null, portalStone:null,
+  holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, practiceHolyTeleportStoneUnlocked:false, holyTeleportStoneLemId:null, portalStone:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
   monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0, monkeyAirSupportPending:false, monkeyAirSupportTargetX:null,
@@ -272,6 +272,11 @@ const G={
     return all[idx]&&all[idx][k]||0;
   },
   buyBriefShopSkill(k){
+    if(this.selectedLevelAffectsProgress&&!this.selectedLevelAffectsProgress()){
+      this.toast('FRITT SPEL Ã„R Ã–VNING - BUTIKEN SPARAS INTE');
+      AU.sShrug();
+      return true;
+    }
     const opt=this.shopOptions().find(o=>o.k===k);
     if(!opt)return false;
     this.money=Math.max(0,this.money|0);
@@ -289,6 +294,7 @@ const G={
     return true;
   },
   handleBriefShopInput(p){
+    if(this.selectedLevelAffectsProgress&&!this.selectedLevelAffectsProgress())return false;
     if(!this.briefShopButtons||!this.briefShopButtons.length)return false;
     for(const b of this.briefShopButtons){
       if(p.x>=b.x&&p.x<b.x+b.w&&p.y>=b.y&&p.y<b.y+b.h)return this.buyBriefShopSkill(b.k);
@@ -296,6 +302,7 @@ const G={
     return false;
   },
   applyPendingSkillBonus(idx){
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress())return false;
     const all=this.pendingSkillBonus||{};
     const bonus=all[idx];
     if(!bonus||!this.skills)return false;
@@ -309,6 +316,7 @@ const G={
     return applied;
   },
   unlockHolyBlessing(){
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress())return false;
     if(this.holyBlessingUnlocked)return false;
     this.holyBlessingUnlocked=true;
     this.savePrefs();
@@ -323,7 +331,8 @@ const G={
       else if(l!==keep){l.holy=false;l.teleportStone=false}
     }
     this.holyLevelLemId=(keep&&!keep.dead)?keep.id:null;
-    if(keep&&!keep.dead&&this.holyTeleportStoneUnlocked){
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():this.holyTeleportStoneUnlocked;
+    if(keep&&!keep.dead&&hasStone){
       keep.teleportStone=true;
       this.holyTeleportStoneLemId=keep.id;
     }else{
@@ -368,6 +377,7 @@ const G={
   resetProfilePrefs(){
     this.mode='chaos';
     this.levelSelectMode='campaign';
+    this.levelRunMode='campaign';
     this.tempoIdx=1;
     this.cleared=new Array(LEVELS.length).fill(false);
     this.money=0;
@@ -376,6 +386,7 @@ const G={
     this.runeProgress={v:1,discovered:{},sets:{}};
     this.holyBlessingUnlocked=false;
     this.holyTeleportStoneUnlocked=false;
+    this.practiceHolyTeleportStoneUnlocked=false;
     this.holyLevelLemId=null;
     this.holyTeleportStoneLemId=null;
     this.levelIdx=0;
@@ -515,6 +526,7 @@ const G={
     return rows;
   },
   recordLevelAttempt(idx){
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress())return null;
     const s=this.profileLevelStats(idx);
     s.attempts=(s.attempts||0)+1;
     s.lastAttemptTs=Date.now?Date.now():0;
@@ -522,6 +534,7 @@ const G={
     return s;
   },
   recordLevelResult(win){
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress())return false;
     if(!this.level)return false;
     const s=this.profileLevelStats(this.levelIdx);
     const pct=Math.floor(this.saved/Math.max(1,this.level.lem)*100);
@@ -802,7 +815,11 @@ const G={
       this.state='BRIEF';
     }else this.goToMenu();
   },
-  markLevelCleared(idx){if(!this.cleared[idx]){this.cleared[idx]=true;this.savePrefs()}},
+  markLevelCleared(idx){
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress())return false;
+    if(!this.cleared[idx]){this.cleared[idx]=true;this.savePrefs();return true}
+    return false;
+  },
   levelProgress(){return this.levelTimeT>0?clamp(1-this.timeT/this.levelTimeT,0,1):0},
   isMegaAllowed(){return this.levelProgress()>=MEGA_MIN_PROGRESS},
   canUseSupplyPlanes(){return !!(this.level&&!this.level.cave)},
@@ -878,6 +895,8 @@ const G={
     AU.stopWeather();
     if(opts&&opts.audio===false&&AU.stopMusic)AU.stopMusic();
     this.levelIdx=idx;
+    this.levelRunMode=this.selectedLevelAffectsProgress&&!this.selectedLevelAffectsProgress()?'practice':'campaign';
+    this.practiceHolyTeleportStoneUnlocked=false;
     this.levelSeed=this.makeLevelSeed(idx);
     this.levelRng=rndSeed(this.levelSeed||1337);
     this.savePrefs();

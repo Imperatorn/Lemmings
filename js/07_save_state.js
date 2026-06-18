@@ -4,6 +4,7 @@ Object.assign(G,{
     if(this.state!=='PLAY'||!this.level||!this.T)return null;
     if((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()))return null;
     if(this.portalStone&&this.portalStone.placingExit)return null;
+    if(this.practiceRunActive&&this.practiceRunActive())return null;
     const fields=['cam','viewZoom','viewY','out','saved','spawned','doorT','rate','spawnT','timeT','levelTimeT','skills','selSkill','trollUsed',
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax','monkeySeq',
@@ -26,6 +27,7 @@ Object.assign(G,{
     if(this.state!=='PLAY'||!this.level||!this.T){this.toast('INGET SPEL ATT SPARA');return false}
     if((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive())){this.toast('KAN INTE SPARA JUST NU');return false}
     if(this.portalStone&&this.portalStone.placingExit){this.toast('KAN INTE SPARA MEDAN PORTAL PLACERAS');return false}
+    if(this.practiceRunActive&&this.practiceRunActive()){this.toast('KAN INTE SPARA ÖVNINGSLÄGE');return false}
     AU.init();
     let label='BANA '+(this.levelIdx+1)+' - '+this.level.name;
     try{
@@ -69,6 +71,8 @@ Object.assign(G,{
     const persisted=loadPersisted();
     this.holyBlessingUnlocked=!!(this.holyBlessingUnlocked||persisted.holyBlessingUnlocked);
     this.holyTeleportStoneUnlocked=!!(this.holyTeleportStoneUnlocked||persisted.holyTeleportStoneUnlocked);
+    this.practiceHolyTeleportStoneUnlocked=false;
+    this.levelRunMode='campaign';
     if(this.selSkill==='nuke')this.selSkill=null;
     this.paused=false;
     this.levelIdx=s.levelIdx|0;this.level=LEVELS[this.levelIdx];this.levelSeed=s.levelSeed>>>0;
