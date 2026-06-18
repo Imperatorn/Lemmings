@@ -540,6 +540,15 @@ const AU={
     this.softNoise(0.18,0.006,820,0.22,t+0.060,{type:'bandpass',q:0.45,smooth:0.72,attack:0.018,release:0.12});
     this.tone(150,0.070,'sine',0.014,0.76,t+0.012);
   },
+  sWaterfallCavePedestalRise(){
+    if(!this.rateFx('waterfall-cave-pedestal-rise',1.0))return;
+    const t=this.now();
+    this.softNoise(0.95,0.020,300,0.58,t,{type:'lowpass',smooth:0.90,attack:0.04,release:0.45});
+    this.softNoise(0.52,0.018,960,0.72,t+0.04,{type:'bandpass',q:0.50,smooth:0.82,attack:0.02,release:0.30});
+    this.tone(96,0.34,'sine',0.028,0.82,t+0.02);
+    this.padTone(392,0.70,'triangle',0.012,t+0.28);
+    this.tone(784,0.18,'sine',0.018,1.02,t+0.62);
+  },
   sPortalStoneOpen(){
     if(!this.rateFx('portal-stone-open',0.18))return;
     const t=this.now();

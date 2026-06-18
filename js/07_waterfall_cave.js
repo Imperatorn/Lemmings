@@ -489,6 +489,59 @@ Object.assign(G,{
     if(!cave||cave.scene!=='mirrorPool')return null;
     return this.waterfallCaveSceneObjects(cave).find(hit=>hit&&hit.def&&hit.def.id==='mirrorPool')||null;
   },
+  waterfallCaveMirrorPoolState(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave)return null;
+    cave.sceneState=cave.sceneState||{};
+    const bucket=cave.sceneState.mirrorPool||(cave.sceneState.mirrorPool={});
+    bucket.stonesThrown=Math.max(0,bucket.stonesThrown|0);
+    bucket.pedestalT=Math.max(0,bucket.pedestalT|0);
+    bucket.pedestalSplashT=Math.max(0,bucket.pedestalSplashT|0);
+    bucket.pedestalShakeT=Math.max(0,bucket.pedestalShakeT|0);
+    return bucket;
+  },
+  resetWaterfallCaveMirrorPoolVisit(cave){
+    const state=this.waterfallCaveMirrorPoolState(cave);
+    if(!state)return false;
+    state.stonesThrown=0;
+    state.pedestalRaised=false;
+    state.pedestalT=0;
+    state.pedestalSplashT=0;
+    state.pedestalShakeT=0;
+    return true;
+  },
+  triggerWaterfallCaveMirrorPedestal(cave,pool){
+    cave=cave||this.waterfallCave;
+    const state=this.waterfallCaveMirrorPoolState(cave);
+    if(!state||state.pedestalRaised)return false;
+    state.pedestalRaised=true;
+    state.pedestalT=1;
+    state.pedestalSplashT=96;
+    state.pedestalShakeT=54;
+    state.pedestalSeed=((state.pedestalSeed||0)+37)&1023;
+    if(pool){
+      pool.rippleT=Math.max(pool.rippleT||0,160);
+      pool.pulseT=Math.max(pool.pulseT||0,110);
+      pool.splashT=Math.max(pool.splashT||0,30);
+      pool.splashX=pool.x||250;
+      pool.splashY=(pool.y||246)-2;
+      pool.splashSeed=((pool.splashSeed||0)+11)&1023;
+    }
+    if(AU.sWaterfallCavePedestalRise)AU.sWaterfallCavePedestalRise();
+    else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash();
+    this.toast('SPEGELDAMMEN SVARAR',130);
+    return true;
+  },
+  updateWaterfallCaveMirrorPedestal(cave){
+    cave=cave||this.waterfallCave;
+    if(!cave||cave.scene!=='mirrorPool')return false;
+    const state=this.waterfallCaveMirrorPoolState(cave);
+    if(!state||!state.pedestalRaised)return false;
+    state.pedestalT=Math.min(118,(state.pedestalT||0)+1);
+    state.pedestalSplashT=Math.max(0,(state.pedestalSplashT||0)-1);
+    state.pedestalShakeT=Math.max(0,(state.pedestalShakeT||0)-1);
+    return true;
+  },
   waterfallCaveMirrorThrowStonePile(cave){
     cave=cave||this.waterfallCave;
     if(!cave||cave.scene!=='mirrorPool')return null;
@@ -598,6 +651,11 @@ Object.assign(G,{
         pool.splashX=st.tx;
         pool.splashY=st.ty;
         pool.splashSeed=((pool.splashSeed||0)+1)&1023;
+      }
+      const state=this.waterfallCaveMirrorPoolState(cave);
+      if(state&&!state.pedestalRaised){
+        state.stonesThrown=Math.min(7,(state.stonesThrown||0)+1);
+        if(state.stonesThrown>=7)this.triggerWaterfallCaveMirrorPedestal(cave,pool);
       }
       if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash();
     }
@@ -759,6 +817,7 @@ Object.assign(G,{
       if(spawn.facing)cave.facing=spawn.facing;
       if(Number.isFinite(spawn.dir))cave.dir=spawn.dir;
     }
+    if(def.id==='mirrorPool'&&prevScene!==def.id&&this.resetWaterfallCaveMirrorPoolVisit)this.resetWaterfallCaveMirrorPoolVisit(cave);
     if(prevScene==='mirrorPool'&&def.id!=='mirrorPool'&&this.clearWaterfallCaveMirrorStone)this.clearWaterfallCaveMirrorStone(cave);
     cave.walking=false;
     cave.running=false;
@@ -1107,6 +1166,7 @@ Object.assign(G,{
     if(this.updateWaterfallCaveChurchBlessing(cave))return true;
     if(this.updateWaterfallCaveTeleportStone(cave))return true;
     this.updateWaterfallCaveMirrorStone(cave);
+    this.updateWaterfallCaveMirrorPedestal(cave);
     const crystalChargeLocked=Number.isFinite(cave.crystalChargeLockT)&&cave.crystalChargeLockT>0;
     if(crystalChargeLocked){
       cave.crystalChargeLockT=Math.max(0,cave.crystalChargeLockT-1);

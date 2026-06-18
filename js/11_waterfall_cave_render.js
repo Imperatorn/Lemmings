@@ -1208,6 +1208,93 @@ function drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk){
   return true;
 }
 
+function waterfallCaveMirrorPedestalState(cave){
+  return cave&&cave.sceneState&&cave.sceneState.mirrorPool||null;
+}
+
+function waterfallCaveMirrorPedestalProgress(state){
+  if(!state||!state.pedestalRaised)return 0;
+  return waterfallCaveEase01(clamp((state.pedestalT||0)/92,0,1));
+}
+
+function waterfallCaveMirrorPoolShake(cave,tk){
+  const state=waterfallCaveMirrorPedestalState(cave);
+  const t=state&&state.pedestalShakeT||0;
+  if(!(t>0))return {x:0,y:0};
+  const life=clamp(t/54,0,1),phase=(tk+(cave&&cave.t||0));
+  return {
+    x:Math.round(Math.sin(phase*0.82)*3*life+Math.sin(phase*1.7)*1.2*life),
+    y:Math.round(Math.cos(phase*1.13)*2*life)
+  };
+}
+
+function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
+  const state=waterfallCaveMirrorPedestalState(cave);
+  const rise=waterfallCaveMirrorPedestalProgress(state);
+  if(!(rise>0))return false;
+  const splashLife=clamp((state.pedestalSplashT||0)/96,0,1);
+  const px=x,baseY=y+18,topY=Math.round(baseY-50*rise);
+  c.save();
+  c.globalAlpha=0.28;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[px-56,baseY+7],[px-30,baseY-2],[px+34,baseY-2],[px+58,baseY+7],[px+36,baseY+15],[px-36,baseY+15]]);
+  c.globalAlpha=1;
+
+  if(splashLife>0){
+    const p=1-splashLife,seed=state.pedestalSeed||0;
+    c.save();
+    c.globalCompositeOperation='lighter';
+    for(let i=0;i<18;i++){
+      const a=(i/18)*Math.PI*2+hash2(seed+i,13)*0.26;
+      const r=20+p*40+hash2(seed+i,29)*10;
+      const dx=Math.cos(a)*r,dy=Math.sin(a)*r*0.28;
+      const wx=Math.round(px+dx),wy=Math.round(baseY-4+dy-p*20-hash2(seed+i,47)*10);
+      c.globalAlpha=(0.16+0.34*splashLife)*(1-p*0.35);
+      c.fillStyle=i%3===0?'#d8fbff':'#8de8f4';
+      c.fillRect(wx,wy,2+(i%4===0?1:0),2+(i%5===0?1:0));
+      if(i%4===0){
+        c.globalAlpha*=0.55;
+        pixelLine(c,px,baseY-2,wx,wy,'#75d8e8');
+      }
+    }
+    c.restore();
+  }
+
+  c.fillStyle='#17232a';
+  fillPixelPoly(c,[[px-34,baseY],[px-24,topY+10],[px+24,topY+10],[px+34,baseY],[px+22,baseY+8],[px-22,baseY+8]]);
+  c.fillStyle='#2a3a42';
+  fillPixelPoly(c,[[px-24,baseY],[px-17,topY+12],[px+2,topY+10],[px+2,baseY+6]]);
+  c.fillStyle='#3f5259';
+  fillPixelPoly(c,[[px+2,topY+10],[px+22,topY+12],[px+28,baseY],[px+2,baseY+6]]);
+  c.fillStyle='#0f171c';
+  fillPixelPoly(c,[[px-28,baseY+6],[px+28,baseY+6],[px+18,baseY+12],[px-18,baseY+12]]);
+  c.fillStyle='#4f6268';
+  c.fillRect(px-22,topY+9,44,4);
+  c.fillStyle='#73848a';
+  c.fillRect(px-16,topY+7,32,2);
+  c.fillStyle='#1c2930';
+  for(let i=0;i<5;i++)c.fillRect(px-18+i*9,topY+18+i%2*6,2,18+((i+1)%2)*7);
+
+  const objY=topY+1;
+  const pulse=0.55+0.45*Math.sin((tk+(cave&&cave.t||0))*0.10);
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.14+0.22*rise*pulse;
+  c.fillStyle='#aeefff';
+  fillPixelPoly(c,[[px-20,objY+2],[px-8,objY-15],[px+8,objY-15],[px+20,objY+2],[px+8,objY+13],[px-8,objY+13]]);
+  c.globalCompositeOperation='source-over';
+  c.globalAlpha=1;
+  c.fillStyle='#24282c';
+  fillPixelPoly(c,[[px-9,objY+8],[px-12,objY-3],[px-3,objY-13],[px+8,objY-8],[px+12,objY+5],[px+2,objY+13]]);
+  c.fillStyle='#6fe8ff';
+  c.fillRect(px-4,objY-7,2,15);
+  c.fillStyle='#ff70df';
+  c.fillRect(px+3,objY-4,2,11);
+  c.fillStyle='#dffcff';
+  c.fillRect(px-2,objY-11,3,3);
+  c.restore();
+  return true;
+}
+
 function waterfallCaveMirrorStoneProjectilePos(st){
   const rel=Number.isFinite(st&&st.releaseT)?st.releaseT:10;
   const dur=Math.max(1,(st&&st.dur||40)-rel);
@@ -1839,6 +1926,7 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
         c.fillRect(x-Math.round(w/2),y-3+i*4,w,1);
       }
       c.globalAlpha=1;
+      drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk);
       drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk);
     }else if(kind==='throwStonePile'){
       drawWaterfallCaveThrowStonePile(c,x,y,obj,style,near,pulse);
@@ -1971,6 +2059,10 @@ function drawWaterfallCaveRuneReadPanel(c,cave,tk){
 function drawWaterfallCaveAdventureView(c,cave,tk){
   const style=waterfallCaveAdventureStyle(cave.scene,cave);
   c.save();
+  if(cave&&cave.scene==='mirrorPool'){
+    const sh=waterfallCaveMirrorPoolShake(cave,tk);
+    if(sh.x||sh.y)c.translate(sh.x,sh.y);
+  }
   drawWaterfallCaveAdventureBase(c,cave,tk,style);
   drawWaterfallCaveVariantMotifs(c,cave,tk,'adventure');
   drawWaterfallCaveAdventureDetails(c,cave,tk,style);
