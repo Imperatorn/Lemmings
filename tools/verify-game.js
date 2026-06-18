@@ -311,6 +311,9 @@ if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('s
 if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',2.1)") || !audioCode.includes('t+0.02') || !audioCode.includes('t+1.64')) {
   throw new Error('Teleport stone charging should use the longer dramatic crystal charge sound');
 }
+if (!audioCode.includes("rateFx('waterfall-cave-pedestal-rise',1.55)") || !audioCode.includes('t+1.14')) {
+  throw new Error('Mirror pool pedestal rise should have a longer layered stone and water sound');
+}
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
   throw new Error('World render should draw active teleport stone portals before lemmels');
@@ -1654,8 +1657,12 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   G.handleWaterfallCaveKeyUp(' ');
   for (let i = 0; i < 70 && G.waterfallCave.mirrorStoneThrow && G.waterfallCave.mirrorStoneThrow.active; i++) G.tick();
-  if (!mirrorState.pedestalRaised || mirrorState.stonesThrown !== 7 || !(mirrorState.pedestalT > 0) || !(mirrorState.pedestalSplashT > 0) || !(mirrorState.pedestalShakeT > 0) || pedestalRiseSounds !== pedestalSoundsBefore + 1) {
+  if (!mirrorState.pedestalRaised || mirrorState.stonesThrown !== 7 || !(mirrorState.pedestalT > 0) || !(mirrorState.pedestalSplashT > 0) || !(mirrorState.pedestalShakeT > 80) || pedestalRiseSounds !== pedestalSoundsBefore + 1) {
     throw new Error('Mirror pool should raise a splashing pedestal on the seventh stone splash of the current room visit');
+  }
+  for (let i = 0; i < 62; i++) G.tick();
+  if (!(mirrorState.pedestalT < 118) || !(mirrorState.pedestalShakeT > 0)) {
+    throw new Error('Mirror pool should keep shaking until the pedestal is fully raised');
   }
   if (!drawWaterfallCaveView(WCTX, 48)) throw new Error('Mirror pool pedestal rise view did not render');
   G.setWaterfallCaveScene('glyphArchive','fromPool',{audio:false});

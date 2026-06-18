@@ -517,7 +517,7 @@ Object.assign(G,{
     state.pedestalRaised=true;
     state.pedestalT=1;
     state.pedestalSplashT=96;
-    state.pedestalShakeT=54;
+    state.pedestalShakeT=118;
     state.pedestalSeed=((state.pedestalSeed||0)+37)&1023;
     if(pool){
       pool.rippleT=Math.max(pool.rippleT||0,160);
@@ -539,7 +539,7 @@ Object.assign(G,{
     if(!state||!state.pedestalRaised)return false;
     state.pedestalT=Math.min(118,(state.pedestalT||0)+1);
     state.pedestalSplashT=Math.max(0,(state.pedestalSplashT||0)-1);
-    state.pedestalShakeT=Math.max(0,(state.pedestalShakeT||0)-1);
+    state.pedestalShakeT=state.pedestalT<118?Math.max(1,118-(state.pedestalT||0)):0;
     return true;
   },
   waterfallCaveMirrorThrowStonePile(cave){

@@ -1219,12 +1219,17 @@ function waterfallCaveMirrorPedestalProgress(state){
 
 function waterfallCaveMirrorPoolShake(cave,tk){
   const state=waterfallCaveMirrorPedestalState(cave);
-  const t=state&&state.pedestalShakeT||0;
-  if(!(t>0))return {x:0,y:0};
-  const life=clamp(t/54,0,1),phase=(tk+(cave&&cave.t||0));
+  if(!state||!state.pedestalRaised)return {x:0,y:0};
+  const rise=waterfallCaveMirrorPedestalProgress(state);
+  if(!(rise>0)&&!(state.pedestalShakeT>0))return {x:0,y:0};
+  const early=1-waterfallCaveEase01(clamp(rise/0.82,0,1));
+  const impact=clamp(1-rise/0.18,0,1);
+  const life=clamp(0.20+0.52*early+0.38*impact,0,1);
+  if(rise>=0.995) return {x:0,y:0};
+  const phase=(tk+(cave&&cave.t||0));
   return {
-    x:Math.round(Math.sin(phase*0.82)*3*life+Math.sin(phase*1.7)*1.2*life),
-    y:Math.round(Math.cos(phase*1.13)*2*life)
+    x:Math.round(Math.sin(phase*0.82)*3.2*life+Math.sin(phase*1.7)*1.5*life),
+    y:Math.round(Math.cos(phase*1.13)*2.2*life)
   };
 }
 
