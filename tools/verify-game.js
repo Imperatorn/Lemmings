@@ -81,10 +81,13 @@ if (debugHtml) {
   for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
-  if (debugPageCode.includes('quietRunArchiveAudioStart') || debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {
+  if (debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {
     throw new Error('Debug archive cave buttons should start glyphArchive with its real audio');
   }
-  if (!debugPageCode.includes("'caveMystery','Runarkiv'") || !debugPageCode.includes('if(withAudio)audioReady();')) {
+  if (!debugPageCode.includes('quietArchiveJump') || !debugPageCode.includes('audio:withAudio&&!quietArchiveJump')) {
+    throw new Error('debug_page.js should suppress the entry waterfall burst only for direct glyph archive debug jumps');
+  }
+  if (!debugPageCode.includes("'caveMystery','Runarkiv'") || !debugPageCode.includes('if(withAudio)audioReady();') || !debugPageCode.includes("G.setWaterfallCaveScene(sceneId,spawnId||'entry',{audio:withAudio})")) {
     throw new Error('debug_page.js should expose and initialize the glyph archive mystery music in debug mode');
   }
   if (!debugPageCode.includes('G.practiceHolyTeleportStoneUnlocked=true') || debugPageCode.includes('G.holyTeleportStoneUnlocked=true')) {

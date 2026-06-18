@@ -364,6 +364,7 @@
   function setupWaterfallCaveScene(sceneId,spawnId,label,opts){
     opts=opts||{};
     const withAudio=opts.audio!==false;
+    const quietArchiveJump=withAudio&&sceneId==='glyphArchive';
     if(withAudio)audioReady();
     if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
     let levelIdx=Number.isFinite(opts.levelIdx)?opts.levelIdx:null;
@@ -385,7 +386,7 @@
     const wf={t:'waterfall',x:l.x,y:Math.max(12,l.y-145),h:150,w:34,v:RND()};
     G.decor.push(wf);
     focusWorldX(l.x);
-    if(!G.enterWaterfallCave(l,wf,{audio:withAudio,waterLevel:0.05,click:false,musicFade:0.08})){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
+    if(!G.enterWaterfallCave(l,wf,{audio:withAudio&&!quietArchiveJump,waterLevel:0.05,click:false,musicFade:0.08})){setStatus('Kunde inte öppna vattenfallsgrottan.','warn');return}
     if(opts.caveVariant&&G.waterfallCave)G.waterfallCave.variantId=String(opts.caveVariant);
     if(!G.setWaterfallCaveScene(sceneId,spawnId||'entry',{audio:withAudio})){
       setStatus('Kunde inte ga till grottscen: '+sceneId,'warn');
