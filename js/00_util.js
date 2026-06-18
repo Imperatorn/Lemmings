@@ -187,8 +187,16 @@ function renameProfile(id,name){
 }
 function deleteProfile(id){
   const idx=ensureProfileIndex();
-  if(idx.profiles.length<=1)return false;
   const before=idx.profiles.length;
+  if(!idx.profiles.some(p=>p.id===id))return false;
+  if(before<=1){
+    const now=Date.now?Date.now():0;
+    const fresh={id:makeProfileId('reset'),name:'Spelare 1',created:now,updated:now};
+    storageRemove(profileDataKey(id));
+    writeStorageJson(PROFILE_INDEX_KEY,{v:1,activeId:fresh.id,profiles:[fresh]});
+    writeStorageJson(profileDataKey(fresh.id),{});
+    return true;
+  }
   idx.profiles=idx.profiles.filter(p=>p.id!==id);
   if(idx.profiles.length===before)return false;
   if(idx.activeId===id)idx.activeId=idx.profiles[0].id;

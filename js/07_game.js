@@ -88,7 +88,7 @@ const G={
   treeT:0, treeEvents:0, treeMax:0, treeLastX:null,
   jumpT:0, jumpEvents:0, jumpMax:0, megaBoom:null, megaArmed:null, eventLockT:0, shakeT:0, shakePow:0,
   weatherKind:'sun', weatherT:0, thunderT:0, thunderFlash:0, thunderX:0, thunderPath:null, sunSurpriseT:0,
-  levelSeed:0, levelRng:null, playCount:0, ropeAim:null, ropeSeq:1, settledTrollRockSeq:0, lemTalkT:0,
+  levelSeed:0, levelRng:null, playCount:0, practicePlayCount:0, ropeAim:null, ropeSeq:1, settledTrollRockSeq:0, lemTalkT:0,
   manual:{used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0},
   viewZoom:1, viewY:0, zoomLevels:[1,1.35,1.7,2.1],
 
@@ -238,6 +238,10 @@ const G={
     if(forced!=null)return (hashString(forced)^Math.imul(idx+1,0x9E3779B1))>>>0;
     const persisted=loadPersisted();
     const base=(persisted.sessionSeed>>>0)||hashString('lemmel-'+Date.now()+'-'+Math.random());
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress()){
+      this.practicePlayCount=((this.practicePlayCount||0)+1)>>>0;
+      return (base^Math.imul(idx+1,1009)^Math.imul(this.practicePlayCount,104729)^0xA5A5A5A5)>>>0;
+    }
     if(!persisted.sessionSeed){persisted.sessionSeed=base;savePersisted(persisted)}
     this.playCount=((persisted.playCount||0)+1)>>>0;
     persisted.playCount=this.playCount;savePersisted(persisted);
@@ -273,7 +277,7 @@ const G={
   },
   buyBriefShopSkill(k){
     if(this.selectedLevelAffectsProgress&&!this.selectedLevelAffectsProgress()){
-      this.toast('FRITT SPEL Ã„R Ã–VNING - BUTIKEN SPARAS INTE');
+      this.toast('FRITT SPEL ÄR ÖVNING - BUTIKEN SPARAS INTE');
       AU.sShrug();
       return true;
     }
@@ -392,6 +396,7 @@ const G={
     this.levelIdx=0;
     this.menuChapter=0;
     this.playCount=0;
+    this.practicePlayCount=0;
     this.cutscenesOn=true;
     AU.musicOn=true;
     AU.sfxOn=true;
@@ -474,17 +479,22 @@ const G={
   promptDeleteProfile(id){
     const list=profileList(), p=list.find(q=>q.id===id);
     if(!p)return false;
-    if(list.length<=1){this.toast('SISTA PROFILEN KAN INTE TAS BORT');AU.sShrug();return false}
     let ok=true;
-    try{ok=window.confirm('Ta bort profilen "'+p.name+'"?')}catch(_){}
+    try{
+      const msg=list.length<=1
+        ? 'Ta bort sista profilen "'+p.name+'"? All progress raderas och en ny tom Spelare 1 skapas.'
+        : 'Ta bort profilen "'+p.name+'"?';
+      ok=window.confirm(msg);
+    }catch(_){}
     if(!ok)return false;
     const wasActive=id===this.activeProfileId();
+    const wasLast=list.length<=1;
     if(deleteProfile(id)){
       if(wasActive){
         this.loadPrefs();
         this.state='MENU';
       }
-      this.toast('PROFIL BORTTAGEN');
+      this.toast(wasLast?'PROFILEN RENSAD':'PROFIL BORTTAGEN');
       return true;
     }
     return false;

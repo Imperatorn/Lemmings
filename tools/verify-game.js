@@ -3121,6 +3121,9 @@ withLocalStorage({}, store => {
   if (G.levelRunMode !== 'practice' || G.currentRunAffectsProgress()) {
     throw new Error('Starting a free-selected level should create a non-progress practice run');
   }
+  if (G.playCount !== 0 || (loadPersisted().playCount || 0) !== 0 || loadPersisted().sessionSeed) {
+    throw new Error('Practice starts should not advance persistent play counters or seed state');
+  }
   if (G.profileStats.levels[idx]) {
     throw new Error('Practice starts should not record profile attempts');
   }
@@ -3214,6 +3217,30 @@ withLocalStorage({}, store => {
   G.loadPrefs();
   if (G.money !== 2 || G.cleared[0] || G.levelSelectMode !== 'campaign' || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
     throw new Error('Profile B should stay isolated after profile A is restored');
+  }
+});
+
+withLocalStorage({}, store => {
+  G.state = 'MENU';
+  G.loadPrefs();
+  const firstId = activeProfileId();
+  G.money = 12;
+  G.cleared[0] = true;
+  G.holyBlessingUnlocked = true;
+  G.savePrefs();
+  if (!writeGameSlots([savedState])) throw new Error('Could not create last-profile save slot fixture');
+  if (!deleteProfile(firstId)) throw new Error('Deleting the final profile should be allowed');
+  const list = profileList();
+  const nextId = activeProfileId();
+  if (list.length !== 1 || nextId === firstId || activeProfileName() !== 'Spelare 1') {
+    throw new Error('Deleting the final profile should create one fresh default profile');
+  }
+  G.loadPrefs();
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || saveGameSlots().length !== 0) {
+    throw new Error('Fresh default profile after final delete should not inherit deleted state');
+  }
+  if (Object.keys(store).some(k => k.includes(firstId))) {
+    throw new Error('Deleted final profile data should be removed from storage');
   }
 });
 
