@@ -31,6 +31,11 @@ if (waterfallRenderIdx < 0 || playRenderIdx < 0 || waterfallRenderIdx >= playRen
 if (debugHtml) {
   if (debugScripts.includes('js/13_boot.js')) throw new Error('debug.html must not load js/13_boot.js');
   if (!debugScripts.includes('js/debug_page.js')) throw new Error('debug.html does not load js/debug_page.js');
+  const debugSandboxIdx = debugHtml.indexOf('LEMMEL_DEBUG_SANDBOX');
+  const debugUtilIdx = debugHtml.indexOf('src="js/00_util.js"');
+  if (debugSandboxIdx < 0 || debugUtilIdx < 0 || debugSandboxIdx > debugUtilIdx) {
+    throw new Error('debug.html must enable the debug storage sandbox before loading js/00_util.js');
+  }
   for (const src of debugScripts) {
     if (!fs.existsSync(path.join(root, src))) throw new Error(`debug.html references missing script: ${src}`);
   }
@@ -97,6 +102,9 @@ if (!fs.existsSync(path.join(root, 'assets/blessthelord.mp3'))) {
   throw new Error('Missing church hymn MP3 asset');
 }
 const utilCode = fs.readFileSync(path.join(root, 'js/00_util.js'), 'utf8');
+if (!utilCode.includes('LEMMEL_DEBUG_SANDBOX') || !utilCode.includes('DEBUG_STORAGE_SANDBOX') || !utilCode.includes('storageSandboxed')) {
+  throw new Error('Profile storage should expose a debug sandbox that avoids real localStorage writes');
+}
 if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
   throw new Error('Lands of Lore pixel-art asset is not registered');
 }
@@ -370,6 +378,49 @@ function makeCanvas(){
     removeEventListener(){},
     getBoundingClientRect(){return {left:0,top:0,width:480,height:300}}
   };
+}
+
+{
+  const touched = [];
+  const debugStorageSandbox = {
+    console,
+    Uint8Array,
+    Uint8ClampedArray,
+    Math,
+    Date,
+    JSON,
+    Image:function(){},
+    window:{
+      LEMMEL_DEBUG_SANDBOX:true,
+      location:{search:''},
+      localStorage:{
+        getItem(k){touched.push('get:'+k);return JSON.stringify({holyBlessingUnlocked:true,cleared:[true]})},
+        setItem(k,v){touched.push('set:'+k)},
+        removeItem(k){touched.push('remove:'+k)}
+      },
+      addEventListener(){},
+      removeEventListener(){}
+    },
+    document:{
+      getElementById(){return makeCanvas()},
+      createElement(){return makeCanvas()}
+    }
+  };
+  debugStorageSandbox.globalThis = debugStorageSandbox;
+  debugStorageSandbox.window.window = debugStorageSandbox.window;
+  vm.createContext(debugStorageSandbox);
+  vm.runInContext(utilCode, debugStorageSandbox, {filename:'js/00_util.js debug sandbox', timeout:10000});
+  vm.runInContext(`
+    if (!storageSandboxed()) throw new Error('Debug storage sandbox is not enabled');
+    const before = loadPersisted();
+    if (before.holyBlessingUnlocked || (before.cleared || [])[0]) throw new Error('Debug sandbox read real profile state');
+    savePersisted({holyBlessingUnlocked:true,cleared:[true],money:9});
+    const after = loadPersisted();
+    if (!after.holyBlessingUnlocked || !(after.cleared || [])[0] || after.money !== 9) throw new Error('Debug sandbox did not keep temporary in-memory state');
+  `, debugStorageSandbox, {timeout:10000});
+  if (touched.length) {
+    throw new Error('Debug storage sandbox should not touch real localStorage: '+touched.join(','));
+  }
 }
 
 const mainCanvas = makeCanvas();

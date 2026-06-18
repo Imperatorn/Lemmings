@@ -65,6 +65,9 @@ const SAVE_KEY='lemmel.save.v20';
 const PROFILE_INDEX_KEY='lemmel.profiles.v1';
 const PROFILE_KEY_PREFIX='lemmel.profile.';
 let GAME_ERROR=null;
+const DEBUG_STORAGE_SANDBOX=!!(typeof window!=='undefined'&&window.LEMMEL_DEBUG_SANDBOX);
+const DEBUG_STORAGE=DEBUG_STORAGE_SANDBOX?{}:null;
+if(DEBUG_STORAGE_SANDBOX)window.LEMMEL_DEBUG_STORAGE=DEBUG_STORAGE;
 
 function hashString(s){
   let h=2166136261>>>0;
@@ -80,14 +83,18 @@ function urlSeedValue(){
   }catch(_){return null}
 }
 function storageGet(key){
+  if(DEBUG_STORAGE_SANDBOX)return Object.prototype.hasOwnProperty.call(DEBUG_STORAGE,key)?DEBUG_STORAGE[key]:null;
   try{return window.localStorage&&window.localStorage.getItem(key)}catch(_){return null}
 }
 function storageSet(key,value){
+  if(DEBUG_STORAGE_SANDBOX){DEBUG_STORAGE[key]=String(value);return true}
   try{ if(window.localStorage)window.localStorage.setItem(key,String(value)); return true; }catch(_){return false}
 }
 function storageRemove(key){
+  if(DEBUG_STORAGE_SANDBOX){delete DEBUG_STORAGE[key];return true}
   try{ if(window.localStorage)window.localStorage.removeItem(key); return true; }catch(_){return false}
 }
+function storageSandboxed(){return DEBUG_STORAGE_SANDBOX}
 function readStorageJson(key){
   try{
     const raw=storageGet(key);
