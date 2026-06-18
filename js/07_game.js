@@ -78,7 +78,7 @@ const G={
   state:'TITLE', levelIdx:0, level:null, T:null,
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
-  timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', tempoIdx:1, cutscenesOn:true,
+  timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', tempoIdx:1, cutscenesOn:true,
   lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
   holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneLemId:null, portalStone:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
@@ -367,6 +367,7 @@ const G={
   },
   resetProfilePrefs(){
     this.mode='chaos';
+    this.levelSelectMode='campaign';
     this.tempoIdx=1;
     this.cleared=new Array(LEVELS.length).fill(false);
     this.money=0;
@@ -542,6 +543,9 @@ const G={
     this.resetProfilePrefs();
     const p=loadPersisted();
     if(p.mode==='classic'||p.mode==='chaos')this.mode=p.mode;
+    this.levelSelectMode=this.normalizeLevelSelectMode
+      ? this.normalizeLevelSelectMode(p.levelSelectMode)
+      : (String(p.levelSelectMode)==='free'?'free':'campaign');
     if(Array.isArray(p.cleared))this.cleared=this.cleared.map((_,i)=>!!p.cleared[i]);
     if(Number.isFinite(p.money))this.money=Math.max(0,p.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus(p.pendingSkillBonus);
@@ -558,12 +562,13 @@ const G={
     if(Number.isFinite(p.sfxVol))AU.setSfxVolume(p.sfxVol);
     if(Number.isFinite(p.tempoIdx))this.tempoIdx=clamp(p.tempoIdx|0,0,TEMPO_CFG.length-1);
     if(Number.isFinite(p.lastLevelIdx))this.levelIdx=clamp(p.lastLevelIdx|0,0,LEVELS.length-1);
+    if(this.clampLevelSelectionForProgression)this.clampLevelSelectionForProgression();
     this.menuChapter=menuChapterForLevel(this.levelIdx);
     if(Number.isFinite(p.playCount))this.playCount=p.playCount>>>0;
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.runeProgress=this.normalizeRuneProgress(this.runeProgress);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.levelSelectMode=this.normalizeLevelSelectMode?this.normalizeLevelSelectMode(this.levelSelectMode):this.levelSelectMode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.runeProgress=this.normalizeRuneProgress(this.runeProgress);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     return savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},

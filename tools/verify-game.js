@@ -14,7 +14,7 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_runes.js','js/07_portal_stone.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_runes.js','js/07_progression.js','js/07_portal_stone.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
@@ -39,6 +39,7 @@ if (debugHtml) {
   const debugManualIdx = debugScripts.indexOf('js/07_manual_control.js');
   const debugWaterfallScenesIdx = debugScripts.indexOf('js/07_waterfall_cave_scenes.js');
   const debugRunesIdx = debugScripts.indexOf('js/07_runes.js');
+  const debugProgressionIdx = debugScripts.indexOf('js/07_progression.js');
   const debugPortalStoneIdx = debugScripts.indexOf('js/07_portal_stone.js');
   const debugWaterfallIdx = debugScripts.indexOf('js/07_waterfall_cave.js');
   const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
@@ -47,7 +48,7 @@ if (debugHtml) {
   const debugWaterfallRenderIdx = debugScripts.indexOf('js/11_waterfall_cave_render.js');
   const debugPlayRenderIdx = debugScripts.indexOf('js/11_play_render.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugRunesIdx <= debugWaterfallScenesIdx || debugPortalStoneIdx <= debugRunesIdx || debugWaterfallIdx <= debugPortalStoneIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugRunesIdx <= debugWaterfallScenesIdx || debugProgressionIdx <= debugRunesIdx || debugPortalStoneIdx <= debugProgressionIdx || debugWaterfallIdx <= debugPortalStoneIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
@@ -107,9 +108,11 @@ for (const token of ['PROFILE_INDEX_KEY','PROFILE_KEY_PREFIX','ensureProfileInde
 }
 const gameCode = fs.readFileSync(path.join(root, 'js/07_game.js'), 'utf8');
 const runeCode = fs.readFileSync(path.join(root, 'js/07_runes.js'), 'utf8');
+const progressionCode = fs.readFileSync(path.join(root, 'js/07_progression.js'), 'utf8');
 const portalStoneCode = fs.readFileSync(path.join(root, 'js/07_portal_stone.js'), 'utf8');
 const levelsCode = fs.readFileSync(path.join(root, 'js/06_levels.js'), 'utf8');
 const manualControlCode = fs.readFileSync(path.join(root, 'js/07_manual_control.js'), 'utf8');
+const inputCode = fs.readFileSync(path.join(root, 'js/12_input.js'), 'utf8');
 const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
 const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
 const waterfallRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
@@ -166,6 +169,19 @@ for (const token of ['const PORTAL_STONE_MAX_DIST','  unlockHolyTeleportStone(l)
 }
 for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','recordLevelResult','profileLeaderboardRows','profileStats']) {
   if (!gameCode.includes(token)) throw new Error(`Profile runtime is missing ${token}`);
+}
+if (!gameCode.includes('levelSelectMode')) throw new Error('Profile state is missing levelSelectMode for campaign/free selection');
+for (const token of ['LEVEL_SELECT_MODE_CAMPAIGN','LEVEL_SELECT_MODE_FREE','normalizeLevelSelectMode','campaignModeEnabled','campaignUnlockedCount','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode']) {
+  if (!progressionCode.includes(token)) throw new Error(`Progression module is missing ${token}`);
+}
+for (const token of ['levelUnlocked(idx){','selectMenuLevel(idx){','toggleLevelSelectMode(){']) {
+  if (gameCode.includes(token)) throw new Error(`07_game.js should not own campaign progression implementation: ${token}`);
+}
+for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','progression:{']) {
+  if (!screensCode.includes(token)) throw new Error(`Menu rendering should expose campaign locked-state visually: ${token}`);
+}
+if (!inputCode.includes("G.selectMenuLevel") || !inputCode.includes("G.toggleLevelSelectMode")) {
+  throw new Error('Menu input should route level selection through progression rules');
 }
 if (!gameCode.includes('runeProgress')) throw new Error('Profile state is missing runeProgress');
 for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus']) {
@@ -436,6 +452,7 @@ const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
   'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus',
+  'normalizeLevelSelectMode','levelSelectModeName','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
@@ -2773,8 +2790,59 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
 }
 G.state = 'MENU';
 drawMenu(WCTX, 1);
-if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol || !G.menuSettings.cutscenes) {
+if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol || !G.menuSettings.cutscenes || !G.menuSettings.progression) {
   throw new Error('Menu volume controls were not created');
+}
+{
+  const prevMode = G.levelSelectMode;
+  const prevCleared = G.cleared.slice();
+  const prevLevelIdx = G.levelIdx;
+  const prevMenuChapter = G.menuChapter;
+  const prevToasts = G.toasts;
+  const prevMsg = G.msg;
+  const prevMsgT = G.msgT;
+  G.levelSelectMode = 'campaign';
+  G.cleared = new Array(LEVELS.length).fill(false);
+  G.levelIdx = 0;
+  G.menuChapter = 0;
+  G.toasts = [];
+  G.msg = '';
+  G.msgT = 0;
+  if (!G.campaignModeEnabled() || !G.levelUnlocked(0) || G.levelUnlocked(1) || G.campaignUnlockedCount() !== 1) {
+    throw new Error('Campaign mode should unlock only the first level for a fresh profile');
+  }
+  if (G.selectMenuLevel(1) || G.levelIdx !== 0) {
+    throw new Error('Campaign menu selection should not allow locked levels');
+  }
+  drawMenu(WCTX, 2);
+  if (!G.menuRows.some(r => r && r.idx === 1 && r.locked)) {
+    throw new Error('Campaign menu should render locked levels as locked rows');
+  }
+  G.menuChapter = 1;
+  drawMenu(WCTX, 3);
+  if (!G.menuTabs.some(r => r && r.idx === 1 && r.locked)) {
+    throw new Error('Campaign menu should show later worlds as locked tabs before they are reached');
+  }
+  G.cleared[0] = true;
+  if (!G.levelUnlocked(1) || !G.selectMenuLevel(1) || G.levelIdx !== 1) {
+    throw new Error('Clearing a level should unlock the next campaign level');
+  }
+  G.levelSelectMode = 'free';
+  if (!G.levelUnlocked(LEVELS.length - 1) || !G.selectMenuLevel(LEVELS.length - 1)) {
+    throw new Error('Free play should allow selecting every level');
+  }
+  G.levelSelectMode = 'campaign';
+  G.clampLevelSelectionForProgression();
+  if (G.levelIdx !== 1) {
+    throw new Error('Returning to campaign should clamp selection back to the highest unlocked level');
+  }
+  G.levelSelectMode = prevMode;
+  G.cleared = prevCleared;
+  G.levelIdx = prevLevelIdx;
+  G.menuChapter = prevMenuChapter;
+  G.toasts = prevToasts;
+  G.msg = prevMsg;
+  G.msgT = prevMsgT;
 }
 
 const levelNames = new Set();
@@ -3053,6 +3121,7 @@ withLocalStorage({}, store => {
   const a = activeProfileId();
   G.money = 9;
   G.cleared[0] = true;
+  G.levelSelectMode = 'free';
   G.holyBlessingUnlocked = true;
   G.holyTeleportStoneUnlocked = true;
   G.profileStats = {levels:{0:{attempts:3,wins:1,bestPct:100,bestSaved:10,bestTimeLeft:42,bestSeed:123,last:null}}};
@@ -3062,19 +3131,20 @@ withLocalStorage({}, store => {
   const bMeta = createProfile('Beta');
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch active profile in storage');
   G.loadPrefs();
-  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
-    throw new Error('New profile should not inherit progress, money, holy state, runes, or save slots');
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.levelSelectMode !== 'campaign' || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
+    throw new Error('New profile should not inherit progress, money, level select mode, holy state, runes, or save slots');
   }
   G.money = 2;
+  G.levelSelectMode = 'campaign';
   G.savePrefs();
   if (!setActiveProfile(a)) throw new Error('Could not switch back to profile A');
   G.loadPrefs();
-  if (G.money !== 9 || !G.cleared[0] || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 1 || saveGameSlots().length !== 1) {
+  if (G.money !== 9 || !G.cleared[0] || G.levelSelectMode !== 'free' || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 1 || saveGameSlots().length !== 1) {
     throw new Error('Profile A progress was not restored after switching back');
   }
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch back to profile B');
   G.loadPrefs();
-  if (G.money !== 2 || G.cleared[0] || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
+  if (G.money !== 2 || G.cleared[0] || G.levelSelectMode !== 'campaign' || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
     throw new Error('Profile B should stay isolated after profile A is restored');
   }
 });

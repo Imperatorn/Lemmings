@@ -40,6 +40,7 @@ webbläsare.
 - I banmenyn: klicka på musik- och SFX-reglagen för att ändra volym.
 - I banmenyn: klicka på FILMER-knappen för att slå på/av cutscenes.
 - K: byt spelläge i titel/meny/briefing.
+- V: växla mellan kampanjläge och fritt banval i titel/meny.
 - `+` / `-`: ändra tempo innan en bana startas.
 
 ## Skills
@@ -133,6 +134,7 @@ js/05_lemming.js        lemmel-tillstånd och skill-logik
 js/06_levels.js         banor
 js/07_game.js           spelmotor, state, events och huvudflöde
 js/07_runes.js          runor, hemligheter och fullbordad-status
+js/07_progression.js    kampanj/fritt banval och upplåsningsregler
 js/07_portal_stone.js   teleportstenens gameplaylogik
 js/07_save_state.js     spara/ladda-logik för spelstate
 js/07_manual_control.js direktstyrning, sikte och manual-skill helpers

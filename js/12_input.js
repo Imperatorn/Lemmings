@@ -76,6 +76,7 @@ function pressAt(p){
       if(p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h){
         if(k==='profile')G.openProfileOverlay();
         else if(k==='leaderboard')G.openLeaderboardOverlay();
+        else if(k==='progression')G.toggleLevelSelectMode();
         else if(k==='mode')G.toggleMode();
         else if(k==='cutscenes')G.toggleCutscenes();
         else if(k==='music')G.toggleMusic();
@@ -92,11 +93,14 @@ function pressAt(p){
         G.menuChapter=r.idx;AU.sClick();return}
     if(G.menuRows)for(const r of G.menuRows)
       if(p.y>=r.y&&p.y<r.y+r.h&&p.x>=(r.x||30)&&p.x<(r.x||30)+(r.w||CW-60)){
-        G.levelIdx=r.idx;G.menuChapter=menuChapterForLevel(r.idx);G.savePrefs();G.state='BRIEF';AU.sClick();return}
+        if(G.selectMenuLevel&&!G.selectMenuLevel(r.idx))return;
+        if(!G.selectMenuLevel){G.levelIdx=r.idx;G.menuChapter=menuChapterForLevel(r.idx);G.savePrefs()}
+        G.state='BRIEF';AU.sClick();return}
     return;
   }
   if(G.state==='BRIEF'){
     if(G.handleBriefShopInput&&G.handleBriefShopInput(p))return;
+    if(G.levelUnlocked&&!G.levelUnlocked(G.levelIdx)){G.toast('BANA LÅST');G.state='MENU';return}
     G.startLevel(G.levelIdx);return
   }
   if(G.state==='RESULT'){
@@ -250,6 +254,7 @@ window.addEventListener('keydown',e=>{
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneKey(e.key);e.preventDefault();return}
   if(e.key==='h'||e.key==='H'){G.toggleHelp();e.preventDefault();return}
   if(e.key==='k'||e.key==='K'){if(G.state==='MENU'||G.state==='BRIEF'||G.state==='TITLE'){G.toggleMode()}else G.toast('LÄGE ÄNDRAS I MENYN');e.preventDefault();return}
+  if(e.key==='v'||e.key==='V'){if(G.state==='MENU'||G.state==='TITLE'){G.toggleLevelSelectMode()}else G.toast('BANVAL ÄNDRAS I MENYN');e.preventDefault();return}
   if(e.key==='m'||e.key==='M'){G.toggleMusic();e.preventDefault();return}
   if(e.key==='s'||e.key==='S'){G.toggleSfx();e.preventDefault();return}
   const tempoDir=(e.key==='+'||e.key==='='||e.code==='NumpadAdd')?1:((e.key==='-'||e.key==='_'||e.code==='NumpadSubtract')?-1:0);

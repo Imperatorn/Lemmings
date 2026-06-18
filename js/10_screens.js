@@ -235,46 +235,66 @@ function drawLeaderboardOverlay(c,tk){
 
 function drawMenu(c,tk){
   c.fillStyle='#000010';c.fillRect(0,0,CW,CH);
-  drawTextC(c,'VÄLJ BANA',CW/2,14,3,'#5fa8ff');
+  drawTextC(c,'VÄLJ BANA',CW/2,9,3,'#5fa8ff');
   G.menuRows=[];G.menuTabs=[];
   const chapters=menuChapters();
   G.menuChapter=clamp(G.menuChapter|0,0,chapters.length-1);
   for(let i=0;i<chapters.length;i++){
-    const r={x:42+i*132,y:34,w:118,h:19,idx:i}, active=i===G.menuChapter;
+    const r={x:42+i*132,y:40,w:118,h:19,idx:i}, active=i===G.menuChapter;
     const hov=G.mx>=r.x&&G.mx<r.x+r.w&&G.my>=r.y&&G.my<r.y+r.h;
-    c.fillStyle=active?'#203858':(hov?'#182438':'#101828');
+    const locked=G.chapterUnlocked?!G.chapterUnlocked(i):false;
+    c.fillStyle=locked?(active?'#1c1a18':(hov?'#1a1b20':'#0d1118')):(active?'#203858':(hov?'#182438':'#101828'));
     c.fillRect(r.x,r.y,r.w,r.h);
-    c.fillStyle=active?'#70a8ff':(hov?'#506890':'#283848');
+    c.fillStyle=locked?(active?'#7a6040':'#383038'):(active?'#70a8ff':(hov?'#506890':'#283848'));
     c.fillRect(r.x,r.y,r.w,1);c.fillRect(r.x,r.y,1,r.h);
     c.fillStyle='#070a12';c.fillRect(r.x,r.y+r.h-1,r.w,1);c.fillRect(r.x+r.w-1,r.y,1,r.h);
-    drawTextC(c,chapters[i].name,r.x+r.w/2,r.y+6,1,active?'#ffffff':'#90a0c0');
+    drawTextC(c,locked?'LÅST VÄRLD':chapters[i].name,r.x+r.w/2,r.y+6,1,locked?'#806850':(active?'#ffffff':'#90a0c0'));
+    r.locked=locked;
     G.menuTabs.push(r);
   }
   const ch=chapters[G.menuChapter], count=Math.max(0,ch.to-ch.from);
-  drawTextC(c,'BANOR '+String(ch.from+1).padStart(2,'0')+'-'+String(ch.to).padStart(2,'0'),CW/2,59,1,'#607090');
+  const chProg=G.chapterProgress?G.chapterProgress(ch):null;
+  const chInfo=chProg&&G.campaignModeEnabled&&G.campaignModeEnabled()?('  ÖPPNA '+chProg.unlocked+'/'+chProg.total):'';
+  drawTextC(c,'BANOR '+String(ch.from+1).padStart(2,'0')+'-'+String(ch.to).padStart(2,'0')+chInfo,CW/2,64,1,'#607090');
   for(let row=0;row<count;row++){
-    const i=ch.from+row, x=46, w=CW-92, y=74+row*18;
-    const L=LEVELS[i], hov=G.mx>=x&&G.mx<x+w&&G.my>=y-4&&G.my<y+16;
-    const active=i===G.levelIdx;
-    if(active){c.fillStyle='rgba(80,180,120,0.11)';c.fillRect(x,y-4,w,18)}
-    if(hov){c.fillStyle='rgba(80,140,255,0.15)';c.fillRect(x,y-4,w,18)}
-    drawText(c,String(i+1).padStart(2,'0'),x+8,y,2,hov?'#fff':(active?'#80ffb0':'#8090b0'));
-    drawText(c,L.name,x+58,y,2,hov?'#ffffff':'#c0c8e0');
-    const comp=G.levelCompletionStatus?G.levelCompletionStatus(i):null;
-    if(comp&&comp.hasExtra){
-      const label=comp.full?'FULL':(comp.cleared?'RUNOR KVAR':'RUNOR');
-      drawText(c,label,x+w-164,y+1,1,comp.full?'#ffe880':'#caa0ff');
+    const i=ch.from+row, x=46, w=CW-92, y=78+row*18;
+    const L=LEVELS[i], unlocked=G.levelUnlocked?G.levelUnlocked(i):true;
+    const hov=G.mx>=x&&G.mx<x+w&&G.my>=y-4&&G.my<y+16;
+    const active=unlocked&&i===G.levelIdx;
+    if(!unlocked){
+      c.fillStyle=hov?'rgba(105,90,72,0.26)':'rgba(40,36,34,0.72)';
+      c.fillRect(x,y-4,w,18);
+      c.fillStyle='#0a0b0d';c.fillRect(x,y-4,w,1);c.fillRect(x,y+13,w,1);
+      c.globalAlpha=0.28;
+      c.fillStyle='#6d5a46';
+      for(let sx=x+6; sx<x+w-8; sx+=18)c.fillRect(sx,y+4,10,1);
+      c.globalAlpha=1;
+      drawText(c,'??',x+14,y,2,hov?'#c8a070':'#806850');
+      drawText(c,G.visibleLevelName?G.visibleLevelName(i):'DOLD BANA',x+58,y,2,hov?'#c8b090':'#706860');
+      drawText(c,G.levelLockedReason?G.levelLockedReason(i):'LÅST',x+w-146,y+1,1,hov?'#e0b070':'#8a7058');
+      drawText(c,'LÅST',x+w-42,y+1,1,hov?'#e0b070':'#806850');
+    }else{
+      if(active){c.fillStyle='rgba(80,180,120,0.11)';c.fillRect(x,y-4,w,18)}
+      if(hov){c.fillStyle='rgba(80,140,255,0.15)';c.fillRect(x,y-4,w,18)}
+      drawText(c,String(i+1).padStart(2,'0'),x+8,y,2,hov?'#fff':(active?'#80ffb0':'#8090b0'));
+      drawText(c,L.name,x+58,y,2,hov?'#ffffff':'#c0c8e0');
+      const comp=G.levelCompletionStatus?G.levelCompletionStatus(i):null;
+      if(comp&&comp.hasExtra){
+        const label=comp.full?'FULL':(comp.cleared?'RUNOR KVAR':'RUNOR');
+        drawText(c,label,x+w-164,y+1,1,comp.full?'#ffe880':'#caa0ff');
+      }
+      if(L.cave)drawText(c,'GROTTA',x+w-84,y+1,1,'#a8b8c8');
+      else if(L.theme==='desert')drawText(c,'ÖKEN',x+w-64,y+1,1,'#ffd070');
+      else if(L.theme==='city')drawText(c,'STAD',x+w-64,y+1,1,'#a8d8ff');
+      else if(L.night)drawText(c,'NATT',x+w-64,y+1,1,'#8080ff');
+      if(G.cleared[i])drawText(c,'✓',x+w-18,y+1,1,'#40ff40');
     }
-    if(L.cave)drawText(c,'GROTTA',x+w-84,y+1,1,'#a8b8c8');
-    else if(L.theme==='desert')drawText(c,'ÖKEN',x+w-64,y+1,1,'#ffd070');
-    else if(L.theme==='city')drawText(c,'STAD',x+w-64,y+1,1,'#a8d8ff');
-    else if(L.night)drawText(c,'NATT',x+w-64,y+1,1,'#8080ff');
-    if(G.cleared[i])drawText(c,'✓',x+w-18,y+1,1,'#40ff40');
-    G.menuRows.push({x,y:y-4,w,h:18,idx:i});
+    G.menuRows.push({x,y:y-4,w,h:18,idx:i,locked:!unlocked});
   }
   const setY=258, volY=274;
   G.menuSettings={
     profile:{x:10,y:8,w:126,h:18},
+    progression:{x:176,y:27,w:128,h:10},
     leaderboard:{x:344,y:8,w:126,h:18},
     mode:{x:18,y:setY-4,w:120,h:14},
     load:{x:146,y:setY-4,w:62,h:14},
@@ -286,6 +306,7 @@ function drawMenu(c,tk){
     sfxVol:{x:276,y:volY-4,w:174,h:14}
   };
   drawMenuActionButton(c,G.menuSettings.profile,'PROFIL: '+(G.activeProfileName?G.activeProfileName():'Spelare 1'),true);
+  drawMenuActionButton(c,G.menuSettings.progression,'BANVAL: '+(G.levelSelectModeName?G.levelSelectModeName():'KAMPANJ'),true);
   drawMenuActionButton(c,G.menuSettings.leaderboard,'TOPPLISTA',true);
   for(const k in G.menuSettings){const r=G.menuSettings[k];
     if(G.mx>=r.x&&G.mx<r.x+r.w&&G.my>=r.y&&G.my<r.y+r.h){c.fillStyle='rgba(255,220,64,0.12)';c.fillRect(r.x,r.y,r.w,r.h)}
@@ -298,7 +319,7 @@ function drawMenu(c,tk){
   drawMenuVolumeBar(c,G.menuSettings.musicVol,AU.musicVol,AU.musicOn);
   drawText(c,'SFX',242,volY,1,AU.sfxOn?'#a0ffa0':'#808080');
   drawMenuVolumeBar(c,G.menuSettings.sfxVol,AU.sfxVol,AU.sfxOn);
-  drawTextC(c,'K: LÄGE   M/S: AV/PÅ   KLICKA REGLAGE FÖR VOLYM   L: LADDA   H: HJÄLP',CW/2,290,1,'#607060');
+  drawTextC(c,'K: LÄGE   V: BANVAL   M/S: AV/PÅ   L: LADDA   H: HJÄLP',CW/2,290,1,'#607060');
   if(G.profileOverlay==='profiles')drawProfileOverlay(c,tk);
   else if(G.profileOverlay==='leaderboard')drawLeaderboardOverlay(c,tk);
 }
