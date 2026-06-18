@@ -484,6 +484,8 @@ Object.assign(G,{
     cave.walking=false;
     cave.running=false;
     cave.facing=throwFacing;
+    const pileHit=this.waterfallCaveMirrorThrowStonePile(cave);
+    if(pileHit&&pileHit.obj)pileHit.obj.pickedT=0;
     cave.mirrorStoneThrow={
       active:true,t:0,releaseT:4,dur:clamp(Math.round(dist/5)+34,42,62),
       sx,sy,tx,ty,peak:34+dist*0.10,landed:false,facing:throwFacing

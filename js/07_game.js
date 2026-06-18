@@ -608,13 +608,24 @@ const G={
   toggleSfx(){
     AU.sfxOn=!AU.sfxOn;
     if(!AU.sfxOn){AU.stopWeather();if(AU.stopWaterfallCave)AU.stopWaterfallCave()}
-    else {AU.sClick();if(this.waterfallCaveActive&&this.waterfallCaveActive()){if(AU.startWaterfallCave)AU.startWaterfallCave()}else if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind)}
+    else {
+      AU.sClick();
+      if(this.waterfallCaveActive&&this.waterfallCaveActive()){
+        if(AU.stopWeather)AU.stopWeather();
+        if(AU.startWaterfallCave)AU.startWaterfallCave();
+        if(this.setWaterfallCaveSceneAudio)this.setWaterfallCaveSceneAudio(this.waterfallCave&&this.waterfallCave.scene);
+      }else if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind);
+    }
     this.toast('SFX '+(AU.sfxOn?'PÅ':'AV'));this.savePrefs();
   },
   setSfxVolume(v){
     AU.sfxOn=true;
     AU.setSfxVolume(v);
-    if(this.waterfallCaveActive&&this.waterfallCaveActive()){if(AU.stopWeather)AU.stopWeather();if(AU.startWaterfallCave)AU.startWaterfallCave()}
+    if(this.waterfallCaveActive&&this.waterfallCaveActive()){
+      if(AU.stopWeather)AU.stopWeather();
+      if(AU.startWaterfallCave)AU.startWaterfallCave();
+      if(this.setWaterfallCaveSceneAudio)this.setWaterfallCaveSceneAudio(this.waterfallCave&&this.waterfallCave.scene);
+    }
     else if(this.state==='PLAY'&&this.level)AU.startWeather(this.weatherKind);
     this.toast('SFX-VOLYM '+Math.round(AU.sfxVol*100)+'%');
     this.savePrefs();

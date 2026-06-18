@@ -862,6 +862,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStopChurchHymn = AU.stopWaterfallCaveChurchHymn;
   const prevMusicOn = AU.musicOn;
   const prevSfxOn = AU.sfxOn;
+  const prevSfxVol = AU.sfxVol;
   const prevMoney = G.money;
   const prevPendingSkillBonus = G.pendingSkillBonus;
   const prevRuneProgress = G.runeProgress;
@@ -1319,6 +1320,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (firesStarted < 1 || !waterLevels.some(w => w.level <= 0.30)) {
     throw new Error('Campfire cave scene did not start fire audio and lower the waterfall level');
   }
+  {
+    const startedBefore = started;
+    const firesBefore = firesStarted;
+    const waterBefore = waterLevels.length;
+    G.setSfxVolume(0.64);
+    const newWaterLevels = waterLevels.slice(waterBefore);
+    if (started <= startedBefore || firesStarted <= firesBefore || !newWaterLevels.some(w => w.level <= 0.30)) {
+      throw new Error('Changing SFX volume inside the cave should restart ambience and keep the active scene audio mix');
+    }
+  }
   if (typeof drawWaterfallCaveView !== 'function' || !drawWaterfallCaveView(WCTX, 23)) {
     throw new Error('Campfire waterfall cave view did not render');
   }
@@ -1443,6 +1454,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (G.waterfallCave.mirrorStoneThrow.releaseT > 6) {
     throw new Error('Mirror pool stone throw wind-up should release quickly enough to avoid a stiff start');
+  }
+  if (throwStonePile.obj.pickedT > 0) {
+    throw new Error('Mirror pool stone pile pickup lift should stop once the throw animation begins');
   }
   const firstStoneTarget = {x:G.waterfallCave.mirrorStoneThrow.tx, y:G.waterfallCave.mirrorStoneThrow.ty};
   if (!G.waterfallCaveMirrorStoneThrowLocks(G.waterfallCave)) {
@@ -2015,6 +2029,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWaterfallCaveChurchHymn = prevStopChurchHymn;
   AU.musicOn = prevMusicOn;
   AU.sfxOn = prevSfxOn;
+  AU.sfxVol = prevSfxVol;
   G.money = prevMoney;
   G.pendingSkillBonus = prevPendingSkillBonus;
   G.runeProgress = prevRuneProgress;
