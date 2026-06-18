@@ -172,6 +172,37 @@ Object.assign(G,{
       label:required===0?'INGA RUNOR':(complete>=required?'RUNOR FUNNA':'RUNOR SAKNAS')
     };
   },
+  levelRuneGuidance(idx){
+    const status=this.levelRuneStatus(idx);
+    if(!status||!status.hasRequirements)return null;
+    const total=Math.max(status.total||0,status.required||0,1);
+    const read=clamp(status.read||0,0,total);
+    if(status.completeAll){
+      return {
+        complete:true,
+        menuLabel:'FULL',
+        briefingLines:['RUNORNA BAKOM FALLET ÄR LÄSTA'],
+        resultLines:['BANA FULLBORDAD - ALLA RUNOR FUNNA'],
+        entryHint:'RUNORNA HÄR ÄR REDAN LÄSTA'
+      };
+    }
+    if(read>0){
+      return {
+        complete:false,
+        menuLabel:'RUNOR '+read+'/'+total,
+        briefingLines:['FALLETS RISTNINGAR ÄR DELVIS LÄSTA','ÅTERVÄND BAKOM VATTNET FÖR RESTEN'],
+        resultLines:['BANA KLARAD - FALLETS RUNOR SAKNAS','ÅTERVÄND BAKOM VATTENFALLET'],
+        entryHint:'TRYCK UPP: FORTSÄTT LÄSA RUNORNA'
+      };
+    }
+    return {
+      complete:false,
+      menuLabel:'FALLRUNOR',
+      briefingLines:['DET FINNS RISTNINGAR BAKOM VATTENFALLET','HÖGERKLICKA EN LÄMMEL, GÅ TILL FALLET OCH TRYCK UPP'],
+      resultLines:['BANA KLARAD - FALLETS RUNOR SAKNAS','DIREKTSTYR EN LÄMMEL BAKOM VATTNET'],
+      entryHint:'TRYCK UPP: GÅ BAKOM VATTENFALLET'
+    };
+  },
   levelFullyCompleted(idx){
     idx=clamp(idx|0,0,LEVELS.length-1);
     const status=this.levelRuneStatus(idx);

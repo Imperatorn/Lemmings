@@ -747,6 +747,19 @@ Object.assign(G,{
     }
     return best;
   },
+  updateManualWaterfallCaveHint(l){
+    if(!l||!this.isManualActive||!this.isManualActive()||this.waterfallCaveActive())return false;
+    const guide=this.levelRuneGuidance?this.levelRuneGuidance(this.levelIdx):null;
+    if(!guide||guide.complete)return false;
+    const wf=this.findWaterfallCaveEntrance(l);
+    if(!wf)return false;
+    const key=(this.levelIdx||0)+':'+Math.round(wf.x||0)+','+Math.round(wf.y||0);
+    this.waterfallCaveEntryHints=this.waterfallCaveEntryHints||{};
+    if(this.waterfallCaveEntryHints[key])return false;
+    this.waterfallCaveEntryHints[key]=true;
+    this.toast(guide.entryHint||'TRYCK UPP VID FALLET',150);
+    return true;
+  },
   tryEnterWaterfallCaveFromManual(){
     if(!this.isManualActive()||this.waterfallCaveActive())return false;
     if(this.waterfallCaveEntryBlocked&&this.waterfallCaveEntryBlocked())return false;

@@ -97,6 +97,7 @@ Object.assign(G,{
       this.stopManualControl('dead');
       return;
     }
+    if(this.updateManualWaterfallCaveHint)this.updateManualWaterfallCaveHint(l);
     if(l.state==='MANUAL')return;
     if(this.manualResumeState(l.state))this.resumeManualControl(l);
   },

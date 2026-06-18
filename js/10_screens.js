@@ -280,7 +280,8 @@ function drawMenu(c,tk){
       drawText(c,L.name,x+58,y,2,hov?'#ffffff':'#c0c8e0');
       const comp=G.levelCompletionStatus?G.levelCompletionStatus(i):null;
       if(comp&&comp.hasExtra){
-        const label=comp.full?'FULL':(comp.cleared?'RUNOR KVAR':'RUNOR');
+        const guide=G.levelRuneGuidance?G.levelRuneGuidance(i):null;
+        const label=guide&&guide.menuLabel?guide.menuLabel:(comp.full?'FULL':(comp.cleared?'RUNOR KVAR':'RUNOR'));
         drawText(c,label,x+w-164,y+1,1,comp.full?'#ffe880':'#caa0ff');
       }
       if(L.cave)drawText(c,'GROTTA',x+w-84,y+1,1,'#a8b8c8');
@@ -339,10 +340,12 @@ function drawBrief(c,tk){
   drawTextC(c,'TEMPO: '+G.tempoName()+'  +/- ÄNDRAR',CW/2,190,1,'#ffd080');
   let infoY=202;
   const affectsProgress=G.selectedLevelAffectsProgress?G.selectedLevelAffectsProgress():true;
-  const runeStatus=G.levelRuneStatus?G.levelRuneStatus(G.levelIdx):null;
-  if(runeStatus&&runeStatus.hasRequirements){
-    drawTextC(c,runeStatus.completeAll?'RUNORNA I VATTENFALLSGROTTAN ÄR FUNNA':'HEMLIGHET: RUNOR FINNS BAKOM VATTNET',CW/2,infoY,1,runeStatus.completeAll?'#ffe880':'#caa0ff');
-    infoY+=12;
+  const runeGuide=G.levelRuneGuidance?G.levelRuneGuidance(G.levelIdx):null;
+  if(runeGuide&&Array.isArray(runeGuide.briefingLines)){
+    for(const line of runeGuide.briefingLines.slice(0,2)){
+      drawTextC(c,line,CW/2,infoY,1,runeGuide.complete?'#ffe880':'#caa0ff');
+      infoY+=12;
+    }
   }
   if(!affectsProgress){
     drawTextC(c,'FRITT SPEL: ÖVNING - RESULTAT OCH FYND SPARAS INTE',CW/2,infoY,1,'#ffd080');
@@ -361,13 +364,19 @@ function drawBrief(c,tk){
     drawTextC(c,'EXTRA LEMLAR KAN GE ÖVER 100% RÄDDAT.',CW/2,infoY+12,1,'#ffd040');
     infoY+=24;
   }
+  let promptY=236,promptScale=2;
   if(shopActive){
     c.fillStyle=L.night?'#000010':'#080800';
     c.fillRect(0,198,CW,102);
-    drawTextC(c,'PENGAR: '+money+'  EXTRA SKILLS KOSTAR 1 MYNT',CW/2,204,1,'#ffd866');
+    let shopTextY=204;
+    if(runeGuide&&!runeGuide.complete&&runeGuide.briefingLines&&runeGuide.briefingLines[0]){
+      drawTextC(c,runeGuide.briefingLines[0],CW/2,shopTextY,1,'#caa0ff');
+      shopTextY+=10;
+    }
+    drawTextC(c,'PENGAR: '+money+'  EXTRA SKILLS KOSTAR 1 MYNT',CW/2,shopTextY,1,'#ffd866');
     const opts=G.shopOptions?G.shopOptions():[];
     const cols=7,bw=62,bh=17,gapX=4,gapY=5,total=cols*bw+(cols-1)*gapX;
-    const x0=Math.round(CW/2-total/2),y0=216;
+    const x0=Math.round(CW/2-total/2),y0=shopTextY+12;
     for(let i=0;i<opts.length;i++){
       const opt=opts[i],col=i%cols,row=(i/cols)|0;
       const x=x0+col*(bw+gapX),y=y0+row*(bh+gapY);
@@ -382,15 +391,21 @@ function drawBrief(c,tk){
       drawTextC(c,opt.label+' +'+(bonus[opt.k]||0),x+bw/2,y+5,1,can?'#ffffff':'#707880');
       G.briefShopButtons.push({x,y,w:bw,h:bh,k:opt.k});
     }
-    drawTextC(c,L.hint,CW/2,263,1,'#40c040');
-  }else drawTextC(c,L.hint,CW/2,Math.min(infoY,L.night?226:228),1,'#40c040');
-  if((tk>>4)&1)drawTextC(c,shopActive?'KLICKA UTANFÖR BUTIKEN FÖR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,shopActive?282:236,shopActive?1:2,'#ffd040');
+    drawTextC(c,L.hint,CW/2,runeGuide&&!runeGuide.complete?274:263,1,'#40c040');
+    promptY=290;promptScale=1;
+  }else{
+    const hintY=Math.min(Math.max(infoY,L.night?226:228),252);
+    drawTextC(c,L.hint,CW/2,hintY,1,'#40c040');
+    promptY=Math.min(hintY+16,276);
+  }
+  if((tk>>4)&1)drawTextC(c,shopActive?'KLICKA UTANFÖR BUTIKEN FÖR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,promptY,promptScale,'#ffd040');
 }
 
 function drawResult(c,tk){
   const L=G.level,win=G.saved>=L.save;
   const practice=G.practiceRunActive&&G.practiceRunActive();
   const comp=!practice&&G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
+  const runeGuide=G.levelRuneGuidance?G.levelRuneGuidance(G.levelIdx):null;
   c.fillStyle='#000008';c.fillRect(0,0,CW,CH);
   drawTextC(c,win?'BRA JOBBAT!':'OJDÅ...',CW/2,50,3,win?'#40ff40':'#ff5050');
   const pct=Math.floor(G.saved/L.lem*100),need=Math.ceil(L.save/L.lem*100);
@@ -398,15 +413,21 @@ function drawResult(c,tk){
   drawTextC(c,'KRAVET VAR '+need+'%',CW/2,122,2,'#a0a0b0');
   if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,'#ffd040');
   if(practice)drawTextC(c,'ÖVNING - PROGRESSION SPARADES INTE',CW/2,G.saved>L.lem?158:146,1,'#ffd080');
-  if(win&&comp&&comp.hasExtra)drawTextC(c,comp.full?'BANA FULLBORDAD - ALLA RUNOR FUNNA':'BANA KLARAD - RUNOR SAKNAS',CW/2,G.saved>L.lem?158:146,1,comp.full?'#ffe880':'#caa0ff');
+  let nextY=170;
+  if(win&&comp&&comp.hasExtra){
+    const lines=runeGuide&&Array.isArray(runeGuide.resultLines)?runeGuide.resultLines:[comp.full?'BANA FULLBORDAD - ALLA RUNOR FUNNA':'BANA KLARAD - RUNOR SAKNAS'];
+    const y0=G.saved>L.lem?158:146;
+    for(let i=0;i<lines.length&&i<2;i++)drawTextC(c,lines[i],CW/2,y0+i*12,1,comp.full?'#ffe880':'#caa0ff');
+    nextY=lines.length>1?182:170;
+  }
   if(win&&G.levelIdx<LEVELS.length-1)
-    drawTextC(c,practice?'KLICKA / ENTER: NÄSTA ÖVNING':'KLICKA / ENTER: NÄSTA BANA',CW/2,170,1,'#ffd040');
+    drawTextC(c,practice?'KLICKA / ENTER: NÄSTA ÖVNING':'KLICKA / ENTER: NÄSTA BANA',CW/2,nextY,1,'#ffd040');
   else if(win)
-    drawTextC(c,'DU KLARADE ALLA BANOR - LEMMEL-MÄSTARE!',CW/2,170,1,'#ffd040');
+    drawTextC(c,'DU KLARADE ALLA BANOR - LEMMEL-MÄSTARE!',CW/2,nextY,1,'#ffd040');
   else
-    drawTextC(c,'KLICKA / ENTER: BANMENY',CW/2,170,1,'#ffd040');
-  drawTextC(c,'R: SPELA IGEN   ESC/B: BANMENY',CW/2,190,1,'#8090a0');
-  drawTextC(c,'LÄGE '+G.modeName()+'  VÄDER '+G.weatherShort()+'  SEED '+((G.levelSeed>>>0).toString(36).toUpperCase()),CW/2,212,1,'#606880');
+    drawTextC(c,'KLICKA / ENTER: BANMENY',CW/2,nextY,1,'#ffd040');
+  drawTextC(c,'R: SPELA IGEN   ESC/B: BANMENY',CW/2,nextY+20,1,'#8090a0');
+  drawTextC(c,'LÄGE '+G.modeName()+'  VÄDER '+G.weatherShort()+'  SEED '+((G.levelSeed>>>0).toString(36).toUpperCase()),CW/2,nextY+42,1,'#606880');
 }
 
 
@@ -448,12 +469,13 @@ function drawHelpOverlay(c){
     'REPKROK: VÄLJ LEMMEL, SIKTA',
     'HÖGERKLICKA LEMMEL: DIREKTSTYR EN GÅNG/BANA',
     'DIREKT: PILAR STYR/HOPPAR   SHIFT SPRING   CTRL SIKTE   L LAMPA',
+    'VATTENFALL: DIREKTSTYR EN LÄMMEL, TRYCK UPP VID FALLET',
     'MELLANSLAG PAUS   R STARTA OM   ESC/B MENY',
     'Z/X/C ZOOM   HJUL/PINCH   DRA/SVEP PANORERA',
     'K LÄGE   M MUSIK   S SFX   F FULLSKÄRM',
     'H VISAR / DÖLJER DENNA RUTA'
   ];
-  for(let i=0;i<rows.length;i++)drawTextC(c,rows[i],CW/2,68+i*17,1,i===7?'#a0ffa0':'#ffffff');
+  for(let i=0;i<rows.length;i++)drawTextC(c,rows[i],CW/2,68+i*15,1,i===8?'#a0ffa0':'#ffffff');
   c.restore();
 }
 function drawErrorOverlay(c,err){

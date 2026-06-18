@@ -184,14 +184,20 @@ for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','pro
 for (const token of ['FRITT SPEL: ÖVNING','PROGRESSION SPARADES INTE']) {
   if (!screensCode.includes(token)) throw new Error(`Practice mode should be visible in screens: ${token}`);
 }
+for (const token of ['HÖGERKLICKA EN LÄMMEL','TRYCK UPP','FALLETS RUNOR SAKNAS']) {
+  if (!runeCode.includes(token)) throw new Error(`Rune/waterfall guidance should be defined in rune guidance data: ${token}`);
+}
+for (const token of ['VATTENFALL: DIREKTSTYR EN LÄMMEL','TRYCK UPP VID FALLET']) {
+  if (!screensCode.includes(token)) throw new Error(`Direct-control waterfall guidance should be visible in help/screens: ${token}`);
+}
 if (!inputCode.includes("G.selectMenuLevel") || !inputCode.includes("G.toggleLevelSelectMode")) {
   throw new Error('Menu input should route level selection through progression rules');
 }
 if (!gameCode.includes('runeProgress')) throw new Error('Profile state is missing runeProgress');
-for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus']) {
+for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus']) {
   if (!runeCode.includes(token)) throw new Error(`Rune module is missing ${token}`);
 }
-for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneDiscovery(desc)','runeProgressSummary(data)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
+for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneDiscovery(desc)','runeProgressSummary(data)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelRuneGuidance(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
   if (gameCode.includes(token)) throw new Error(`07_game.js should not own rune/completion implementation: ${token}`);
 }
 if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\(')) {
@@ -455,7 +461,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
-  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelFullyCompleted','levelCompletionStatus',
+  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
   'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
@@ -483,7 +489,7 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','levelWaterfallCaveVariant','waterfallCaveVariantId','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneFallback','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneExits','waterfallCaveSceneArchiveStyle','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','levelWaterfallCaveVariant','waterfallCaveVariantId','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneFallback','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneExits','waterfallCaveSceneArchiveStyle','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','updateManualWaterfallCaveHint','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'waterfallCaveRuneAt','waterfallCaveRuneLines','waterfallCaveRuneDescriptor','syncWaterfallCaveRuneObjectProgress','readWaterfallCaveRune',
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone',
   'waterfallCaveMirrorPoolHit','waterfallCaveMirrorThrowStonePile','waterfallCaveMirrorStoneHeld','waterfallCaveMirrorStoneThrowLocks','pickWaterfallCaveMirrorStone','throwWaterfallCaveMirrorStone','handleWaterfallCaveMirrorStoneAction','clearWaterfallCaveMirrorStone','updateWaterfallCaveMirrorStone',
@@ -968,6 +974,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (!G.levelHasWaterfallSecrets(waterfallIdx) || !G.levelRuneStatus(waterfallIdx).hasRequirements || G.levelRuneStatus(waterfallIdx).completeAll) {
     throw new Error('Waterfall levels should start as clearable but not rune-complete before their rune set is discovered');
+  }
+  const guide = G.levelRuneGuidance(waterfallIdx);
+  if (!guide || guide.complete || !guide.briefingLines || !guide.briefingLines.some(line => line.includes('HÖGERKLICKA')) || !guide.briefingLines.some(line => line.includes('TRYCK UPP'))) {
+    throw new Error('Unfinished waterfall rune levels should explain direct control and the up-key waterfall entry');
   }
   if (plainIdx >= 0 && (G.levelHasWaterfallSecrets(plainIdx) || G.levelRuneRequirements(plainIdx).length !== 0)) {
     throw new Error('Levels without waterfall secrets should not inherit rune requirements');
@@ -1573,6 +1583,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (!G.levelRuneStatus(waterfallIdx).completeAll) {
     throw new Error('A waterfall level rune requirement should be fulfilled after the waterfall rune set is discovered');
+  }
+  const completeGuide = G.levelRuneGuidance(waterfallIdx);
+  if (!completeGuide || !completeGuide.complete || completeGuide.menuLabel !== 'FULL') {
+    throw new Error('Rune guidance should switch to completed state after all waterfall runes are read');
   }
   G.cleared[waterfallIdx] = true;
   if (!G.levelFullyCompleted(waterfallIdx) || G.levelCompletionStatus(waterfallIdx).label !== 'FULLBORDAD') {
