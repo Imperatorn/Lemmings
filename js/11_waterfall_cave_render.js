@@ -902,29 +902,39 @@ function drawWaterfallCaveAdventureBase(c,cave,tk,style){
   }
   if(scene==='emberPassage'){
     drawWaterfallCaveEmberCampOpeningLight(c,cave,tk);
-    c.fillStyle='#070403';
-    fillPixelPoly(c,[[158,68],[204,44],[278,44],[326,70],[304,108],[184,108]]);
-    c.fillStyle='#21120d';
-    fillPixelPoly(c,[[178,72],[216,56],[268,56],[304,75],[286,98],[198,98]]);
-    c.fillStyle='#120b08';
-    fillPixelPoly(c,[[186,88],[204,78],[282,78],[296,91],[282,106],[198,106]]);
+    c.fillStyle='#050302';
+    fillPixelPoly(c,[[154,66],[202,42],[280,42],[330,68],[310,106],[184,108]]);
+    c.fillStyle='#2a1710';
+    fillPixelPoly(c,[[176,70],[216,54],[270,54],[306,73],[286,96],[198,98]]);
+    c.fillStyle='#1a0f0b';
+    fillPixelPoly(c,[[184,78],[212,66],[278,68],[300,82],[284,100],[198,100]]);
+    c.fillStyle='#0b0705';
+    fillPixelPoly(c,[[188,90],[206,78],[278,79],[294,90],[280,104],[200,104]]);
+    c.globalAlpha=0.34;
+    c.fillStyle='#6b381e';
+    fillPixelPoly(c,[[178,72],[216,54],[206,66],[184,80]]);
+    fillPixelPoly(c,[[270,54],[306,73],[286,82],[278,67]]);
+    c.globalAlpha=1;
     c.fillStyle='#3b2417';
-    c.fillRect(204,102,74,3);
-    c.globalAlpha=0.38;
-    c.fillStyle='#59321d';
-    for(let i=0;i<6;i++){
-      const x=196+i*17+Math.round(hash2(i+764,wf.x||0)*5);
-      const h=14+Math.round(hash2(i+766,wf.y||0)*22);
-      fillPixelPoly(c,[[x,79],[x+5,79],[x+3,79+h],[x+1,84+h]]);
+    c.fillRect(204,101,72,3);
+    c.fillStyle='#5a2f19';
+    const teeth=[[190,88,13],[207,84,18],[284,85,17],[300,88,12]];
+    for(const q of teeth){
+      const x=q[0],y=q[1],h=q[2];
+      fillPixelPoly(c,[[x,y],[x+9,y],[x+5,y+h],[x+2,y+h-3]]);
     }
-    c.globalAlpha=0.46;
-    c.fillStyle='#182417';
-    for(let i=0;i<5;i++){
-      const x=212+i*15+Math.round(hash2(i+772,wf.x||0)*6);
-      const h=18+Math.round(hash2(i+774,wf.y||0)*18);
-      c.fillRect(x,80,2,h);
-      if(i%2===0)c.fillRect(x+2,90,1,Math.max(6,h-10));
+    c.globalAlpha=0.50;
+    c.fillStyle='#1d2b18';
+    const roots=[[181,82,16,-1],[194,86,13,1],[293,85,15,-1],[307,80,19,1]];
+    for(const q of roots){
+      const x=q[0],y=q[1],h=q[2],d=q[3];
+      c.fillRect(x,y,2,Math.max(5,h-5));
+      c.fillRect(x+d*3,y+Math.max(6,h-8),2,7);
+      c.fillRect(x+d*5,y+h-2,1,5);
     }
+    c.globalAlpha=0.22;
+    c.fillStyle='#ff8a36';
+    c.fillRect(206,101,68,1);
     c.globalAlpha=1;
   }
   if(scene==='mirrorPool'){
