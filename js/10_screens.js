@@ -31,26 +31,26 @@ function drawTitleGrass(c,x,y,h,tk,seed){
 
 function drawTitleBackdrop(c,tk){
   const g=c.createLinearGradient(0,0,0,CH);
-  g.addColorStop(0,'#000018');g.addColorStop(0.58,'#061426');g.addColorStop(1,'#001a00');
+  g.addColorStop(0,'#09070a');g.addColorStop(0.55,'#17120d');g.addColorStop(1,'#07160c');
   c.fillStyle=g;c.fillRect(0,0,CW,CH);
 
-  c.globalAlpha=0.20+0.04*Math.sin(tk*0.025);
-  c.fillStyle='#d8e8ff';c.fillRect(392,28,18,18);
-  c.fillStyle='#f8f0c8';c.fillRect(396,31,12,12);c.fillRect(393,35,16,6);
+  c.globalAlpha=0.18+0.03*Math.sin(tk*0.025);
+  c.fillStyle='#f0d68a';c.fillRect(392,28,18,18);
+  c.fillStyle='#fff2b8';c.fillRect(396,31,12,12);c.fillRect(393,35,16,6);
   c.globalAlpha=1;
 
-  for(let i=0;i<70;i++){
-    const tw=clamp(0.25+0.45*Math.sin(hash2(i,5)*7+tk*0.035),0.05,0.70);
+  for(let i=0;i<52;i++){
+    const tw=clamp(0.18+0.32*Math.sin(hash2(i,5)*7+tk*0.025),0.04,0.48);
     c.globalAlpha=tw;
-    c.fillStyle=i%9===0?'#d8e8ff':'#aac0ff';
+    c.fillStyle=i%9===0?'#d8c894':'#9b8764';
     const s=i%13===0?2:1;
     c.fillRect(Math.floor(hash2(i,1)*CW),Math.floor(hash2(i,2)*145),s,1);
   }
   c.globalAlpha=1;
 
-  drawTitleRidge(c,152,'#06142a',28,2);
-  drawTitleRidge(c,178,'#08251f',22,7);
-  drawTitleRidge(c,198,'#0b361b',15,11);
+  drawTitleRidge(c,150,'#18120f',27,2);
+  drawTitleRidge(c,176,'#182315',22,7);
+  drawTitleRidge(c,198,'#0d2a13',15,11);
 
   for(let i=0;i<15;i++){
     const x=(hash2(i,31)*CW+Math.sin(tk*0.025+i)*7+CW)%CW;
@@ -122,23 +122,50 @@ function drawTitleLemmings(c,tk){
   }
 }
 
+function drawTitleLogo(c,tk){
+  const t='LEMMEL!';
+  const sc=6, tw=textW(t,sc);
+  const px=Math.round(CW/2-tw/2-24), py=34, pw=tw+48, ph=76;
+  c.fillStyle='#050403';c.fillRect(px+4,py+7,pw,ph);
+  c.fillStyle='#21150c';c.fillRect(px,py,pw,ph);
+  c.fillStyle='#5b3619';c.fillRect(px+3,py+3,pw-6,ph-6);
+  c.fillStyle='#2d1d10';c.fillRect(px+7,py+8,pw-14,ph-14);
+  c.fillStyle='#7a4a22';c.fillRect(px+9,py+10,pw-18,3);
+  c.fillStyle='#140d08';c.fillRect(px+9,py+ph-13,pw-18,3);
+  c.fillStyle='#8a6532';
+  for(let i=0;i<7;i++){
+    const x=px+18+i*Math.floor((pw-36)/6);
+    c.fillRect(x,py+13,2,2);
+    if(i%2===0)c.fillRect(x+1,py+ph-17,2,1);
+  }
+  c.globalAlpha=0.42;
+  c.fillStyle='#203b18';
+  c.fillRect(px+12,py+6,38,3);c.fillRect(px+21,py+9,17,2);
+  c.fillRect(px+pw-62,py+ph-16,42,3);c.fillRect(px+pw-47,py+ph-19,18,2);
+  c.globalAlpha=1;
+
+  let x=CW/2-tw/2;
+  const textY=62;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i], b=Math.round(Math.sin(tk*0.055+i*0.9)*1.2);
+    drawText(c,ch,x+3,textY+3+b,sc,'#0a0705');
+    drawText(c,ch,x-1,textY+1+b,sc,'#1a1008');
+    drawText(c,ch,x+1,textY+1+b,sc,'#1a1008');
+    drawText(c,ch,x,textY+b,sc,i%2?'#d8c06a':'#f1d982');
+    drawText(c,ch,x,textY-1+b,sc,'rgba(255,240,170,0.22)');
+    if(i%2===0){c.fillStyle='#6c8f3f';c.fillRect(Math.round(x+4),textY-2+b,7,2)}
+    x+=(FONT[ch][0].length+1)*sc;
+  }
+}
+
 function drawTitle(c,tk){
   drawTitleBackdrop(c,tk);
-  // logga med studs
-  const t='LEMMEL!';
-  let x=CW/2-textW(t,6)/2;
-  for(let i=0;i<t.length;i++){
-    const ch=t[i],b=Math.sin(tk*0.18+i*0.7)*5;
-    drawText(c,ch,x+2,61+b,6,'rgba(0,0,0,0.45)');
-    drawText(c,ch,x,58+b,6,i%2?'#5fa8ff':'#2f6fff');
-    if(((tk+i*5)&31)<12)drawText(c,ch,x,57+b,6,'rgba(190,230,255,0.18)');
-    x+=(FONT[ch][0].length+1)*6;
-  }
-  drawTextC(c,'EN HYLLNING TILL DOS-KLASSIKERN',CW/2,118,1,'#9090a0');
+  drawTitleLogo(c,tk);
+  drawTextC(c,'EN HYLLNING TILL DOS-KLASSIKERN',CW/2,123,1,'#9b8d68');
   drawTitleGround(c,tk);
   drawTitleLemmings(c,tk);
-  if((tk>>4)&1)drawTextC(c,'KLICKA FÖR ATT BÖRJA',CW/2,160,2,'#ffffff');
-  drawTextC(c,'BYGG GRÄV SPRÄNG FLYG - RÄDDA LEMLARNA',CW/2,232,1,'#70a070');
+  if((tk>>4)&1)drawTextC(c,'KLICKA FÖR ATT BÖRJA',CW/2,160,2,'#f3df9a');
+  drawTextC(c,'BYGG GRÄV SPRÄNG FLYG - RÄDDA LEMLARNA',CW/2,232,1,'#8ab05c');
 }
 
 function drawMenuVolumeBar(c,r,val,on){
