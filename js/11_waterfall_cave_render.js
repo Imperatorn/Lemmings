@@ -1722,6 +1722,83 @@ function drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk){
   return true;
 }
 
+function drawWaterfallCaveMainCrystal(c,cave,x,y,obj,tk,active,near,pulse){
+  const st=waterfallCaveCrystalChargeState(cave,obj);
+  const charge=st?waterfallCaveEase01(clamp(st.p/0.72,0,1))*st.fade:0;
+  const t=(tk+(cave&&cave.t||0));
+  const wake=clamp((active?0.42:0)+(near?0.22:0)+pulse*0.28+charge*0.65,0,1);
+  const flick=0.50+0.50*Math.sin(t*0.12);
+  c.save();
+
+  c.globalAlpha=0.28+0.18*wake;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[x-58,y+26],[x-32,y+14],[x+34,y+14],[x+62,y+26],[x+36,y+35],[x-38,y+35]]);
+
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.07+0.20*wake+0.16*charge;
+  c.fillStyle='#5feaff';
+  fillPixelPoly(c,[[x-74,y+18],[x-34,y-40],[x+0,y-64],[x+42,y-42],[x+78,y+18],[x+34,y+44],[x-40,y+42]]);
+  c.globalAlpha=0.04+0.12*wake+0.12*charge;
+  c.fillStyle='#ff58dc';
+  fillPixelPoly(c,[[x-58,y+22],[x-16,y-50],[x+22,y-48],[x+64,y+22],[x+26,y+40],[x-28,y+40]]);
+  c.globalCompositeOperation='source-over';
+  c.globalAlpha=1;
+
+  c.fillStyle='#111c24';
+  fillPixelPoly(c,[[x-48,y+28],[x-34,y+16],[x-2,y+10],[x+34,y+16],[x+50,y+28],[x+22,y+34],[x-24,y+34]]);
+  c.fillStyle='#24343b';
+  fillPixelPoly(c,[[x-40,y+25],[x-28,y+18],[x+0,y+14],[x+26,y+18],[x+40,y+25],[x+18,y+29],[x-20,y+29]]);
+  c.fillStyle='#0b1218';
+  c.fillRect(x-46,y+31,92,5);
+
+  c.fillStyle='#183241';
+  fillPixelPoly(c,[[x-48,y+22],[x-37,y-18],[x-18,y-34],[x-7,y+24]]);
+  c.fillStyle='#2d6074';
+  fillPixelPoly(c,[[x-38,y+20],[x-28,y-15],[x-18,y-26],[x-12,y+20]]);
+  c.fillStyle='#7bd7e7';
+  fillPixelPoly(c,[[x-25,y-20],[x-18,y-28],[x-16,y+8],[x-22,y+4]]);
+
+  c.fillStyle='#234b60';
+  fillPixelPoly(c,[[x-12,y+26],[x-3,y-58],[x+10,y-72],[x+26,y+24]]);
+  c.fillStyle='#67dff1';
+  fillPixelPoly(c,[[x-2,y+21],[x+5,y-52],[x+10,y-64],[x+16,y+21]]);
+  c.fillStyle='#bffbff';
+  fillPixelPoly(c,[[x+6,y-53],[x+10,y-64],[x+11,y-16],[x+8,y-18]]);
+  c.fillStyle='#102d40';
+  fillPixelPoly(c,[[x+16,y+24],[x+10,y-64],[x+30,y-38],[x+42,y+22]]);
+  c.fillStyle='#3f8ca7';
+  fillPixelPoly(c,[[x+18,y+20],[x+15,y-44],[x+28,y-30],[x+34,y+18]]);
+
+  c.fillStyle='#182f3f';
+  fillPixelPoly(c,[[x+24,y+23],[x+38,y-22],[x+55,y-5],[x+46,y+24]]);
+  c.fillStyle='#58c4d8';
+  fillPixelPoly(c,[[x+36,y+17],[x+42,y-14],[x+51,y-4],[x+43,y+18]]);
+  c.fillStyle='#0d202d';
+  fillPixelPoly(c,[[x+45,y+23],[x+55,y-5],[x+61,y+19],[x+54,y+25]]);
+
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.30+0.38*wake+0.24*charge;
+  c.fillStyle='#89f8ff';
+  c.fillRect(x+5,y-43,3,26);
+  c.fillRect(x-27,y-9,2,18);
+  c.fillRect(x+39,y-10,2,15);
+  c.globalAlpha=0.14+0.28*wake+0.24*charge;
+  c.fillStyle='#ff70e7';
+  c.fillRect(x+18,y-24,2,28);
+  c.fillRect(x-13,y-14,2,24);
+  c.globalAlpha=0.12+0.20*wake*flick;
+  c.fillStyle='#e8ffff';
+  for(let i=0;i<5;i++){
+    const sx=x-34+i*18+Math.round(Math.sin(t*0.05+i)*2);
+    const sy=y-18+Math.round(Math.cos(t*0.06+i*2)*18);
+    if(i!==2||wake>0.35)c.fillRect(sx,sy,2,2);
+  }
+  c.globalCompositeOperation='source-over';
+  c.globalAlpha=1;
+  c.restore();
+  drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk);
+}
+
 function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
   const objects=G.waterfallCaveSceneObjects?G.waterfallCaveSceneObjects(cave):[];
   for(const hit of objects){
@@ -1745,15 +1822,7 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
       drawWaterfallCaveStoneGlyph(c,x+off,y-1,glyph,markColor,0.55);
       c.globalAlpha=1;
     }else if(kind==='crystal'){
-      c.globalAlpha=0.18+0.30*pulse;
-      c.fillStyle='#75eaff';fillPixelPoly(c,[[x-58,y+18],[x-34,y-30],[x+4,y-46],[x+46,y-18],[x+62,y+20]]);
-      c.globalAlpha=1;
-      const cols=active?['#a8f8ff','#6fe8ff','#326c94']:['#7aa6b8','#416b82','#20384a'];
-      c.fillStyle=cols[2];fillPixelPoly(c,[[x-40,y+24],[x-24,y-24],[x-4,y+22]]);
-      c.fillStyle=cols[1];fillPixelPoly(c,[[x-10,y+26],[x+6,y-52],[x+28,y+24]]);
-      c.fillStyle=cols[0];fillPixelPoly(c,[[x+22,y+20],[x+42,y-22],[x+54,y+18]]);
-      if(active){c.fillStyle='#e8ffff';c.fillRect(x+3,y-32,3,18);c.fillRect(x-26,y-10,2,15)}
-      drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk);
+      drawWaterfallCaveMainCrystal(c,cave,x,y,obj,tk,active,near,pulse);
     }else if(kind==='pool'){
       const rip=obj.rippleT||0;
       c.globalAlpha=0.42;c.fillStyle='#000';c.fillRect(x-86,y+18,172,8);c.globalAlpha=1;
