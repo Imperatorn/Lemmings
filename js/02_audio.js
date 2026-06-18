@@ -503,20 +503,22 @@ const AU={
     const t=this.now();
     this.padTone(196,2.28,'sine',0.014,t);
     this.padTone(294,2.16,'triangle',0.012,t+0.08);
-    this.padTone(392,1.78,'sine',0.010,t+0.30);
+    this.padTone(392,1.78,'sine',0.010,t+0.18);
+    this.tone(880,0.13,'sine',0.020,1.03,t+0.02);
+    this.tone(1320,0.12,'triangle',0.014,0.98,t+0.08);
     this.softNoise(1.82,0.010,980,1.66,t+0.08,{type:'bandpass',q:0.45,smooth:0.88,attack:0.20,release:0.48});
-    this.softNoise(1.36,0.006,4200,1.20,t+0.48,{type:'highpass',smooth:0.62,attack:0.22,release:0.36});
+    this.softNoise(1.36,0.006,4200,1.20,t+0.26,{type:'highpass',smooth:0.62,attack:0.18,release:0.36});
     const notes=[440,554,659,831,988];
     for(let i=0;i<notes.length;i++){
-      const when=t+0.38+i*0.24;
+      const when=t+0.16+i*0.22;
       this.tone(notes[i],0.18+(i%2)*0.04,i%2?'triangle':'sine',0.014+i*0.002,1.05,when);
       this.tone(notes[i]*2,0.10,'sine',0.006+i*0.001,0.98,when+0.045);
     }
-    this.padTone(523,0.70,'sine',0.018,t+1.56);
-    this.padTone(784,0.66,'triangle',0.016,t+1.62);
-    this.tone(1568,0.22,'sine',0.030,1.02,t+1.86);
-    this.tone(2093,0.16,'triangle',0.020,0.94,t+2.02);
-    this.softNoise(0.34,0.012,5600,0.62,t+1.82,{type:'bandpass',q:0.72,smooth:0.72,attack:0.06,release:0.20});
+    this.padTone(523,0.68,'sine',0.018,t+1.36);
+    this.padTone(784,0.62,'triangle',0.016,t+1.42);
+    this.tone(1568,0.22,'sine',0.030,1.02,t+1.64);
+    this.tone(2093,0.16,'triangle',0.020,0.94,t+1.80);
+    this.softNoise(0.34,0.012,5600,0.62,t+1.60,{type:'bandpass',q:0.72,smooth:0.72,attack:0.06,release:0.20});
   },
   sWaterfallCaveStonePickup(){
     if(!this.rateFx('waterfall-cave-stone-pickup',0.10))return;

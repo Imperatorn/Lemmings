@@ -308,7 +308,7 @@ if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47'
 if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveTeleportCharge') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
   throw new Error('Teleport stone discovery and rune reading should have dedicated magical sounds');
 }
-if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',2.1)") || !audioCode.includes('t+1.86')) {
+if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',2.1)") || !audioCode.includes('t+0.02') || !audioCode.includes('t+1.64')) {
   throw new Error('Teleport stone charging should use the longer dramatic crystal charge sound');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');

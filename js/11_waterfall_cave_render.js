@@ -1649,10 +1649,11 @@ function drawWaterfallCaveCrystalChargeRoomLight(c,cave,tk){
   const st=waterfallCaveCrystalChargeState(cave,obj);
   if(!st)return false;
   const x=Math.round(obj.x||240),y=Math.round(obj.y||220),t=(tk+(cave&&cave.t||0));
-  const darken=waterfallCaveEase01(clamp(st.p/0.24,0,1))*(1-0.58*waterfallCaveEase01(clamp((st.p-0.66)/0.30,0,1)));
-  const bloom=waterfallCaveEase01(clamp((st.p-0.14)/0.62,0,1))*st.fade;
+  const ignite=clamp(1-st.p/0.18,0,1)*st.fade;
+  const darken=waterfallCaveEase01(clamp(st.p/0.20,0,1))*(1-0.64*waterfallCaveEase01(clamp((st.p-0.58)/0.32,0,1)));
+  const bloom=(0.24*ignite+0.76*waterfallCaveEase01(clamp(st.p/0.62,0,1)))*st.fade;
   c.save();
-  c.globalAlpha=0.10+0.32*darken;
+  c.globalAlpha=0.08+0.26*darken;
   c.fillStyle='#00030a';
   c.fillRect(0,0,CW,CH);
   c.globalCompositeOperation='lighter';
@@ -1673,9 +1674,10 @@ function drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk){
   const st=waterfallCaveCrystalChargeState(cave,obj);
   if(!st)return false;
   const p=st.p;
-  const gather=waterfallCaveEase01(clamp(p/0.28,0,1));
-  const power=waterfallCaveEase01(clamp((p-0.14)/0.58,0,1))*st.fade;
-  const finalPulse=waterfallCaveEase01(clamp((p-0.66)/0.30,0,1))*st.fade;
+  const ignite=clamp(1-p/0.16,0,1)*st.fade;
+  const gather=(0.32+0.68*waterfallCaveEase01(clamp(p/0.26,0,1)))*st.fade;
+  const power=(0.18*ignite+0.82*waterfallCaveEase01(clamp(p/0.58,0,1)))*st.fade;
+  const finalPulse=waterfallCaveEase01(clamp((p-0.62)/0.30,0,1))*st.fade;
   const pulse=0.55+0.45*Math.sin((tk+(cave&&cave.t||0))*0.22);
   const lx=Math.round(cave&&Number.isFinite(cave.lemX)?cave.lemX:240);
   const ly=Math.round(cave&&Number.isFinite(cave.lemY)?cave.lemY:220);
@@ -1690,7 +1692,7 @@ function drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk){
   c.globalAlpha=(0.10+0.38*power+0.18*finalPulse);
   c.fillStyle='#ff55d8';
   fillPixelPoly(c,[[x-70,y+28],[x-22,y-66],[x+24,y-62],[x+74,y+24],[x+34,y+46],[x-34,y+46]]);
-  const stream=waterfallCaveEase01(clamp((p-0.24)/0.42,0,1))*st.fade;
+  const stream=(0.20*ignite+0.80*waterfallCaveEase01(clamp(p/0.44,0,1)))*st.fade;
   for(let i=0;i<9;i++){
     const t=i/8;
     const phase=p*8.4+i*1.35;
@@ -1713,7 +1715,7 @@ function drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk){
   c.fillStyle='#ff72e5';
   fillPixelPoly(c,[[targetX-30,targetY+10],[targetX-10,targetY-18],[targetX+14,targetY-16],[targetX+32,targetY+10],[targetX+11,targetY+24],[targetX-14,targetY+23]]);
   c.globalAlpha=0.62+0.28*pulse;
-  drawWaterfallCaveTeleportStone(c,targetX,targetY,0.34+0.20*power+0.12*finalPulse,tk,0.55+0.45*gather);
+  drawWaterfallCaveTeleportStone(c,targetX,targetY,0.42+0.10*power+0.08*finalPulse,tk,0.55+0.45*gather);
   c.globalCompositeOperation='source-over';
   c.globalAlpha=1;
   c.restore();
