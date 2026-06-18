@@ -469,7 +469,7 @@ Object.assign(G,{
     }
     if(this.chargeHolyTeleportStone&&!this.chargeHolyTeleportStone())return false;
     obj.activated=true;
-    obj.pulseT=Math.max(obj.pulseT||0,WATERFALL_CAVE_TELEPORT_CHARGE_TICKS+28);
+    obj.pulseT=Math.max(obj.pulseT||0,WATERFALL_CAVE_TELEPORT_CHARGE_TICKS);
     obj.chargeDur=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS;
     obj.chargeT=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS;
     obj.hintT=WATERFALL_CAVE_TELEPORT_CHARGE_TICKS+26;

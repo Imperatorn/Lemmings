@@ -1724,9 +1724,10 @@ function drawWaterfallCaveCrystalChargeEffect(c,cave,x,y,obj,tk){
 
 function drawWaterfallCaveMainCrystal(c,cave,x,y,obj,tk,active,near,pulse){
   const st=waterfallCaveCrystalChargeState(cave,obj);
-  const charge=st?waterfallCaveEase01(clamp(st.p/0.72,0,1))*st.fade:0;
+  const charge=st?(0.22*clamp(1-st.p/0.14,0,1)+0.78*waterfallCaveEase01(clamp(st.p/0.62,0,1)))*st.fade:0;
   const t=(tk+(cave&&cave.t||0));
-  const wake=clamp((active?0.42:0)+(near?0.22:0)+pulse*0.28+charge*0.65,0,1);
+  const idleGlow=(near?0.12:0.04)+(active&&!st?0.04:0);
+  const wake=clamp(idleGlow+pulse*(st?0.12:0.06)+charge*0.86,0,1);
   const flick=0.50+0.50*Math.sin(t*0.12);
   c.save();
 
