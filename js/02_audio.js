@@ -499,24 +499,24 @@ const AU={
     this.softNoise(0.45,0.010,1800,0.55,t+0.03,{type:'bandpass',q:0.60,smooth:0.76,attack:0.07,release:0.28});
   },
   sWaterfallCaveTeleportCharge(){
-    if(!this.rateFx('waterfall-cave-teleport-charge',3.1))return;
+    if(!this.rateFx('waterfall-cave-teleport-charge',2.1))return;
     const t=this.now();
-    this.padTone(196,3.40,'sine',0.014,t);
-    this.padTone(294,3.20,'triangle',0.012,t+0.12);
-    this.padTone(392,2.70,'sine',0.010,t+0.42);
-    this.softNoise(2.75,0.010,980,1.78,t+0.12,{type:'bandpass',q:0.45,smooth:0.88,attack:0.28,release:0.72});
-    this.softNoise(2.10,0.006,4200,1.26,t+0.72,{type:'highpass',smooth:0.62,attack:0.32,release:0.54});
-    const notes=[440,554,659,831,988,1175];
+    this.padTone(196,2.28,'sine',0.014,t);
+    this.padTone(294,2.16,'triangle',0.012,t+0.08);
+    this.padTone(392,1.78,'sine',0.010,t+0.30);
+    this.softNoise(1.82,0.010,980,1.66,t+0.08,{type:'bandpass',q:0.45,smooth:0.88,attack:0.20,release:0.48});
+    this.softNoise(1.36,0.006,4200,1.20,t+0.48,{type:'highpass',smooth:0.62,attack:0.22,release:0.36});
+    const notes=[440,554,659,831,988];
     for(let i=0;i<notes.length;i++){
-      const when=t+0.58+i*0.34;
+      const when=t+0.38+i*0.24;
       this.tone(notes[i],0.18+(i%2)*0.04,i%2?'triangle':'sine',0.014+i*0.002,1.05,when);
       this.tone(notes[i]*2,0.10,'sine',0.006+i*0.001,0.98,when+0.045);
     }
-    this.padTone(523,0.92,'sine',0.018,t+2.35);
-    this.padTone(784,0.86,'triangle',0.016,t+2.42);
-    this.tone(1568,0.26,'sine',0.030,1.02,t+2.72);
-    this.tone(2093,0.20,'triangle',0.020,0.94,t+2.92);
-    this.softNoise(0.48,0.012,5600,0.62,t+2.66,{type:'bandpass',q:0.72,smooth:0.72,attack:0.08,release:0.28});
+    this.padTone(523,0.70,'sine',0.018,t+1.56);
+    this.padTone(784,0.66,'triangle',0.016,t+1.62);
+    this.tone(1568,0.22,'sine',0.030,1.02,t+1.86);
+    this.tone(2093,0.16,'triangle',0.020,0.94,t+2.02);
+    this.softNoise(0.34,0.012,5600,0.62,t+1.82,{type:'bandpass',q:0.72,smooth:0.72,attack:0.06,release:0.20});
   },
   sWaterfallCaveStonePickup(){
     if(!this.rateFx('waterfall-cave-stone-pickup',0.10))return;

@@ -47,11 +47,14 @@ Object.assign(G,{
   consumeHolyTeleportStoneCharge(){
     return this.setHolyTeleportStoneCharged(false);
   },
+  portalStoneUnchargedMessage(){
+    return 'STENEN ÄR OLADDAD - SÖK UPP EN KRISTALL I GROTTA';
+  },
   portalStoneUnavailableReason(){
     const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
     if(!hasStone)return 'TELEPORTERINGSSTEN SAKNAS';
     if(!this.portalStoneOwner())return 'STENEN KRÄVER DEN HELIGA LÄMMELN';
-    if(!this.holyTeleportStoneIsCharged())return 'STENEN ÄR OLADDAD';
+    if(!this.holyTeleportStoneIsCharged())return this.portalStoneUnchargedMessage();
     return '';
   },
   portalStoneButtonVisible(){
@@ -114,7 +117,7 @@ Object.assign(G,{
   handlePortalStoneClick(wx,wy){
     const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
     if(!hasStone){this.toast('TELEPORTERINGSSTEN SAKNAS');AU.sShrug();return false}
-    if(!this.holyTeleportStoneIsCharged()){this.toast('STENEN ÄR OLADDAD - LADDA DEN VID KRISTALLEN');AU.sShrug();return false}
+    if(!this.holyTeleportStoneIsCharged()){this.toast(this.portalStoneUnchargedMessage());AU.sShrug();return false}
     const l=this.findPortalStoneTarget(wx,wy);
     if(!l){this.toast('KLICKA PÅ DEN HELIGA LÄMMELN');AU.sShrug();return false}
     return this.beginPortalStonePlacement(l);
@@ -126,7 +129,7 @@ Object.assign(G,{
       return false;
     }
     if(!this.holyTeleportStoneIsCharged()){
-      this.toast('STENEN ÄR OLADDAD - LADDA DEN VID KRISTALLEN');
+      this.toast(this.portalStoneUnchargedMessage());
       AU.sShrug();
       return false;
     }

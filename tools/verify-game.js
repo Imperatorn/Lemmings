@@ -175,7 +175,7 @@ if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHoly
 if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneCharged') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('portalStone:null')) {
   throw new Error('Teleport stone profile and runtime state should remain in js/07_game.js');
 }
-for (const token of ['PORTAL_STONE_MAX_DIST','PORTAL_STONE_ENTER_COOLDOWN','unlockHolyTeleportStone','holyTeleportStoneIsCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','beginPortalStonePlacement','placePortalStoneExit','updatePortalStone']) {
+for (const token of ['PORTAL_STONE_MAX_DIST','PORTAL_STONE_ENTER_COOLDOWN','unlockHolyTeleportStone','holyTeleportStoneIsCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','SÖK UPP EN KRISTALL','beginPortalStonePlacement','placePortalStoneExit','updatePortalStone']) {
   if (!portalStoneCode.includes(token)) throw new Error(`Teleport stone module is missing ${token}`);
 }
 for (const token of ['const PORTAL_STONE_MAX_DIST','  unlockHolyTeleportStone(l){','  portalStoneButtonVisible(){','  portalStoneOwner(){','  portalStoneSurfaceClear(x,y){','  beginPortalStonePlacement(l){','  placePortalStoneExit(wx,wy){','  updatePortalStone(){']) {
@@ -308,7 +308,7 @@ if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47'
 if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveTeleportCharge') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
   throw new Error('Teleport stone discovery and rune reading should have dedicated magical sounds');
 }
-if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',3.1)") || !audioCode.includes('t+2.72')) {
+if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',2.1)") || !audioCode.includes('t+1.86')) {
   throw new Error('Teleport stone charging should use the longer dramatic crystal charge sound');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
@@ -527,7 +527,7 @@ const requiredRuntimeMethods = [
   'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
   'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
-  'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
+  'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'restoreGoalBase',
@@ -1534,10 +1534,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.practiceHolyTeleportStoneCharged = false;
   songCrystal.obj.hintT = 0;
   G.handleWaterfallCaveKey(' ');
-  if (!G.practiceHolyTeleportStoneCharged || !(songCrystal.obj.chargeT >= 180) || !(songCrystal.obj.chargeDur >= 180) || !(songCrystal.obj.hintT > 0) || crystalChargeSounds !== chargeSoundsBefore + 1) {
+  if (!G.practiceHolyTeleportStoneCharged || !(songCrystal.obj.chargeT >= 120) || !(songCrystal.obj.chargeDur >= 120) || !(songCrystal.obj.hintT > 0) || crystalChargeSounds !== chargeSoundsBefore + 1) {
     throw new Error('Song crystal did not charge an uncharged teleport stone with Space');
   }
-  if (!(G.waterfallCave.crystalChargeLockT >= 180)) {
+  if (!(G.waterfallCave.crystalChargeLockT >= 120)) {
     throw new Error('Crystal charging should briefly lock cave control during the dramatic charge sequence');
   }
   if (!drawWaterfallCaveView(WCTX, 38)) {
@@ -2133,6 +2133,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (!G.portalStoneButtonVisible() || G.portalStoneButtonAvailable() || G.portalStoneOwner() !== holyHatchLems[0]) {
     throw new Error('Uncharged teleport stone should be visible but unavailable for the holy hatch lemmel');
+  }
+  if (!G.portalStoneUnavailableReason().includes('KRISTALL')) {
+    throw new Error('Uncharged teleport stone should tell the player to seek a crystal');
   }
   if (G.beginPortalStonePlacement(holyHatchLems[0])) {
     throw new Error('Uncharged teleport stone should not begin portal placement');
