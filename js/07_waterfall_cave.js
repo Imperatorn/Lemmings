@@ -150,7 +150,7 @@ Object.assign(G,{
   },
   waterfallCaveObjectResetScale(def){
     const near=this.waterfallCaveObjectNearScale(def);
-    if(def&&(def.kind==='viewCard'||def.kind==='inspectable'))return Math.max(near+0.42,1.72);
+    if(def&&(def.kind==='viewCard'||def.kind==='inspectable'))return Math.max(near+0.24,1.72);
     return Math.max(near+0.20,1.42);
   },
   waterfallCaveObjectBlockContains(def,obj,x,y,scale){
@@ -486,9 +486,9 @@ Object.assign(G,{
     const seq=(cave.mirrorStoneThrowSeq=(cave.mirrorStoneThrowSeq||0)+1);
     const seed=seq*97+(cave.t||0)*13+Math.round((cave.lemX||0)*3)+Math.round((cave.lemY||0)*5);
     const angle=(typeof hash2==='function'?hash2(seed,17):Math.random())*Math.PI*2;
-    const radius=Math.sqrt(0.10+0.76*(typeof hash2==='function'?hash2(seed,31):Math.random()));
-    const tx=(pool.x||250)+Math.cos(angle)*radius*50;
-    const ty=(pool.y||246)+2+Math.sin(angle)*radius*10;
+    const radius=Math.sqrt(0.08+0.64*(typeof hash2==='function'?hash2(seed,31):Math.random()));
+    const tx=(pool.x||250)+Math.cos(angle)*radius*40;
+    const ty=(pool.y||246)+2+Math.sin(angle)*radius*8;
     const oldFacing=cave.facing||'front',lemX=cave.lemX||240;
     const throwFacing=Math.abs(tx-lemX)>10?(tx>lemX?'right':'left'):((oldFacing==='left'||oldFacing==='right')?oldFacing:'right');
     const scale=typeof waterfallCaveLemmingScale==='function'?waterfallCaveLemmingScale(cave):2;
@@ -505,8 +505,8 @@ Object.assign(G,{
     const pileHit=this.waterfallCaveMirrorThrowStonePile(cave);
     if(pileHit&&pileHit.obj)pileHit.obj.pickedT=0;
     cave.mirrorStoneThrow={
-      active:true,t:0,releaseT:3,dur:clamp(Math.round(dist/7)+20,26,38),
-      sx,sy,tx,ty,peak:18+dist*0.055,landed:false,facing:throwFacing
+      active:true,t:0,releaseT:3,dur:clamp(Math.round(dist/8)+16,20,30),
+      sx,sy,tx,ty,peak:15+dist*0.04,landed:false,facing:throwFacing
     };
     if(AU.sWaterfallCaveStoneThrow)AU.sWaterfallCaveStoneThrow();
     return true;
@@ -553,7 +553,7 @@ Object.assign(G,{
         pool.activated=true;
         pool.rippleT=Math.max(pool.rippleT||0,128);
         pool.pulseT=Math.max(pool.pulseT||0,72);
-        pool.splashT=34;
+        pool.splashT=22;
         pool.splashX=st.tx;
         pool.splashY=st.ty;
         pool.splashSeed=((pool.splashSeed||0)+1)&1023;

@@ -1185,17 +1185,17 @@ function drawWaterfallCaveThrowStonePile(c,x,y,obj,style,near,pulse){
 function drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk){
   const splashT=obj&&obj.splashT||0;
   if(!(splashT>0))return false;
-  const life=clamp(splashT/34,0,1),p=1-life;
+  const life=clamp(splashT/22,0,1),p=1-life;
   const sx=Math.round(obj.splashX||x),sy=Math.round(obj.splashY||y);
   c.save();
   c.globalCompositeOperation='lighter';
   c.globalAlpha=0.72*life;
   c.fillStyle='#d8fbff';
-  const spread=8+Math.round(p*34);
+  const spread=8+Math.round(p*26);
   for(let i=0;i<13;i++){
     const a=(i-6)/6;
     const px=sx+Math.round(a*spread);
-    const py=sy-Math.round(Math.sin((1-Math.abs(a))*Math.PI*0.5)*(10+p*16))-Math.round((i%3)*p*3);
+    const py=sy-Math.round(Math.sin((1-Math.abs(a))*Math.PI*0.5)*(9+p*12))-Math.round((i%3)*p*2);
     c.fillRect(px,py,2,2);
     if(i%2===0)c.fillRect(px+(a<0?-2:2),py+3,2,1);
   }
@@ -1282,6 +1282,51 @@ function drawWaterfallCaveMirrorStoneCarry(c,cave,lx,ly,scale){
     r(handX-1,handY-3,4,3,'#6c7a80');
     r(handX,handY-3,2,1,'#c8d4d4');
   }
+  c.restore();
+  return true;
+}
+
+function waterfallCavePromptObject(cave){
+  if(!cave||!G.waterfallCaveSceneObjects||!G.waterfallCaveObjectContains)return null;
+  const lx=Number.isFinite(cave.lemX)?cave.lemX:240,ly=Number.isFinite(cave.lemY)?cave.lemY:220;
+  let best=null,bestScore=Infinity;
+  for(const hit of G.waterfallCaveSceneObjects(cave)){
+    const def=hit&&hit.def||{},obj=hit&&hit.obj||{};
+    const isCard=def.kind==='viewCard';
+    const isCover=def.kind==='inspectable'&&def.id==='cover';
+    if(!isCard&&!isCover)continue;
+    if((isCard&&obj.cardOpen)||(isCover&&obj.coverOpen))continue;
+    const scale=G.waterfallCaveObjectNearScale?G.waterfallCaveObjectNearScale(def):1.7;
+    if(!G.waterfallCaveObjectContains(def,obj,lx,ly,scale))continue;
+    const h=def.hit||{},rx=Math.max(1,(h.rx||((h.w||24)/2))*scale),ry=Math.max(1,(h.ry||((h.h||24)/2))*scale);
+    const score=((lx-(obj.x||0))/rx)*((lx-(obj.x||0))/rx)+((ly-(obj.y||0))/ry)*((ly-(obj.y||0))/ry);
+    if(score<bestScore){best=hit;bestScore=score}
+  }
+  return best;
+}
+
+function drawWaterfallCaveObjectPrompt(c,cave,tk){
+  if(typeof drawTextC!=='function')return false;
+  const hit=waterfallCavePromptObject(cave);
+  if(!hit||!hit.obj)return false;
+  const label='MELLANSLAG: TITTA';
+  const x=clamp(Math.round(hit.obj.x||240),82,CW-82);
+  const y=clamp(Math.round((hit.obj.y||220)-44),24,CH-42);
+  const tw=typeof textW==='function'?textW(label,1):102;
+  const w=Math.max(118,tw+18),h=18;
+  const pulse=0.82+0.18*Math.sin((tk+(cave&&cave.t||0))*0.16);
+  c.save();
+  c.globalAlpha=0.82;
+  c.fillStyle='#050607';
+  c.fillRect(x-(w>>1)-2,y-2,w+4,h+4);
+  c.globalAlpha=0.88;
+  c.fillStyle='#1b1710';
+  c.fillRect(x-(w>>1),y,w,h);
+  c.globalAlpha=0.90*pulse;
+  c.fillStyle='#4b3b1d';
+  c.fillRect(x-(w>>1)+4,y+3,w-8,2);
+  c.globalAlpha=1;
+  drawTextC(c,label,x,y+6,1,'#f4d878');
   c.restore();
   return true;
 }
@@ -1727,6 +1772,7 @@ function drawWaterfallCaveAdventureView(c,cave,tk){
   }
   drawWaterfallCaveStoneInspect(c,cave,tk);
   drawWaterfallCaveRuneReadPanel(c,cave,tk);
+  drawWaterfallCaveObjectPrompt(c,cave,tk);
   c.globalAlpha=0.22;
   c.fillStyle='#000000';
   c.fillRect(0,0,CW,18);c.fillRect(0,CH-18,CW,18);c.fillRect(0,0,18,CH);c.fillRect(CW-18,0,18,CH);

@@ -279,6 +279,9 @@ if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.incl
 if (!caveRenderCode.includes('drawWaterfallCaveRuneReadPanel')) {
   throw new Error('Glyph archive should render readable rune text when the lemmel approaches the runes');
 }
+if (!caveRenderCode.includes('drawWaterfallCaveObjectPrompt') || !caveRenderCode.includes('MELLANSLAG: TITTA')) {
+  throw new Error('Waterfall cave cards should show a visible interaction prompt');
+}
 if (!caveRenderCode.includes('drawWaterfallCaveLemmingShadow') || caveRenderCode.includes('fillRect(x-54,y+13,108,8)') || caveRenderCode.includes('fillRect(lx-Math.round(8*lemScale)')) {
   throw new Error('Campfire cave shadows should avoid the old hard rectangular shadow blocks');
 }
@@ -1322,13 +1325,13 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!(deepItem.displayScale <= 0.51)) {
     throw new Error('Deep cave game item should render smaller on the ground');
   }
-  G.waterfallCave.lemX = deepItem.x + 50;
+  G.waterfallCave.lemX = deepItem.x + 62;
   G.waterfallCave.lemY = deepItem.y + 12;
   G.tick();
   if (deepItem.coverOpen || deepItem.near) {
     throw new Error('Deep cave game cover opens before the lemmel reaches the item');
   }
-  G.waterfallCave.lemX = deepItem.x + 42;
+  G.waterfallCave.lemX = deepItem.x + 50;
   G.waterfallCave.lemY = deepItem.y + 10;
   G.tick();
   if (!deepItem.coverOpen || !deepItem.near) {
@@ -1543,7 +1546,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (G.waterfallCave.mirrorStoneThrow.releaseT > 6) {
     throw new Error('Mirror pool stone throw wind-up should release quickly enough to avoid a stiff start');
   }
-  if (G.waterfallCave.mirrorStoneThrow.dur > 40 || G.waterfallCave.mirrorStoneThrow.peak > 32) {
+  if (G.waterfallCave.mirrorStoneThrow.dur > 31 || G.waterfallCave.mirrorStoneThrow.peak > 25) {
     throw new Error('Mirror pool stone throw should be short and use a grounded arc');
   }
   if (throwStonePile.obj.pickedT > 0) {
@@ -1557,6 +1560,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   for (let i = 0; i < 70 && G.waterfallCave.mirrorStoneThrow && G.waterfallCave.mirrorStoneThrow.active; i++) G.tick();
   if (!(mirrorPool.obj.splashT > 0) || !(mirrorPool.obj.rippleT > 0)) {
     throw new Error('Mirror pool thrown stone did not splash and ripple in the pool');
+  }
+  if (mirrorPool.obj.splashT > 22) {
+    throw new Error('Mirror pool stone splash should be brief');
   }
   if (!drawWaterfallCaveView(WCTX, 46)) throw new Error('Mirror pool splash view did not render');
   G.handleWaterfallCaveKeyUp(' ');
@@ -1680,13 +1686,13 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!(churchCard.def.displayScale <= 0.51)) {
     throw new Error('Dala-Floda church card should render smaller on the ground');
   }
-  G.waterfallCave.lemX = churchCard.obj.x + 42;
+  G.waterfallCave.lemX = churchCard.obj.x + 56;
   G.waterfallCave.lemY = churchCard.obj.y;
   G.tick();
   if (churchCard.obj.cardOpen || churchCard.obj.near) {
     throw new Error('Dala-Floda church card opened before the lemmel reached it');
   }
-  G.waterfallCave.lemX = churchCard.obj.x + 36;
+  G.waterfallCave.lemX = churchCard.obj.x + 44;
   G.waterfallCave.lemY = churchCard.obj.y;
   G.tick();
   if (!churchCard.obj.cardOpen || churchCard.obj.cardSide !== 'front' || !churchCard.obj.near) {
