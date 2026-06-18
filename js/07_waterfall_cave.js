@@ -142,6 +142,17 @@ Object.assign(G,{
     const rx=Math.max(1,(h.rx||12)*sc),ry=Math.max(1,(h.ry||12)*sc);
     return ((x-ox)/rx)*((x-ox)/rx)+((y-oy)/ry)*((y-oy)/ry)<=1;
   },
+  waterfallCaveObjectNearScale(def){
+    if(Number.isFinite(def&&def.nearScale))return Math.max(0.1,def.nearScale);
+    if(def&&def.kind==='viewCard')return 1.35;
+    if(def&&def.kind==='inspectable')return 1.38;
+    return 1.08;
+  },
+  waterfallCaveObjectResetScale(def){
+    const near=this.waterfallCaveObjectNearScale(def);
+    if(def&&(def.kind==='viewCard'||def.kind==='inspectable'))return Math.max(near+0.42,1.72);
+    return Math.max(near+0.20,1.42);
+  },
   waterfallCaveObjectBlockContains(def,obj,x,y,scale){
     if(!def||!obj)return false;
     const blocks=Array.isArray(def.block)?def.block:(def.block?[def.block]:[def.hit||{}]);
@@ -558,11 +569,12 @@ Object.assign(G,{
     for(const hit of this.waterfallCaveSceneObjects(cave)){
       const def=hit.def,obj=hit.obj;
       if(!def||def.kind==='hazard')continue;
-      const h=def.hit||{},rx=Math.max(1,h.rx||((h.w||24)/2)),ry=Math.max(1,h.ry||((h.h||24)/2));
+      const h=def.hit||{},scale=this.waterfallCaveObjectNearScale(def);
+      const rx=Math.max(1,(h.rx||((h.w||24)/2))*scale),ry=Math.max(1,(h.ry||((h.h||24)/2))*scale);
       const d=((cave.lemX-(obj.x||0))/rx)*((cave.lemX-(obj.x||0))/rx)+((cave.lemY-(obj.y||0))/ry)*((cave.lemY-(obj.y||0))/ry);
       if(d<bestD){best=hit;bestD=d}
     }
-    return bestD<=1.3?best:null;
+    return bestD<=1?best:null;
   },
   interactWaterfallCaveObject(hit,mode){
     const cave=this.waterfallCave;
@@ -603,10 +615,10 @@ Object.assign(G,{
       if(Number.isFinite(obj.completeT))obj.completeT=Math.max(0,obj.completeT-1);
       if(Number.isFinite(obj.splashT))obj.splashT=Math.max(0,obj.splashT-1);
       if(Number.isFinite(obj.pickedT))obj.pickedT=Math.max(0,obj.pickedT-1);
-      const nearScale=def.kind==='viewCard'?1.0:1.08;
+      const nearScale=this.waterfallCaveObjectNearScale(def);
       const near=this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,nearScale);
       if(def.kind==='viewCard'){
-        const leftResetZone=!this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,1.42);
+        const leftResetZone=!this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,this.waterfallCaveObjectResetScale(def));
         if(leftResetZone){
           obj.dismissedNear=false;
           if(obj.cardOpen)obj.cardOpen=false;
@@ -658,6 +670,27 @@ Object.assign(G,{
     cave.visited[cave.scene]=true;
     return cave;
   },
+  resetWaterfallCaveSceneInspectionState(cave,sceneId){
+    if(!cave||!sceneId)return false;
+    const sceneCave=Object.assign({},cave,{scene:sceneId});
+    for(const hit of this.waterfallCaveSceneObjects(sceneCave)){
+      const def=hit&&hit.def,obj=hit&&hit.obj;
+      if(!def||!obj)continue;
+      if(def.kind==='viewCard'){
+        obj.cardOpen=false;
+        obj.cardCloseArmed=false;
+        obj.dismissedNear=false;
+        obj.near=false;
+      }else if(def.kind==='inspectable'){
+        obj.coverOpen=false;
+        obj.coverCloseArmed=false;
+        obj.dismissedNear=false;
+        obj.coverReturnBlocked=false;
+        obj.near=false;
+      }
+    }
+    return true;
+  },
   setWaterfallCaveScene(scene,spawnId,opts){
     const cave=this.ensureWaterfallCaveSceneState(this.waterfallCave);
     if(!cave)return false;
@@ -665,6 +698,7 @@ Object.assign(G,{
     const def=this.waterfallCaveSceneDef(scene,cave);
     if(!def)return false;
     const prevScene=cave.scene;
+    if(prevScene&&prevScene!==def.id)this.resetWaterfallCaveSceneInspectionState(cave,prevScene);
     cave.scene=def.id;
     cave.visited=cave.visited||{};
     cave.visited[def.id]=true;
@@ -1073,9 +1107,9 @@ Object.assign(G,{
     if(this.updateWaterfallCaveTeleportStone(cave))return true;
     if(cave.scene==='deep'){
       const it=cave.deepItem||(cave.deepItem={x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
-      const ix=Math.abs((cave.lemX||0)-it.x),iy=Math.abs((cave.lemY||0)-it.y);
-      const near=(ix/30)*(ix/30)+(iy/20)*(iy/20)<=1;
-      const leftResetZone=(ix/38)*(ix/38)+(iy/26)*(iy/26)>=1;
+      const coverHit=this.waterfallCaveSceneObjects(cave).find(hit=>hit&&hit.def&&hit.def.id==='cover')||{def:{kind:'inspectable',hit:{type:'ellipse',rx:30,ry:20}},obj:it};
+      const near=this.waterfallCaveObjectContains(coverHit.def,it,cave.lemX||0,cave.lemY||0,this.waterfallCaveObjectNearScale(coverHit.def));
+      const leftResetZone=!this.waterfallCaveObjectContains(coverHit.def,it,cave.lemX||0,cave.lemY||0,this.waterfallCaveObjectResetScale(coverHit.def));
       it.near=near;
       if(leftResetZone){
         it.dismissedNear=false;

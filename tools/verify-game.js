@@ -1265,14 +1265,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!(deepItem.displayScale <= 0.51)) {
     throw new Error('Deep cave game item should render smaller on the ground');
   }
-  G.waterfallCave.lemX = deepItem.x + 34;
-  G.waterfallCave.lemY = deepItem.y + 10;
+  G.waterfallCave.lemX = deepItem.x + 50;
+  G.waterfallCave.lemY = deepItem.y + 12;
   G.tick();
   if (deepItem.coverOpen || deepItem.near) {
     throw new Error('Deep cave game cover opens before the lemmel reaches the item');
   }
-  G.waterfallCave.lemX = deepItem.x + 18;
-  G.waterfallCave.lemY = deepItem.y + 8;
+  G.waterfallCave.lemX = deepItem.x + 34;
+  G.waterfallCave.lemY = deepItem.y + 10;
   G.tick();
   if (!deepItem.coverOpen || !deepItem.near) {
     throw new Error('Deep cave game cover did not open near the item');
@@ -1620,13 +1620,13 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!(churchCard.def.displayScale <= 0.51)) {
     throw new Error('Dala-Floda church card should render smaller on the ground');
   }
-  G.waterfallCave.lemX = churchCard.obj.x + 28;
+  G.waterfallCave.lemX = churchCard.obj.x + 42;
   G.waterfallCave.lemY = churchCard.obj.y;
   G.tick();
   if (churchCard.obj.cardOpen || churchCard.obj.near) {
     throw new Error('Dala-Floda church card opened before the lemmel reached it');
   }
-  G.waterfallCave.lemX = churchCard.obj.x;
+  G.waterfallCave.lemX = churchCard.obj.x + 28;
   G.waterfallCave.lemY = churchCard.obj.y;
   G.tick();
   if (!churchCard.obj.cardOpen || churchCard.obj.cardSide !== 'front' || !churchCard.obj.near) {
