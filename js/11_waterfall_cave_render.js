@@ -1777,6 +1777,20 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
   }
 }
 
+function drawWaterfallCaveFitTextC(c,text,cx,y,maxW,col){
+  text=String(text||'');
+  if(typeof drawTextC!=='function')return false;
+  if(typeof textW==='function'&&textW(text,1)>maxW){
+    c.save();
+    c.beginPath();
+    c.rect(Math.round(cx-maxW/2),y-2,Math.round(maxW),12);
+    c.clip();
+    drawTextC(c,text,cx,y,1,col);
+    c.restore();
+  }else drawTextC(c,text,cx,y,1,col);
+  return true;
+}
+
 function drawWaterfallCaveStoneInspect(c,cave,tk){
   if(!cave||cave.scene!=='emberPassage')return false;
   const hit=((G.waterfallCaveSceneObjects&&G.waterfallCaveSceneObjects(cave))||[]).find(h=>h.def&&h.def.id==='looseStone');
@@ -1785,7 +1799,7 @@ function drawWaterfallCaveStoneInspect(c,cave,tk){
   const ins=def.inscription||{},title=String(ins.title||'RISTAD STEN');
   const lines=Array.isArray(ins.lines)&&ins.lines.length?ins.lines:['Stenen bär ett gammalt tecken.'];
   const markColor=ins.color||'#d99a54',glyph=ins.glyph||'bridge';
-  const x=156,y=24,w=168,h=86;
+  const x=132,y=20,w=216,h=106;
   c.save();
   c.globalAlpha=0.72;
   c.fillStyle='#030507';
@@ -1795,20 +1809,26 @@ function drawWaterfallCaveStoneInspect(c,cave,tk){
   c.fillStyle='#332820';c.fillRect(x+4,y+4,w-8,h-8);
   c.fillStyle='#12171a';c.fillRect(x+10,y+10,w-20,h-20);
   c.fillStyle='#2d373a';
-  fillPixelPoly(c,[[x+42,y+56],[x+58,y+30],[x+102,y+26],[x+126,y+50],[x+112,y+70],[x+56,y+72]]);
+  fillPixelPoly(c,[[x+64,y+58],[x+82,y+30],[x+132,y+26],[x+158,y+52],[x+140,y+72],[x+78,y+74]]);
   c.fillStyle='#536066';
-  fillPixelPoly(c,[[x+52,y+52],[x+64,y+36],[x+96,y+34],[x+114,y+50],[x+102,y+62],[x+60,y+64]]);
-  drawWaterfallCaveStoneGlyph(c,x+84,y+49,glyph,markColor,1.15);
+  fillPixelPoly(c,[[x+78,y+54],[x+90,y+38],[x+126,y+36],[x+144,y+52],[x+128,y+64],[x+84,y+66]]);
+  drawWaterfallCaveStoneGlyph(c,x+108,y+49,glyph,markColor,1.02);
   c.fillStyle='#ffcf74';
-  c.fillRect(x+56,y+62,18,2);
-  c.fillRect(x+98,y+62,22,2);
+  c.fillRect(x+82,y+64,18,2);
+  c.fillRect(x+124,y+64,22,2);
   c.globalAlpha=0.22;
   c.fillStyle=markColor;
-  fillPixelPoly(c,[[x+34,y+66],[x+62,y+18],[x+114,y+18],[x+140,y+58],[x+112,y+82],[x+58,y+82]]);
+  fillPixelPoly(c,[[x+56,y+68],[x+84,y+18],[x+146,y+18],[x+174,y+60],[x+144,y+82],[x+78,y+82]]);
+  c.globalAlpha=0.82;
+  c.fillStyle='#090b0c';
+  c.fillRect(x+18,y+76,w-36,24);
+  c.globalAlpha=0.28;
+  c.fillStyle=markColor;
+  c.fillRect(x+28,y+80,w-56,2);
   c.globalAlpha=1;
   if(typeof drawTextC==='function'){
     drawTextC(c,title,x+w/2,y+12,1,markColor);
-    for(let i=0;i<Math.min(2,lines.length);i++)drawTextC(c,String(lines[i]).toUpperCase(),x+w/2,y+h-29+i*12,1,'#f1c275');
+    for(let i=0;i<Math.min(2,lines.length);i++)drawWaterfallCaveFitTextC(c,String(lines[i]).toUpperCase(),x+w/2,y+83+i*11,w-44,'#f1c275');
   }
   c.restore();
   return true;
