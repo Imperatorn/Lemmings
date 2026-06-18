@@ -99,7 +99,7 @@ const WATERFALL_CAVE_SCENES={
       {id:'toMirrorPool',key:'down',x0:160,x1:318,yMin:286,target:'mirrorPool',spawn:'fromCrystal'}
     ],
     objects:[
-      {id:'songCrystal',kind:'crystal',default:{x:244,y:238,near:false,activated:false,pulseT:0},hit:{type:'ellipse',rx:36,ry:34},block:{type:'ellipse',rx:31,ry:23,dy:8},blocker:true,verbs:['look','touch']}
+      {id:'songCrystal',kind:'crystal',nearScale:1.45,default:{x:244,y:238,near:false,activated:false,pulseT:0,chargeT:0,hintT:0,hintLines:null},hit:{type:'ellipse',rx:36,ry:34},block:{type:'ellipse',rx:31,ry:23,dy:8},blocker:true,verbs:['look','touch','charge']}
     ]
   },
   mirrorPool:{

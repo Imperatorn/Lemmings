@@ -103,7 +103,7 @@ function drawHUD(c,tk){
   const hs=hb?SKILLS.find(s=>s.k===hb.k):null;
   if(hb&&hb.k==='troll')info=G.trollUsed?'TROLLFÖRVANDLING ANVÄND':'FÖRVANDLA LEMMEL TILL TROLL';
   else if(hb&&hb.k==='save')info='SPARA LÄGE';
-  else if(hb&&hb.k==='portal')info=(G.portalStoneButtonAvailable&&G.portalStoneButtonAvailable())?'TELEPORTERINGSSTEN':'STENEN KRÄVER DEN HELIGA LÄMMELN';
+  else if(hb&&hb.k==='portal')info=(G.portalStoneButtonAvailable&&G.portalStoneButtonAvailable())?'TELEPORTERINGSSTEN LADDAD':((G.portalStoneUnavailableReason&&G.portalStoneUnavailableReason())||'STENEN KRÄVER DEN HELIGA LÄMMELN');
   else if(hs)info=hs.name+' '+(G.skills&&G.skills[hs.k]!=null?G.skills[hs.k]:'');
   else if(G.hoverLem)info=roleName(G.hoverLem);
   else if(G.selSkill==='troll')info='FÖRVANDLA LEMMEL TILL TROLL';

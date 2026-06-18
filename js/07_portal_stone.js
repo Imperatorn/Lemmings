@@ -10,14 +10,49 @@ Object.assign(G,{
     }
     if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress()){
       this.practiceHolyTeleportStoneUnlocked=true;
+      this.practiceHolyTeleportStoneCharged=false;
       if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l&&l.holy?l:null);
       return true;
     }
     const newly=!this.holyTeleportStoneUnlocked;
     this.holyTeleportStoneUnlocked=true;
+    this.holyTeleportStoneCharged=false;
     if(this.normalizeHolyLemmings)this.normalizeHolyLemmings(l&&l.holy?l:null);
     this.savePrefs();
     return newly;
+  },
+  holyTeleportStoneIsCharged(){
+    if(this.practiceHolyTeleportStoneUnlocked)return !!this.practiceHolyTeleportStoneCharged;
+    return !!(this.holyTeleportStoneUnlocked&&this.holyTeleportStoneCharged);
+  },
+  setHolyTeleportStoneCharged(value){
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
+    if(!hasStone)return false;
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress()){
+      this.practiceHolyTeleportStoneUnlocked=true;
+      this.practiceHolyTeleportStoneCharged=!!value;
+      return true;
+    }
+    if(this.practiceHolyTeleportStoneUnlocked&&!this.holyTeleportStoneUnlocked){
+      this.practiceHolyTeleportStoneCharged=!!value;
+      return true;
+    }
+    this.holyTeleportStoneCharged=!!value;
+    this.savePrefs();
+    return true;
+  },
+  chargeHolyTeleportStone(){
+    return this.setHolyTeleportStoneCharged(true);
+  },
+  consumeHolyTeleportStoneCharge(){
+    return this.setHolyTeleportStoneCharged(false);
+  },
+  portalStoneUnavailableReason(){
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
+    if(!hasStone)return 'TELEPORTERINGSSTEN SAKNAS';
+    if(!this.portalStoneOwner())return 'STENEN KRÄVER DEN HELIGA LÄMMELN';
+    if(!this.holyTeleportStoneIsCharged())return 'STENEN ÄR OLADDAD';
+    return '';
   },
   portalStoneButtonVisible(){
     return this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
@@ -33,7 +68,7 @@ Object.assign(G,{
     return l||null;
   },
   portalStoneButtonAvailable(){
-    return !!this.portalStoneOwner();
+    return !!(this.portalStoneOwner()&&this.holyTeleportStoneIsCharged());
   },
   portalStoneSurfaceClear(x,y){
     if(!this.T||!this.level)return false;
@@ -79,6 +114,7 @@ Object.assign(G,{
   handlePortalStoneClick(wx,wy){
     const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
     if(!hasStone){this.toast('TELEPORTERINGSSTEN SAKNAS');AU.sShrug();return false}
+    if(!this.holyTeleportStoneIsCharged()){this.toast('STENEN ÄR OLADDAD - LADDA DEN VID KRISTALLEN');AU.sShrug();return false}
     const l=this.findPortalStoneTarget(wx,wy);
     if(!l){this.toast('KLICKA PÅ DEN HELIGA LÄMMELN');AU.sShrug();return false}
     return this.beginPortalStonePlacement(l);
@@ -86,6 +122,11 @@ Object.assign(G,{
   beginPortalStonePlacement(l){
     if(!l||!l.holy||!l.teleportStone||!l.alive||!l.alive()){
       this.toast('STENEN KAN BARA ANVÄNDAS AV DEN HELIGA LÄMMELN');
+      AU.sShrug();
+      return false;
+    }
+    if(!this.holyTeleportStoneIsCharged()){
+      this.toast('STENEN ÄR OLADDAD - LADDA DEN VID KRISTALLEN');
       AU.sShrug();
       return false;
     }
@@ -132,9 +173,10 @@ Object.assign(G,{
     ps.t=0;
     this.paused=false;
     this.selSkill=null;
+    this.consumeHolyTeleportStoneCharge();
     this.portalStoneSpark(ps.out.x,ps.out.y,'out');
     if(AU.sPortalStoneOpen)AU.sPortalStoneOpen();
-    this.toast('PORTALERNA ÄR ÖPPNA');
+    this.toast('PORTALERNA ÄR ÖPPNA - STENEN ÄR OLADDAD');
     return true;
   },
   cancelPortalStonePlacement(){

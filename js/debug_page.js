@@ -426,6 +426,7 @@
     G.holyBlessingUnlocked=false;
     G.holyTeleportStoneUnlocked=false;
     G.practiceHolyTeleportStoneUnlocked=true;
+    G.practiceHolyTeleportStoneCharged=true;
     G.holyLevelLemId=holy.id;
     G.holyTeleportStoneLemId=holy.id;
     G.selSkill=null;

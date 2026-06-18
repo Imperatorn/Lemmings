@@ -90,8 +90,8 @@ if (debugHtml) {
   if (!debugPageCode.includes("'caveMystery','Runarkiv'") || !debugPageCode.includes('if(withAudio)audioReady();') || !debugPageCode.includes("G.setWaterfallCaveScene(sceneId,spawnId||'entry',{audio:withAudio})")) {
     throw new Error('debug_page.js should expose and initialize the glyph archive mystery music in debug mode');
   }
-  if (!debugPageCode.includes('G.practiceHolyTeleportStoneUnlocked=true') || debugPageCode.includes('G.holyTeleportStoneUnlocked=true')) {
-    throw new Error('Debug portal-stone test should use temporary practice state, not permanent profile unlocks');
+  if (!debugPageCode.includes('G.practiceHolyTeleportStoneUnlocked=true') || !debugPageCode.includes('G.practiceHolyTeleportStoneCharged=true') || debugPageCode.includes('G.holyTeleportStoneUnlocked=true')) {
+    throw new Error('Debug portal-stone test should use charged temporary practice state, not permanent profile unlocks');
   }
 }
 const hudCode = fs.readFileSync(path.join(root, 'js/09_hud.js'), 'utf8');
@@ -172,10 +172,10 @@ if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('
 if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHolyLemmingForLevel') || !gameCode.includes('normalizeHolyLemmings')) {
   throw new Error('Blessed lemmels should unlock exactly one persistent holy hatch lemmel for future levels');
 }
-if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('portalStone:null')) {
+if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneCharged') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('portalStone:null')) {
   throw new Error('Teleport stone profile and runtime state should remain in js/07_game.js');
 }
-for (const token of ['PORTAL_STONE_MAX_DIST','PORTAL_STONE_ENTER_COOLDOWN','unlockHolyTeleportStone','beginPortalStonePlacement','placePortalStoneExit','updatePortalStone']) {
+for (const token of ['PORTAL_STONE_MAX_DIST','PORTAL_STONE_ENTER_COOLDOWN','unlockHolyTeleportStone','holyTeleportStoneIsCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','beginPortalStonePlacement','placePortalStoneExit','updatePortalStone']) {
   if (!portalStoneCode.includes(token)) throw new Error(`Teleport stone module is missing ${token}`);
 }
 for (const token of ['const PORTAL_STONE_MAX_DIST','  unlockHolyTeleportStone(l){','  portalStoneButtonVisible(){','  portalStoneOwner(){','  portalStoneSurfaceClear(x,y){','  beginPortalStonePlacement(l){','  placePortalStoneExit(wx,wy){','  updatePortalStone(){']) {
@@ -305,14 +305,14 @@ if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCav
 if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('CHURCH_HYMN_LOOP_SECONDS=32') || !audioCode.includes('CHURCH_HYMN_LOOP_FADE_SECONDS=1') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');
 }
-if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
+if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveTeleportCharge') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
   throw new Error('Teleport stone discovery and rune reading should have dedicated magical sounds');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
   throw new Error('World render should draw active teleport stone portals before lemmels');
 }
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeEffect') || !caveRenderCode.includes('drawWaterfallCaveCrystalMessage') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
@@ -524,7 +524,7 @@ const requiredRuntimeMethods = [
   'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
   'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
-  'portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
+  'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
   'restoreGoalBase',
@@ -549,9 +549,9 @@ const requiredRuntimeMethods = [
   'trollWallHasStairs','trollRockLandingSurface','nearbySettledTrollRock','settleTrollRock','findSettledTrollRockForLemming',
   'clearTrollWallEntry','clearTrollWallHeadroom',
   'isManualActive','startManualControl','stopManualControl','manualAimFor','releaseManualForSkill',
-  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','levelWaterfallCaveVariant','waterfallCaveVariantId','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneFallback','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneExits','waterfallCaveSceneArchiveStyle','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','updateManualWaterfallCaveHint','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
+  'waterfallCaveActive','waterfallCaveEntryBlocked','releaseWaterfallCaveEntryBlock','cloneWaterfallCaveData','levelWaterfallCaveVariant','waterfallCaveVariantId','waterfallCaveObjectDefaultData','waterfallCaveSceneIds','waterfallCaveSceneDef','waterfallCaveSceneFallback','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveSceneMapNode','waterfallCaveSceneExits','waterfallCaveSceneArchiveStyle','waterfallCaveSceneBounds','waterfallCaveRuntimeObject','waterfallCaveActiveRuneSetId','waterfallCaveResolvedObjectDef','waterfallCaveSceneObjects','waterfallCaveObjectContains','waterfallCaveObjectBlockContains','waterfallCaveHitObject','waterfallCaveSceneBlockerAt','waterfallCaveNearestObject','interactWaterfallCaveObject','updateWaterfallCaveSceneObjects','ensureWaterfallCaveSceneState','setWaterfallCaveScene','waterfallCaveExitReady','tryWaterfallCaveSceneExit','findWaterfallCaveEntrance','updateManualWaterfallCaveHint','tryEnterWaterfallCaveFromManual','enterWaterfallCave','exitWaterfallCave','startWeatherAfterWaterfallCave','setWaterfallCaveSceneAudio','waterfallCaveMovementHeld','clearWaterfallCaveMoveKeys','waterfallCaveMapOpen','openWaterfallCaveMap','closeWaterfallCaveMap','toggleWaterfallCaveMap','closeWaterfallCaveDeepItem','openWaterfallCaveDeepItem','waterfallCaveActiveViewCard','openWaterfallCaveViewCard','closeWaterfallCaveViewCard','toggleWaterfallCaveViewCard','waterfallCaveViewCardRect','setWaterfallCaveMoveKey','toggleWaterfallCaveDeepItemCover','waterfallCaveCoverRect','waterfallCaveCampFire','waterfallCaveCampFireBlocked','updateWaterfallCave','handleWaterfallCaveInput','handleWaterfallCaveKey','handleWaterfallCaveKeyUp','waterfallCaveLootKey','collectWaterfallCaveChest',
   'waterfallCaveRuneAt','waterfallCaveRuneLines','waterfallCaveRuneDescriptor','syncWaterfallCaveRuneObjectProgress','readWaterfallCaveRune',
-  'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone',
+  'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone','chargeWaterfallCaveTeleportStoneAtCrystal',
   'waterfallCaveMirrorPoolHit','waterfallCaveMirrorThrowStonePile','waterfallCaveMirrorStoneHeld','waterfallCaveMirrorStoneThrowLocks','pickWaterfallCaveMirrorStone','throwWaterfallCaveMirrorStone','handleWaterfallCaveMirrorStoneAction','clearWaterfallCaveMirrorStone','updateWaterfallCaveMirrorStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
@@ -562,7 +562,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sPortalStoneOpen','sPortalStoneTravel']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -934,6 +934,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevStopWeather = AU.stopWeather;
   const prevCaveStep = AU.sWaterfallCaveStep;
   const prevCrystalChime = AU.sWaterfallCaveCrystalChime;
+  const prevTeleportChargeSound = AU.sWaterfallCaveTeleportCharge;
   const prevRuneDiscoverSound = AU.sWaterfallCaveRuneDiscover;
   const prevRunesCompleteSound = AU.sWaterfallCaveRunesComplete;
   const prevTeleportStoneSound = AU.sWaterfallCaveTeleportStone;
@@ -961,13 +962,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevHolyBlessingUnlocked = G.holyBlessingUnlocked;
   const prevHolyLevelLemId = G.holyLevelLemId;
   const prevHolyTeleportStoneUnlocked = G.holyTeleportStoneUnlocked;
+  const prevHolyTeleportStoneCharged = G.holyTeleportStoneCharged;
+  const prevPracticeHolyTeleportStoneUnlocked = G.practiceHolyTeleportStoneUnlocked;
+  const prevPracticeHolyTeleportStoneCharged = G.practiceHolyTeleportStoneCharged;
   const prevHolyTeleportStoneLemId = G.holyTeleportStoneLemId;
   const prevPortalStone = G.portalStone;
   const prevSelSkill = G.selSkill;
   const prevPaused = G.paused;
   const prevCutscene = G.cutscene;
   const prevCutscenesOn = G.cutscenesOn;
-  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, runeDiscoverSounds = 0, runeCompleteSounds = 0, teleportStoneSounds = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
+  let started = 0, stopped = 0, musicStopped = 0, weatherStopped = 0, crystalChimes = 0, crystalChargeSounds = 0, runeDiscoverSounds = 0, runeCompleteSounds = 0, teleportStoneSounds = 0, firesStarted = 0, firesStopped = 0, fireUpdates = 0, mysteryStarted = 0, mysteryStopped = 0, churchHymnStarted = 0, churchHymnDistantStarted = 0, churchHymnStopped = 0;
   const musicStarted = [], weatherStarted = [], musicFadeDurations = [], caveSteps = [], waterLevels = [], mysteryFadeDurations = [], churchHymnFadeDurations = [], churchHymnLevels = [];
   AU.startWaterfallCave = () => { started++; };
   AU.stopWaterfallCave = () => { stopped++; };
@@ -978,6 +982,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWeather = () => { weatherStopped++; };
   AU.sWaterfallCaveStep = depth => { caveSteps.push(depth); };
   AU.sWaterfallCaveCrystalChime = () => { crystalChimes++; };
+  AU.sWaterfallCaveTeleportCharge = () => { crystalChargeSounds++; };
   AU.sWaterfallCaveRuneDiscover = () => { runeDiscoverSounds++; };
   AU.sWaterfallCaveRunesComplete = () => { runeCompleteSounds++; };
   AU.sWaterfallCaveTeleportStone = () => { teleportStoneSounds++; };
@@ -995,6 +1000,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.sfxOn = true;
   G.runeProgress = {v:1, discovered:{}, sets:{}};
   G.cleared = new Array(LEVELS.length).fill(false);
+  G.holyTeleportStoneUnlocked = false;
+  G.holyTeleportStoneCharged = false;
+  G.practiceHolyTeleportStoneUnlocked = false;
+  G.practiceHolyTeleportStoneCharged = false;
   G.cutscenesOn = true;
   const waterfallIdx = LEVELS.findIndex(L => L && L.name === 'BYGG EN BRO');
   if (waterfallIdx < 0) throw new Error('Missing waterfall cave fixture level');
@@ -1351,6 +1360,16 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (deepItem.dismissedNear) {
     throw new Error('Deep cave game item did not reset after walking away');
   }
+  G.waterfallCave.lemX = deepItem.x + 18;
+  G.waterfallCave.lemY = deepItem.y + 8;
+  G.handleWaterfallCaveKey(' ');
+  if (!deepItem.coverOpen || deepItem.coverSide !== 'front') {
+    throw new Error('Deep cave game cover did not open with Space when prompted');
+  }
+  G.handleWaterfallCaveInput({x:20,y:20}, 'click');
+  G.waterfallCave.lemX = deepItem.x - 72;
+  G.waterfallCave.lemY = deepItem.y;
+  G.tick();
   G.handleWaterfallCaveKey('ArrowRight');
   for (let i = 0; i < 90 && G.waterfallCave.lemX < deepItem.x + 48; i++) G.tick();
   if (deepItem.coverOpen || G.waterfallCave.lemX < deepItem.x + 34) {
@@ -1495,6 +1514,22 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (crystalChimes <= crystalChimesBefore) {
     throw new Error('Song crystal did not play a chime when approached');
   }
+  if (!(songCrystal.obj.hintT > 0) || !Array.isArray(songCrystal.obj.hintLines) || !songCrystal.obj.hintLines.join(' ').includes('LADDAS')) {
+    throw new Error('Song crystal should subtly hint that something can be charged before the teleport stone is found');
+  }
+  const chargeSoundsBefore = crystalChargeSounds;
+  G.practiceHolyTeleportStoneUnlocked = true;
+  G.practiceHolyTeleportStoneCharged = false;
+  songCrystal.obj.hintT = 0;
+  G.handleWaterfallCaveKey(' ');
+  if (!G.practiceHolyTeleportStoneCharged || !(songCrystal.obj.chargeT > 0) || !(songCrystal.obj.hintT > 0) || crystalChargeSounds !== chargeSoundsBefore + 1) {
+    throw new Error('Song crystal did not charge an uncharged teleport stone with Space');
+  }
+  if (!drawWaterfallCaveView(WCTX, 38)) {
+    throw new Error('Teleport stone crystal charging animation did not render');
+  }
+  G.practiceHolyTeleportStoneUnlocked = false;
+  G.practiceHolyTeleportStoneCharged = false;
   if (!songCrystal.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, songCrystal.obj.x, songCrystal.obj.y + 8)) {
     throw new Error('Song crystal should be a blocking cave object');
   }
@@ -1868,6 +1903,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!teleportStone || !teleportStone.found || !teleportStone.collected || !G.holyTeleportStoneUnlocked || !blessedLem.teleportStone || G.holyTeleportStoneLemId !== blessedLem.id) {
     throw new Error('Holy lemmel should discover and receive the teleport stone behind the church altar');
   }
+  if (G.holyTeleportStoneCharged || !Array.isArray(G.waterfallCave.teleportStoneMessageLines) || !G.waterfallCave.teleportStoneMessageLines.join(' ').includes('OLADDAD')) {
+    throw new Error('Newly discovered teleport stone should start uncharged and explain that it must be charged');
+  }
   if (teleportStoneSounds <= teleportSoundsBefore) {
     throw new Error('Teleport stone discovery did not play its magical sound');
   }
@@ -2069,8 +2107,15 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!holyHatchLems[0].teleportStone || G.holyTeleportStoneLemId !== holyHatchLems[0].id) {
     throw new Error('A holy lemmel with the discovered teleport stone should keep that property on new levels');
   }
-  if (!G.portalStoneButtonVisible() || !G.portalStoneButtonAvailable() || G.portalStoneOwner() !== holyHatchLems[0]) {
-    throw new Error('Teleport stone HUD button should be available for the holy hatch lemmel');
+  if (!G.portalStoneButtonVisible() || G.portalStoneButtonAvailable() || G.portalStoneOwner() !== holyHatchLems[0]) {
+    throw new Error('Uncharged teleport stone should be visible but unavailable for the holy hatch lemmel');
+  }
+  if (G.beginPortalStonePlacement(holyHatchLems[0])) {
+    throw new Error('Uncharged teleport stone should not begin portal placement');
+  }
+  G.holyTeleportStoneCharged = true;
+  if (!G.portalStoneButtonAvailable()) {
+    throw new Error('Charged teleport stone HUD button should be available for the holy hatch lemmel');
   }
   G.paused = true;
   if (!G.beginPortalStonePlacement(holyHatchLems[0]) || !G.portalStone || !G.portalStone.placingExit || !G.paused) {
@@ -2099,6 +2144,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!G.placePortalStoneExit(exitPortal.x, exitPortal.y) || G.paused || !G.portalStone.active || !G.portalStone.out) {
     throw new Error('Teleport stone should place an exit portal and unpause the game');
   }
+  if (G.holyTeleportStoneCharged || G.portalStoneButtonAvailable()) {
+    throw new Error('Teleport stone charge should be consumed when the portals are opened');
+  }
   const portalTraveler = new Lemming(entryPortal.x, entryPortal.y);
   portalTraveler.state = 'BLOCK';
   G.lems.push(portalTraveler);
@@ -2115,6 +2163,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWeather = prevStopWeather;
   AU.sWaterfallCaveStep = prevCaveStep;
   AU.sWaterfallCaveCrystalChime = prevCrystalChime;
+  AU.sWaterfallCaveTeleportCharge = prevTeleportChargeSound;
   AU.sWaterfallCaveRuneDiscover = prevRuneDiscoverSound;
   AU.sWaterfallCaveRunesComplete = prevRunesCompleteSound;
   AU.sWaterfallCaveTeleportStone = prevTeleportStoneSound;
@@ -2142,6 +2191,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.holyBlessingUnlocked = prevHolyBlessingUnlocked;
   G.holyLevelLemId = prevHolyLevelLemId;
   G.holyTeleportStoneUnlocked = prevHolyTeleportStoneUnlocked;
+  G.holyTeleportStoneCharged = prevHolyTeleportStoneCharged;
+  G.practiceHolyTeleportStoneUnlocked = prevPracticeHolyTeleportStoneUnlocked;
+  G.practiceHolyTeleportStoneCharged = prevPracticeHolyTeleportStoneCharged;
   G.holyTeleportStoneLemId = prevHolyTeleportStoneLemId;
   G.portalStone = prevPortalStone;
   G.selSkill = prevSelSkill;
@@ -3204,7 +3256,7 @@ withLocalStorage({}, store => {
   G.unlockHolyBlessing();
   const fakeHoly = {id:9001, holy:true, dead:false, alive(){return true}};
   G.unlockHolyTeleportStone(fakeHoly);
-  if (G.cleared[idx] || G.profileStats.levels[idx] || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked) {
+  if (G.cleared[idx] || G.profileStats.levels[idx] || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged) {
     throw new Error('Practice run rewards or results leaked into campaign profile state');
   }
   if (!G.practiceHolyTeleportStoneUnlocked || !G.portalStoneButtonVisible()) {
@@ -3221,13 +3273,14 @@ withLocalStorage({}, store => {
   practiceHoly.state = 'WALK';
   G.lems = [practiceHoly];
   G.holyTeleportStoneLemId = practiceHoly.id;
+  G.practiceHolyTeleportStoneCharged = true;
   if (!G.handlePortalStoneClick(practiceHoly.x, practiceHoly.y - 6) || !G.portalStone || !G.portalStone.placingExit) {
     throw new Error('Practice teleport stone should be usable through the normal portal HUD flow');
   }
   G.cancelPortalStonePlacement();
   G.savePrefs();
   G.loadPrefs();
-  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.practiceHolyTeleportStoneUnlocked) {
+  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.practiceHolyTeleportStoneUnlocked || G.practiceHolyTeleportStoneCharged) {
     throw new Error('Practice state should not persist after save/load');
   }
 });
@@ -3276,6 +3329,7 @@ withLocalStorage({}, store => {
   G.levelSelectMode = 'free';
   G.holyBlessingUnlocked = true;
   G.holyTeleportStoneUnlocked = true;
+  G.holyTeleportStoneCharged = true;
   G.profileStats = {levels:{0:{attempts:3,wins:1,bestPct:100,bestSaved:10,bestTimeLeft:42,bestSeed:123,last:null}}};
   G.recordRuneDiscovery({key:'profileA.runes.one',setId:'profileA.runes',runeId:'one',title:'Profilruna',setTitle:'Profilrunor',total:1,lines:['Profilruna']});
   G.savePrefs();
@@ -3283,7 +3337,7 @@ withLocalStorage({}, store => {
   const bMeta = createProfile('Beta');
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch active profile in storage');
   G.loadPrefs();
-  if (G.money !== 0 || G.cleared.some(Boolean) || G.levelSelectMode !== 'campaign' || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.levelSelectMode !== 'campaign' || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
     throw new Error('New profile should not inherit progress, money, level select mode, holy state, runes, or save slots');
   }
   G.money = 2;
@@ -3291,7 +3345,7 @@ withLocalStorage({}, store => {
   G.savePrefs();
   if (!setActiveProfile(a)) throw new Error('Could not switch back to profile A');
   G.loadPrefs();
-  if (G.money !== 9 || !G.cleared[0] || G.levelSelectMode !== 'free' || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || G.runeProgressSummary().discovered !== 1 || saveGameSlots().length !== 1) {
+  if (G.money !== 9 || !G.cleared[0] || G.levelSelectMode !== 'free' || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || !G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 1 || saveGameSlots().length !== 1) {
     throw new Error('Profile A progress was not restored after switching back');
   }
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch back to profile B');
@@ -3308,6 +3362,8 @@ withLocalStorage({}, store => {
   G.money = 12;
   G.cleared[0] = true;
   G.holyBlessingUnlocked = true;
+  G.holyTeleportStoneUnlocked = true;
+  G.holyTeleportStoneCharged = true;
   G.savePrefs();
   if (!writeGameSlots([savedState])) throw new Error('Could not create last-profile save slot fixture');
   if (!deleteProfile(firstId)) throw new Error('Deleting the final profile should be allowed');
@@ -3317,7 +3373,7 @@ withLocalStorage({}, store => {
     throw new Error('Deleting the final profile should create one fresh default profile');
   }
   G.loadPrefs();
-  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || saveGameSlots().length !== 0) {
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || saveGameSlots().length !== 0) {
     throw new Error('Fresh default profile after final delete should not inherit deleted state');
   }
   if (Object.keys(store).some(k => k.includes(firstId))) {

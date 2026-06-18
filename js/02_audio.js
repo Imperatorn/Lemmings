@@ -498,6 +498,17 @@ const AU={
     this.tone(1760,0.22,'triangle',0.014,0.84,t+0.26);
     this.softNoise(0.45,0.010,1800,0.55,t+0.03,{type:'bandpass',q:0.60,smooth:0.76,attack:0.07,release:0.28});
   },
+  sWaterfallCaveTeleportCharge(){
+    if(!this.rateFx('waterfall-cave-teleport-charge',1.0))return;
+    const t=this.now();
+    this.padTone(294,0.78,'sine',0.018,t);
+    this.padTone(440,0.86,'triangle',0.016,t+0.08);
+    this.tone(660,0.14,'sine',0.020,1.08,t+0.16);
+    this.tone(880,0.15,'triangle',0.024,1.10,t+0.27);
+    this.tone(1320,0.18,'sine',0.030,1.05,t+0.42);
+    this.softNoise(0.34,0.012,2400,0.62,t+0.10,{type:'bandpass',q:0.72,smooth:0.80,attack:0.08,release:0.22});
+    this.softNoise(0.18,0.007,5200,0.74,t+0.34,{type:'highpass',smooth:0.38,attack:0.03,release:0.12});
+  },
   sWaterfallCaveStonePickup(){
     if(!this.rateFx('waterfall-cave-stone-pickup',0.10))return;
     const t=this.now();

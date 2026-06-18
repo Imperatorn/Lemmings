@@ -35,7 +35,7 @@ function refreshPointer(p){
 function selectSkill(k){
   if(k==='portal'){
     if(!G.portalStoneButtonAvailable||!G.portalStoneButtonAvailable()){
-      G.toast('STENEN KRÄVER DEN HELIGA LÄMMELN');
+      G.toast((G.portalStoneUnavailableReason&&G.portalStoneUnavailableReason())||'STENEN KRÄVER DEN HELIGA LÄMMELN');
       AU.sShrug();
       return;
     }

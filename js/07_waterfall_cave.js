@@ -418,12 +418,12 @@ Object.assign(G,{
     cave.flags=cave.flags||{};
     cave.flags.teleportStoneFound=true;
     cave.teleportStoneMessageT=180;
-    cave.teleportStoneMessageLines=['TELEPORTERINGSSTENEN HAR VAKNAT','DEN TILLHÖR DEN HELIGA LÄMMELN'];
+    cave.teleportStoneMessageLines=['STENEN ÄR OLADDAD','SÖK EN KRISTALL SOM KAN LADDA DEN'];
     this.unlockHolyTeleportStone(l);
     if(AU.sWaterfallCaveTeleportStone)AU.sWaterfallCaveTeleportStone();
     else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
     if(this.playTeleportStoneCutscene)this.playTeleportStoneCutscene(l,'fullscreen');
-    this.toast('TELEPORTERINGSSTEN HITTAD',160);
+    this.toast('TELEPORTERINGSSTEN HITTAD - DEN ÄR OLADDAD',170);
     return true;
   },
   updateWaterfallCaveTeleportStone(cave){
@@ -442,6 +442,42 @@ Object.assign(G,{
     stone.near=this.waterfallCaveBehindChurchAltar(cave);
     if(stone.near&&l&&l.holy&&!stone.found)return this.discoverWaterfallCaveTeleportStone(cave,stone,l);
     return false;
+  },
+  chargeWaterfallCaveTeleportStoneAtCrystal(cave,obj,mode){
+    cave=cave||this.waterfallCave;
+    if(!cave||!obj)return false;
+    const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
+    if(!hasStone){
+      obj.hintT=Math.max(obj.hintT||0,150);
+      obj.hintLines=['KRISTALLEN SVARAR SVAGT','NÅGOT SKULLE KUNNA LADDAS HÄR'];
+      return false;
+    }
+    if(this.holyTeleportStoneIsCharged&&this.holyTeleportStoneIsCharged()){
+      if(mode!=='near'){
+        obj.hintT=Math.max(obj.hintT||0,90);
+        obj.hintLines=['STENEN ÄR REDAN LADDAD','KRAFTEN VILAR I DEN'];
+        if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
+      }
+      return false;
+    }
+    if(mode==='near'){
+      obj.hintT=Math.max(obj.hintT||0,110);
+      obj.hintLines=['STENEN ÄR OLADDAD','MELLANSLAG LADDAR DEN'];
+      return false;
+    }
+    if(this.chargeHolyTeleportStone&&!this.chargeHolyTeleportStone())return false;
+    obj.activated=true;
+    obj.pulseT=Math.max(obj.pulseT||0,132);
+    obj.chargeT=96;
+    obj.hintT=130;
+    obj.hintLines=['STENEN FYLLS AV KRISTALLKRAFT','PORTALEN KAN ÖPPNAS EN GÅNG'];
+    cave.flags=cave.flags||{};
+    cave.flags.teleportStoneCharged=true;
+    cave.teleportStoneChargeT=96;
+    if(AU.sWaterfallCaveTeleportCharge)AU.sWaterfallCaveTeleportCharge();
+    else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
+    this.toast('TELEPORTERINGSSTENEN ÄR LADDAD',150);
+    return true;
   },
   waterfallCaveMirrorPoolHit(cave){
     cave=cave||this.waterfallCave;
@@ -485,8 +521,8 @@ Object.assign(G,{
     if(!pool)return false;
     const seq=(cave.mirrorStoneThrowSeq=(cave.mirrorStoneThrowSeq||0)+1);
     const seed=seq*97+(cave.t||0)*13+Math.round((cave.lemX||0)*3)+Math.round((cave.lemY||0)*5);
-    const angle=(typeof hash2==='function'?hash2(seed,17):Math.random())*Math.PI*2;
-    const radius=Math.sqrt(0.08+0.64*(typeof hash2==='function'?hash2(seed,31):Math.random()));
+    const angle=(typeof hash2==='function'?hash2(seed,17):Math.random())*Math.PI*2+seq*2.399963;
+    const radius=Math.sqrt(0.18+0.54*(typeof hash2==='function'?hash2(seed,31):Math.random()));
     const tx=(pool.x||250)+Math.cos(angle)*radius*40;
     const ty=(pool.y||246)+2+Math.sin(angle)*radius*8;
     const oldFacing=cave.facing||'front',lemX=cave.lemX||240;
@@ -588,7 +624,10 @@ Object.assign(G,{
     if(def.kind==='stone'&&mode)obj.shifted=true;
     if(def.kind==='throwStonePile'&&mode!=='near')return this.pickWaterfallCaveMirrorStone(cave,obj);
     if(def.kind==='torch')obj.flameT=Math.max(obj.flameT||0,96);
-    if(def.kind==='crystal'&&AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(mode==='near'?0.85:1);
+    if(def.kind==='crystal'){
+      const charged=this.chargeWaterfallCaveTeleportStoneAtCrystal?this.chargeWaterfallCaveTeleportStoneAtCrystal(cave,obj,mode):false;
+      if(!charged&&AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(mode==='near'?0.85:1);
+    }
     if(def.kind==='runeWall'){
       if(!this.readWaterfallCaveRune(hit)){
         obj.activeRuneId=null;
@@ -597,6 +636,7 @@ Object.assign(G,{
         obj.readLines=this.cloneWaterfallCaveData(def.readLines||['Runorna viskar.']);
       }
     }
+    if(def.kind==='inspectable'&&def.id==='cover'&&(mode!=='near'||!obj.dismissedNear))this.openWaterfallCaveDeepItem(obj);
     if(def.kind==='viewCard'&&(mode!=='near'||!obj.dismissedNear))this.openWaterfallCaveViewCard(hit);
     cave.flags=cave.flags||{};
     cave.flags[def.id||'object']=true;
@@ -615,6 +655,8 @@ Object.assign(G,{
       if(Number.isFinite(obj.completeT))obj.completeT=Math.max(0,obj.completeT-1);
       if(Number.isFinite(obj.splashT))obj.splashT=Math.max(0,obj.splashT-1);
       if(Number.isFinite(obj.pickedT))obj.pickedT=Math.max(0,obj.pickedT-1);
+      if(Number.isFinite(obj.chargeT))obj.chargeT=Math.max(0,obj.chargeT-1);
+      if(Number.isFinite(obj.hintT))obj.hintT=Math.max(0,obj.hintT-1);
       const nearScale=this.waterfallCaveObjectNearScale(def);
       const near=this.waterfallCaveObjectContains(def,obj,cave.lemX||0,cave.lemY||0,nearScale);
       if(def.kind==='viewCard'){
@@ -970,6 +1012,17 @@ Object.assign(G,{
     it.coverCloseArmed=false;
     return true;
   },
+  openWaterfallCaveDeepItem(it){
+    const cave=this.waterfallCave;
+    if(!it)return false;
+    it.coverOpen=true;
+    it.coverSide='front';
+    it.coverCloseArmed=!this.waterfallCaveMovementHeld(cave);
+    it.dismissedNear=false;
+    it.coverReturnBlocked=false;
+    if(cave)cave.inspectObjectId='cover';
+    return true;
+  },
   waterfallCaveActiveViewCard(cave){
     cave=cave||this.waterfallCave;
     if(!cave)return null;
@@ -1121,9 +1174,7 @@ Object.assign(G,{
         it.coverReturnBlocked=false;
       }
       if(it.near&&!it.dismissedNear&&!it.coverOpen&&!it.coverReturnBlocked&&!this.waterfallCaveMovementHeld(cave)){
-        it.coverOpen=true;
-        it.coverCloseArmed=!this.waterfallCaveMovementHeld(cave);
-        it.coverSide='front';
+        this.openWaterfallCaveDeepItem(it);
       }
     }
     if(cave.scene==='camp'){
