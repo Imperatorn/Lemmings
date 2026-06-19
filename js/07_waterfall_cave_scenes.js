@@ -40,7 +40,7 @@ const WATERFALL_CAVE_SCENES={
       {id:'toCamp',key:'down',x0:154,x1:326,yMin:276,target:'camp',spawn:'fromDeep',requiresClosedDeepItem:true}
     ],
     objects:[
-      {id:'cover',runtimeKey:'deepItem',kind:'inspectable',default:{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false},hit:{type:'ellipse',rx:33,ry:22},verbs:['look','turn']}
+      {id:'cover',runtimeKey:'deepItem',kind:'inspectable',default:{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false,coverAsset:'landsOfLoreCover',coverRect:{x:150,y:30,w:180,h:225},coverBackLines:['Utvecklat av','Johan Forsberg.','','Tilldelat Valdemar,','Tage och Elis.','','Beta-testare:','Micke och Calle','']},hit:{type:'ellipse',rx:33,ry:22},verbs:['look','turn']}
     ]
   },
   camp:{
@@ -209,7 +209,10 @@ const WATERFALL_CAVE_VARIANTS={
     archiveStyle:'forest',
     stoneInscription:{title:'ROTSTENEN',glyph:'root',color:'#8fb96a',lines:['Rötterna bär natten.','Lyktan får inte slockna.']},
     hiddenScenes:['church','churchInterior'],
-    scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
+    scenes:{
+      deep:{objectDefaults:{cover:{coverAsset:'amigaA1200Cover',coverRect:{x:84,y:46,w:312,h:208},coverBackLines:['Tack till Anders Gunderson']}}},
+      glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}
+    }
   },
   marbleArchive:{
     id:'marbleArchive',
@@ -392,6 +395,12 @@ function waterfallCaveApplySceneVariant(raw,variantId){
   }
   if(Array.isArray(cfg.removeObjects)&&cfg.removeObjects.length){
     out.objects=(out.objects||[]).filter(o=>o&&!cfg.removeObjects.includes(o.id));
+  }
+  if(cfg.objectDefaults&&Array.isArray(out.objects)){
+    for(const obj of out.objects){
+      const patch=obj&&cfg.objectDefaults[obj.id];
+      if(patch)obj.default=Object.assign({},obj.default||{},waterfallCaveCloneData(patch));
+    }
   }
   if(Array.isArray(cfg.addObjects)&&cfg.addObjects.length){
     out.objects=(out.objects||[]).concat(waterfallCaveCloneData(cfg.addObjects));

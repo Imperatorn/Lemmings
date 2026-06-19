@@ -104,6 +104,9 @@ if (!fs.existsSync(path.join(root, 'assets/lands-of-lore-pixel.png'))) {
 if (!fs.existsSync(path.join(root, 'assets/dala-floda-kyrka-pixel.png'))) {
   throw new Error('Missing Dala-Floda church pixel-art asset');
 }
+if (!fs.existsSync(path.join(root, 'assets/amiga-a1200-pixel.png'))) {
+  throw new Error('Missing Amiga A1200 pixel-art asset');
+}
 if (!fs.existsSync(path.join(root, 'assets/blessthelord.mp3'))) {
   throw new Error('Missing church hymn MP3 asset');
 }
@@ -116,6 +119,9 @@ if (!utilCode.includes("assets/lands-of-lore-pixel.png")) {
 }
 if (!utilCode.includes("assets/dala-floda-kyrka-pixel.png")) {
   throw new Error('Dala-Floda church pixel-art asset is not registered');
+}
+if (!utilCode.includes("assets/amiga-a1200-pixel.png")) {
+  throw new Error('Amiga A1200 pixel-art asset is not registered');
 }
 for (const token of ['PROFILE_INDEX_KEY','PROFILE_KEY_PREFIX','ensureProfileIndex','createProfile','setActiveProfile','deleteProfile','loadProfileData','saveProfileData']) {
   if (!utilCode.includes(token)) throw new Error(`Profile storage layer is missing ${token}`);
@@ -246,6 +252,9 @@ const caveRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_ren
 if (!caveRenderCode.includes('ASSETS.landsOfLoreCover') || caveRenderCode.includes('THE THRONE OF CHAOS')) {
   throw new Error('Waterfall cave cover should use the image asset instead of the old hand-drawn cover');
 }
+if (!caveRenderCode.includes('ASSETS[asset]') || !caveRenderCode.includes('coverBackLines') || !waterfallScenesCode.includes('amigaA1200Cover') || !waterfallScenesCode.includes('Tack till Anders Gunderson') || !waterfallRuntimeCode.includes('it.coverRect')) {
+  throw new Error('Deep cave cover should support variant-specific front art, back text, and cover dimensions');
+}
 if (!caveRenderCode.includes('ASSETS[card.asset]') || !caveRenderCode.includes('Floda kyrka')) {
   throw new Error('Waterfall cave view cards should render the church card asset and Floda kyrka back text');
 }
@@ -280,7 +289,10 @@ if (!caveRenderCode.includes('drawWaterfallCaveRuneReadPanel')) {
   throw new Error('Glyph archive should render readable rune text when the lemmel approaches the runes');
 }
 if (!caveRenderCode.includes('drawWaterfallCaveMirrorEchoMarks') || !caveRenderCode.includes('drawWaterfallCaveMirrorEchoHint') || !caveRenderCode.includes('DAMMEN RÄKNAR EKON')) {
-  throw new Error('Mirror pool should offer subtle seven-stone echo hints without explicit instructions');
+  throw new Error('Mirror pool should offer subtle echo hints without explicit instructions');
+}
+if (!caveRenderCode.includes('const points=') || !caveRenderCode.includes('litCount>=6') || !caveRenderCode.includes('pixelLine(c,Math.round(a[0])')) {
+  throw new Error('Mirror pool echo marks should use six rim points and a connected near-complete glow');
 }
 if (!caveRenderCode.includes('waterfallCaveArchivePageState') || !caveRenderCode.includes('drawWaterfallCaveArchivePage') || !caveRenderCode.includes('G.runeArchiveProgress')) {
   throw new Error('Glyph archive side pages should render global profile rune progress');
@@ -1145,6 +1157,14 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   if (G.waterfallCave.variantId !== 'flodaChurch' || !G.waterfallCaveSceneIds().includes('churchInterior') || !caveMap.nodes.some(n => n.id === 'church')) {
     throw new Error('The first waterfall rune cave should use the Floda church variant and show the church map branch');
+  }
+  const firstDeepCover = G.waterfallCaveObjectDefaultData('deep','cover',{},'flodaChurch');
+  const secondDeepCover = G.waterfallCaveObjectDefaultData('deep','cover',{},'darkForestArchive');
+  if (!firstDeepCover || firstDeepCover.coverAsset !== 'landsOfLoreCover') {
+    throw new Error('The first waterfall cave should keep the Lands of Lore deep cover');
+  }
+  if (!secondDeepCover || secondDeepCover.coverAsset !== 'amigaA1200Cover' || !(secondDeepCover.coverRect && secondDeepCover.coverRect.w > secondDeepCover.coverRect.h) || !(secondDeepCover.coverBackLines || []).includes('Tack till Anders Gunderson')) {
+    throw new Error('The second waterfall cave should use the Amiga deep cover with Anders Gunderson back text');
   }
   const archiveOnlyCave = {scene:'glyphArchive', variantId:'darkForestArchive', sceneState:{}, flags:{}, visited:{glyphArchive:true}, lemX:240, lemY:220};
   const archiveOnlyIds = G.waterfallCaveSceneIds(archiveOnlyCave);

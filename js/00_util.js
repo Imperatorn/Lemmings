@@ -54,7 +54,8 @@ function loadAssetImage(src){
 }
 const ASSETS={
   landsOfLoreCover:loadAssetImage('assets/lands-of-lore-pixel.png'),
-  dalaFlodaChurch:loadAssetImage('assets/dala-floda-kyrka-pixel.png')
+  dalaFlodaChurch:loadAssetImage('assets/dala-floda-kyrka-pixel.png'),
+  amigaA1200Cover:loadAssetImage('assets/amiga-a1200-pixel.png')
 };
 
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}

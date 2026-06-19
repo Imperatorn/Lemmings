@@ -207,10 +207,13 @@ function drawWaterfallCaveLemmingShadow(c,lx,ly,scale,alpha){
 }
 
 function drawLandsOfLoreCaveCover(c,cave,tk){
-  const img=typeof ASSETS==='object'&&ASSETS?ASSETS.landsOfLoreCover:null;
+  const it=cave&&cave.deepItem||{};
+  const asset=it.coverAsset||'landsOfLoreCover';
+  const img=typeof ASSETS==='object'&&ASSETS?(ASSETS[asset]||ASSETS.landsOfLoreCover):null;
   const loaded=!!(img&&img.complete!==false&&(img.naturalWidth||img.width));
-  const side=(cave&&cave.deepItem&&cave.deepItem.coverSide)||'front';
-  const x=150,y=30,w=180,h=225;
+  const side=it.coverSide||'front';
+  const rr=it.coverRect||{};
+  const x=Number.isFinite(rr.x)?rr.x:150,y=Number.isFinite(rr.y)?rr.y:30,w=Number.isFinite(rr.w)?rr.w:180,h=Number.isFinite(rr.h)?rr.h:225;
   c.save();
   c.globalAlpha=0.66;
   c.fillStyle='#000000';
@@ -229,15 +232,7 @@ function drawLandsOfLoreCaveCover(c,cave,tk){
   c.fillStyle='#3a271b';c.fillRect(x-3,y-3,w+6,h+6);
   c.fillStyle='#1a1511';c.fillRect(x,y,w,h);
   if(side==='back'){
-    c.fillStyle='#4c3422';c.fillRect(x+5,y+5,w-10,h-10);
-    c.fillStyle='#eadbb4';c.fillRect(x+10,y+10,w-20,h-20);
-    c.fillStyle='#f8eac4';c.fillRect(x+14,y+16,w-28,h-34);
-    c.fillStyle='#8a5a34';c.fillRect(x+16,y+24,w-32,2);
-    c.fillStyle='#261910';
-    c.font='12px sans-serif';
-    c.textAlign='left';
-    c.textBaseline='top';
-    const lines=[
+    const defaultLines=[
       'Utvecklat av',
       'Johan Forsberg.',
       '',
@@ -248,7 +243,23 @@ function drawLandsOfLoreCaveCover(c,cave,tk){
       'Micke och Calle',
       ''
     ];
-    for(let i=0;i<lines.length;i++)c.fillText(lines[i],x+22,y+42+i*20);
+    const lines=Array.isArray(it.coverBackLines)&&it.coverBackLines.length?it.coverBackLines:defaultLines;
+    c.fillStyle='#4c3422';c.fillRect(x+5,y+5,w-10,h-10);
+    c.fillStyle='#eadbb4';c.fillRect(x+10,y+10,w-20,h-20);
+    c.fillStyle='#f8eac4';c.fillRect(x+14,y+16,w-28,h-34);
+    c.fillStyle='#8a5a34';c.fillRect(x+16,y+24,w-32,2);
+    c.fillStyle='#261910';
+    if(w>260&&lines.length<=3){
+      c.font='18px sans-serif';
+      c.textAlign='center';
+      c.textBaseline='middle';
+      for(let i=0;i<lines.length;i++)c.fillText(lines[i],x+w/2,y+h/2+(i-(lines.length-1)/2)*26);
+    }else{
+      c.font='12px sans-serif';
+      c.textAlign='left';
+      c.textBaseline='top';
+      for(let i=0;i<lines.length;i++)c.fillText(lines[i],x+22,y+42+i*20);
+    }
     c.fillStyle='#6d472a';c.fillRect(x+22,y+h-34,w-44,2);
   }else if(loaded){
     c.imageSmoothingEnabled=false;
@@ -1262,27 +1273,46 @@ function drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk){
 
 function drawWaterfallCaveMirrorEchoMarks(c,x,y,cave,tk){
   const state=waterfallCaveMirrorPedestalState(cave);
-  const thrown=clamp(state&&state.stonesThrown||0,0,7);
+  const thrown=clamp(state&&state.stonesThrown||0,0,6);
   const raised=!!(state&&state.pedestalRaised);
+  const litCount=raised?6:thrown;
   const t=tk+(cave&&cave.t||0);
+  const points=[
+    [x-78,y+4],[x-52,y-10],[x+52,y-10],
+    [x+78,y+4],[x+52,y+18],[x-52,y+18]
+  ];
   c.save();
-  for(let i=0;i<7;i++){
-    const lit=raised||i<thrown;
+  if(litCount>=6){
+    const linePulse=0.5+0.5*Math.sin(t*0.10);
+    c.globalCompositeOperation='lighter';
+    c.globalAlpha=(raised?0.10:0.18)+(raised?0.04:0.10)*linePulse;
+    for(let i=0;i<points.length;i++){
+      const a=points[i],b=points[(i+1)%points.length];
+      pixelLine(c,Math.round(a[0]),Math.round(a[1]),Math.round(b[0]),Math.round(b[1]),'#78e8ff');
+    }
+    c.globalAlpha=(raised?0.06:0.12)+(raised?0.03:0.07)*linePulse;
+    for(let i=0;i<points.length;i++){
+      const a=points[i],b=points[(i+1)%points.length];
+      pixelLine(c,Math.round(a[0]),Math.round(a[1]-1),Math.round(b[0]),Math.round(b[1]-1),'#d6ffff');
+    }
+    c.globalCompositeOperation='source-over';
+  }
+  for(let i=0;i<points.length;i++){
+    const lit=raised||i<litCount;
     const fresh=lit&&i===thrown-1&&!raised;
-    const p=i/6;
-    const mx=Math.round(x-52+p*104);
-    const my=Math.round(y+19-Math.sin(p*Math.PI)*9);
+    const mx=Math.round(points[i][0]);
+    const my=Math.round(points[i][1]);
     const pulse=fresh?(0.5+0.5*Math.sin(t*0.18+i)):0;
     if(lit){
       c.globalCompositeOperation='lighter';
-      c.globalAlpha=fresh?(0.22+0.16*pulse):0.13;
+      c.globalAlpha=fresh?(0.22+0.16*pulse):(litCount>=6?0.17:0.13);
       c.fillStyle='#9eefff';
       c.fillRect(mx-3,my-4,7,8);
       c.globalCompositeOperation='source-over';
-      c.globalAlpha=fresh?0.92:0.58;
+      c.globalAlpha=fresh?0.92:(litCount>=6?0.68:0.58);
       c.fillStyle=fresh?'#d8ffff':'#9eefff';
     }else{
-      c.globalAlpha=0.20;
+      c.globalAlpha=0.16;
       c.fillStyle='#3f6974';
     }
     c.fillRect(mx-2,my-1,5,1);

@@ -757,7 +757,14 @@ Object.assign(G,{
     cave.bounds=cave.bounds||this.cloneWaterfallCaveData(main.bounds||{minX:102,maxX:386,minY:176,maxY:304,exitX0:184,exitX1:296,exitY:218,deepX0:164,deepX1:316,deepY:298});
     cave.deepBounds=cave.deepBounds||this.cloneWaterfallCaveData(deep.bounds||{minX:86,maxX:394,minY:168,maxY:282,exitX0:180,exitX1:300,exitY:178,campX0:154,campX1:326,campY:276});
     cave.campBounds=cave.campBounds||this.cloneWaterfallCaveData(camp.bounds||{minX:74,maxX:406,minY:166,maxY:306,exitX0:168,exitX1:312,exitY:182});
-    cave.deepItem=cave.deepItem||this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
+    const deepItemDefault=this.waterfallCaveObjectDefaultData('deep','cover',{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false});
+    cave.deepItem=cave.deepItem||deepItemDefault;
+    if(cave.deepItem&&deepItemDefault){
+      const coverChanged=deepItemDefault.coverAsset&&cave.deepItem.coverAsset!==deepItemDefault.coverAsset;
+      if(coverChanged||!cave.deepItem.coverAsset)cave.deepItem.coverAsset=deepItemDefault.coverAsset;
+      if(coverChanged||!cave.deepItem.coverRect)cave.deepItem.coverRect=this.cloneWaterfallCaveData(deepItemDefault.coverRect);
+      if(coverChanged||!cave.deepItem.coverBackLines)cave.deepItem.coverBackLines=this.cloneWaterfallCaveData(deepItemDefault.coverBackLines);
+    }
     cave.campFire=cave.campFire||this.waterfallCaveObjectDefaultData('camp','campFire',{x:318,y:244,rx:54,ry:30});
     cave.visited=cave.visited||{};
     cave.flags=cave.flags||{};
@@ -1151,7 +1158,10 @@ Object.assign(G,{
     it.coverSide=it.coverSide==='back'?'front':'back';
     return true;
   },
-  waterfallCaveCoverRect(){
+  waterfallCaveCoverRect(it){
+    it=it||(this.waterfallCave&&this.waterfallCave.deepItem);
+    const r=it&&it.coverRect||{};
+    if(Number.isFinite(r.x)&&Number.isFinite(r.y)&&Number.isFinite(r.w)&&Number.isFinite(r.h))return {x:r.x,y:r.y,w:r.w,h:r.h};
     return {x:150,y:30,w:180,h:225};
   },
   waterfallCaveCampFire(cave){
