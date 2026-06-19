@@ -249,7 +249,7 @@ if (!cutsceneScenesCode.includes('makeTeleportStoneCutsceneSpec') || !cutsceneSc
   throw new Error('Teleport stone discovery should have a dedicated cutscene');
 }
 const caveRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
-if (!caveRenderCode.includes('ASSETS.landsOfLoreCover') || caveRenderCode.includes('THE THRONE OF CHAOS')) {
+if (!caveRenderCode.includes('drawWaterfallCaveDeepCover') || !caveRenderCode.includes('ASSETS.landsOfLoreCover') || caveRenderCode.includes('THE THRONE OF CHAOS')) {
   throw new Error('Waterfall cave cover should use the image asset instead of the old hand-drawn cover');
 }
 if (!caveRenderCode.includes('ASSETS[asset]') || !caveRenderCode.includes('coverBackLines') || !waterfallScenesCode.includes('amigaA1200Cover') || !waterfallScenesCode.includes('Tack till Anders Gunderson') || !waterfallRuntimeCode.includes('it.coverRect')) {

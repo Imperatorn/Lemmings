@@ -206,7 +206,7 @@ function drawWaterfallCaveLemmingShadow(c,lx,ly,scale,alpha){
   c.restore();
 }
 
-function drawLandsOfLoreCaveCover(c,cave,tk){
+function drawWaterfallCaveDeepCover(c,cave,tk){
   const it=cave&&cave.deepItem||{};
   const asset=it.coverAsset||'landsOfLoreCover';
   const img=typeof ASSETS==='object'&&ASSETS?(ASSETS[asset]||ASSETS.landsOfLoreCover):null;
@@ -536,7 +536,7 @@ function drawWaterfallCaveDeepView(c,cave,tk){
   const lemScale=waterfallCaveLemmingScale(cave);
   drawWaterfallCaveLemmingShadow(c,lx,ly,lemScale,0.32);
   drawWaterfallCaveLemming(c,cave,lx,ly,lemScale);
-  if(it.coverOpen)drawLandsOfLoreCaveCover(c,cave,tk+t);
+  if(it.coverOpen)drawWaterfallCaveDeepCover(c,cave,tk+t);
   c.restore();
   return true;
 }
