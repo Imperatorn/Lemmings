@@ -1233,6 +1233,53 @@ function waterfallCaveMirrorPoolShake(cave,tk){
   };
 }
 
+function drawWaterfallCaveMirrorPedestalDrips(c,px,baseY,topY,state,cave,tk,rise){
+  const t=state&&state.pedestalT||0;
+  if(!(rise>0.08)||t>=118)return false;
+  const seed=state.pedestalSeed||0;
+  const emerge=clamp(rise/0.30,0,1);
+  const fade=clamp(0.28+(118-t)/88,0.28,1);
+  const power=emerge*fade;
+  if(!(power>0.02))return false;
+  c.save();
+  c.globalCompositeOperation='lighter';
+
+  c.globalAlpha=0.10+0.12*power;
+  pixelLine(c,px-18,topY+13,px-28,baseY-4,'#8fe9f4');
+  pixelLine(c,px+18,topY+13,px+28,baseY-4,'#b8f8ff');
+  c.globalAlpha=0.06+0.08*power;
+  pixelLine(c,px-4,topY+12,px-7,baseY-2,'#7eddea');
+  pixelLine(c,px+6,topY+12,px+10,baseY-1,'#d6ffff');
+
+  const count=16+Math.round(14*power);
+  for(let i=0;i<count;i++){
+    const cycle=26+Math.floor(hash2(seed+i,91)*24);
+    const phase=((tk*0.72+i*11+seed*0.19)%cycle)/cycle;
+    const side=hash2(seed+i,17)<0.5?-1:1;
+    const rim=Math.pow(hash2(seed+i,31),0.82);
+    const sourceX=Math.round(px+side*(6+rim*20)+Math.sin(tk*0.06+i)*2);
+    const sourceY=Math.round(topY+8+hash2(seed+i,43)*10);
+    const fall=Math.max(16,baseY-sourceY+8);
+    const y=Math.round(sourceY+phase*fall);
+    if(y>baseY+7)continue;
+    const wobble=Math.round(Math.sin((tk+i*7)*0.13)*hash2(seed+i,59)*2);
+    const len=Math.round(3+hash2(seed+i,67)*7+phase*4);
+    const thick=hash2(seed+i,73)>0.82?2:1;
+    c.globalAlpha=(0.14+0.28*(1-phase))*power;
+    c.fillStyle=i%4===0?'#e4ffff':(i%3===0?'#a4f4ff':'#6fdce9');
+    c.fillRect(sourceX+wobble,y,thick,len);
+    if(phase>0.78){
+      const splash=(phase-0.78)/0.22;
+      c.globalAlpha=(0.16+0.16*(1-splash))*power;
+      c.fillStyle=i%2?'#9bedf7':'#d8ffff';
+      c.fillRect(sourceX-2-Math.round(splash*4),baseY+2+Math.round(hash2(seed+i,83)*3),3+Math.round(splash*9),1);
+      if(i%5===0)c.fillRect(sourceX+Math.round(splash*5),baseY-1,2,2);
+    }
+  }
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
   const state=waterfallCaveMirrorPedestalState(cave);
   const rise=waterfallCaveMirrorPedestalProgress(state);
@@ -1279,6 +1326,7 @@ function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
   c.fillRect(px-16,topY+7,32,2);
   c.fillStyle='#1c2930';
   for(let i=0;i<5;i++)c.fillRect(px-18+i*9,topY+18+i%2*6,2,18+((i+1)%2)*7);
+  drawWaterfallCaveMirrorPedestalDrips(c,px,baseY,topY,state,cave,tk,rise);
 
   const objY=topY+1;
   const pulse=0.55+0.45*Math.sin((tk+(cave&&cave.t||0))*0.10);
