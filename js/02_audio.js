@@ -541,32 +541,40 @@ const AU={
     this.tone(150,0.070,'sine',0.014,0.76,t+0.012);
   },
   sWaterfallCavePedestalRise(){
-    if(!this.rateFx('waterfall-cave-pedestal-rise',2.05))return;
+    if(!this.rateFx('waterfall-cave-pedestal-rise',2.35))return;
     const t=this.now();
-    this.tone(68,0.36,'sine',0.034,0.74,t+0.01);
-    this.tone(104,0.26,'triangle',0.020,0.78,t+0.10);
-    this.softNoise(1.86,0.020,240,0.56,t,{type:'lowpass',smooth:0.94,attack:0.06,release:0.70});
-    this.softNoise(1.42,0.017,720,0.78,t+0.08,{type:'bandpass',q:0.42,smooth:0.88,attack:0.04,release:0.52});
-    this.softNoise(1.20,0.010,1850,0.72,t+0.26,{type:'bandpass',q:0.64,smooth:0.72,attack:0.08,release:0.46});
+    this.tone(54,0.40,'sine',0.024,0.68,t);
+    this.tone(68,0.46,'sine',0.032,0.74,t+0.01);
+    this.tone(104,0.30,'triangle',0.020,0.78,t+0.10);
+    this.softNoise(2.06,0.021,220,0.54,t,{type:'lowpass',smooth:0.95,attack:0.07,release:0.78});
+    this.softNoise(1.62,0.018,640,0.76,t+0.08,{type:'bandpass',q:0.42,smooth:0.90,attack:0.05,release:0.56});
+    this.softNoise(1.34,0.010,1780,0.70,t+0.25,{type:'bandpass',q:0.62,smooth:0.74,attack:0.09,release:0.48});
     const scrapes=[
-      [0.24,260,0.020],[0.44,210,0.017],[0.66,310,0.016],
-      [0.88,240,0.014],[1.12,360,0.013],[1.36,285,0.011]
+      [0.20,240,0.019],[0.35,285,0.017],[0.52,210,0.018],
+      [0.70,325,0.016],[0.90,250,0.014],[1.12,380,0.013],
+      [1.34,300,0.012],[1.55,430,0.010]
     ];
     for(const s of scrapes){
       this.softNoise(0.085,s[2],s[1],0.58,t+s[0],{type:'bandpass',q:0.80,smooth:0.48,attack:0.006,release:0.060});
       this.tone(s[1]*0.72,0.055,'triangle',s[2]*0.42,0.84,t+s[0]+0.012);
     }
-    const surges=[[0.18,0.015,620],[0.52,0.013,980],[0.92,0.011,1320],[1.30,0.010,1680]];
+    const groans=[[0.06,92,0.012,0.56],[0.48,118,0.010,0.64],[0.94,86,0.011,0.60],[1.42,136,0.009,0.72]];
+    for(const g of groans)this.tone(g[1],0.50,'sine',g[2],g[3],t+g[0]);
+    const surges=[[0.16,0.015,560],[0.46,0.014,880],[0.78,0.012,1180],[1.12,0.011,1540],[1.48,0.010,1960]];
     for(const w of surges)this.softNoise(0.24,w[1],w[2],0.66,t+w[0],{type:'bandpass',q:0.55,smooth:0.74,attack:0.018,release:0.16});
-    this.padTone(196,1.26,'sine',0.010,t+0.24);
-    this.padTone(294,1.10,'triangle',0.010,t+0.50);
-    this.padTone(392,0.78,'sine',0.012,t+1.03);
-    this.padTone(587,0.66,'triangle',0.011,t+1.22);
+    const droplets=[[1.56,1760,0.008],[1.70,2349,0.007],[1.86,3136,0.006],[2.02,2637,0.005]];
+    for(const d of droplets)this.tone(d[1],0.075,'sine',d[2],0.90,t+d[0]);
+    this.padTone(196,1.36,'sine',0.010,t+0.24);
+    this.padTone(294,1.18,'triangle',0.010,t+0.50);
+    this.padTone(392,0.84,'sine',0.012,t+1.03);
+    this.padTone(587,0.72,'triangle',0.011,t+1.22);
     this.tone(784,0.18,'sine',0.016,1.02,t+1.52);
     this.tone(1175,0.16,'triangle',0.014,0.98,t+1.70);
     this.tone(1568,0.14,'sine',0.010,0.94,t+1.84);
     this.tone(122,0.16,'sine',0.018,0.70,t+1.88);
-    this.softNoise(0.34,0.010,3200,0.58,t+1.60,{type:'bandpass',q:0.84,smooth:0.62,attack:0.05,release:0.20});
+    this.tone(92,0.18,'sine',0.018,0.62,t+2.03);
+    this.softNoise(0.38,0.011,3200,0.58,t+1.60,{type:'bandpass',q:0.84,smooth:0.62,attack:0.05,release:0.22});
+    this.softNoise(0.28,0.007,5600,0.50,t+1.82,{type:'bandpass',q:0.72,smooth:0.68,attack:0.04,release:0.16});
   },
   sPortalStoneOpen(){
     if(!this.rateFx('portal-stone-open',0.18))return;
