@@ -1,4 +1,10 @@
 // ---------------------- VATTENFALLSGROTTA RENDER -----------------------
+const WATERFALL_CAVE_MIRROR_PEDESTAL_RISE_FRAMES=92;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_SETTLE_FRAMES=118;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_SPLASH_FRAMES=96;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_WATERLINE_OFFSET=8;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_RISE_PX=50;
+
 function waterfallCaveActiveBounds(cave){
   if(typeof waterfallCaveSceneBoundsFor==='function')return waterfallCaveSceneBoundsFor(cave);
   if(cave&&cave.scene==='camp')return cave.campBounds||cave.deepBounds||cave.bounds||{};
@@ -1214,7 +1220,7 @@ function waterfallCaveMirrorPedestalState(cave){
 
 function waterfallCaveMirrorPedestalProgress(state){
   if(!state||!state.pedestalRaised)return 0;
-  return waterfallCaveEase01(clamp((state.pedestalT||0)/92,0,1));
+  return waterfallCaveEase01(clamp((state.pedestalT||0)/WATERFALL_CAVE_MIRROR_PEDESTAL_RISE_FRAMES,0,1));
 }
 
 function waterfallCaveMirrorPoolShake(cave,tk){
@@ -1235,10 +1241,10 @@ function waterfallCaveMirrorPoolShake(cave,tk){
 
 function drawWaterfallCaveMirrorPedestalDrips(c,px,baseY,topY,state,cave,tk,rise){
   const t=state&&state.pedestalT||0;
-  if(!(rise>0.08)||t>=118)return false;
+  if(!(rise>0.08)||t>=WATERFALL_CAVE_MIRROR_PEDESTAL_SETTLE_FRAMES)return false;
   const seed=state.pedestalSeed||0;
   const emerge=clamp(rise/0.30,0,1);
-  const fade=clamp(0.28+(118-t)/88,0.28,1);
+  const fade=clamp(0.28+(WATERFALL_CAVE_MIRROR_PEDESTAL_SETTLE_FRAMES-t)/88,0.28,1);
   const power=emerge*fade;
   if(!(power>0.02))return false;
   c.save();
@@ -1284,8 +1290,8 @@ function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
   const state=waterfallCaveMirrorPedestalState(cave);
   const rise=waterfallCaveMirrorPedestalProgress(state);
   if(!(rise>0))return false;
-  const splashLife=clamp((state.pedestalSplashT||0)/96,0,1);
-  const px=x,baseY=y+8,topY=Math.round(baseY-50*rise);
+  const splashLife=clamp((state.pedestalSplashT||0)/WATERFALL_CAVE_MIRROR_PEDESTAL_SPLASH_FRAMES,0,1);
+  const px=x,baseY=y+WATERFALL_CAVE_MIRROR_PEDESTAL_WATERLINE_OFFSET,topY=Math.round(baseY-WATERFALL_CAVE_MIRROR_PEDESTAL_RISE_PX*rise);
   c.save();
   c.globalAlpha=0.20;
   c.fillStyle='#000000';
