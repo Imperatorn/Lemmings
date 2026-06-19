@@ -224,7 +224,7 @@ const LEVELS=[
   build(P){ P.rect(0,185,285,55); P.rect(455,160,230,80); P.rect(920,190,380,50);
     P.ramp(285,205,55,20,-1); P.ramp(860,190,80,30,1);
     P.disc(575,130,18); P.rect(1010,150,24,40); },
-  decor(D){ D.waterfall(370,56,156,34);D.waterfall(805,62,150,34);D.rock(300,184,0.9);D.rock(875,189,1.0);
+  decor(D){ D.waterfall(370,56,156,34);D.rock(300,184,0.9);D.rock(875,189,1.0);
     D.bush(120,184);D.mush(520,159);D.bush(650,159);D.mush(980,189);D.bush(1160,189);D.mush(760,159); } },
 
 { name:'MÅNSKENSMUREN', theme:'hell', night:true, W:1400,
@@ -432,7 +432,7 @@ const LEVELS=[
     P.rect(1210,112,28,63); P.rect(1730,104,24,51);
     P.rect(1238,138,94,37); P.erase.rect(1250,150,48,22);
     P.disc(175,166,20); P.disc(555,145,18); P.disc(1130,150,22); P.disc(1540,160,20); },
-  decor(D){ D.waterfall(420,54,158,30);D.waterfall(1440,64,150,28);
+  decor(D){ D.waterfall(420,54,158,30);
     D.tree(150,190,1.15);D.tree(245,190,0.9);D.bush(70,129);D.bush(520,169);D.mush(545,169);D.marker(615,129,'BONUS');
     D.torch(585,130);D.torch(845,150);D.crystal(884,150);D.marker(585,205,'LOOT');
     D.pyramid(1140,175,0.95);D.mummy(1135,174,130,0.15);D.cactus(1175,175,0.9);D.rock(1215,175,0.9);D.marker(1274,159,'LOOT');

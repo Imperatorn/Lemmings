@@ -225,8 +225,12 @@ if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\('
 }
 const runeSetMatches = [...levelsCode.matchAll(/secrets:\{[^}]*runeSets:\['([^']+)'\][^}]*\}/g)].map(m => m[1]);
 const caveVariantMatches = [...levelsCode.matchAll(/secrets:\{[^}]*runeSets:\['([^']+)'\][^}]*caveVariant:'([^']+)'[^}]*\}/g)].map(m => ({setId:m[1],variant:m[2]}));
+const waterfallDecorCount = (levelsCode.match(/D\.waterfall\(/g) || []).length;
 if (!runeSetMatches.includes('waterfall.glyphArchive') || new Set(runeSetMatches).size < 7) {
   throw new Error('Waterfall levels should declare distinct explicit rune set requirements in secrets.runeSets');
+}
+if (waterfallDecorCount !== runeSetMatches.length) {
+  throw new Error('Interactive waterfall entrances should match the number of waterfall rune archives');
 }
 if (caveVariantMatches.length < 7 || !caveVariantMatches.some(v => v.setId === 'waterfall.glyphArchive' && v.variant === 'flodaChurch') || caveVariantMatches.filter(v => v.variant === 'flodaChurch').length !== 1) {
   throw new Error('Waterfall rune levels should declare explicit cave variants, with only the first rune cave using flodaChurch');
