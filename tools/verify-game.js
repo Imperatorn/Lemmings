@@ -321,6 +321,9 @@ if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.include
 if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || !caveRenderCode.includes('drawWaterfallCaveMainCrystal') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeEffect') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeRoomLight') || !caveRenderCode.includes('drawWaterfallCaveCrystalMessage') || !caveRenderCode.includes('drawWaterfallCaveMirrorPedestal') || !caveRenderCode.includes('waterfallCaveMirrorPoolShake') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
+if (!waterfallRuntimeCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SPLASH_FRAMES') || !waterfallRuntimeCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES') || !caveRenderCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_SPLASH_FRAMES') || !caveRenderCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_SETTLE_FRAMES')) {
+  throw new Error('Mirror pool pedestal timing should use named constants in state and render code');
+}
 if (/drawWaterfallCaveView\(ctx,tickCount\);\s*drawToastStack\(ctx\);/.test(playRenderCode)) {
   throw new Error('Waterfall cave view should not render gameplay toast text on top');
 }
@@ -1660,8 +1663,9 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!mirrorState.pedestalRaised || mirrorState.stonesThrown !== 7 || !(mirrorState.pedestalT > 0) || !(mirrorState.pedestalSplashT > 0) || !(mirrorState.pedestalShakeT > 80) || pedestalRiseSounds !== pedestalSoundsBefore + 1) {
     throw new Error('Mirror pool should raise a splashing pedestal on the seventh stone splash of the current room visit');
   }
+  const mirrorPedestalSettleFrames = 118;
   for (let i = 0; i < 62; i++) G.tick();
-  if (!(mirrorState.pedestalT < 118) || !(mirrorState.pedestalShakeT > 0)) {
+  if (!(mirrorState.pedestalT < mirrorPedestalSettleFrames) || !(mirrorState.pedestalShakeT > 0)) {
     throw new Error('Mirror pool should keep shaking until the pedestal is fully raised');
   }
   if (!drawWaterfallCaveView(WCTX, 48)) throw new Error('Mirror pool pedestal rise view did not render');
