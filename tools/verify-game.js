@@ -311,7 +311,7 @@ if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('s
 if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',2.1)") || !audioCode.includes('t+0.02') || !audioCode.includes('t+1.64')) {
   throw new Error('Teleport stone charging should use the longer dramatic crystal charge sound');
 }
-if (!audioCode.includes("rateFx('waterfall-cave-pedestal-rise',1.55)") || !audioCode.includes('t+1.14')) {
+if (!audioCode.includes("rateFx('waterfall-cave-pedestal-rise',2.05)") || !audioCode.includes('const scrapes=') || !audioCode.includes('t+1.84')) {
   throw new Error('Mirror pool pedestal rise should have a longer layered stone and water sound');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
