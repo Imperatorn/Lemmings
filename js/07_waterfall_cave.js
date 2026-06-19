@@ -1,5 +1,7 @@
 // ------------------------ VATTENFALLSGROTTA ----------------------------
 const WATERFALL_CAVE_TELEPORT_CHARGE_TICKS=126;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SPLASH_FRAMES=96;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES=118;
 
 Object.assign(G,{
   waterfallCaveLootKey(wf){
@@ -516,8 +518,8 @@ Object.assign(G,{
     if(!state||state.pedestalRaised)return false;
     state.pedestalRaised=true;
     state.pedestalT=1;
-    state.pedestalSplashT=96;
-    state.pedestalShakeT=118;
+    state.pedestalSplashT=WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SPLASH_FRAMES;
+    state.pedestalShakeT=WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES;
     state.pedestalSeed=((state.pedestalSeed||0)+37)&1023;
     if(pool){
       pool.rippleT=Math.max(pool.rippleT||0,160);
@@ -537,9 +539,9 @@ Object.assign(G,{
     if(!cave||cave.scene!=='mirrorPool')return false;
     const state=this.waterfallCaveMirrorPoolState(cave);
     if(!state||!state.pedestalRaised)return false;
-    state.pedestalT=Math.min(118,(state.pedestalT||0)+1);
+    state.pedestalT=Math.min(WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES,(state.pedestalT||0)+1);
     state.pedestalSplashT=Math.max(0,(state.pedestalSplashT||0)-1);
-    state.pedestalShakeT=state.pedestalT<118?Math.max(1,118-(state.pedestalT||0)):0;
+    state.pedestalShakeT=state.pedestalT<WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES?Math.max(1,WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES-(state.pedestalT||0)):0;
     return true;
   },
   waterfallCaveMirrorThrowStonePile(cave){
