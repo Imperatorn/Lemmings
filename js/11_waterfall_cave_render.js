@@ -1260,6 +1260,60 @@ function drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk){
   return true;
 }
 
+function drawWaterfallCaveMirrorEchoMarks(c,x,y,cave,tk){
+  const state=waterfallCaveMirrorPedestalState(cave);
+  const thrown=clamp(state&&state.stonesThrown||0,0,7);
+  const raised=!!(state&&state.pedestalRaised);
+  const t=tk+(cave&&cave.t||0);
+  c.save();
+  for(let i=0;i<7;i++){
+    const lit=raised||i<thrown;
+    const fresh=lit&&i===thrown-1&&!raised;
+    const p=i/6;
+    const mx=Math.round(x-52+p*104);
+    const my=Math.round(y+19-Math.sin(p*Math.PI)*9);
+    const pulse=fresh?(0.5+0.5*Math.sin(t*0.18+i)):0;
+    if(lit){
+      c.globalCompositeOperation='lighter';
+      c.globalAlpha=fresh?(0.22+0.16*pulse):0.13;
+      c.fillStyle='#9eefff';
+      c.fillRect(mx-3,my-4,7,8);
+      c.globalCompositeOperation='source-over';
+      c.globalAlpha=fresh?0.92:0.58;
+      c.fillStyle=fresh?'#d8ffff':'#9eefff';
+    }else{
+      c.globalAlpha=0.20;
+      c.fillStyle='#3f6974';
+    }
+    c.fillRect(mx-2,my-1,5,1);
+    c.fillRect(mx,my-4,1,7);
+  }
+  c.restore();
+  return true;
+}
+
+function drawWaterfallCaveMirrorEchoHint(c,cave,tk){
+  if(!cave||cave.scene!=='mirrorPool'||typeof drawTextC!=='function')return false;
+  const state=waterfallCaveMirrorPedestalState(cave);
+  if(!state||state.pedestalRaised||!(state.stonesThrown>=3))return false;
+  const life=0.72+0.18*Math.sin((tk+(cave.t||0))*0.08);
+  const x=130,y=32,w=220,h=24;
+  c.save();
+  c.globalAlpha=0.34*life;
+  c.fillStyle='#02070a';
+  c.fillRect(x-5,y-5,w+10,h+10);
+  c.globalAlpha=0.58*life;
+  c.fillStyle='#0b1720';
+  fillPixelPoly(c,[[x,y+3],[x+10,y],[x+w-10,y],[x+w,y+3],[x+w-8,y+h],[x+8,y+h]]);
+  c.globalAlpha=0.46*life;
+  c.fillStyle='#78d8f0';
+  c.fillRect(x+18,y+h-6,w-36,1);
+  c.globalAlpha=0.92*life;
+  drawTextC(c,'DAMMEN RÄKNAR EKON',x+w/2,y+8,1,'#bdf8ff');
+  c.restore();
+  return true;
+}
+
 function waterfallCaveMirrorPedestalState(cave){
   return cave&&cave.sceneState&&cave.sceneState.mirrorPool||null;
 }
@@ -2041,6 +2095,7 @@ function drawWaterfallCaveAdventureObjects(c,cave,tk,style){
         c.fillRect(x-Math.round(w/2),y-3+i*4,w,1);
       }
       c.globalAlpha=1;
+      drawWaterfallCaveMirrorEchoMarks(c,x,y,cave,tk);
       drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk);
       drawWaterfallCaveMirrorPoolSplash(c,x,y,obj,tk);
     }else if(kind==='throwStonePile'){
@@ -2197,6 +2252,7 @@ function drawWaterfallCaveAdventureView(c,cave,tk){
   }
   drawWaterfallCaveStoneInspect(c,cave,tk);
   drawWaterfallCaveCrystalMessage(c,cave,tk);
+  drawWaterfallCaveMirrorEchoHint(c,cave,tk);
   drawWaterfallCaveRuneReadPanel(c,cave,tk);
   drawWaterfallCaveObjectPrompt(c,cave,tk);
   c.globalAlpha=0.22;

@@ -279,6 +279,9 @@ if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.incl
 if (!caveRenderCode.includes('drawWaterfallCaveRuneReadPanel')) {
   throw new Error('Glyph archive should render readable rune text when the lemmel approaches the runes');
 }
+if (!caveRenderCode.includes('drawWaterfallCaveMirrorEchoMarks') || !caveRenderCode.includes('drawWaterfallCaveMirrorEchoHint') || !caveRenderCode.includes('DAMMEN RÄKNAR EKON')) {
+  throw new Error('Mirror pool should offer subtle seven-stone echo hints without explicit instructions');
+}
 if (!caveRenderCode.includes('waterfallCaveArchivePageState') || !caveRenderCode.includes('drawWaterfallCaveArchivePage') || !caveRenderCode.includes('G.runeArchiveProgress')) {
   throw new Error('Glyph archive side pages should render global profile rune progress');
 }
