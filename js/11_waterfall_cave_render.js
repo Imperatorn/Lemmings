@@ -1285,11 +1285,11 @@ function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
   const rise=waterfallCaveMirrorPedestalProgress(state);
   if(!(rise>0))return false;
   const splashLife=clamp((state.pedestalSplashT||0)/96,0,1);
-  const px=x,baseY=y+18,topY=Math.round(baseY-50*rise);
+  const px=x,baseY=y+8,topY=Math.round(baseY-50*rise);
   c.save();
-  c.globalAlpha=0.28;
+  c.globalAlpha=0.20;
   c.fillStyle='#000000';
-  fillPixelPoly(c,[[px-56,baseY+7],[px-30,baseY-2],[px+34,baseY-2],[px+58,baseY+7],[px+36,baseY+15],[px-36,baseY+15]]);
+  fillPixelPoly(c,[[px-50,baseY+10],[px-28,baseY+1],[px+32,baseY+1],[px+54,baseY+10],[px+34,baseY+17],[px-34,baseY+17]]);
   c.globalAlpha=1;
 
   if(splashLife>0){
@@ -1326,6 +1326,16 @@ function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
   c.fillRect(px-16,topY+7,32,2);
   c.fillStyle='#1c2930';
   for(let i=0;i<5;i++)c.fillRect(px-18+i*9,topY+18+i%2*6,2,18+((i+1)%2)*7);
+  const lipPulse=0.5+0.5*Math.sin((tk+(cave&&cave.t||0))*0.12);
+  c.globalAlpha=0.22+0.16*splashLife+0.05*lipPulse;
+  c.fillStyle='#1f6376';
+  fillPixelPoly(c,[[px-42,baseY+1],[px-24,baseY-4],[px+26,baseY-4],[px+44,baseY+1],[px+28,baseY+7],[px-28,baseY+7]]);
+  c.globalAlpha=0.20+0.16*splashLife;
+  c.fillStyle='#9eefff';
+  c.fillRect(px-30,baseY-2,18,1);
+  c.fillRect(px+10,baseY-3,24,1);
+  c.fillRect(px-20,baseY+4,42,1);
+  c.globalAlpha=1;
   drawWaterfallCaveMirrorPedestalDrips(c,px,baseY,topY,state,cave,tk,rise);
 
   const objY=topY+1;
