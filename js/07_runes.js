@@ -131,6 +131,65 @@ Object.assign(G,{
       sets:progress.sets
     };
   },
+  runeArchiveProgress(data,limit){
+    const progress=this.normalizeRuneProgress(data||this.runeProgress);
+    const catalog=this.runeCatalog();
+    const setMeta={};
+    const sets=Array.isArray(catalog.sets)?catalog.sets:[];
+    for(let i=0;i<sets.length;i++){
+      const s=sets[i]||{},id=String(s.id||'');
+      if(!id)continue;
+      setMeta[id]={
+        order:Number.isFinite(s.order)?s.order:i,
+        index:i,
+        title:String(s.title||id)
+      };
+    }
+    const entries=(Array.isArray(catalog.runes)?catalog.runes:[]).map((r,i)=>{
+      r=r||{};
+      const setId=String(r.setId||'');
+      const meta=setMeta[setId]||{order:9999,index:9999,title:String(r.setTitle||setId)};
+      const key=String(r.key||'');
+      return {
+        key,
+        setId,
+        runeId:String(r.runeId||key.split('.').pop()||('rune'+i)),
+        title:String(r.title||r.runeId||key||('Runa '+(i+1))),
+        setTitle:String(r.setTitle||meta.title||setId),
+        setOrder:meta.order,
+        setIndex:meta.index,
+        order:Number.isFinite(r.order)?r.order:i+1,
+        catalogIndex:i,
+        read:!!(key&&progress.discovered&&progress.discovered[key])
+      };
+    }).sort((a,b)=>
+      (a.setOrder-b.setOrder)||
+      (a.setIndex-b.setIndex)||
+      (a.order-b.order)||
+      (a.catalogIndex-b.catalogIndex)||
+      a.key.localeCompare(b.key)
+    );
+    const max=Number.isFinite(limit)?Math.max(0,Number(limit)|0):entries.length;
+    const pages=max>0?entries.slice(0,max):[];
+    const visited={};
+    let discovered=0,visibleLit=0;
+    for(const e of entries){
+      if(!e.read)continue;
+      discovered++;
+      if(e.setId)visited[e.setId]=true;
+    }
+    for(const e of pages)if(e.read)visibleLit++;
+    return {
+      entries,
+      pages,
+      discovered,
+      visibleLit,
+      visitedSets:Object.keys(visited).length,
+      knownTotal:entries.length,
+      visibleTotal:pages.length,
+      hiddenTotal:Math.max(0,entries.length-pages.length)
+    };
+  },
   levelSecretRuneSets(idx){
     const L=LEVELS[clamp(idx|0,0,LEVELS.length-1)];
     const secrets=L&&L.secrets&&typeof L.secrets==='object'?L.secrets:null;

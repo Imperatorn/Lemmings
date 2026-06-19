@@ -1008,6 +1008,52 @@ function drawWaterfallCaveAmbientMotes(c,cave,tk,col,count,seed,alpha){
   c.restore();
 }
 
+function waterfallCaveArchivePageState(cave,limit){
+  const out=G.runeArchiveProgress?G.runeArchiveProgress(null,limit):{pages:[]};
+  const pages=Array.isArray(out&&out.pages)?out.pages:[];
+  let activeSlot=-1;
+  if(cave&&cave.scene==='glyphArchive'&&G.waterfallCaveSceneObjects){
+    const hit=(G.waterfallCaveSceneObjects(cave)||[]).find(h=>h&&h.def&&h.def.id==='runeWall');
+    const def=hit&&hit.def,obj=hit&&hit.obj;
+    const runes=Array.isArray(def&&def.runes)?def.runes:[];
+    const idx=obj&&Number.isFinite(obj.activeRuneIndex)?obj.activeRuneIndex:-1;
+    if(obj&&obj.readT>0&&idx>=0&&idx<runes.length&&G.waterfallCaveRuneDescriptor){
+      const desc=G.waterfallCaveRuneDescriptor(def,runes[idx],idx,runes.length);
+      const key=desc&&desc.key;
+      activeSlot=pages.findIndex(p=>p&&p.key===key);
+    }
+  }
+  return Object.assign({},out,{pages,activeSlot});
+}
+
+function drawWaterfallCaveArchivePage(c,bx,by,slot,state,style,tk){
+  const page=state&&state.pages&&state.pages[slot];
+  const lit=!!(page&&page.read);
+  const active=lit&&state&&state.activeSlot===slot;
+  const pulse=active?(0.5+0.5*Math.sin(tk*0.22)):0;
+  c.save();
+  if(lit){
+    c.globalCompositeOperation='lighter';
+    c.globalAlpha=active?(0.22+0.16*pulse):0.10;
+    c.fillStyle=style.glow||'#ffce78';
+    c.fillRect(bx-2,by-3,11,17);
+    c.globalAlpha=active?(0.34+0.18*pulse):0.15;
+    c.fillStyle=style.accent||'#d5a55a';
+    c.fillRect(bx-1,by-1,9,14);
+    c.globalCompositeOperation='source-over';
+  }
+  c.globalAlpha=1;
+  c.fillStyle=lit?(active?'#fff3b0':(style.accent||'#d5a55a')):(slot%2?'#d0a060':'#8f6137');
+  c.fillRect(bx,by,7,12);
+  if(lit){
+    c.globalAlpha=active?0.90:0.52;
+    c.fillStyle=active?'#fff8d0':'#ffe6a0';
+    c.fillRect(bx+1,by+1,5,2);
+    c.fillRect(bx+1,by+4,1,6);
+  }
+  c.restore();
+}
+
 function drawWaterfallCaveAdventureDetails(c,cave,tk,style){
   const scene=cave.scene||'emberPassage', wf=cave.wf||{}, t=cave.t||0;
   if(scene==='emberPassage'){
@@ -1072,6 +1118,7 @@ function drawWaterfallCaveAdventureDetails(c,cave,tk,style){
   }else if(scene==='glyphArchive'){
     drawWaterfallCaveAmbientMotes(c,cave,tk,'#ffd080',20,881,0.22);
     c.save();
+    const archivePages=waterfallCaveArchivePageState(cave,32);
     c.globalAlpha=0.46;
     c.fillStyle='#080604';
     fillPixelPoly(c,[[72,92],[116,70],[170,86],[160,226],[78,242]]);
@@ -1090,8 +1137,7 @@ function drawWaterfallCaveAdventureDetails(c,cave,tk,style){
         c.fillStyle='#b9874c';
         for(let i=0;i<4;i++){
           const bx=sx+(left?8+i*12:8+i*12), by=y-7+(i%2);
-          c.fillStyle=i%2?'#d0a060':'#8f6137';
-          c.fillRect(bx,by,7,12);
+          drawWaterfallCaveArchivePage(c,bx,by,side*16+row*4+i,archivePages,style,tk+t);
         }
       }
     }

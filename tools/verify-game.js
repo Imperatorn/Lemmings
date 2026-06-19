@@ -208,10 +208,10 @@ if (!inputCode.includes("G.selectMenuLevel") || !inputCode.includes("G.toggleLev
   throw new Error('Menu input should route level selection through progression rules');
 }
 if (!gameCode.includes('runeProgress')) throw new Error('Profile state is missing runeProgress');
-for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus']) {
+for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus']) {
   if (!runeCode.includes(token)) throw new Error(`Rune module is missing ${token}`);
 }
-for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneDiscovery(desc)','runeProgressSummary(data)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelRuneGuidance(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
+for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneDiscovery(desc)','runeProgressSummary(data)','runeArchiveProgress(data,limit)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelRuneGuidance(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
   if (gameCode.includes(token)) throw new Error(`07_game.js should not own rune/completion implementation: ${token}`);
 }
 if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\(')) {
@@ -278,6 +278,9 @@ if (!caveRenderCode.includes('drawWaterfallCaveRuneWall') || caveRenderCode.incl
 }
 if (!caveRenderCode.includes('drawWaterfallCaveRuneReadPanel')) {
   throw new Error('Glyph archive should render readable rune text when the lemmel approaches the runes');
+}
+if (!caveRenderCode.includes('waterfallCaveArchivePageState') || !caveRenderCode.includes('drawWaterfallCaveArchivePage') || !caveRenderCode.includes('G.runeArchiveProgress')) {
+  throw new Error('Glyph archive side pages should render global profile rune progress');
 }
 if (!caveRenderCode.includes('drawWaterfallCaveObjectPrompt') || !caveRenderCode.includes('MELLANSLAG: TITTA')) {
   throw new Error('Waterfall cave cards should show a visible interaction prompt');
@@ -530,7 +533,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
-  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
+  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
   'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
@@ -1740,6 +1743,13 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const runtimeRunes = G.runeProgress;
   if (runeSummary.discovered < runeWall.def.runes.length || runeSummary.completeSets < 1 || !runtimeRunes || !runtimeRunes.sets || !runtimeRunes.sets['waterfall.glyphArchive'] || !runtimeRunes.sets['waterfall.glyphArchive'].complete) {
     throw new Error('Reading glyph archive runes should complete a persistent rune set on the active profile state');
+  }
+  const archiveProgress = G.runeArchiveProgress(null, 32);
+  if (!archiveProgress || archiveProgress.visibleTotal !== 32 || archiveProgress.visibleLit !== runeWall.def.runes.length || archiveProgress.visitedSets !== 1) {
+    throw new Error('Global rune archive page progress should expose the first 32 profile rune slots');
+  }
+  if (archiveProgress.pages.slice(0, runeWall.def.runes.length).some(p => !p || !p.read) || archiveProgress.pages.slice(runeWall.def.runes.length).some(p => p && p.read)) {
+    throw new Error('Completing the first rune archive should light only the first six global archive pages');
   }
   const firstRuneKey = 'waterfall.glyphArchive.' + runeWall.def.runes[0].id;
   if (!runtimeRunes.discovered || !runtimeRunes.discovered[firstRuneKey] || runtimeRunes.discovered[firstRuneKey].setTitle !== runeWall.def.runeSet.title) {
