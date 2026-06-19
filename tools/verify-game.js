@@ -317,8 +317,8 @@ if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('s
 if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',2.1)") || !audioCode.includes('t+0.02') || !audioCode.includes('t+1.64')) {
   throw new Error('Teleport stone charging should use the longer dramatic crystal charge sound');
 }
-if (!audioCode.includes("rateFx('waterfall-cave-pedestal-rise',2.35)") || !audioCode.includes('const scrapes=') || !audioCode.includes('const groans=') || !audioCode.includes('const droplets=') || !audioCode.includes('t+2.03')) {
-  throw new Error('Mirror pool pedestal rise should have a long layered stone, water, and settling sound');
+if (!audioCode.includes("rateFx('waterfall-cave-pedestal-rise',2.90)") || !audioCode.includes('const bassDest=') || !audioCode.includes('const subLifts=') || !audioCode.includes('const droplets=') || !audioCode.includes('t+2.42')) {
+  throw new Error('Mirror pool pedestal rise should have a long layered stone, water, sub-bass, and settling sound');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
 if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
