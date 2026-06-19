@@ -79,7 +79,7 @@ const G={
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', levelRunMode:'campaign', tempoIdx:1, cutscenesOn:true,
-  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
+  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{},archives:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
   holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneCharged:false, practiceHolyTeleportStoneUnlocked:false, practiceHolyTeleportStoneCharged:false, holyTeleportStoneLemId:null, portalStone:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
@@ -387,7 +387,7 @@ const G={
     this.money=0;
     this.pendingSkillBonus={};
     this.profileStats={levels:{}};
-    this.runeProgress={v:1,discovered:{},sets:{}};
+    this.runeProgress={v:1,discovered:{},sets:{},archives:{}};
     this.holyBlessingUnlocked=false;
     this.holyTeleportStoneUnlocked=false;
     this.holyTeleportStoneCharged=false;
@@ -532,7 +532,7 @@ const G={
         sumPct+=s.bestPct||0;
         bestSaved+=s.bestSaved||0;
       }
-      rows.push({id:meta.id,name:meta.name,cleared,attempts,wins,sumPct,bestSaved,money:Math.max(0,data.money|0),holy:!!data.holyBlessingUnlocked,stone:!!data.holyTeleportStoneUnlocked,runes:runeSummary.discovered,runeSets:runeSummary.completeSets});
+      rows.push({id:meta.id,name:meta.name,cleared,attempts,wins,sumPct,bestSaved,money:Math.max(0,data.money|0),holy:!!data.holyBlessingUnlocked,stone:!!data.holyTeleportStoneUnlocked,runes:runeSummary.discovered,runeSets:runeSummary.completeSets,runeArchives:runeSummary.visitedArchives});
     }
     rows.sort((a,b)=>(b.cleared-a.cleared)||(b.sumPct-a.sumPct)||(b.wins-a.wins)||a.name.localeCompare(b.name));
     return rows;

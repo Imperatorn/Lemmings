@@ -836,6 +836,19 @@ Object.assign(G,{
       cave.churchHymnDistant=false;
       if(prevScene==='church'||prevScene==='glyphArchive')cave.churchHymnCarry=false;
     }
+    if(def.id==='glyphArchive'&&this.recordRuneArchiveVisit){
+      const runeWall=(this.waterfallCaveSceneObjects(cave)||[]).find(hit=>hit&&hit.def&&hit.def.kind==='runeWall');
+      const rs=runeWall&&runeWall.def&&runeWall.def.runeSet||{};
+      const setId=String(rs.id||(runeWall&&this.waterfallCaveActiveRuneSetId?this.waterfallCaveActiveRuneSetId(cave,runeWall.def):''));
+      if(setId)this.recordRuneArchiveVisit({
+        setId,
+        title:rs.title,
+        source:rs.source,
+        world:rs.world,
+        sceneId:def.id,
+        objectId:runeWall&&runeWall.def&&runeWall.def.id
+      });
+    }
     if(!opts||opts.audio!==false)this.setWaterfallCaveSceneAudio(def.id,{fromScene:prevScene});
     return true;
   },

@@ -208,10 +208,10 @@ if (!inputCode.includes("G.selectMenuLevel") || !inputCode.includes("G.toggleLev
   throw new Error('Menu input should route level selection through progression rules');
 }
 if (!gameCode.includes('runeProgress')) throw new Error('Profile state is missing runeProgress');
-for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus']) {
+for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus']) {
   if (!runeCode.includes(token)) throw new Error(`Rune module is missing ${token}`);
 }
-for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneDiscovery(desc)','runeProgressSummary(data)','runeArchiveProgress(data,limit)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelRuneGuidance(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
+for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneArchiveVisit(desc)','recordRuneDiscovery(desc)','runeProgressSummary(data)','runeArchiveProgress(data,limit)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelRuneGuidance(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
   if (gameCode.includes(token)) throw new Error(`07_game.js should not own rune/completion implementation: ${token}`);
 }
 if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\(')) {
@@ -533,7 +533,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
-  'runeCatalog','normalizeRuneProgress','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
+  'runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
   'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
@@ -1012,7 +1012,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   AU.stopWaterfallCaveChurchHymn = fade => { churchHymnStopped++; churchHymnFadeDurations.push(fade); };
   AU.musicOn = true;
   AU.sfxOn = true;
-  G.runeProgress = {v:1, discovered:{}, sets:{}};
+  G.runeProgress = {v:1, discovered:{}, sets:{}, archives:{}};
   G.cleared = new Array(LEVELS.length).fill(false);
   G.holyTeleportStoneUnlocked = false;
   G.holyTeleportStoneCharged = false;
@@ -1689,6 +1689,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!drawWaterfallCaveView(WCTX, 49)) throw new Error('Glyph archive view did not render');
   const runeWall = G.waterfallCaveSceneObjects(G.waterfallCave).find(hit => hit && hit.def && hit.def.id === 'runeWall');
   if (!runeWall) throw new Error('Glyph archive is missing the rune wall');
+  const archiveVisitBeforeReading = G.runeArchiveProgress(null, 32);
+  if (!G.runeProgress.archives || !G.runeProgress.archives['waterfall.glyphArchive'] || archiveVisitBeforeReading.visitedArchives !== 1 || archiveVisitBeforeReading.visibleLit !== 0) {
+    throw new Error('Entering the glyph archive should persist an archive visit without lighting unread rune pages');
+  }
   G.waterfallCave.lemX = runeWall.obj.x;
   G.waterfallCave.lemY = runeWall.obj.y;
   G.tick();
@@ -3328,12 +3332,13 @@ withLocalStorage({}, store => {
   G.saved = G.level.save;
   G.recordLevelResult(true);
   G.markLevelCleared(idx);
+  G.recordRuneArchiveVisit({setId:'practice.runes',title:'Practice'});
   G.recordRuneDiscovery({key:'practice.rune.one',setId:'practice.runes',runeId:'one',title:'Practice Rune',setTitle:'Practice',total:1,lines:['Practice']});
   G.collectWaterfallCaveChest({chest:{coins:4}});
   G.unlockHolyBlessing();
   const fakeHoly = {id:9001, holy:true, dead:false, alive(){return true}};
   G.unlockHolyTeleportStone(fakeHoly);
-  if (G.cleared[idx] || G.profileStats.levels[idx] || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged) {
+  if (G.cleared[idx] || G.profileStats.levels[idx] || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged) {
     throw new Error('Practice run rewards or results leaked into campaign profile state');
   }
   if (!G.practiceHolyTeleportStoneUnlocked || !G.portalStoneButtonVisible()) {
@@ -3357,7 +3362,7 @@ withLocalStorage({}, store => {
   G.cancelPortalStonePlacement();
   G.savePrefs();
   G.loadPrefs();
-  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.practiceHolyTeleportStoneUnlocked || G.practiceHolyTeleportStoneCharged) {
+  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.practiceHolyTeleportStoneUnlocked || G.practiceHolyTeleportStoneCharged) {
     throw new Error('Practice state should not persist after save/load');
   }
 });
@@ -3414,7 +3419,7 @@ withLocalStorage({}, store => {
   const bMeta = createProfile('Beta');
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch active profile in storage');
   G.loadPrefs();
-  if (G.money !== 0 || G.cleared.some(Boolean) || G.levelSelectMode !== 'campaign' || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.levelSelectMode !== 'campaign' || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || saveGameSlots().length !== 0) {
     throw new Error('New profile should not inherit progress, money, level select mode, holy state, runes, or save slots');
   }
   G.money = 2;
@@ -3422,12 +3427,12 @@ withLocalStorage({}, store => {
   G.savePrefs();
   if (!setActiveProfile(a)) throw new Error('Could not switch back to profile A');
   G.loadPrefs();
-  if (G.money !== 9 || !G.cleared[0] || G.levelSelectMode !== 'free' || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || !G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 1 || saveGameSlots().length !== 1) {
+  if (G.money !== 9 || !G.cleared[0] || G.levelSelectMode !== 'free' || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || !G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 1 || G.runeProgressSummary().visitedArchives !== 1 || saveGameSlots().length !== 1) {
     throw new Error('Profile A progress was not restored after switching back');
   }
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch back to profile B');
   G.loadPrefs();
-  if (G.money !== 2 || G.cleared[0] || G.levelSelectMode !== 'campaign' || G.runeProgressSummary().discovered !== 0 || saveGameSlots().length !== 0) {
+  if (G.money !== 2 || G.cleared[0] || G.levelSelectMode !== 'campaign' || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || saveGameSlots().length !== 0) {
     throw new Error('Profile B should stay isolated after profile A is restored');
   }
 });

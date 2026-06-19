@@ -6,7 +6,7 @@ Object.assign(G,{
   },
   normalizeRuneProgress(data){
     const src=data&&typeof data==='object'?data:{};
-    const out={v:1,discovered:{},sets:{}};
+    const out={v:1,discovered:{},sets:{},archives:{}};
     const rawSets=src.sets&&typeof src.sets==='object'?src.sets:{};
     for(const id in rawSets){
       const s=rawSets[id]||{}, sid=String(s.id||id);
@@ -20,6 +20,22 @@ Object.assign(G,{
         readCount:0,
         complete:!!s.complete,
         completedAt:Number.isFinite(s.completedAt)?s.completedAt:null
+      };
+    }
+    const rawArchives=src.archives&&typeof src.archives==='object'?src.archives:{};
+    for(const id in rawArchives){
+      const a=rawArchives[id]||{}, aid=String(a.setId||a.id||id);
+      if(!aid)continue;
+      out.archives[aid]={
+        setId:aid,
+        title:String(a.title||a.setTitle||aid),
+        source:String(a.source||''),
+        world:String(a.world||''),
+        sceneId:String(a.sceneId||''),
+        objectId:String(a.objectId||''),
+        firstVisitedAt:Number.isFinite(a.firstVisitedAt)?a.firstVisitedAt:0,
+        lastVisitedAt:Number.isFinite(a.lastVisitedAt)?a.lastVisitedAt:(Number.isFinite(a.firstVisitedAt)?a.firstVisitedAt:0),
+        visitCount:Math.max(1,Number(a.visitCount)|0)
       };
     }
     const raw=src.discovered&&typeof src.discovered==='object'?src.discovered:{};
@@ -53,6 +69,19 @@ Object.assign(G,{
       if(e.source)set.source=e.source;
       if(e.world)set.world=e.world;
       set.total=Math.max(set.total||0,e.total||0);
+      if(!out.archives[setId]){
+        out.archives[setId]={
+          setId,
+          title:e.setTitle||setId,
+          source:e.source||'',
+          world:e.world||'',
+          sceneId:e.sceneId||'',
+          objectId:e.objectId||'',
+          firstVisitedAt:e.discoveredAt||0,
+          lastVisitedAt:e.discoveredAt||0,
+          visitCount:1
+        };
+      }
     }
     const readBySet={};
     for(const key in out.discovered){
@@ -67,6 +96,39 @@ Object.assign(G,{
       if(set.complete&&!Number.isFinite(set.completedAt))set.completedAt=null;
     }
     return out;
+  },
+  recordRuneArchiveVisit(desc){
+    if(!desc||typeof desc!=='object')return {visited:false,newly:false,archive:null,setId:null,practice:false};
+    const setId=String(desc.setId||desc.id||'');
+    if(!setId)return {visited:false,newly:false,archive:null,setId:null,practice:false};
+    let progress=this.normalizeRuneProgress(this.runeProgress);
+    const old=progress.archives&&progress.archives[setId];
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress()){
+      return {visited:!!old,newly:!old,archive:old||null,setId,practice:true};
+    }
+    const now=Date.now?Date.now():0;
+    const archive=old||{
+      setId,
+      title:String(desc.title||desc.setTitle||setId),
+      source:String(desc.source||''),
+      world:String(desc.world||''),
+      sceneId:String(desc.sceneId||''),
+      objectId:String(desc.objectId||''),
+      firstVisitedAt:now,
+      lastVisitedAt:now,
+      visitCount:0
+    };
+    archive.title=String(desc.title||desc.setTitle||archive.title||setId);
+    if(desc.source)archive.source=String(desc.source);
+    if(desc.world)archive.world=String(desc.world);
+    if(desc.sceneId)archive.sceneId=String(desc.sceneId);
+    if(desc.objectId)archive.objectId=String(desc.objectId);
+    archive.lastVisitedAt=now;
+    archive.visitCount=Math.max(1,(archive.visitCount||0)+1);
+    progress.archives[setId]=archive;
+    this.runeProgress=this.normalizeRuneProgress(progress);
+    this.savePrefs();
+    return {visited:true,newly:!old,archive:this.runeProgress.archives[setId],setId,practice:false};
   },
   recordRuneDiscovery(desc){
     if(!desc||typeof desc!=='object')return {newly:false,setCompletedNow:false,set:null,key:null};
@@ -128,6 +190,7 @@ Object.assign(G,{
       knownTotal,
       completeSets,
       totalSets,
+      visitedArchives:Object.keys(progress.archives||{}).length,
       sets:progress.sets
     };
   },
@@ -171,12 +234,10 @@ Object.assign(G,{
     );
     const max=Number.isFinite(limit)?Math.max(0,Number(limit)|0):entries.length;
     const pages=max>0?entries.slice(0,max):[];
-    const visited={};
     let discovered=0,visibleLit=0;
     for(const e of entries){
       if(!e.read)continue;
       discovered++;
-      if(e.setId)visited[e.setId]=true;
     }
     for(const e of pages)if(e.read)visibleLit++;
     return {
@@ -184,7 +245,9 @@ Object.assign(G,{
       pages,
       discovered,
       visibleLit,
-      visitedSets:Object.keys(visited).length,
+      visitedSets:Object.keys(progress.archives||{}).length,
+      visitedArchives:Object.keys(progress.archives||{}).length,
+      archives:progress.archives,
       knownTotal:entries.length,
       visibleTotal:pages.length,
       hiddenTotal:Math.max(0,entries.length-pages.length)
