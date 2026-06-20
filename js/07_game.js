@@ -643,6 +643,7 @@ const G={
       if(AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.25);
       if(AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.25);
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.25);
+      if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0.12);
     }
     else if(this.underwaterCaveActive&&this.underwaterCaveActive()){
       this.underwaterCaveResumeMusic=true;

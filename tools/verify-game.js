@@ -67,7 +67,7 @@ if (debugHtml) {
     'animFishRing','animFishRingRope','animWaterfallCave','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
     'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
   ];
-  requiredDebugActions.push('spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest');
+  requiredDebugActions.push('spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest','underwaterCaveNoFinsTest');
   for (const action of requiredDebugActions) {
     if (!debugHtml.includes(`data-action="${action}"`)) {
       throw new Error(`debug.html is missing debug action: ${action}`);
@@ -85,7 +85,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','makeDebugLemmingHoly','debugLemmingTarget','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest']) {
+  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','makeDebugLemmingHoly','debugLemmingTarget','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest','underwaterCaveNoFinsTest','setupUnderwaterCaveTest({swimFins:true})','setupUnderwaterCaveTest({swimFins:false})']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
   if (debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {
@@ -203,6 +203,9 @@ for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','swimStro
 }
 if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('c.rotate(Math.PI/2)') || !underwaterRenderCode.includes('rp(-2,-6,4,4,body)') || !underwaterRenderCode.includes('p(2,-5,2,2,skin)')) {
   throw new Error('Underwater lemming should use a rotated waterfall-cave body with a naturally oriented side-facing head');
+}
+if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.includes('rgba(0,1,4,0.94)') || !underwaterRenderCode.includes('rgba(255,230,130,0.38)')) {
+  throw new Error('Underwater octopus threat should make the lit room darker and more dangerous');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
   throw new Error('Input routing should send pointer and keyboard events to the underwater cave overlay');
@@ -409,6 +412,9 @@ if (!audioCode.includes('caveMystery') || !audioCode.includes('startWaterfallCav
 }
 if (!audioCode.includes('underwaterMystery') || !audioCode.includes('startUnderwaterCaveMysteryMusic') || !audioCode.includes('stopUnderwaterCaveMysteryMusic') || !audioCode.includes('UNDERWATER_MYSTERY_GAIN_BOOST')) {
   throw new Error('Underwater dark rooms should have a dedicated mysterious exploration music variant');
+}
+if (!audioCode.includes('underwaterPanic') || !audioCode.includes('startUnderwaterCavePanicMusic') || !audioCode.includes('stopUnderwaterCavePanicMusic') || !audioCode.includes('UNDERWATER_PANIC_GAIN_BOOST')) {
+  throw new Error('Underwater octopus threat should have a dedicated stressful panic music variant');
 }
 if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('CHURCH_HYMN_LOOP_SECONDS=32') || !audioCode.includes('CHURCH_HYMN_LOOP_FADE_SECONDS=1') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');
@@ -696,7 +702,7 @@ for (const name of requiredRuntimeMethods) {
     throw new Error('Typed rune summaries should report empty 32/10 progress on a fresh profile');
   }
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','setMusicDuck','clearMusicDuck','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusic','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startUnderwaterCaveMysteryMusic','stopUnderwaterCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sWaterfallCavePedestalRise','sPortalStoneOpen','sPortalStoneTravel']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','setMusicDuck','clearMusicDuck','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusic','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startUnderwaterCaveMysteryMusic','stopUnderwaterCaveMysteryMusic','startUnderwaterCavePanicMusic','stopUnderwaterCavePanicMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sWaterfallCavePedestalRise','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -705,6 +711,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
 {
   const prevStartUnderwaterMusic = AU.startUnderwaterCaveMysteryMusic;
   const prevStopUnderwaterMusic = AU.stopUnderwaterCaveMysteryMusic;
+  const prevStartUnderwaterPanicMusic = AU.startUnderwaterCavePanicMusic;
+  const prevStopUnderwaterPanicMusic = AU.stopUnderwaterCavePanicMusic;
   const prevSetMusicDuck = AU.setMusicDuck;
   const prevClearMusicDuck = AU.clearMusicDuck;
   const prevSilenceMusic = AU.silenceMusic;
@@ -729,11 +737,22 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevResumeWeather = G.underwaterCaveResumeWeather;
   const prevWeatherKind = G.weatherKind;
   const prevToasts = G.toasts;
-  let underwaterStarts = 0, underwaterStops = 0, silenced = 0, musicStops = 0, weatherStops = 0;
+  const prevHolySwimFinsUnlocked = G.holySwimFinsUnlocked;
+  const prevPracticeHolySwimFinsUnlocked = G.practiceHolySwimFinsUnlocked;
+  let underwaterStarts = 0, underwaterStops = 0, panicStarts = 0, panicStops = 0, silenced = 0, musicStops = 0, weatherStops = 0;
   const musicStarted = [], weatherStarted = [];
   const musicDucks = [], musicDuckClears = [];
   AU.startUnderwaterCaveMysteryMusic = fade => { underwaterStarts++; AU.mus = {timer:1,step:0,next:0,kind:'underwaterMystery'}; return true; };
   AU.stopUnderwaterCaveMysteryMusic = fade => { underwaterStops++; if (AU.mus && AU.mus.kind === 'underwaterMystery') AU.mus = {timer:null,step:0,next:0,kind:'underwaterMystery'}; return true; };
+  AU.startUnderwaterCavePanicMusic = fade => { panicStarts++; AU.mus = {timer:1,step:0,next:0,kind:'underwaterPanic'}; return true; };
+  AU.stopUnderwaterCavePanicMusic = fade => {
+    if (AU.mus && AU.mus.kind === 'underwaterPanic') {
+      panicStops++;
+      AU.mus = {timer:null,step:0,next:0,kind:'underwaterPanic'};
+      return true;
+    }
+    return false;
+  };
   AU.setMusicDuck = (v, fade) => { musicDucks.push({v, fade}); AU.musicDuck = v; return v; };
   AU.clearMusicDuck = fade => { musicDuckClears.push(fade); AU.musicDuck = 1; return 1; };
   AU.silenceMusic = fade => { silenced++; };
@@ -774,9 +793,11 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.weatherKind = 'rain';
   G.lems = [holy];
   G.manual = {used:true,active:true,lemId:holy.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+  G.holySwimFinsUnlocked = false;
+  G.practiceHolySwimFinsUnlocked = true;
   if (!G.enterUnderwaterCave(holy, water)) throw new Error('Underwater cave should open for a holy manual lemmel');
-  if (underwaterStarts !== 0 || !G.underwaterCaveActive() || G.underwaterCave.scene !== 'entryPool' || silenced !== 0 || weatherStops !== 1 || musicStarted.length !== 0 || musicDucks.length !== 1 || Math.abs(musicDucks[0].v - 0.34) > 0.001) {
-    throw new Error('Underwater entry should duck level music but not start mystery music in the lit first room');
+  if (underwaterStarts !== 0 || panicStarts !== 0 || !G.underwaterCaveActive() || G.underwaterCave.scene !== 'entryPool' || silenced !== 0 || weatherStops !== 1 || musicStarted.length !== 0 || musicDucks.length !== 1 || Math.abs(musicDucks[0].v - 0.34) > 0.001) {
+    throw new Error('Underwater entry with swim fins should duck level music but not start cave music in the lit first room');
   }
   G.setUnderwaterCaveScene('siltTunnel','fromPool');
   if (underwaterStarts !== 1 || G.underwaterCave.scene !== 'siltTunnel' || musicDuckClears.length < 1) {
@@ -794,8 +815,32 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   if (holy.manualVy !== 0 || !G.T.solid(holy.x, holy.y+1) || G.liquidAt(holy.x, holy.y+4, 0)) {
     throw new Error('Leaving underwater cave should place the holy lemmel on a dry shore when one is available');
   }
+  {
+    const panicStartBefore = panicStarts;
+    const panicStopBefore = panicStops;
+    const duckClearsBefore = musicDuckClears.length;
+    G.holySwimFinsUnlocked = false;
+    G.practiceHolySwimFinsUnlocked = false;
+    AU.mus = {timer:1,step:0,next:0,kind:'day'};
+    const holyNoFins = new Lemming(water.x + Math.min(18, Math.max(6, water.w/2)), water.y - 8);
+    holyNoFins.holy = true;
+    holyNoFins.state = 'MANUAL';
+    G.state = 'PLAY';
+    G.lems = [holyNoFins];
+    G.manual = {used:true,active:true,lemId:holyNoFins.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    if (!G.enterUnderwaterCave(holyNoFins, water)) throw new Error('Underwater cave should open without swim fins for the octopus warning');
+    if (panicStarts !== panicStartBefore + 1 || !(G.underwaterCave && G.underwaterCave.octopus) || AU.mus.kind !== 'underwaterPanic' || musicDuckClears.length <= duckClearsBefore) {
+      throw new Error('Entering underwater without swim fins should start panic music and dark octopus threat');
+    }
+    G.exitUnderwaterCave('silent');
+    if (panicStops <= panicStopBefore) {
+      throw new Error('Leaving the octopus threat should stop panic music');
+    }
+  }
   AU.startUnderwaterCaveMysteryMusic = prevStartUnderwaterMusic;
   AU.stopUnderwaterCaveMysteryMusic = prevStopUnderwaterMusic;
+  AU.startUnderwaterCavePanicMusic = prevStartUnderwaterPanicMusic;
+  AU.stopUnderwaterCavePanicMusic = prevStopUnderwaterPanicMusic;
   AU.setMusicDuck = prevSetMusicDuck;
   AU.clearMusicDuck = prevClearMusicDuck;
   AU.silenceMusic = prevSilenceMusic;
@@ -820,6 +865,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.underwaterCaveResumeWeather = prevResumeWeather;
   G.weatherKind = prevWeatherKind;
   G.toasts = prevToasts;
+  G.holySwimFinsUnlocked = prevHolySwimFinsUnlocked;
+  G.practiceHolySwimFinsUnlocked = prevPracticeHolySwimFinsUnlocked;
 }
 {
   const prevUnderwater = G.underwaterCave;

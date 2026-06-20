@@ -48,14 +48,23 @@ Object.assign(G,{
     return String(scene||'entryPool')!=='entryPool';
   },
   setUnderwaterCaveSceneAudio(scene,opts){
+    const panic=!!((this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(this.underwaterCave))||(opts&&opts.panic));
     const dark=this.underwaterCaveSceneDark(scene);
     if(opts&&opts.audio===false)return dark;
+    if(panic){
+      if(AU.clearMusicDuck)AU.clearMusicDuck(opts&&opts.force?0.05:0.2);
+      if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
+      if(AU.startUnderwaterCavePanicMusic)AU.startUnderwaterCavePanicMusic(opts&&opts.force?0.08:0.22);
+      return true;
+    }
     if(dark){
       if(AU.clearMusicDuck)AU.clearMusicDuck(opts&&opts.force?0.2:0.75);
+      if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0.08);
       if(AU.startUnderwaterCaveMysteryMusic)AU.startUnderwaterCaveMysteryMusic(opts&&opts.force?0.55:1.35);
     }else{
-      const wasUnderwaterMusic=!!(AU.mus&&AU.mus.kind==='underwaterMystery');
+      const wasUnderwaterMusic=!!(AU.mus&&(AU.mus.kind==='underwaterMystery'||AU.mus.kind==='underwaterPanic'));
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(opts&&opts.force?0.35:0.75);
+      if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(opts&&opts.force?0.08:0.25);
       const restartLevelMusic=this.underwaterCaveResumeMusic&&AU.musicOn&&AU.startMusic&&this.state==='PLAY'&&this.level&&(!AU.mus||!AU.mus.timer||wasUnderwaterMusic);
       if(restartLevelMusic&&AU.setMusicDuck)AU.setMusicDuck(UNDERWATER_ENTRY_MUSIC_DUCK,0);
       if(restartLevelMusic){
@@ -181,10 +190,12 @@ Object.assign(G,{
     if(caveAudio){
       if(AU.stopWeather)AU.stopWeather();
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
+      if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0.05);
     }else{
       this.underwaterCaveResumeMusic=false;
       this.underwaterCaveResumeWeather=null;
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0);
+      if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0);
     }
     this.setUnderwaterCaveSceneAudio('entryPool',{force:true,audio:caveAudio});
     this.clearTransientText();
@@ -215,6 +226,7 @@ Object.assign(G,{
     this.underwaterCave=null;
     this.underwaterCaveExitCooldown=48;
     if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(reason==='silent'?0.05:0.55);
+    if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(reason==='silent'?0.05:0.25);
     if(AU.clearMusicDuck)AU.clearMusicDuck(reason==='silent'?0.05:0.35);
     const resumeMusic=!!this.underwaterCaveResumeMusic;
     const resumeWeather=this.underwaterCaveResumeWeather;
@@ -313,6 +325,7 @@ Object.assign(G,{
     this.state='RESULT';
     this.recordLevelResult(false);
     if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
+    if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0.05);
     if(AU.clearMusicDuck)AU.clearMusicDuck(0.05);
     if(AU.stopMusic)AU.stopMusic();
     if(AU.stopWeather)AU.stopWeather();

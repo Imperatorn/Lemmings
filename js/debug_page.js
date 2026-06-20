@@ -480,7 +480,9 @@
     finishAnimationSetup('Portalsten: använd vanliga HUD-knappen PT, klicka den heliga lämmeln och placera utgångsportalen i världen.');
   }
 
-  function setupUnderwaterCaveTest(){
+  function setupUnderwaterCaveTest(opts){
+    opts=opts||{};
+    const withFins=opts.swimFins!==false;
     if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
     if(G.exitUnderwaterCave)G.exitUnderwaterCave('silent');
     if(!ensureWaterLevelForFishRing()){setStatus('Ingen vattenbana hittades för undervattenstest.','warn');return}
@@ -498,13 +500,14 @@
     G.spawned=G.level.lem;
     G.manual={used:true,active:true,lemId:holy.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     G.holyBlessingUnlocked=true;
-    G.practiceHolySwimFinsUnlocked=true;
-    holy.swimFins=true;
+    G.holySwimFinsUnlocked=withFins?G.holySwimFinsUnlocked:false;
+    G.practiceHolySwimFinsUnlocked=withFins;
+    holy.swimFins=withFins;
     G.holyLevelLemId=holy.id;
     G.paused=false;
     G.cam=clamp(x-180,0,G.maxCam());
     if(!G.enterUnderwaterCave||!G.enterUnderwaterCave(holy,z)){setStatus('Kunde inte öppna undervattensgrottan.','warn');return}
-    finishAnimationSetup('Undervattensgrotta: styr med piltangenterna, Shift simmar snabbare med simfötter, M visar kartan.');
+    finishAnimationSetup(withFins?'Undervattensgrotta med simfötter: piltangenter styr, Shift simmar snabbare, M visar kartan.':'Undervattensgrotta utan simfötter: simma upp för att fly från bläckfisken.');
   }
 
   function setupFishRingAnimation(){
@@ -702,7 +705,8 @@
     audioReady();
     if(action&&action.indexOf('anim')===0){doAnimation(action);return}
     if(action==='portalStoneTest'){setupPortalStoneTest();return}
-    if(action==='underwaterCaveTest'){setupUnderwaterCaveTest();return}
+    if(action==='underwaterCaveTest'){setupUnderwaterCaveTest({swimFins:true});return}
+    if(action==='underwaterCaveNoFinsTest'){setupUnderwaterCaveTest({swimFins:false});return}
     if(action==='makeHolyLem'){makeDebugLemmingHoly();return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;

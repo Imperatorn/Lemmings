@@ -256,34 +256,44 @@ function drawUnderwaterOctopusThreat(c,cave,tk,front){
   return true;
 }
 function drawUnderwaterCaveDarkness(c,cave,tk){
-  if(underwaterCaveLitRoom(cave))return false;
+  const danger=!!(cave&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
+  if(underwaterCaveLitRoom(cave)&&!danger)return false;
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150);
   const pulse=Math.sin(((cave.t||0)+tk)*0.11)*7;
   c.save();
-  const g=c.createRadialGradient(x,y,26,x,y,136+pulse);
+  const g=c.createRadialGradient(x,y,danger?12:26,x,y,danger?72+Math.abs(pulse)*0.7:136+pulse);
   g.addColorStop(0,'rgba(0,0,0,0)');
-  g.addColorStop(0.34,'rgba(0,3,8,0.08)');
-  g.addColorStop(0.58,'rgba(0,4,10,0.58)');
-  g.addColorStop(0.82,'rgba(0,3,8,0.88)');
-  g.addColorStop(1,'rgba(0,2,6,0.97)');
+  g.addColorStop(danger?0.22:0.34,danger?'rgba(0,3,8,0.12)':'rgba(0,3,8,0.08)');
+  g.addColorStop(danger?0.44:0.58,danger?'rgba(0,2,6,0.72)':'rgba(0,4,10,0.58)');
+  g.addColorStop(danger?0.70:0.82,danger?'rgba(0,1,4,0.94)':'rgba(0,3,8,0.88)');
+  g.addColorStop(1,danger?'rgba(0,0,2,0.995)':'rgba(0,2,6,0.97)');
   c.fillStyle=g;
   c.fillRect(0,0,CW,CH);
-  c.globalAlpha=0.18;
+  if(danger){
+    c.globalAlpha=0.30+0.10*Math.sin(((cave.t||0)+tk)*0.19);
+    c.fillStyle='#020003';
+    c.fillRect(0,0,CW,CH);
+    c.globalAlpha=0.28;
+    c.fillStyle='#18060b';
+    c.fillRect(0,Math.round(CH*0.58),CW,Math.round(CH*0.42));
+  }
+  c.globalAlpha=danger?0.36:0.18;
   c.fillStyle='#000000';
-  c.fillRect(0,0,CW,28);
-  c.fillRect(0,CH-24,CW,24);
+  c.fillRect(0,0,CW,danger?46:28);
+  c.fillRect(0,CH-(danger?44:24),CW,danger?44:24);
   c.restore();
   return true;
 }
 function drawUnderwaterHolyLight(c,cave,tk,dark){
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150);
   const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.14);
+  const danger=!!(cave&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
   c.save();
   c.globalCompositeOperation='lighter';
-  let g=c.createRadialGradient(x,y,2,x,y,dark?96+Math.round(pulse*12):46);
-  g.addColorStop(0,'rgba(255,245,170,0.46)');
-  g.addColorStop(0.24,'rgba(190,240,255,0.25)');
-  g.addColorStop(0.65,'rgba(80,190,220,0.08)');
+  let g=c.createRadialGradient(x,y,2,x,y,danger?58+Math.round(pulse*7):(dark?96+Math.round(pulse*12):46));
+  g.addColorStop(0,danger?'rgba(255,230,130,0.38)':'rgba(255,245,170,0.46)');
+  g.addColorStop(0.24,danger?'rgba(150,220,255,0.15)':'rgba(190,240,255,0.25)');
+  g.addColorStop(0.65,danger?'rgba(40,120,160,0.045)':'rgba(80,190,220,0.08)');
   g.addColorStop(1,'rgba(0,0,0,0)');
   c.fillStyle=g;
   c.fillRect(0,0,CW,CH);
