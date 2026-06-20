@@ -163,6 +163,7 @@ Object.assign(G,{
       swimY:spawn.y,
       vx:0,
       vy:0,
+      swimStrokeT:0,
       facing:spawn.facing||'front',
       swimFins:!!(this.hasHolySwimFins&&this.hasHolySwimFins()),
       keys:{left:false,right:false,up:false,down:false,run:false},
@@ -297,11 +298,13 @@ Object.assign(G,{
     if(mag>0){
       cave.vx=clamp((cave.vx||0)+h/mag*accel,-maxSpeed,maxSpeed);
       cave.vy=clamp((cave.vy||0)+v/mag*accel,-maxSpeed,maxSpeed);
-      if(Math.abs(h)>Math.abs(v))cave.facing=h>0?'right':'left';
-      else cave.facing=v<0?'back':'front';
+      if(Math.abs(h)>0)cave.facing=h>0?'right':'left';
     }
     cave.vx=(cave.vx||0)*UNDERWATER_SWIM_DRAG;
     cave.vy=(cave.vy||0)*UNDERWATER_SWIM_DRAG;
+    const strokeSpeed=Math.hypot(cave.vx||0,cave.vy||0);
+    if(!Number.isFinite(cave.swimStrokeT))cave.swimStrokeT=0;
+    cave.swimStrokeT+=strokeSpeed>0.08?(swimFast?0.16:0.095)+strokeSpeed*0.018:0.018;
     let nx=clamp((cave.swimX||240)+cave.vx,b.minX,b.maxX);
     let ny=clamp((cave.swimY||150)+cave.vy,b.minY,b.maxY);
     if(this.underwaterCaveBlockerAt(cave,nx,ny)){

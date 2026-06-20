@@ -196,13 +196,13 @@ for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwate
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
 }
-for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','drawUnderwaterLemmingFrontBack','anim.phase','anim.fast','hasFins']) {
+for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','swimStrokeT','anim.kick','anim.fast','hasFins','drawDir']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater lemming swim animation is missing ${token}`);
   }
 }
-if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('Samma kompakta grundform som vattenfallsgrottan')) {
-  throw new Error('Underwater lemming should keep the compact waterfall-cave pixel proportions');
+if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('Side-swimming pose')) {
+  throw new Error('Underwater lemming should use a compact side-swimming pixel pose');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
   throw new Error('Input routing should send pointer and keyboard events to the underwater cave overlay');
@@ -623,12 +623,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,waterfallCaveLemmingScale,drawWaterfallCaveLemming,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK,SAVE_KEY,PROFILE_INDEX_KEY,profileList,activeProfileId,activeProfileName,loadProfileData,saveProfileData,createProfile,setActiveProfile,renameProfile,deleteProfile,loadPersisted,savePersisted,saveGameSlots,writeGameSlots};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,drawUnderwaterCaveView,waterfallCaveLemmingScale,drawWaterfallCaveLemming,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK,SAVE_KEY,PROFILE_INDEX_KEY,profileList,activeProfileId,activeProfileName,loadProfileData,saveProfileData,createProfile,setActiveProfile,renameProfile,deleteProfile,loadPersisted,savePersisted,saveGameSlots,writeGameSlots};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, waterfallCaveLemmingScale, drawWaterfallCaveLemming, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK, SAVE_KEY, PROFILE_INDEX_KEY, profileList, activeProfileId, activeProfileName, loadProfileData, saveProfileData, createProfile, setActiveProfile, renameProfile, deleteProfile, loadPersisted, savePersisted, saveGameSlots, writeGameSlots} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, drawUnderwaterCaveView, waterfallCaveLemmingScale, drawWaterfallCaveLemming, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK, SAVE_KEY, PROFILE_INDEX_KEY, profileList, activeProfileId, activeProfileName, loadProfileData, saveProfileData, createProfile, setActiveProfile, renameProfile, deleteProfile, loadPersisted, savePersisted, saveGameSlots, writeGameSlots} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -869,6 +869,33 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.toasts = prevToasts;
   G.holySwimFinsUnlocked = prevHolySwimFinsUnlocked;
   G.practiceHolySwimFinsUnlocked = prevPracticeHolySwimFinsUnlocked;
+}
+{
+  const prevUnderwater = G.underwaterCave;
+  G.underwaterCave = {
+    active:true,
+    scene:'siltTunnel',
+    sceneState:{},
+    swimX:228,
+    swimY:156,
+    vx:1.2,
+    vy:-0.4,
+    swimStrokeT:1.4,
+    facing:'front',
+    swimFins:true,
+    keys:{left:false,right:true,up:false,down:false,run:true},
+    bubbles:[],
+    mapOpen:false,
+    hintT:12,
+    messageT:0,
+    t:44
+  };
+  if (!drawUnderwaterCaveView(WCTX, 13)) throw new Error('Underwater cave side-swim view with fins did not render');
+  G.underwaterCave.facing = 'left';
+  G.underwaterCave.vx = -1.1;
+  G.underwaterCave.swimStrokeT = 2.8;
+  if (!drawUnderwaterCaveView(WCTX, 14)) throw new Error('Underwater cave mirrored side-swim view did not render');
+  G.underwaterCave = prevUnderwater;
 }
 {
   const prevRuneProgress = G.runeProgress;
