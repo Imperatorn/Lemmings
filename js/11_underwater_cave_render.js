@@ -166,7 +166,7 @@ function drawUnderwaterLemmingSide(c,x,y,d,anim,hasFins){
 function drawUnderwaterLemming(c,cave,tk){
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150),face=cave.facing||'right';
   const anim=underwaterSwimPhase(cave,tk);
-  const hasFins=!!(cave.swimFins||(G.hasHolySwimFins&&G.hasHolySwimFins()));
+  const hasFins=!!(cave.swimFins||(!cave.manualLampDive&&G.hasHolySwimFins&&G.hasHolySwimFins()));
   const drawDir=face==='left'?-1:(face==='right'?1:((cave.vx||0)<-0.05?-1:1));
   const grab=!!(cave.octopus&&cave.octopus.phase==='grab');
   const dragFade=grab?clamp(cave.octopus.dragFade||0,0,1):0;
@@ -326,6 +326,7 @@ function drawUnderwaterCaveDarkness(c,cave,tk){
   return true;
 }
 function drawUnderwaterHolyLight(c,cave,tk,dark){
+  if(cave&&cave.manualLampDive)return false;
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150);
   const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.14);
   const danger=!!(cave&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
@@ -352,6 +353,63 @@ function drawUnderwaterHolyLight(c,cave,tk,dark){
   }
   c.restore();
 }
+function underwaterManualLampOn(cave){
+  return !!(cave&&cave.manualLampDive&&G.manual&&G.manual.active&&G.manual.lemId===cave.lemId&&G.manual.lampOn);
+}
+function underwaterManualLampDir(cave){
+  if(!cave)return 1;
+  if(cave.facing==='left')return -1;
+  if(cave.facing==='right')return 1;
+  return (cave.vx||0)<-0.05?-1:1;
+}
+function drawUnderwaterManualLampLight(c,cave,tk,dark){
+  if(!cave||!cave.manualLampDive)return false;
+  const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150),d=underwaterManualLampDir(cave);
+  const on=underwaterManualLampOn(cave),pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.18);
+  const flash=clamp((cave.lampPulseT||0)/18,0,1),baseY=y-7,tilt=clamp(cave.vy||0,-1.4,1.4)*10;
+  c.save();
+  c.globalCompositeOperation='lighter';
+  if(!on){
+    c.globalAlpha=0.12+0.18*flash;
+    c.fillStyle='#fff0a0';
+    c.fillRect(x+d*9-1,baseY-1,3,3);
+    c.restore();
+    return false;
+  }
+  const len=dark?178:132,spread=dark?64:44;
+  c.globalAlpha=(dark?0.24:0.16)+0.06*pulse+0.16*flash;
+  c.fillStyle='rgba(255,238,166,0.48)';
+  uwPoly(c,[
+    [x+d*8,baseY-5],
+    [x+d*Math.round(len*0.54),baseY+tilt-Math.round(spread*0.52)],
+    [x+d*len,baseY+tilt-Math.round(spread*0.18)],
+    [x+d*(len+18),baseY+tilt],
+    [x+d*len,baseY+tilt+Math.round(spread*0.18)],
+    [x+d*Math.round(len*0.54),baseY+tilt+Math.round(spread*0.52)],
+    [x+d*8,baseY+5]
+  ]);
+  c.globalAlpha=(dark?0.32:0.22)+0.08*pulse;
+  c.fillStyle='rgba(184,246,255,0.34)';
+  uwPoly(c,[
+    [x+d*10,baseY-3],
+    [x+d*Math.round(len*0.58),baseY+tilt-Math.round(spread*0.27)],
+    [x+d*Math.round(len*0.86),baseY+tilt],
+    [x+d*Math.round(len*0.58),baseY+tilt+Math.round(spread*0.27)],
+    [x+d*10,baseY+3]
+  ]);
+  c.globalAlpha=0.22+0.10*pulse;
+  c.fillStyle='#fff6c8';
+  for(let i=0;i<6;i++){
+    const p=(i+1)/7,xx=x+d*Math.round(20+p*len*0.78),yy=baseY+tilt*p+Math.sin((tk||0)*0.12+i)*2;
+    const w=Math.max(8,Math.round((1-p)*44));
+    c.fillRect(Math.round(xx-w/2),Math.round(yy),w,1);
+  }
+  c.globalAlpha=0.88;
+  c.fillStyle='#caa040';c.fillRect(x+d*7-1,baseY-2,3,2);
+  c.fillStyle='#fff0a0';c.fillRect(x+d*9-1,baseY-2,3,3);
+  c.restore();
+  return true;
+}
 function drawUnderwaterOctopusWarning(c,cave,tk){
   const o=cave&&cave.octopus;
   if(!o||!o.active||cave.swimFins||!o.warned||o.phase==='grab')return false;
@@ -365,6 +423,10 @@ function drawUnderwaterOctopusWarning(c,cave,tk){
   drawTextC(c,'SIMMA UPP\u00c5T!',x,y-5,1,pulse>0.48?'#fff0a0':'#ffd45c');
   c.restore();
   return true;
+}
+function underwaterCaveHintText(cave){
+  if(cave&&cave.manualLampDive)return 'PILAR SIMMAR  L LAMPA  M KARTA  ESC UPP';
+  return cave&&cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP':'PILAR SIMMAR  M KARTA  ESC UPP';
 }
 function drawUnderwaterMap(c,cave){
   const graph=typeof underwaterCaveMapGraph==='function'?underwaterCaveMapGraph():{nodes:[],links:[]};
@@ -401,13 +463,14 @@ function drawUnderwaterCaveView(c,tk){
   drawUnderwaterOctopusThreat(c,cave,tk,false);
   const dark=drawUnderwaterCaveDarkness(c,cave,tk);
   drawUnderwaterHolyLight(c,cave,tk,dark);
+  drawUnderwaterManualLampLight(c,cave,tk,dark);
   drawUnderwaterLemming(c,cave,tk);
   drawUnderwaterOctopusThreat(c,cave,tk,true);
   const def=typeof underwaterCaveSceneDef==='function'?underwaterCaveSceneDef(cave.scene):null;
   drawText(c,def&&def.label?def.label:'Undervattnet',12,12,1,'#bdf8ff');
   drawUnderwaterOctopusWarning(c,cave,tk);
   const octopus=!!(cave.octopus&&cave.octopus.active&&!cave.swimFins);
-  if(cave.hintT>0&&!octopus)drawTextC(c,cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP':'PILAR SIMMAR  M KARTA  ESC UPP',CW/2,CH-18,1,'#d8fbff');
+  if(cave.hintT>0&&!octopus)drawTextC(c,underwaterCaveHintText(cave),CW/2,CH-18,1,'#d8fbff');
   const hit=G.underwaterCavePromptObject?G.underwaterCavePromptObject(cave):null;
   if(hit&&hit.obj&&hit.obj.near){
     drawTextC(c,'MELLANSLAG: UNDERSÖK',Math.round(cave.swimX||240),Math.max(22,Math.round((cave.swimY||150)-28)),1,'#fff0a0');

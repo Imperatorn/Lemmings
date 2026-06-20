@@ -180,7 +180,7 @@ for (const token of ['UNDERWATER_CAVE_SCENES','UNDERWATER_CAVE_DEEP_RUNE_SET','e
     throw new Error(`Underwater cave scene registry is missing ${token}`);
   }
 }
-for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp']) {
+for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','underwaterCaveWaterfallDiveSource','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
@@ -196,6 +196,9 @@ if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_WAKE_DELAY=60') || !unde
 if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96') || !underwaterRuntimeCode.includes("cave.octopus&&cave.octopus.phase==='grab'") || !underwaterRuntimeCode.includes('cave.swimY>=UNDERWATER_OCTOPUS_GONE_Y') || !underwaterRuntimeCode.includes('o.goneT>=UNDERWATER_OCTOPUS_GONE_TICKS')) {
   throw new Error('Underwater octopus grab should pull the lemmel fully below the view before resolving failure');
 }
+if (!underwaterRuntimeCode.includes('manualLampDive') || !underwaterRuntimeCode.includes('waterfallDive') || !underwaterRuntimeCode.includes("key==='l'||key==='L'") || !underwaterRuntimeCode.includes('LAMPAN RÄCKER INTE')) {
+  throw new Error('Manual waterfall lamp diving should have separate state, lamp input, and progression guardrails');
+}
 if (underwaterRuntimeCode.includes("this.toast('SIMMA UPP!") || underwaterRuntimeCode.includes("this.toast('BLÄCKFISKEN") || underwaterRuntimeCode.includes("this.toast('NÅGOT RÖR SIG UNDER VATTNET")) {
   throw new Error('Underwater octopus threat should not show text over the octopus/eyes');
 }
@@ -207,7 +210,7 @@ for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','underwa
     throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
   }
 }
-for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterOctopusThreat','drawUnderwaterOctopusWarning','createRadialGradient']) {
+for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterManualLampLight','drawUnderwaterOctopusThreat','drawUnderwaterOctopusWarning','createRadialGradient']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
@@ -225,6 +228,9 @@ if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.i
 }
 if (!underwaterRenderCode.includes('drawUnderwaterOctopusWarning') || !underwaterRenderCode.includes("SIMMA UPP\\u00c5T!") || !underwaterRenderCode.includes('const x=CW-82,y=24')) {
   throw new Error('Underwater octopus warning should be shown as a small top warning, away from the octopus eyes');
+}
+if (!underwaterRenderCode.includes('underwaterManualLampOn') || !underwaterRenderCode.includes('underwaterManualLampDir') || !underwaterRenderCode.includes('L LAMPA') || !underwaterRenderCode.includes('cave&&cave.manualLampDive)return false')) {
+  throw new Error('Manual underwater lamp dive should render a directional lamp cone without holy aura');
 }
 if (!underwaterRenderCode.includes('drawUnderwaterOctopusEyes') || !underwaterRenderCode.includes('escapeFade') || !underwaterRenderCode.includes('dragFade') || !underwaterRenderCode.includes('goneFade') || !underwaterRenderCode.includes('visible<=0') || !underwaterRenderCode.includes('#ffd45c') || !underwaterRenderCode.includes('#ff4a24') || !underwaterRenderCode.includes("globalCompositeOperation='lighter'")) {
   throw new Error('Underwater octopus threat should show faint glowing red/yellow eyes near the bottom');
@@ -753,6 +759,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevLevel = G.level;
   const prevT = G.T;
   const prevLiquidCache = G.liquidCache;
+  const prevDecor = G.decor;
   const prevLevelIdx = G.levelIdx;
   const prevState = G.state;
   const prevLems = G.lems;
@@ -797,6 +804,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   holy.holy = true;
   holy.state = 'MANUAL';
   G.level = LEVELS[waterIdx];
+  G.decor = [{t:'waterfall',x:water.x+water.w/2,y:water.y-160,h:160,w:30,v:0}];
   G.liquidCache = null;
   {
     const poolLeft = Math.round(water.x);
@@ -862,6 +870,40 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
       throw new Error('Leaving the octopus threat should stop panic music');
     }
   }
+  {
+    const manualDive = new Lemming(water.x + Math.min(16, Math.max(8, water.w/2)), water.y - 6);
+    manualDive.holy = false;
+    manualDive.state = 'MANUAL';
+    G.state = 'PLAY';
+    G.lems = [manualDive];
+    G.manual = {used:true,active:true,lemId:manualDive.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    G.holySwimFinsUnlocked = true;
+    G.practiceHolySwimFinsUnlocked = true;
+    G.underwaterCave = null;
+    G.underwaterCaveExitCooldown = 0;
+    if (!G.tryEnterUnderwaterCaveFromManual(manualDive, water)) {
+      throw new Error('A normal manual lemmel should be able to lamp-dive in water fed by a waterfall');
+    }
+    if (!G.underwaterCave.manualLampDive || G.underwaterCave.diverKind !== 'manualLamp' || G.underwaterCave.octopus || G.underwaterCave.swimFins) {
+      throw new Error('Manual waterfall dive should not inherit holy fins or octopus state');
+    }
+    G.handleUnderwaterCaveKey('l');
+    if (!G.manual.lampOn || !(G.underwaterCave.lampPulseT > 0)) {
+      throw new Error('Manual underwater lamp dive should let L toggle the direct lamp');
+    }
+    G.exitUnderwaterCave('silent');
+    G.underwaterCaveExitCooldown = 0;
+    const normalPool = {x:water.x+180,w:50,y:water.y,lava:false};
+    const dryManual = new Lemming(normalPool.x + 10, normalPool.y - 6);
+    dryManual.holy = false;
+    dryManual.state = 'MANUAL';
+    G.lems = [dryManual];
+    G.manual = {used:true,active:true,lemId:dryManual.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    G.decor = [];
+    if (G.tryEnterUnderwaterCaveFromManual(dryManual, normalPool) || G.underwaterCaveActive()) {
+      throw new Error('Normal manual lemmel should not become water-safe away from waterfall-fed pools');
+    }
+  }
   AU.startUnderwaterCaveMysteryMusic = prevStartUnderwaterMusic;
   AU.stopUnderwaterCaveMysteryMusic = prevStopUnderwaterMusic;
   AU.startUnderwaterCavePanicMusic = prevStartUnderwaterPanicMusic;
@@ -881,6 +923,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.level = prevLevel;
   G.T = prevT;
   G.liquidCache = prevLiquidCache;
+  G.decor = prevDecor;
   G.levelIdx = prevLevelIdx;
   G.state = prevState;
   G.lems = prevLems;
@@ -944,6 +987,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
 }
 {
   const prevUnderwater = G.underwaterCave;
+  const prevManual = G.manual;
   G.underwaterCave = {
     active:true,
     scene:'siltTunnel',
@@ -987,7 +1031,32 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     t:58
   };
   if (!drawUnderwaterCaveView(WCTX, 15)) throw new Error('Underwater cave octopus warning view did not render');
+  G.manual = {used:true,active:true,lemId:4242,lampOn:true,keys:{},jumpQueued:null,aimAngle:0};
+  G.underwaterCave = {
+    active:true,
+    scene:'siltTunnel',
+    sceneState:{},
+    lemId:4242,
+    diverKind:'manualLamp',
+    manualLampDive:true,
+    swimX:236,
+    swimY:154,
+    vx:1.0,
+    vy:0.25,
+    swimStrokeT:1.1,
+    facing:'right',
+    swimFins:false,
+    keys:{left:false,right:true,up:false,down:false,run:false},
+    bubbles:[],
+    mapOpen:false,
+    hintT:12,
+    messageT:0,
+    lampPulseT:8,
+    t:77
+  };
+  if (!drawUnderwaterCaveView(WCTX, 16)) throw new Error('Underwater manual lamp dive view did not render');
   G.underwaterCave = prevUnderwater;
+  G.manual = prevManual;
 }
 {
   const prevUnderwater = G.underwaterCave;

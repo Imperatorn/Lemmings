@@ -141,17 +141,43 @@ Object.assign(G,{
     }
     return null;
   },
+  underwaterCaveWaterfallDiveSource(l,z){
+    if(!l||!z||z.lava||!this.decor)return null;
+    const source=z.source||z;
+    const sx=Number.isFinite(source.x)?source.x:(Number.isFinite(z.x)?z.x:0);
+    const sw=Math.max(1,Number.isFinite(source.w)?source.w:(Number.isFinite(z.w)?z.w:1));
+    const sy=Number.isFinite(source.y)?source.y:(Number.isFinite(z.y)?z.y:0);
+    const sourceCenter=sx+sw/2;
+    let best=null,bestScore=Infinity;
+    for(const wf of this.decor){
+      if(!wf||wf.t!=='waterfall'||wf.remove)continue;
+      const w=wf.w||28,h=wf.h||130,base=(wf.y||0)+h;
+      const fallLeft=(wf.x||0)-w/2-24,fallRight=(wf.x||0)+w/2+24;
+      const sourceUnderFall=sx+sw>=fallLeft&&sx<=fallRight;
+      const lemmelNear=Math.abs((l.x||sourceCenter)-(wf.x||sourceCenter))<=Math.max(46,sw/2+w/2+24);
+      const lemmelInSource=(l.x||sourceCenter)>=sx-18&&(l.x||sourceCenter)<=sx+sw+18;
+      const surfaceNear=Math.abs(sy-base)<=34;
+      if(!surfaceNear||!sourceUnderFall||(!lemmelNear&&!lemmelInSource))continue;
+      const score=Math.abs(sourceCenter-(wf.x||sourceCenter))+Math.abs(sy-base)*0.8+Math.abs((l.x||sourceCenter)-sourceCenter)*0.18;
+      if(score<bestScore){best=wf;bestScore=score}
+    }
+    return best;
+  },
   tryEnterUnderwaterCaveFromManual(l,z){
     if(!l||!z||z.lava||this.underwaterCaveActive())return false;
     if(this.waterfallCaveActive&&this.waterfallCaveActive())return false;
     if(this.cutsceneActive&&this.cutsceneActive())return false;
     if(this.underwaterCaveExitCooldown>0)return false;
     if(!this.isManualActive||!this.isManualActive())return false;
-    if(!this.manual||this.manual.lemId!==l.id||!l.holy||l.state!=='MANUAL')return false;
-    return this.enterUnderwaterCave(l,z);
+    if(!this.manual||this.manual.lemId!==l.id||l.state!=='MANUAL')return false;
+    const canLampDive=!l.holy&&this.underwaterCaveWaterfallDiveSource;
+    const waterfallDive=canLampDive?this.underwaterCaveWaterfallDiveSource(l,z):null;
+    if(!l.holy&&!waterfallDive)return false;
+    return this.enterUnderwaterCave(l,z,{manualLampDive:!l.holy,waterfallDive});
   },
   enterUnderwaterCave(l,z,opts){
     if(!l||!z)return false;
+    opts=opts||{};
     this.underwaterCaveExitCooldown=0;
     if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
     if(this.manual)this.manual.jumpQueued=null;
@@ -159,18 +185,25 @@ Object.assign(G,{
     this.clearRopeAim();
     const spawn=underwaterCaveSceneSpawn('entryPool','entry');
     const key=(this.levelIdx||0)+':'+Math.round(z.x||0)+','+Math.round(z.y||0)+','+Math.round(z.w||0);
-    const hasFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
+    const manualLampDive=!!(opts.manualLampDive&&!l.holy);
+    const holyDiver=!!(l.holy&&!manualLampDive);
+    const hasFins=!!(holyDiver&&this.hasHolySwimFins&&this.hasHolySwimFins());
+    const wf=opts.waterfallDive||null;
     this.underwaterCave={
       active:true,
       scene:'entryPool',
       levelIdx:this.levelIdx||0,
       lemId:l.id,
+      diverKind:manualLampDive?'manualLamp':'holy',
+      holyDiver,
+      manualLampDive,
       waterKey:key,
       water:{
         x:z.x,y:z.y,w:z.w,lava:false,
         sourceX:z.source&&Number.isFinite(z.source.x)?z.source.x:z.x,
         sourceY:z.source&&Number.isFinite(z.source.y)?z.source.y:z.y,
-        sourceW:z.source&&Number.isFinite(z.source.w)?z.source.w:z.w
+        sourceW:z.source&&Number.isFinite(z.source.w)?z.source.w:z.w,
+        waterfallDive:wf?{x:wf.x,y:wf.y,w:wf.w||28,h:wf.h||130}:null
       },
       returnSpot:{x:Math.round(l.x),y:Math.round((z.y||l.y)-7)},
       t:0,
@@ -181,7 +214,7 @@ Object.assign(G,{
       swimStrokeT:0,
       facing:spawn.facing||'front',
       swimFins:hasFins,
-      octopus:hasFins?null:{active:true,t:0,wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY,wakeT:0,phase:'rise',x:spawn.x,bodyY:CH+72,tipY:CH+52,reach:0,grabT:0,warned:false},
+      octopus:(!manualLampDive&&!hasFins)?{active:true,t:0,wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY,wakeT:0,phase:'rise',x:spawn.x,bodyY:CH+72,tipY:CH+52,reach:0,grabT:0,warned:false}:null,
       keys:{left:false,right:false,up:false,down:false,run:false},
       sceneState:{},
       bubbles:[],
@@ -203,7 +236,8 @@ Object.assign(G,{
     }
     this.setUnderwaterCaveSceneAudio('entryPool',{force:true,audio:caveAudio});
     this.clearTransientText();
-    if(hasFins)this.toast('DEN HELIGA LÄMMELN SIMMAR NER',120);
+    if(manualLampDive)this.toast('DIREKTLÄMMELN DYKER',100);
+    else if(hasFins)this.toast('DEN HELIGA LÄMMELN SIMMAR NER',120);
     if(!opts||opts.splash!==false){
       if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
     }
@@ -306,7 +340,7 @@ Object.assign(G,{
     return false;
   },
   underwaterCaveOctopusThreatActive(cave){
-    return !!(cave&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
+    return !!(cave&&!cave.manualLampDive&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
   },
   finishUnderwaterCaveOctopusCatch(cave){
     const l=cave&&this.findLemById?this.findLemById(cave.lemId):null;
@@ -403,8 +437,9 @@ Object.assign(G,{
     const cave=this.underwaterCave;
     cave.t++;
     if(cave.messageT>0)cave.messageT--;
+    if(cave.lampPulseT>0)cave.lampPulseT--;
     cave.keys=cave.keys||{};
-    cave.swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
+    cave.swimFins=!!(!cave.manualLampDive&&this.hasHolySwimFins&&this.hasHolySwimFins());
     const b=this.underwaterCaveSceneBounds(cave);
     if(cave.mapOpen){
       if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave))cave.mapOpen=false;
@@ -489,6 +524,13 @@ Object.assign(G,{
     obj.activated=true;
     obj.pulseT=Math.max(obj.pulseT||0,100);
     obj.hintT=Math.max(obj.hintT||0,140);
+    if(cave.manualLampDive){
+      cave.messageT=130;
+      cave.messageLines=['RUNORNA SVARAR INTE PÅ LAMPAN','ETT HELIGT SKEN KRÄVS'];
+      this.toast('LAMPAN RÄCKER INTE',80);
+      if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.45);
+      return true;
+    }
     const meta=typeof underwaterCaveDeepRuneSetMeta==='function'?underwaterCaveDeepRuneSetMeta():{
       id:'underwater.deepArchive',
       title:'Djuprunor',
@@ -567,6 +609,12 @@ Object.assign(G,{
     if(key==='m'||key==='M'){
       if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave))return true;
       cave.mapOpen=!cave.mapOpen;return true;
+    }
+    if((key==='l'||key==='L')&&cave.manualLampDive&&this.toggleManualLamp){
+      this.toggleManualLamp();
+      cave.hintT=Math.max(cave.hintT||0,100);
+      cave.lampPulseT=18;
+      return true;
     }
     if(key===' '||key==='Spacebar'||key==='Enter')return this.activateUnderwaterCaveObject()||true;
     if(key==='ArrowLeft'){cave.keys.left=true;return true}
