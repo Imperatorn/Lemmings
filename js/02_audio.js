@@ -2,6 +2,7 @@
 // Procedurell chiptune-motor. All musik är egenkomponerad.
 const MUSIC_GAIN_BASE=0.50;
 const CAVE_MYSTERY_GAIN_BOOST=1.35;
+const UNDERWATER_MYSTERY_GAIN_BOOST=1.18;
 const CHURCH_HYMN_LOOP_START_SECONDS=1;
 const CHURCH_HYMN_LOOP_SECONDS=32;
 const CHURCH_HYMN_LOOP_FADE_SECONDS=1;
@@ -39,8 +40,9 @@ const AU={
   sfxDest(){return this.sfxGain||this.master},
   applyVolumes(){
     const t=this.now();
-    const mystery=this.mus&&this.mus.kind==='caveMystery';
-    const mv=MUSIC_GAIN_BASE*(mystery?CAVE_MYSTERY_GAIN_BOOST:1)*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    const kind=this.mus&&this.mus.kind;
+    const mysteryBoost=kind==='caveMystery'?CAVE_MYSTERY_GAIN_BOOST:(kind==='underwaterMystery'?UNDERWATER_MYSTERY_GAIN_BOOST:1);
+    const mv=MUSIC_GAIN_BASE*mysteryBoost*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
     const sv=clamp(Number.isFinite(this.sfxVol)?this.sfxVol:1,0,1);
     if(this.musGain&&this.musGain.gain)this.gainRamp(this.musGain,this.musGain.gain,t,mv,'linear');
     if(this.sfxGain&&this.sfxGain.gain)this.gainRamp(this.sfxGain,this.sfxGain.gain,t,sv,'linear');
@@ -1163,6 +1165,19 @@ const AU={
             0,0,64,0, 0,0,67,0, 0,0,60,0, 0,0,64,0,
             0,0,62,0, 0,0,66,0, 0,0,60,0, 0,0,64,0,
             0,0,59,0, 0,0,62,0, 0,0,60,0, 0,0,64,0]},
+    underwaterMystery:{bpm:52,
+      mel:[0,0,50,0, 0,55,0,0, 57,0,0,0, 53,0,0,0,
+           0,0,48,0, 0,52,0,0, 55,0,53,0, 50,0,0,0,
+           0,0,47,0, 0,50,0,0, 54,0,52,0, 48,0,0,0,
+           0,0,45,0, 0,48,0,0, 52,0,50,0, 47,0,0,0],
+      bass:[24,0,0,0, 0,0,31,0, 24,0,0,0, 0,0,29,0,
+            21,0,0,0, 0,0,28,0, 21,0,0,0, 0,0,26,0,
+            19,0,0,0, 0,0,26,0, 19,0,0,0, 0,0,24,0,
+            17,0,0,0, 0,0,24,0, 19,0,0,0, 24,0,0,0],
+      harm:[0,0,62,0, 0,0,67,0, 0,0,65,0, 0,0,62,0,
+            0,0,60,0, 0,0,64,0, 0,0,62,0, 0,0,59,0,
+            0,0,59,0, 0,0,62,0, 0,0,60,0, 0,0,57,0,
+            0,0,57,0, 0,0,60,0, 0,0,59,0, 0,0,55,0]},
     city:{bpm:128,
       mel:[72,0,76,79, 81,79,76,0, 71,0,74,76, 79,76,74,0,
            69,0,72,76, 77,76,72,0, 68,0,71,74, 76,74,71,0,
@@ -1209,9 +1224,10 @@ const AU={
       if(p>=96&&p%8===4)this.tone(this.midi(m+12),stepDur*0.22,'triangle',0.010,1,t+stepDur*0.12,this.musGain);
     }else if(kind==='cave'){
       if(i%16===4||i%16===12)this.tone(this.midi(m+12),stepDur*0.46,'square',0.010,0.99,t+stepDur*0.05,this.musGain);
-    }else if(kind==='caveMystery'){
-      if(i%16===8)this.tone(this.midi(m+12),stepDur*0.82,'sine',0.008,0.995,t+stepDur*0.12,this.musGain);
-      if(i%32===24)this.tone(this.midi(m+7),stepDur*0.62,'triangle',0.006,0.99,t+stepDur*0.22,this.musGain);
+    }else if(kind==='caveMystery'||kind==='underwaterMystery'){
+      const underwater=kind==='underwaterMystery';
+      if(i%16===8)this.tone(this.midi(m+(underwater?19:12)),stepDur*(underwater?1.12:0.82),'sine',underwater?0.0065:0.008,0.995,t+stepDur*0.12,this.musGain);
+      if(i%32===24)this.tone(this.midi(m+(underwater?12:7)),stepDur*(underwater?0.86:0.62),'triangle',underwater?0.0048:0.006,0.99,t+stepDur*0.22,this.musGain);
     }else if(kind==='desert'){
       if(i%8===0||i%8===4)this.tone(this.midi(m+12),stepDur*0.30,'square',0.015,1,t+stepDur*0.03,this.musGain);
     }else if(kind==='city'){
@@ -1252,6 +1268,8 @@ const AU={
       third=3;pulseVol=0.027;arpVol=0.017;pulseEvery=4;arpEvery=16;padVol=0.012;padEvery=32;
     }else if(kind==='caveMystery'){
       third=3;pulseVol=0.012;arpVol=0.007;pulseEvery=8;arpEvery=32;padVol=0.015;padEvery=16;subVol=0.030;subEvery=16;subLen=7.0;
+    }else if(kind==='underwaterMystery'){
+      third=3;pulseVol=0.008;arpVol=0.0045;pulseEvery=16;arpEvery=32;padVol=0.018;padEvery=16;subVol=0.026;subEvery=16;subLen=8.8;
     }else if(kind==='desert'){
       pulseVol=0.024;arpVol=0.022;padVol=0.008;
     }else if(kind==='city'){
@@ -1288,10 +1306,11 @@ const AU={
       this.tone(this.midi(b+31),stepDur*0.18,'square',arpVol*0.58,1,t+stepDur*0.28,this.musGain);
     }
     if(padVol&&i%padEvery===0){
-      this.padTone(this.midi(b+12),stepDur*(kind==='cave'||kind==='caveMystery'?7.5:5.5),'triangle',padVol,t+stepDur*0.02,this.musGain);
+      this.padTone(this.midi(b+12),stepDur*(kind==='underwaterMystery'?9.4:(kind==='cave'||kind==='caveMystery'?7.5:5.5)),'triangle',padVol,t+stepDur*0.02,this.musGain);
       if(kind==='night')this.padTone(this.midi(b+19),stepDur*4.8,'sine',padVol*0.55,t+stepDur*0.10,this.musGain);
       if(kind==='cave')this.padTone(this.midi(b+19),stepDur*4.8,'sine',padVol*0.48,t+stepDur*0.12,this.musGain);
       if(kind==='caveMystery')this.padTone(this.midi(b+19),stepDur*6.2,'sine',padVol*0.42,t+stepDur*0.18,this.musGain);
+      if(kind==='underwaterMystery')this.padTone(this.midi(b+24),stepDur*7.6,'sine',padVol*0.34,t+stepDur*0.24,this.musGain);
     }
   },
   startWeather(kind){
@@ -1346,7 +1365,7 @@ const AU={
     this.mus.timer=setInterval(()=>this.pump(),50);
   },
   stopMusic(){ if(this.mus.timer){clearInterval(this.mus.timer);this.mus.timer=null} },
-  silenceMusicForWaterfallCave(fade){
+  silenceMusic(fade){
     this.stopMusic();
     if(!this.musGain||!this.musGain.gain)return;
     const t=this.now(), stopDelay=fade==null?1.0:fade;
@@ -1358,6 +1377,9 @@ const AU={
       else if(p.exponentialRampToValueAtTime)p.exponentialRampToValueAtTime(0.00005,t+stopDelay);
       else p.value=0.00005;
     }catch(_){try{p.value=0.00005}catch(__){}}
+  },
+  silenceMusicForWaterfallCave(fade){
+    this.silenceMusic(fade);
   },
   startWaterfallCaveMysteryMusic(fade){
     this.init();
@@ -1379,7 +1401,30 @@ const AU={
   },
   stopWaterfallCaveMysteryMusic(fade){
     if(!this.mus||this.mus.kind!=='caveMystery')return false;
-    this.silenceMusicForWaterfallCave(fade==null?0.75:fade);
+    this.silenceMusic(fade==null?0.75:fade);
+    return true;
+  },
+  startUnderwaterCaveMysteryMusic(fade){
+    this.init();
+    if(!this.ctx||!this.on||!this.musicOn)return false;
+    if(this.mus&&this.mus.timer&&this.mus.kind==='underwaterMystery'){this.applyVolumes();return true}
+    this.startMusic('underwaterMystery');
+    if(!this.musGain||!this.musGain.gain)return true;
+    const t=this.now(), dur=fade==null?1.45:Math.max(0.05,fade);
+    const target=MUSIC_GAIN_BASE*UNDERWATER_MYSTERY_GAIN_BOOST*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    const p=this.musGain.gain;
+    try{
+      if(p.cancelScheduledValues)p.cancelScheduledValues(t);
+      if(p.setValueAtTime)p.setValueAtTime(0.00005,t);
+      if(p.linearRampToValueAtTime)p.linearRampToValueAtTime(Math.max(0.00005,target),t+dur);
+      else if(p.exponentialRampToValueAtTime)p.exponentialRampToValueAtTime(Math.max(0.00005,target),t+dur);
+      else p.value=Math.max(0.00005,target);
+    }catch(_){try{p.value=Math.max(0.00005,target)}catch(__){}}
+    return true;
+  },
+  stopUnderwaterCaveMysteryMusic(fade){
+    if(!this.mus||this.mus.kind!=='underwaterMystery')return false;
+    this.silenceMusic(fade==null?0.85:fade);
     return true;
   },
   pump(){
@@ -1389,7 +1434,8 @@ const AU={
       const i=this.mus.step%P.mel.length, t=this.mus.next;
       const m=P.mel[i], b=P.bass[i], kind=this.mus.kind;
       const mp=i%128;
-      const mystery=kind==='caveMystery';
+      const underwaterMystery=kind==='underwaterMystery';
+      const mystery=kind==='caveMystery'||underwaterMystery;
       const lead=kind==='cave'||mystery?'sine':(kind==='menu'?(mp>=64&&mp<96?'triangle':'square'):(kind==='lava'||kind==='night'||kind==='desert'?'triangle':(kind==='day2'&&i%32>=16?'triangle':'square')));
       const accent=kind==='day2'?(i%16===0?1.18:(i%8===6?0.86:1.0)):(kind==='menu'?(mp>=96?1.10:(mp>=64?0.88:(mp%32===0?1.06:1.0))):1);
       const leadVol=mystery?0.066:(kind==='cave'?0.075:(kind==='lava'?0.102:(kind==='night'?0.10:(kind==='desert'?0.066:(kind==='menu'?0.050*accent:(kind==='city'?0.068:(kind==='day2'?0.060*accent:0.07)))))));
@@ -1412,11 +1458,13 @@ const AU={
       if(mystery){
         if(i%32===0){
           const root=b||28;
-          this.padTone(this.midi(root+12),stepDur*9.0,'sine',0.030,t,this.musGain);
-          this.padTone(this.midi(root+19),stepDur*8.0,'triangle',0.014,t+stepDur*0.18,this.musGain);
+          this.padTone(this.midi(root+12),stepDur*(underwaterMystery?10.8:9.0),'sine',underwaterMystery?0.025:0.030,t,this.musGain);
+          this.padTone(this.midi(root+19),stepDur*(underwaterMystery?9.4:8.0),'triangle',underwaterMystery?0.010:0.014,t+stepDur*0.18,this.musGain);
         }
-        if(i%16===10)this.softNoise(0.55,0.0105,420,0.86,t+stepDur*0.2,{type:'lowpass',smooth:0.88,attack:0.18,release:0.32,dest:this.musGain});
-        if(i%32===22&&b)this.tone(this.midi(b+31),stepDur*1.4,'sine',0.012,1.01,t+stepDur*0.36,this.musGain);
+        if(i%16===10)this.softNoise(underwaterMystery?0.82:0.55,underwaterMystery?0.0085:0.0105,underwaterMystery?310:420,underwaterMystery?0.76:0.86,t+stepDur*0.2,{type:'lowpass',smooth:underwaterMystery?0.93:0.88,attack:0.18,release:underwaterMystery?0.48:0.32,dest:this.musGain});
+        if(i%32===22&&b)this.tone(this.midi(b+(underwaterMystery?36:31)),stepDur*(underwaterMystery?1.8:1.4),'sine',underwaterMystery?0.008:0.012,1.01,t+stepDur*0.36,this.musGain);
+        if(underwaterMystery&&i%16===6)this.softNoise(0.30,0.0065,1180,0.62,t+stepDur*0.28,{type:'bandpass',q:0.55,smooth:0.84,attack:0.08,release:0.20,dest:this.musGain});
+        if(underwaterMystery&&i%64===46)this.tone(this.midi(74),stepDur*2.0,'sine',0.010,0.995,t+stepDur*0.18,this.musGain);
       }
       if(kind==='lava'){
         if(i%16===0){

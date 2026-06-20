@@ -79,7 +79,7 @@ const G={
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', levelRunMode:'campaign', tempoIdx:1, cutscenesOn:true,
-  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{},archives:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null, underwaterCave:null, underwaterCaveExitCooldown:0,
+  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{},archives:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null, underwaterCave:null, underwaterCaveExitCooldown:0, underwaterCaveResumeMusic:false, underwaterCaveResumeWeather:null,
   holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneCharged:false, practiceHolyTeleportStoneUnlocked:false, practiceHolyTeleportStoneCharged:false, holyTeleportStoneLemId:null, portalStone:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
@@ -613,6 +613,12 @@ const G={
       AU.stopMusic();
       if(AU.stopWaterfallCaveMysteryMusic)AU.stopWaterfallCaveMysteryMusic(0.25);
       if(AU.stopWaterfallCaveChurchHymn)AU.stopWaterfallCaveChurchHymn(0.25);
+      if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.25);
+    }
+    else if(this.underwaterCaveActive&&this.underwaterCaveActive()){
+      this.underwaterCaveResumeMusic=true;
+      AU.stopMusic();
+      if(this.setUnderwaterCaveSceneAudio)this.setUnderwaterCaveSceneAudio(this.underwaterCave&&this.underwaterCave.scene,{force:true});
     }
     else if(this.waterfallCaveActive&&this.waterfallCaveActive()){
       this.waterfallCaveResumeMusic=true;
@@ -626,7 +632,12 @@ const G={
   setMusicVolume(v){
     AU.musicOn=true;
     AU.setMusicVolume(v);
-    if(this.waterfallCaveActive&&this.waterfallCaveActive()){
+    if(this.underwaterCaveActive&&this.underwaterCaveActive()){
+      this.underwaterCaveResumeMusic=true;
+      AU.stopMusic();
+      if(this.setUnderwaterCaveSceneAudio)this.setUnderwaterCaveSceneAudio(this.underwaterCave&&this.underwaterCave.scene,{force:true});
+    }
+    else if(this.waterfallCaveActive&&this.waterfallCaveActive()){
       this.waterfallCaveResumeMusic=true;
       AU.stopMusic();
       if(this.setWaterfallCaveSceneAudio)this.setWaterfallCaveSceneAudio(this.waterfallCave&&this.waterfallCave.scene);
@@ -642,7 +653,9 @@ const G={
     if(!AU.sfxOn){AU.stopWeather();if(AU.stopWaterfallCave)AU.stopWaterfallCave()}
     else {
       AU.sClick();
-      if(this.waterfallCaveActive&&this.waterfallCaveActive()){
+      if(this.underwaterCaveActive&&this.underwaterCaveActive()){
+        if(AU.stopWeather)AU.stopWeather();
+      }else if(this.waterfallCaveActive&&this.waterfallCaveActive()){
         if(AU.stopWeather)AU.stopWeather();
         if(AU.startWaterfallCave)AU.startWaterfallCave();
         if(this.setWaterfallCaveSceneAudio)this.setWaterfallCaveSceneAudio(this.waterfallCave&&this.waterfallCave.scene);
@@ -653,7 +666,10 @@ const G={
   setSfxVolume(v){
     AU.sfxOn=true;
     AU.setSfxVolume(v);
-    if(this.waterfallCaveActive&&this.waterfallCaveActive()){
+    if(this.underwaterCaveActive&&this.underwaterCaveActive()){
+      if(AU.stopWeather)AU.stopWeather();
+    }
+    else if(this.waterfallCaveActive&&this.waterfallCaveActive()){
       if(AU.stopWeather)AU.stopWeather();
       if(AU.startWaterfallCave)AU.startWaterfallCave();
       if(this.setWaterfallCaveSceneAudio)this.setWaterfallCaveSceneAudio(this.waterfallCave&&this.waterfallCave.scene);
@@ -932,7 +948,7 @@ const G={
     const D=createLevelDecorApi(this);
     if(L.decor)L.decor(D);
     // status
-    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.portalStone=null;this.waterfallCaveLooted={};this.waterfallCaveEntryHints={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.underwaterCave=null;this.underwaterCaveExitCooldown=0;this.holyLevelLemId=null;this.holyTeleportStoneLemId=null;this.practiceHolyTeleportStoneCharged=false;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.portalStone=null;this.waterfallCaveLooted={};this.waterfallCaveEntryHints={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.underwaterCave=null;this.underwaterCaveExitCooldown=0;this.underwaterCaveResumeMusic=false;this.underwaterCaveResumeWeather=null;this.holyLevelLemId=null;this.holyTeleportStoneLemId=null;this.practiceHolyTeleportStoneCharged=false;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;this.sunSurpriseT=0;
     this.meteorT=(L.night&&!L.cave)?Math.round((18+this.rand()*34)*1000/TICK):0;
     this.cam=clamp(L.hatch.x-160,0,this.maxCamFor(L));

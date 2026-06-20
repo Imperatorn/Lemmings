@@ -37,6 +37,18 @@ Object.assign(G,{
     if(!def||!obj||!def.blocker)return false;
     return this.underwaterCaveHitContains(def.block||def.hit,obj,x,y,1);
   },
+  underwaterCaveSceneDark(scene){
+    return String(scene||'entryPool')!=='entryPool';
+  },
+  setUnderwaterCaveSceneAudio(scene,opts){
+    const dark=this.underwaterCaveSceneDark(scene);
+    if(dark){
+      if(AU.startUnderwaterCaveMysteryMusic)AU.startUnderwaterCaveMysteryMusic(opts&&opts.force?0.55:1.35);
+    }else if(AU.stopUnderwaterCaveMysteryMusic){
+      AU.stopUnderwaterCaveMysteryMusic(opts&&opts.force?0.35:0.75);
+    }
+    return dark;
+  },
   tryEnterUnderwaterCaveFromManual(l,z){
     if(!l||!z||z.lava||this.underwaterCaveActive())return false;
     if(this.waterfallCaveActive&&this.waterfallCaveActive())return false;
@@ -75,6 +87,20 @@ Object.assign(G,{
       mapOpen:false,
       hintT:140
     };
+    const caveAudio=!opts||opts.audio!==false;
+    this.underwaterCaveResumeMusic=caveAudio&&!!AU.musicOn;
+    this.underwaterCaveResumeWeather=caveAudio?this.weatherKind||null:null;
+    if(caveAudio){
+      if(AU.silenceMusic)AU.silenceMusic(0.85);
+      else if(AU.stopMusic)AU.stopMusic();
+      if(AU.stopWeather)AU.stopWeather();
+      if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
+    }else{
+      this.underwaterCaveResumeMusic=false;
+      this.underwaterCaveResumeWeather=null;
+      if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0);
+    }
+    this.setUnderwaterCaveSceneAudio('entryPool',{force:true});
     this.clearTransientText();
     this.toast('DEN HELIGA LÄMMELN SIMMAR NER',120);
     if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
@@ -98,6 +124,13 @@ Object.assign(G,{
     }
     this.underwaterCave=null;
     this.underwaterCaveExitCooldown=48;
+    if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(reason==='silent'?0.05:0.55);
+    const resumeMusic=!!this.underwaterCaveResumeMusic;
+    const resumeWeather=this.underwaterCaveResumeWeather;
+    this.underwaterCaveResumeMusic=false;
+    this.underwaterCaveResumeWeather=null;
+    if(reason!=='silent'&&resumeWeather&&AU.sfxOn&&AU.startWeather)AU.startWeather(resumeWeather);
+    if(reason!=='silent'&&resumeMusic&&AU.musicOn&&AU.startMusic&&this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
     if(reason!=='silent')this.toast(reason==='surface'?'UPPE VID YTAN':'UTE UR UNDERVATTNET',100);
     return true;
   },
@@ -114,6 +147,7 @@ Object.assign(G,{
     cave.facing=spawn.facing||cave.facing||'front';
     cave.mapOpen=false;
     cave.hintT=90;
+    this.setUnderwaterCaveSceneAudio(def.id);
     this.toast(def.label||'NYTT RUM',80);
     return true;
   },
