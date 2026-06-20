@@ -210,7 +210,7 @@ for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','underwa
     throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
   }
 }
-for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterManualLampLight','drawUnderwaterOctopusThreat','drawUnderwaterOctopusWarning','createRadialGradient']) {
+for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterLampDiveDarkness','drawUnderwaterManualLampCutout','drawUnderwaterManualLampLight','drawUnderwaterOctopusThreat','drawUnderwaterOctopusWarning','createRadialGradient']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
@@ -229,8 +229,8 @@ if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.i
 if (!underwaterRenderCode.includes('drawUnderwaterOctopusWarning') || !underwaterRenderCode.includes("SIMMA UPP\\u00c5T!") || !underwaterRenderCode.includes('const x=CW-82,y=24')) {
   throw new Error('Underwater octopus warning should be shown as a small top warning, away from the octopus eyes');
 }
-if (!underwaterRenderCode.includes('underwaterManualLampOn') || !underwaterRenderCode.includes('underwaterManualLampDir') || !underwaterRenderCode.includes('L LAMPA') || !underwaterRenderCode.includes('cave&&cave.manualLampDive)return false')) {
-  throw new Error('Manual underwater lamp dive should render a directional lamp cone without holy aura');
+if (!underwaterRenderCode.includes('UW_DARK_CV') || !underwaterRenderCode.includes("globalCompositeOperation='destination-out'") || !underwaterRenderCode.includes('drawUnderwaterLampDiveDarkness(c,cave,tk)') || !underwaterRenderCode.includes('if(!lampDive){') || !underwaterRenderCode.includes('L LAMPA') || !underwaterRenderCode.includes('cave&&cave.manualLampDive)return false')) {
+  throw new Error('Manual underwater lamp dive should use a darkness mask and lamp cutout without holy aura');
 }
 if (!underwaterRenderCode.includes('drawUnderwaterOctopusEyes') || !underwaterRenderCode.includes('escapeFade') || !underwaterRenderCode.includes('dragFade') || !underwaterRenderCode.includes('goneFade') || !underwaterRenderCode.includes('visible<=0') || !underwaterRenderCode.includes('#ffd45c') || !underwaterRenderCode.includes('#ff4a24') || !underwaterRenderCode.includes("globalCompositeOperation='lighter'")) {
   throw new Error('Underwater octopus threat should show faint glowing red/yellow eyes near the bottom');
