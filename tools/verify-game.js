@@ -183,7 +183,7 @@ for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','tryEnte
     throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
   }
 }
-for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects']) {
+for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','createRadialGradient']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }

@@ -20,25 +20,29 @@ function uwRect(c,x,y,w,h){
   if(h<0){y+=h;h=-h}
   c.fillRect(x,y,w,h);
 }
+function underwaterCaveLitRoom(cave){
+  return (cave&&cave.scene?cave.scene:'entryPool')==='entryPool';
+}
 function drawUnderwaterBackdrop(c,cave,tk){
   const scene=cave.scene||'entryPool',t=(cave.t||0)+tk;
-  c.fillStyle='#031019';
+  const lit=underwaterCaveLitRoom(cave);
+  c.fillStyle=lit?'#072635':'#01060a';
   c.fillRect(0,0,CW,CH);
-  c.fillStyle=scene==='airBell'?'#0b2430':(scene==='crystalReef'?'#062331':(scene==='sunkenArchive'?'#071827':'#061b28'));
+  c.fillStyle=lit?'#0c3a4a':(scene==='airBell'?'#06141b':(scene==='crystalReef'?'#041018':(scene==='sunkenArchive'?'#050b11':'#031018')));
   c.fillRect(0,0,CW,CH);
-  c.globalAlpha=0.36;
+  c.globalAlpha=lit?0.38:0.12;
   c.fillStyle='#4cc7df';
   for(let x=-40;x<CW+40;x+=42){
     const sx=x+Math.round(Math.sin(t*0.035+x)*12);
     uwLine(c,sx,0,sx+72,CH,'#4cc7df');
   }
   c.globalAlpha=1;
-  c.fillStyle='#061017';
+  c.fillStyle=lit?'#061017':'#02070b';
   uwPoly(c,[[0,0],[96,0],[72,72],[42,156],[0,CH]]);
   uwPoly(c,[[CW,0],[382,0],[410,86],[440,184],[CW,CH]]);
-  c.fillStyle='#0d2833';
+  c.fillStyle=lit?'#0d2833':'#061017';
   uwPoly(c,[[24,CH],[86,246],[152,222],[242,214],[334,230],[430,CH]]);
-  c.fillStyle='#123845';
+  c.fillStyle=lit?'#123845':'#0a1d25';
   for(let i=0;i<36;i++){
     const x=28+Math.round(hash2(i+601,scene.length)*424);
     const y=52+Math.round(hash2(i+607,scene.length)*214);
@@ -139,6 +143,46 @@ function drawUnderwaterBubbles(c,cave,tk){
   }
   c.restore();
 }
+function drawUnderwaterCaveDarkness(c,cave,tk){
+  if(underwaterCaveLitRoom(cave))return false;
+  const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150);
+  const pulse=Math.sin(((cave.t||0)+tk)*0.11)*7;
+  c.save();
+  const g=c.createRadialGradient(x,y,26,x,y,136+pulse);
+  g.addColorStop(0,'rgba(0,0,0,0)');
+  g.addColorStop(0.34,'rgba(0,3,8,0.08)');
+  g.addColorStop(0.58,'rgba(0,4,10,0.58)');
+  g.addColorStop(0.82,'rgba(0,3,8,0.88)');
+  g.addColorStop(1,'rgba(0,2,6,0.97)');
+  c.fillStyle=g;
+  c.fillRect(0,0,CW,CH);
+  c.globalAlpha=0.18;
+  c.fillStyle='#000000';
+  c.fillRect(0,0,CW,28);
+  c.fillRect(0,CH-24,CW,24);
+  c.restore();
+  return true;
+}
+function drawUnderwaterHolyLight(c,cave,tk,dark){
+  const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150);
+  const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.14);
+  c.save();
+  c.globalCompositeOperation='lighter';
+  let g=c.createRadialGradient(x,y,2,x,y,dark?96+Math.round(pulse*12):46);
+  g.addColorStop(0,'rgba(255,245,170,0.46)');
+  g.addColorStop(0.24,'rgba(190,240,255,0.25)');
+  g.addColorStop(0.65,'rgba(80,190,220,0.08)');
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=g;
+  c.fillRect(0,0,CW,CH);
+  if(dark){
+    c.globalAlpha=0.20+0.08*pulse;
+    c.fillStyle='#fff0a0';
+    c.fillRect(x-42,y-2,84,2);
+    c.fillRect(x-26,y+12,52,1);
+  }
+  c.restore();
+}
 function drawUnderwaterMap(c,cave){
   const graph=typeof underwaterCaveMapGraph==='function'?underwaterCaveMapGraph():{nodes:[],links:[]};
   c.save();
@@ -171,6 +215,8 @@ function drawUnderwaterCaveView(c,tk){
   drawUnderwaterRoomDetails(c,cave,tk);
   drawUnderwaterObjects(c,cave,tk);
   drawUnderwaterBubbles(c,cave,tk);
+  const dark=drawUnderwaterCaveDarkness(c,cave,tk);
+  drawUnderwaterHolyLight(c,cave,tk,dark);
   drawUnderwaterLemming(c,cave,tk);
   const def=typeof underwaterCaveSceneDef==='function'?underwaterCaveSceneDef(cave.scene):null;
   drawText(c,def&&def.label?def.label:'Undervattnet',12,12,1,'#bdf8ff');

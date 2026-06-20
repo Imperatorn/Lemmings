@@ -5,7 +5,7 @@ const UNDERWATER_CAVE_SCENES={
     id:'entryPool',
     label:'Under ytan',
     render:'entryPool',
-    bounds:{minX:54,maxX:426,minY:58,maxY:286},
+    bounds:{minX:58,maxX:424,minY:58,maxY:274},
     map:{x:0,y:0,w:44,h:24,kind:'entry',short:'YT'},
     spawns:{
       entry:{x:240,y:96,facing:'front'},
@@ -13,7 +13,7 @@ const UNDERWATER_CAVE_SCENES={
     },
     exits:[
       {id:'toSurface',key:'up',yMax:64,target:null,reason:'surface'},
-      {id:'toSiltTunnel',key:'right',xMin:420,yMin:116,yMax:246,target:'siltTunnel',spawn:'fromPool'}
+      {id:'toSiltTunnel',key:'right',xMin:418,yMin:116,yMax:246,target:'siltTunnel',spawn:'fromPool'}
     ],
     objects:[
       {id:'surfaceLight',kind:'glow',default:{x:240,y:62,near:false,pulseT:0,hintT:0,hintLines:['LJUSET DARRAR OVANFÖR','UPP TAR DIG TILLBAKA']},hit:{type:'ellipse',rx:78,ry:22},verbs:['look']}
@@ -23,17 +23,17 @@ const UNDERWATER_CAVE_SCENES={
     id:'siltTunnel',
     label:'Slamtunneln',
     render:'siltTunnel',
-    bounds:{minX:48,maxX:432,minY:72,maxY:278},
+    bounds:{minX:56,maxX:424,minY:82,maxY:258},
     map:{x:1,y:0,w:54,h:22,kind:'tunnel',short:'SL'},
     spawns:{
       fromPool:{x:78,y:184,facing:'right'},
       fromBell:{x:382,y:126,facing:'left'},
-      fromReef:{x:236,y:264,facing:'back'}
+      fromReef:{x:236,y:250,facing:'back'}
     },
     exits:[
-      {id:'toPool',key:'left',xMax:56,yMin:116,yMax:246,target:'entryPool',spawn:'fromTunnel'},
-      {id:'toAirBell',key:'right',xMin:424,yMin:86,yMax:168,target:'airBell',spawn:'fromTunnel'},
-      {id:'toCrystalReef',key:'down',x0:148,x1:324,yMin:270,target:'crystalReef',spawn:'fromTunnel'}
+      {id:'toPool',key:'left',xMax:62,yMin:116,yMax:246,target:'entryPool',spawn:'fromTunnel'},
+      {id:'toAirBell',key:'right',xMin:418,yMin:86,yMax:168,target:'airBell',spawn:'fromTunnel'},
+      {id:'toCrystalReef',key:'down',x0:148,x1:324,yMin:254,target:'crystalReef',spawn:'fromTunnel'}
     ],
     objects:[
       {id:'shellEcho',kind:'shell',default:{x:246,y:158,near:false,pulseT:0,hintT:0,hintLines:['SNÄCKAN SVARAR MED ETT LÅGT EKO','NÅGOT RÖR SIG DJUPARE IN']},hit:{type:'ellipse',rx:34,ry:22},verbs:['look','touch']}
@@ -43,15 +43,15 @@ const UNDERWATER_CAVE_SCENES={
     id:'airBell',
     label:'Luftklockan',
     render:'airBell',
-    bounds:{minX:62,maxX:418,minY:70,maxY:274},
+    bounds:{minX:70,maxX:410,minY:78,maxY:258},
     map:{x:2,y:-1,w:44,h:25,kind:'air',short:'LU'},
     spawns:{
       fromTunnel:{x:78,y:132,facing:'right'},
-      fromArchive:{x:248,y:268,facing:'back'}
+      fromArchive:{x:248,y:254,facing:'back'}
     },
     exits:[
-      {id:'toTunnel',key:'left',xMax:70,yMin:92,yMax:176,target:'siltTunnel',spawn:'fromBell'},
-      {id:'toArchive',key:'down',x0:154,x1:330,yMin:268,target:'sunkenArchive',spawn:'fromBell'}
+      {id:'toTunnel',key:'left',xMax:76,yMin:92,yMax:176,target:'siltTunnel',spawn:'fromBell'},
+      {id:'toArchive',key:'down',x0:154,x1:330,yMin:254,target:'sunkenArchive',spawn:'fromBell'}
     ],
     objects:[
       {id:'airPocket',kind:'airPocket',default:{x:244,y:96,near:false,pulseT:0,hintT:0,hintLines:['HÄR FINNS EN STILLASTÅENDE LUFTFICKA','DEN HELIGA LÄMMELN KAN VILA HÄR']},hit:{type:'ellipse',rx:62,ry:34},verbs:['rest']}
@@ -61,15 +61,15 @@ const UNDERWATER_CAVE_SCENES={
     id:'crystalReef',
     label:'Kristallrevet',
     render:'crystalReef',
-    bounds:{minX:54,maxX:426,minY:66,maxY:284},
+    bounds:{minX:62,maxX:416,minY:78,maxY:270},
     map:{x:1,y:1,w:50,h:28,kind:'crystal',short:'KR'},
     spawns:{
       fromTunnel:{x:238,y:82,facing:'front'},
-      fromArchive:{x:390,y:216,facing:'left'}
+      fromArchive:{x:384,y:216,facing:'left'}
     },
     exits:[
-      {id:'toTunnel',key:'up',x0:148,x1:324,yMax:74,target:'siltTunnel',spawn:'fromReef'},
-      {id:'toArchive',key:'right',xMin:420,yMin:158,yMax:260,target:'sunkenArchive',spawn:'fromReef'}
+      {id:'toTunnel',key:'up',x0:148,x1:324,yMax:84,target:'siltTunnel',spawn:'fromReef'},
+      {id:'toArchive',key:'right',xMin:410,yMin:158,yMax:260,target:'sunkenArchive',spawn:'fromReef'}
     ],
     objects:[
       {id:'blueCrystal',kind:'crystal',default:{x:258,y:202,near:false,pulseT:0,hintT:0,hintLines:['KRISTALLEN PULSERAR I VATTNET','DEN VERKAR VÄNTA PÅ EN FRAMTIDA HEMLIGHET']},hit:{type:'ellipse',rx:40,ry:42},block:{type:'ellipse',rx:34,ry:26,dy:8},blocker:true,verbs:['look','touch']}
@@ -79,15 +79,15 @@ const UNDERWATER_CAVE_SCENES={
     id:'sunkenArchive',
     label:'Det sjunkna arkivet',
     render:'sunkenArchive',
-    bounds:{minX:62,maxX:418,minY:74,maxY:284},
+    bounds:{minX:78,maxX:402,minY:90,maxY:260},
     map:{x:2,y:1,w:52,h:28,kind:'archive',short:'AR'},
     spawns:{
-      fromBell:{x:244,y:92,facing:'front'},
-      fromReef:{x:84,y:218,facing:'right'}
+      fromBell:{x:244,y:96,facing:'front'},
+      fromReef:{x:92,y:218,facing:'right'}
     },
     exits:[
-      {id:'toAirBell',key:'up',x0:154,x1:330,yMax:80,target:'airBell',spawn:'fromArchive'},
-      {id:'toCrystalReef',key:'left',xMax:70,yMin:158,yMax:260,target:'crystalReef',spawn:'fromArchive'}
+      {id:'toAirBell',key:'up',x0:154,x1:330,yMax:96,target:'airBell',spawn:'fromArchive'},
+      {id:'toCrystalReef',key:'left',xMax:84,yMin:158,yMax:260,target:'crystalReef',spawn:'fromArchive'}
     ],
     objects:[
       {id:'sealedRunes',kind:'sealedRunes',default:{x:242,y:174,near:false,pulseT:0,hintT:0,hintLines:['FÖRSEGLADE SPECIALRUNOR','DE ÄR INTE REDO ATT LÄSAS ÄN']},hit:{type:'rect',w:136,h:60,dy:-6},verbs:['read']}
