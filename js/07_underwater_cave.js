@@ -1,8 +1,8 @@
 // ------------------------- UNDERVATTENSGROTTA ------------------------
 const UNDERWATER_ENTRY_MUSIC_DUCK=0.34;
-const UNDERWATER_SWIM_ACCEL=0.26;
+const UNDERWATER_SWIM_ACCEL=0.18;
 const UNDERWATER_SWIM_RUN_ACCEL=0.50;
-const UNDERWATER_SWIM_MAX=2.25;
+const UNDERWATER_SWIM_MAX=1.70;
 const UNDERWATER_SWIM_RUN_MAX=3.75;
 const UNDERWATER_SWIM_DRAG=0.87;
 Object.assign(G,{
@@ -164,6 +164,7 @@ Object.assign(G,{
       vx:0,
       vy:0,
       facing:spawn.facing||'front',
+      swimFins:!!(this.hasHolySwimFins&&this.hasHolySwimFins()),
       keys:{left:false,right:false,up:false,down:false,run:false},
       sceneState:{},
       bubbles:[],
@@ -280,6 +281,7 @@ Object.assign(G,{
     cave.t++;
     if(cave.messageT>0)cave.messageT--;
     cave.keys=cave.keys||{};
+    cave.swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     const b=this.underwaterCaveSceneBounds(cave);
     if(cave.mapOpen){
       cave.vx=0;cave.vy=0;
@@ -289,7 +291,7 @@ Object.assign(G,{
     const h=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     const v=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     const mag=Math.hypot(h,v);
-    const swimFast=!!cave.keys.run;
+    const swimFast=!!(cave.keys.run&&cave.swimFins);
     const accel=swimFast?UNDERWATER_SWIM_RUN_ACCEL:UNDERWATER_SWIM_ACCEL;
     const maxSpeed=swimFast?UNDERWATER_SWIM_RUN_MAX:UNDERWATER_SWIM_MAX;
     if(mag>0){

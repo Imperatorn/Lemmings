@@ -2,6 +2,9 @@
 const WATERFALL_CAVE_TELEPORT_CHARGE_TICKS=126;
 const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SPLASH_FRAMES=96;
 const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES=118;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_FRAMES=92;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_WATERLINE_OFFSET=8;
+const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_PX=50;
 
 Object.assign(G,{
   waterfallCaveLootKey(wf){
@@ -500,6 +503,8 @@ Object.assign(G,{
     bucket.pedestalT=Math.max(0,bucket.pedestalT|0);
     bucket.pedestalSplashT=Math.max(0,bucket.pedestalSplashT|0);
     bucket.pedestalShakeT=Math.max(0,bucket.pedestalShakeT|0);
+    bucket.swimFinsCollected=!!(bucket.swimFinsCollected||this.holySwimFinsUnlocked);
+    bucket.swimFinsPickupT=Math.max(0,bucket.swimFinsPickupT|0);
     return bucket;
   },
   resetWaterfallCaveMirrorPoolVisit(cave){
@@ -510,6 +515,38 @@ Object.assign(G,{
     state.pedestalT=0;
     state.pedestalSplashT=0;
     state.pedestalShakeT=0;
+    state.swimFinsPickupT=0;
+    return true;
+  },
+  waterfallCaveMirrorPedestalItemSpot(cave,state){
+    cave=cave||this.waterfallCave;
+    state=state||this.waterfallCaveMirrorPoolState(cave);
+    const poolHit=this.waterfallCaveMirrorPoolHit(cave);
+    const pool=poolHit&&poolHit.obj;
+    if(!state||!pool)return null;
+    const rise=state.pedestalRaised?clamp((state.pedestalT||0)/WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_FRAMES,0,1):0;
+    const smooth=rise*rise*(3-2*rise);
+    const baseY=(pool.y||246)+WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_WATERLINE_OFFSET;
+    const topY=Math.round(baseY-WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_PX*smooth);
+    return {x:pool.x||250,baseY,topY,itemY:topY+1,rise:smooth};
+  },
+  collectWaterfallCaveMirrorSwimFins(cave,state){
+    cave=cave||this.waterfallCave;
+    state=state||this.waterfallCaveMirrorPoolState(cave);
+    if(!cave||cave.scene!=='mirrorPool'||!state||!state.pedestalRaised)return false;
+    if(this.hasHolySwimFins&&this.hasHolySwimFins()){state.swimFinsCollected=true;return false}
+    if(state.swimFinsCollected||state.pedestalT<WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_FRAMES)return false;
+    const spot=this.waterfallCaveMirrorPedestalItemSpot(cave,state);
+    if(!spot)return false;
+    const near=Math.abs((cave.lemX||0)-spot.x)<=42&&(cave.lemY||0)>=spot.topY+8&&(cave.lemY||0)<=spot.baseY+18;
+    if(!near)return false;
+    const l=this.findLemById?this.findLemById(cave.lemId):null;
+    if(!l)return false;
+    if(!this.unlockHolySwimFins||!this.unlockHolySwimFins(l))return false;
+    state.swimFinsCollected=true;
+    state.swimFinsPickupT=96;
+    this.toast('SIMFÖTTERNA ÄR DINA',130);
+    if(AU.sSaved)AU.sSaved();else if(AU.sClick)AU.sClick();
     return true;
   },
   triggerWaterfallCaveMirrorPedestal(cave,pool){
@@ -542,6 +579,8 @@ Object.assign(G,{
     state.pedestalT=Math.min(WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES,(state.pedestalT||0)+1);
     state.pedestalSplashT=Math.max(0,(state.pedestalSplashT||0)-1);
     state.pedestalShakeT=state.pedestalT<WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES?Math.max(1,WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES-(state.pedestalT||0)):0;
+    state.swimFinsPickupT=Math.max(0,(state.swimFinsPickupT||0)-1);
+    this.collectWaterfallCaveMirrorSwimFins(cave,state);
     return true;
   },
   waterfallCaveMirrorThrowStonePile(cave){

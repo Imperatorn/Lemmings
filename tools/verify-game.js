@@ -183,8 +183,8 @@ for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERW
     throw new Error(`Underwater cave swim tuning is missing ${token}`);
   }
 }
-if (!underwaterRuntimeCode.includes('swimFast?UNDERWATER_SWIM_RUN_MAX:UNDERWATER_SWIM_MAX') || !underwaterRuntimeCode.includes('cave.t%(swimFast?4:7)')) {
-  throw new Error('Shift-swimming should use a higher underwater max speed and stronger bubble cadence');
+if (!underwaterRuntimeCode.includes('cave.keys.run&&cave.swimFins') || !underwaterRuntimeCode.includes('swimFast?UNDERWATER_SWIM_RUN_MAX:UNDERWATER_SWIM_MAX') || !underwaterRuntimeCode.includes('cave.t%(swimFast?4:7)')) {
+  throw new Error('Shift-swimming should require swim fins and then use a higher underwater max speed and stronger bubble cadence');
 }
 for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','underwaterCaveResumeMusic','underwaterCaveResumeWeather','tryEnterUnderwaterCaveFromManual&&this.tryEnterUnderwaterCaveFromManual(l,z)','updateUnderwaterCave&&this.updateUnderwaterCave()']) {
   if (!gameCode.includes(token)) {
@@ -196,7 +196,7 @@ for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwate
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
 }
-for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','drawUnderwaterLemmingFrontBack','anim.phase','anim.fast']) {
+for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','drawUnderwaterLemmingFrontBack','anim.phase','anim.fast','hasFins']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater lemming swim animation is missing ${token}`);
   }
@@ -229,7 +229,7 @@ for (const token of ['Vattenfallsöppningen','Glödgång','Lägereld','Spegeldam
     throw new Error(`Waterfall cave map text is missing Swedish label ${token}`);
   }
 }
-for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing','blessWaterfallCaveLemming','waterfallCaveTeleportStoneState','updateWaterfallCaveTeleportStone']) {
+for (const token of ['setWaterfallCaveScene','tryWaterfallCaveSceneExit','waterfallCaveSceneRenderKey','waterfallCaveSceneObjects','waterfallCaveHitObject','waterfallCaveChurchBlessingState','updateWaterfallCaveChurchBlessing','blessWaterfallCaveLemming','waterfallCaveTeleportStoneState','updateWaterfallCaveTeleportStone','collectWaterfallCaveMirrorSwimFins','waterfallCaveMirrorPedestalItemSpot']) {
   if (!waterfallRuntimeCode.includes(token)) {
     throw new Error(`Waterfall cave runtime is missing scene-system method ${token}`);
   }
@@ -248,8 +248,11 @@ if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('
 if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHolyLemmingForLevel') || !gameCode.includes('normalizeHolyLemmings')) {
   throw new Error('Blessed lemmels should unlock exactly one persistent holy hatch lemmel for future levels');
 }
-if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneCharged') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('portalStone:null')) {
-  throw new Error('Teleport stone profile and runtime state should remain in js/07_game.js');
+if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneCharged') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('holySwimFinsUnlocked') || !gameCode.includes('portalStone:null')) {
+  throw new Error('Holy item profile and runtime state should remain in js/07_game.js');
+}
+for (const token of ['hasHolySwimFins','unlockHolySwimFins','swimFins=!!this.holySwimFinsUnlocked']) {
+  if (!gameCode.includes(token)) throw new Error(`Holy swim fins state is missing ${token}`);
 }
 for (const token of ['PORTAL_STONE_MAX_DIST','PORTAL_STONE_ENTER_COOLDOWN','unlockHolyTeleportStone','holyTeleportStoneIsCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','SÖK UPP EN KRISTALL','beginPortalStonePlacement','placePortalStoneExit','updatePortalStone']) {
   if (!portalStoneCode.includes(token)) throw new Error(`Teleport stone module is missing ${token}`);
@@ -426,7 +429,7 @@ if (!playRenderCode.includes('drawUnderwaterCaveView') || !playRenderCode.includ
 if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
   throw new Error('World render should draw active teleport stone portals before lemmels');
 }
-if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || !caveRenderCode.includes('drawWaterfallCaveMainCrystal') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeEffect') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeRoomLight') || !caveRenderCode.includes('drawWaterfallCaveCrystalMessage') || !caveRenderCode.includes('drawWaterfallCaveMirrorPedestal') || !caveRenderCode.includes('waterfallCaveMirrorPoolShake') || playRenderCode.includes('function drawWaterfallCaveView')) {
+if (!caveRenderCode.includes('function drawWaterfallCaveView') || !caveRenderCode.includes('waterfallCaveRenderKey') || !caveRenderCode.includes('drawWaterfallCaveAdventureView') || !caveRenderCode.includes('drawWaterfallCaveAdventureDetails') || !caveRenderCode.includes('drawWaterfallCaveAmbientMotes') || !caveRenderCode.includes('drawWaterfallCaveMapOverlay') || !caveRenderCode.includes('GROTTKARTA') || caveRenderCode.includes('hash2(i+1301,cave.t') || !caveRenderCode.includes('drawWaterfallCaveStoneInspect') || !caveRenderCode.includes('RISTAD STEN') || !caveRenderCode.includes('drawWaterfallCaveMainCrystal') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeEffect') || !caveRenderCode.includes('drawWaterfallCaveCrystalChargeRoomLight') || !caveRenderCode.includes('drawWaterfallCaveCrystalMessage') || !caveRenderCode.includes('drawWaterfallCaveMirrorPedestal') || !caveRenderCode.includes('drawWaterfallCaveMirrorSwimFins') || !caveRenderCode.includes('waterfallCaveMirrorPoolShake') || playRenderCode.includes('function drawWaterfallCaveView')) {
   throw new Error('Waterfall cave rendering should live in js/11_waterfall_cave_render.js');
 }
 if (!waterfallRuntimeCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SPLASH_FRAMES') || !waterfallRuntimeCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES') || !caveRenderCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_SPLASH_FRAMES') || !caveRenderCode.includes('WATERFALL_CAVE_MIRROR_PEDESTAL_SETTLE_FRAMES')) {
@@ -640,7 +643,7 @@ const requiredRuntimeMethods = [
   'setMusicVolume','setSfxVolume',
   'runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeTypedSummary','surfaceRuneSummary','deepRuneSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
   'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','skyChapter','skyChapterStart','skyUnlockProgress','skyChapterUnlocked','skyLockedReason','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
-  'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
+  'unlockHolyBlessing','hasHolySwimFins','unlockHolySwimFins','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
   'ropeAnchorIntact','detachRope','pruneDetachedRopes',
@@ -821,6 +824,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
 {
   const prevUnderwater = G.underwaterCave;
   const prevToasts = G.toasts;
+  const prevHolySwimFinsUnlocked = G.holySwimFinsUnlocked;
   const makeSwimCave = run => ({
     active:true,
     scene:'entryPool',
@@ -838,22 +842,30 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     t:0
   });
   G.toasts = [];
+  G.holySwimFinsUnlocked = false;
   G.underwaterCave = makeSwimCave(false);
   for (let i = 0; i < 18; i++) G.updateUnderwaterCave();
   const normalDx = G.underwaterCave.swimX - 240;
-  const normalBubbles = (G.underwaterCave.bubbles || []).length;
+  G.underwaterCave = makeSwimCave(true);
+  for (let i = 0; i < 18; i++) G.updateUnderwaterCave();
+  const noFinsShiftDx = G.underwaterCave.swimX - 240;
+  if (Math.abs(noFinsShiftDx - normalDx) > 0.01) {
+    throw new Error(`Shift should not speed underwater swimming before swim fins, normal=${normalDx.toFixed(2)} shift=${noFinsShiftDx.toFixed(2)}`);
+  }
+  G.holySwimFinsUnlocked = true;
   G.underwaterCave = makeSwimCave(true);
   for (let i = 0; i < 18; i++) G.updateUnderwaterCave();
   const fastDx = G.underwaterCave.swimX - 240;
   const fastBubbles = (G.underwaterCave.bubbles || []).length;
   if (!(fastDx > normalDx * 1.45)) {
-    throw new Error(`Shift underwater swimming should be clearly faster, normal=${normalDx.toFixed(2)} fast=${fastDx.toFixed(2)}`);
+    throw new Error(`Swim fins should make Shift underwater swimming clearly faster, normal=${normalDx.toFixed(2)} fast=${fastDx.toFixed(2)}`);
   }
-  if (fastBubbles <= normalBubbles) {
-    throw new Error('Fast underwater swimming should leave a stronger bubble trail');
+  if (fastBubbles < 4) {
+    throw new Error('Fast underwater swimming with swim fins should leave a stronger bubble trail');
   }
   G.underwaterCave = prevUnderwater;
   G.toasts = prevToasts;
+  G.holySwimFinsUnlocked = prevHolySwimFinsUnlocked;
 }
 {
   const prevRuneProgress = G.runeProgress;
@@ -1325,6 +1337,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   const prevHolyLevelLemId = G.holyLevelLemId;
   const prevHolyTeleportStoneUnlocked = G.holyTeleportStoneUnlocked;
   const prevHolyTeleportStoneCharged = G.holyTeleportStoneCharged;
+  const prevHolySwimFinsUnlocked = G.holySwimFinsUnlocked;
   const prevPracticeHolyTeleportStoneUnlocked = G.practiceHolyTeleportStoneUnlocked;
   const prevPracticeHolyTeleportStoneCharged = G.practiceHolyTeleportStoneCharged;
   const prevHolyTeleportStoneLemId = G.holyTeleportStoneLemId;
@@ -1365,6 +1378,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.cleared = new Array(LEVELS.length).fill(false);
   G.holyTeleportStoneUnlocked = false;
   G.holyTeleportStoneCharged = false;
+  G.holySwimFinsUnlocked = false;
   G.practiceHolyTeleportStoneUnlocked = false;
   G.practiceHolyTeleportStoneCharged = false;
   G.cutscenesOn = true;
@@ -2029,11 +2043,24 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Mirror pool should keep shaking until the pedestal is fully raised');
   }
   if (!drawWaterfallCaveView(WCTX, 48)) throw new Error('Mirror pool pedestal rise view did not render');
+  if (mirrorState.swimFinsCollected || G.holySwimFinsUnlocked) {
+    throw new Error('Mirror pool swim fins should not be collected before the lemmel reaches the raised pedestal');
+  }
+  for (let i = 0; i < 80 && mirrorState.pedestalT < 92; i++) G.tick();
+  const pedestalLem = G.findLemById(G.waterfallCave.lemId);
+  if (!pedestalLem) throw new Error('Mirror pool swim fins should be collected by the cave lemmel');
+  G.waterfallCave.lemX = mirrorPool.obj.x;
+  G.waterfallCave.lemY = 230;
+  G.tick();
+  if (!mirrorState.swimFinsCollected || !G.holySwimFinsUnlocked || !pedestalLem.swimFins || !(mirrorState.swimFinsPickupT > 0)) {
+    throw new Error('Cave lemmel did not collect persistent black swim fins from the raised mirror-pool pedestal');
+  }
+  if (!drawWaterfallCaveView(WCTX, 48.5)) throw new Error('Mirror pool empty pedestal after swim fins pickup did not render');
   G.setWaterfallCaveScene('glyphArchive','fromPool',{audio:false});
   G.setWaterfallCaveScene('mirrorPool','fromGlyph',{audio:false});
   const resetMirrorState = G.waterfallCaveMirrorPoolState(G.waterfallCave);
-  if (!resetMirrorState || resetMirrorState.stonesThrown !== 0 || resetMirrorState.pedestalRaised || resetMirrorState.pedestalT !== 0) {
-    throw new Error('Mirror pool stone count and pedestal should reset each time the room is entered');
+  if (!resetMirrorState || resetMirrorState.stonesThrown !== 0 || resetMirrorState.pedestalRaised || resetMirrorState.pedestalT !== 0 || !resetMirrorState.swimFinsCollected) {
+    throw new Error('Mirror pool stone count and pedestal should reset each time the room is entered while keeping collected swim fins gone');
   }
   G.waterfallCave.lemX = G.waterfallCaveSceneBounds(G.waterfallCave).minX;
   G.waterfallCave.lemY = 230;
@@ -2633,6 +2660,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.holyLevelLemId = prevHolyLevelLemId;
   G.holyTeleportStoneUnlocked = prevHolyTeleportStoneUnlocked;
   G.holyTeleportStoneCharged = prevHolyTeleportStoneCharged;
+  G.holySwimFinsUnlocked = prevHolySwimFinsUnlocked;
   G.practiceHolyTeleportStoneUnlocked = prevPracticeHolyTeleportStoneUnlocked;
   G.practiceHolyTeleportStoneCharged = prevPracticeHolyTeleportStoneCharged;
   G.holyTeleportStoneLemId = prevHolyTeleportStoneLemId;
@@ -3752,7 +3780,8 @@ withLocalStorage({}, store => {
   G.unlockHolyBlessing();
   const fakeHoly = {id:9001, holy:true, dead:false, alive(){return true}};
   G.unlockHolyTeleportStone(fakeHoly);
-  if (G.cleared[idx] || G.profileStats.levels[idx] || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged) {
+  G.unlockHolySwimFins(fakeHoly);
+  if (G.cleared[idx] || G.profileStats.levels[idx] || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.holySwimFinsUnlocked) {
     throw new Error('Practice run rewards or results leaked into campaign profile state');
   }
   if (!G.practiceHolyTeleportStoneUnlocked || !G.portalStoneButtonVisible()) {
@@ -3776,7 +3805,7 @@ withLocalStorage({}, store => {
   G.cancelPortalStonePlacement();
   G.savePrefs();
   G.loadPrefs();
-  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.practiceHolyTeleportStoneUnlocked || G.practiceHolyTeleportStoneCharged) {
+  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.holySwimFinsUnlocked || G.practiceHolyTeleportStoneUnlocked || G.practiceHolyTeleportStoneCharged) {
     throw new Error('Practice state should not persist after save/load');
   }
 });
@@ -3787,13 +3816,14 @@ withLocalStorage({
     money:7,
     holyBlessingUnlocked:true,
     holyTeleportStoneUnlocked:true,
+    holySwimFinsUnlocked:true,
     runeProgress:{v:1,discovered:{'legacy.rune.one':{key:'legacy.rune.one',setId:'legacy.runes',runeId:'one',title:'Legacyruna',setTitle:'Legacyrunor',total:1,lines:['Legacyruna']}},sets:{'legacy.runes':{id:'legacy.runes',title:'Legacyrunor',total:1,readCount:1,complete:true}}},
     savedStates:[savedState],
     mode:'classic'
   })
 }, store => {
   const p = loadPersisted();
-  if (!p || p.money !== 7 || !p.holyBlessingUnlocked || !p.holyTeleportStoneUnlocked || !p.runeProgress || !p.runeProgress.discovered || !p.runeProgress.discovered['legacy.rune.one']) {
+  if (!p || p.money !== 7 || !p.holyBlessingUnlocked || !p.holyTeleportStoneUnlocked || !p.holySwimFinsUnlocked || !p.runeProgress || !p.runeProgress.discovered || !p.runeProgress.discovered['legacy.rune.one']) {
     throw new Error('Legacy save should migrate into the first profile');
   }
   if (!store[SAVE_KEY]) throw new Error('Legacy save key should be preserved as backup during profile migration');
@@ -3826,6 +3856,7 @@ withLocalStorage({}, store => {
   G.holyBlessingUnlocked = true;
   G.holyTeleportStoneUnlocked = true;
   G.holyTeleportStoneCharged = true;
+  G.holySwimFinsUnlocked = true;
   G.profileStats = {levels:{0:{attempts:3,wins:1,bestPct:100,bestSaved:10,bestTimeLeft:42,bestSeed:123,last:null}}};
   G.recordRuneDiscovery({key:'profileA.runes.one',setId:'profileA.runes',runeId:'one',title:'Profilruna',setTitle:'Profilrunor',total:1,lines:['Profilruna']});
   G.savePrefs();
@@ -3833,7 +3864,7 @@ withLocalStorage({}, store => {
   const bMeta = createProfile('Beta');
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch active profile in storage');
   G.loadPrefs();
-  if (G.money !== 0 || G.cleared.some(Boolean) || G.levelSelectMode !== 'campaign' || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || saveGameSlots().length !== 0) {
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.levelSelectMode !== 'campaign' || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.holySwimFinsUnlocked || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || saveGameSlots().length !== 0) {
     throw new Error('New profile should not inherit progress, money, level select mode, holy state, runes, or save slots');
   }
   G.money = 2;
@@ -3841,7 +3872,7 @@ withLocalStorage({}, store => {
   G.savePrefs();
   if (!setActiveProfile(a)) throw new Error('Could not switch back to profile A');
   G.loadPrefs();
-  if (G.money !== 9 || !G.cleared[0] || G.levelSelectMode !== 'free' || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || !G.holyTeleportStoneCharged || G.runeProgressSummary().discovered !== 1 || G.runeProgressSummary().visitedArchives !== 1 || saveGameSlots().length !== 1) {
+  if (G.money !== 9 || !G.cleared[0] || G.levelSelectMode !== 'free' || !G.holyBlessingUnlocked || !G.holyTeleportStoneUnlocked || !G.holyTeleportStoneCharged || !G.holySwimFinsUnlocked || G.runeProgressSummary().discovered !== 1 || G.runeProgressSummary().visitedArchives !== 1 || saveGameSlots().length !== 1) {
     throw new Error('Profile A progress was not restored after switching back');
   }
   if (!setActiveProfile(bMeta.id)) throw new Error('Could not switch back to profile B');
@@ -3860,6 +3891,7 @@ withLocalStorage({}, store => {
   G.holyBlessingUnlocked = true;
   G.holyTeleportStoneUnlocked = true;
   G.holyTeleportStoneCharged = true;
+  G.holySwimFinsUnlocked = true;
   G.savePrefs();
   if (!writeGameSlots([savedState])) throw new Error('Could not create last-profile save slot fixture');
   if (!deleteProfile(firstId)) throw new Error('Deleting the final profile should be allowed');
@@ -3869,7 +3901,7 @@ withLocalStorage({}, store => {
     throw new Error('Deleting the final profile should create one fresh default profile');
   }
   G.loadPrefs();
-  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || saveGameSlots().length !== 0) {
+  if (G.money !== 0 || G.cleared.some(Boolean) || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.holySwimFinsUnlocked || saveGameSlots().length !== 0) {
     throw new Error('Fresh default profile after final delete should not inherit deleted state');
   }
   if (Object.keys(store).some(k => k.includes(firstId))) {

@@ -126,7 +126,7 @@ function underwaterSwimPhase(cave,tk){
     bob:Math.round(Math.sin(t*(moving?(fast?0.28:0.22):0.12))*2)
   };
 }
-function drawUnderwaterLemmingSide(c,x,y,d,anim){
+function drawUnderwaterLemmingSide(c,x,y,d,anim,hasFins){
   const colors=typeof COL==='object'&&COL?COL:{hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb'};
   const hair=colors.hair,skin=colors.skin,body=colors.body,leg=colors.leg,dark='#102040';
   const kick=anim.phase===1?1:(anim.phase===3?-1:0),reach=anim.phase===0?1:(anim.phase===2?-1:0);
@@ -139,6 +139,10 @@ function drawUnderwaterLemmingSide(c,x,y,d,anim){
   p(d>0?-5:3,-1+kick,2,1,leg);
   p(d>0?-2:0,-1-kick,2,1,leg);
   p(d>0?-3:1,0-kick,2,1,leg);
+  if(hasFins){
+    p(d>0?-6:4,-1+kick,3,1,'#020304');
+    p(d>0?-5:3,1-kick,3,1,'#020304');
+  }
   p(-2,-6,4,4,body);
   p(-1+(d>0?0:-1)+1,-8,2,2,skin);
   p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
@@ -147,7 +151,7 @@ function drawUnderwaterLemmingSide(c,x,y,d,anim){
   p(d>0?-4:2,-5-reach,2,1,skin);
   c.restore();
 }
-function drawUnderwaterLemmingFrontBack(c,x,y,face,anim){
+function drawUnderwaterLemmingFrontBack(c,x,y,face,anim,hasFins){
   const colors=typeof COL==='object'&&COL?COL:{hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb'};
   const hair=colors.hair,skin=colors.skin,body=colors.body,leg=colors.leg,dark='#102040';
   const kick=anim.phase===1?1:(anim.phase===3?-1:0),reach=anim.phase===0?1:(anim.phase===2?-1:0);
@@ -160,6 +164,10 @@ function drawUnderwaterLemmingFrontBack(c,x,y,face,anim){
   p(1,-2-kick,1,2,leg);
   p(-1,-1-kick,1,1,leg);
   p(0,-1+kick,1,1,leg);
+  if(hasFins){
+    p(-4,0+kick,3,1,'#020304');
+    p(1,0-kick,3,1,'#020304');
+  }
   p(-2,-6,4,4,body);
   p(-3,-6+reach,1,3,skin);
   p(2,-6-reach,1,3,skin);
@@ -175,6 +183,7 @@ function drawUnderwaterLemmingFrontBack(c,x,y,face,anim){
 function drawUnderwaterLemming(c,cave,tk){
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150),face=cave.facing||'right';
   const anim=underwaterSwimPhase(cave,tk);
+  const hasFins=!!(cave.swimFins||(G.hasHolySwimFins&&G.hasHolySwimFins()));
   c.save();
   c.globalAlpha=0.18;c.fillStyle='#d8f8ff';uwRect(c,x-14,y+5,28,2);c.globalAlpha=1;
   c.globalCompositeOperation='lighter';
@@ -197,8 +206,8 @@ function drawUnderwaterLemming(c,cave,tk){
     }
     c.globalAlpha=1;
   }
-  if(face==='left'||face==='right')drawUnderwaterLemmingSide(c,x,y,face==='left'?-1:1,anim);
-  else drawUnderwaterLemmingFrontBack(c,x,y,face,anim);
+  if(face==='left'||face==='right')drawUnderwaterLemmingSide(c,x,y,face==='left'?-1:1,anim,hasFins);
+  else drawUnderwaterLemmingFrontBack(c,x,y,face,anim,hasFins);
   c.restore();
 }
 function drawUnderwaterBubbles(c,cave,tk){
@@ -290,7 +299,7 @@ function drawUnderwaterCaveView(c,tk){
   drawUnderwaterLemming(c,cave,tk);
   const def=typeof underwaterCaveSceneDef==='function'?underwaterCaveSceneDef(cave.scene):null;
   drawText(c,def&&def.label?def.label:'Undervattnet',12,12,1,'#bdf8ff');
-  if(cave.hintT>0)drawTextC(c,'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP',CW/2,CH-18,1,'#d8fbff');
+  if(cave.hintT>0)drawTextC(c,(cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP':'PILAR SIMMAR  M KARTA  ESC UPP'),CW/2,CH-18,1,'#d8fbff');
   const hit=G.underwaterCavePromptObject?G.underwaterCavePromptObject(cave):null;
   if(hit&&hit.obj&&hit.obj.near){
     drawTextC(c,'MELLANSLAG: UNDERSÖK',Math.round(cave.swimX||240),Math.max(22,Math.round((cave.swimY||150)-28)),1,'#fff0a0');

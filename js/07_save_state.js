@@ -9,7 +9,7 @@ Object.assign(G,{
       'lamp','weatherKind','weatherT','thunderT','thunderFlash','thunderX','thunderPath','meteorT','supplyT','supplyDrops','supplyMax','supplyLastX',
       'supplyRecentXs','supplyMegaDropped','supplyMegaPlanned','supplyMegaForceAt','supplyLateMegaScheduled','monkeyT','monkeyEvents','monkeyMax','monkeySeq',
       'monkeyAirSupportPending','monkeyAirSupportTargetX','monkeyLastX','trollT','trollEvents','trollMax','trollLastX','treeT','treeEvents','treeMax','treeLastX','jumpT','jumpEvents','jumpMax',
-      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','portalStone','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus','holyBlessingUnlocked','holyLevelLemId','holyTeleportStoneUnlocked','holyTeleportStoneCharged','holyTeleportStoneLemId'];
+      'megaBoom','megaArmed','eventLockT','shakeT','shakePow','ropeAim','ropeSeq','portalStone','settledTrollRockSeq','lemTalkT','manual','waterfallCaveLooted','money','pendingSkillBonus','holyBlessingUnlocked','holyLevelLemId','holyTeleportStoneUnlocked','holyTeleportStoneCharged','holyTeleportStoneLemId','holySwimFinsUnlocked'];
     const arrays=['lems','parts','rockets','hooks','ropes','planes','packages','monkeys','bananas','trolls','trollRocks','settledTrollRocks','trees','dolphins','flashes',
       'decor','rescues','fireflies','meteors','caveDrips','ambientBugs','ambientFish','ambientGrass','warnings','queuedEvents'];
     const data={v:1,label:String(label||'SPARAT LÄGE').slice(0,28),ts:Date.now?Date.now():0,levelIdx:this.levelIdx,levelSeed:this.levelSeed>>>0,
@@ -74,6 +74,7 @@ Object.assign(G,{
     if(Object.prototype.hasOwnProperty.call(fields,'holyTeleportStoneCharged'))this.holyTeleportStoneCharged=!!fields.holyTeleportStoneCharged;
     else this.holyTeleportStoneCharged=!!persisted.holyTeleportStoneCharged;
     this.holyTeleportStoneCharged=!!(this.holyTeleportStoneUnlocked&&this.holyTeleportStoneCharged);
+    this.holySwimFinsUnlocked=!!(this.holySwimFinsUnlocked||persisted.holySwimFinsUnlocked);
     this.practiceHolyTeleportStoneUnlocked=false;
     this.practiceHolyTeleportStoneCharged=false;
     this.levelRunMode='campaign';

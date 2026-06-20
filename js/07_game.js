@@ -83,7 +83,7 @@ const G={
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', levelRunMode:'campaign', tempoIdx:1, cutscenesOn:true,
   lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{},archives:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null, underwaterCave:null, underwaterCaveExitCooldown:0, underwaterCaveResumeMusic:false, underwaterCaveResumeWeather:null,
-  holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneCharged:false, practiceHolyTeleportStoneUnlocked:false, practiceHolyTeleportStoneCharged:false, holyTeleportStoneLemId:null, portalStone:null,
+  holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneCharged:false, practiceHolyTeleportStoneUnlocked:false, practiceHolyTeleportStoneCharged:false, holyTeleportStoneLemId:null, holySwimFinsUnlocked:false, portalStone:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
   monkeyT:0, monkeyEvents:0, monkeyMax:0, monkeyLastX:null, monkeySeq:0, monkeyAirSupportPending:false, monkeyAirSupportTargetX:null,
@@ -330,15 +330,31 @@ const G={
     this.savePrefs();
     return true;
   },
+  hasHolySwimFins(){
+    return !!this.holySwimFinsUnlocked;
+  },
+  unlockHolySwimFins(l){
+    if(this.currentRunAffectsProgress&&!this.currentRunAffectsProgress())return false;
+    if(!l&&this.holyLevelLemId!=null&&this.findLemById)l=this.findLemById(this.holyLevelLemId);
+    if(this.holySwimFinsUnlocked){
+      if(l)l.swimFins=true;
+      return false;
+    }
+    this.holySwimFinsUnlocked=true;
+    if(l)l.swimFins=true;
+    this.savePrefs();
+    return true;
+  },
   normalizeHolyLemmings(preferred){
     let keep=(preferred&&preferred.holy&&!preferred.dead)?preferred:null;
     for(const l of this.lems||[]){
       if(!l)continue;
-      if(!l.holy){l.teleportStone=false;continue}
+      if(!l.holy){l.teleportStone=false;l.swimFins=false;continue}
       if(!keep&&!l.dead)keep=l;
-      else if(l!==keep){l.holy=false;l.teleportStone=false}
+      else if(l!==keep){l.holy=false;l.teleportStone=false;l.swimFins=false}
     }
     this.holyLevelLemId=(keep&&!keep.dead)?keep.id:null;
+    if(keep&&!keep.dead)keep.swimFins=!!this.holySwimFinsUnlocked;
     const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():this.holyTeleportStoneUnlocked;
     if(keep&&!keep.dead&&hasStone){
       keep.teleportStone=true;
@@ -355,6 +371,7 @@ const G={
     l.holy=true;
     l.holySaveT=-999;
     l.teleportStone=!!this.holyTeleportStoneUnlocked;
+    l.swimFins=!!this.holySwimFinsUnlocked;
     this.holyLevelLemId=l.id;
     if(l.teleportStone)this.holyTeleportStoneLemId=l.id;
     this.normalizeHolyLemmings(l);
@@ -395,6 +412,7 @@ const G={
     this.holyBlessingUnlocked=false;
     this.holyTeleportStoneUnlocked=false;
     this.holyTeleportStoneCharged=false;
+    this.holySwimFinsUnlocked=false;
     this.practiceHolyTeleportStoneUnlocked=false;
     this.practiceHolyTeleportStoneCharged=false;
     this.holyLevelLemId=null;
@@ -584,6 +602,7 @@ const G={
     this.holyBlessingUnlocked=!!p.holyBlessingUnlocked;
     this.holyTeleportStoneUnlocked=!!p.holyTeleportStoneUnlocked;
     this.holyTeleportStoneCharged=!!(this.holyTeleportStoneUnlocked&&p.holyTeleportStoneCharged);
+    this.holySwimFinsUnlocked=!!p.holySwimFinsUnlocked;
     this.holyLevelLemId=null;
     this.holyTeleportStoneLemId=null;
     if(typeof p.musicOn==='boolean')AU.musicOn=p.musicOn;
@@ -599,7 +618,7 @@ const G={
   },
   savePrefs(){
     const p=loadPersisted();
-    p.mode=this.mode;p.levelSelectMode=this.normalizeLevelSelectMode?this.normalizeLevelSelectMode(this.levelSelectMode):this.levelSelectMode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.runeProgress=this.normalizeRuneProgress(this.runeProgress);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.holyTeleportStoneCharged=!!(this.holyTeleportStoneUnlocked&&this.holyTeleportStoneCharged);p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
+    p.mode=this.mode;p.levelSelectMode=this.normalizeLevelSelectMode?this.normalizeLevelSelectMode(this.levelSelectMode):this.levelSelectMode;p.tempoIdx=clamp(this.tempoIdx|0,0,TEMPO_CFG.length-1);p.cleared=this.cleared.slice();p.money=Math.max(0,this.money|0);p.pendingSkillBonus=this.normalizePendingSkillBonus(this.pendingSkillBonus);p.stats=this.normalizeProfileStats(this.profileStats);p.runeProgress=this.normalizeRuneProgress(this.runeProgress);p.holyBlessingUnlocked=!!this.holyBlessingUnlocked;p.holyTeleportStoneUnlocked=!!this.holyTeleportStoneUnlocked;p.holyTeleportStoneCharged=!!(this.holyTeleportStoneUnlocked&&this.holyTeleportStoneCharged);p.holySwimFinsUnlocked=!!this.holySwimFinsUnlocked;p.musicOn=!!AU.musicOn;p.sfxOn=!!AU.sfxOn;p.cutscenesOn=this.cutscenesOn!==false;p.musicVol=AU.musicVol;p.sfxVol=AU.sfxVol;p.lastLevelIdx=this.levelIdx;p.playCount=this.playCount>>>0;p.lastSeed=this.levelSeed>>>0;
     return savePersisted(p);
   },
   toggleMode(){this.mode=this.mode==='chaos'?'classic':'chaos';this.toast('LÄGE: '+this.modeName());this.savePrefs();AU.sClick();return this.mode},

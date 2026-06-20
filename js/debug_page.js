@@ -341,7 +341,7 @@
   function resetDebugLemming(l,x,y){
     l.x=Math.round(x);l.y=Math.round(y);l.dir=1;l.state='WALK';l.fall=0;l.bombT=-1;l.busyT=0;l.bricks=0;
     l.jumpT=0;l.jumpVy=0;l.manualAimAngle=null;l.ropeId=null;l.ropeCooldown=0;l.swimRing=false;l.fishRingTried=false;
-    l.climber=false;l.floater=false;l.chute=false;l.soft=false;l.glide=0;l.dead=false;
+    l.climber=false;l.floater=false;l.chute=false;l.soft=false;l.glide=0;l.swimFins=false;l.dead=false;
     return l;
   }
 

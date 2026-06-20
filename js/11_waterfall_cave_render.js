@@ -1436,6 +1436,35 @@ function drawWaterfallCaveMirrorPedestalDrips(c,px,baseY,topY,state,cave,tk,rise
   return true;
 }
 
+function drawWaterfallCaveMirrorSwimFins(c,px,objY,tk,pulse){
+  const bob=Math.round(Math.sin((tk||0)*0.12)*2);
+  const y=objY+bob;
+  c.save();
+  c.globalAlpha=0.34;
+  c.fillStyle='#000000';
+  fillPixelPoly(c,[[px-22,y+12],[px-6,y+7],[px+18,y+8],[px+28,y+13],[px+12,y+17],[px-16,y+16]]);
+  c.globalAlpha=1;
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.10+0.12*pulse;
+  c.fillStyle='#8eefff';
+  fillPixelPoly(c,[[px-34,y+6],[px-14,y-13],[px+8,y-13],[px+33,y+6],[px+13,y+19],[px-16,y+18]]);
+  c.globalCompositeOperation='source-over';
+  c.globalAlpha=1;
+  c.fillStyle='#030405';
+  fillPixelPoly(c,[[px-18,y+6],[px-22,y-5],[px-13,y-13],[px-4,y-7],[px-5,y+7],[px-13,y+12]]);
+  fillPixelPoly(c,[[px+5,y+7],[px+3,y-7],[px+13,y-13],[px+22,y-5],[px+18,y+7],[px+11,y+12]]);
+  c.fillStyle='#101820';
+  fillPixelPoly(c,[[px-16,y+4],[px-17,y-4],[px-12,y-9],[px-8,y-6],[px-8,y+5],[px-13,y+8]]);
+  fillPixelPoly(c,[[px+9,y+5],[px+8,y-6],[px+13,y-9],[px+17,y-4],[px+16,y+4],[px+12,y+8]]);
+  c.fillStyle='#27323a';
+  c.fillRect(px-13,y-5,4,1);
+  c.fillRect(px+10,y-5,4,1);
+  c.fillStyle='#000000';
+  c.fillRect(px-8,y+5,5,2);
+  c.fillRect(px+4,y+5,5,2);
+  c.restore();
+}
+
 function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
   const state=waterfallCaveMirrorPedestalState(cave);
   const rise=waterfallCaveMirrorPedestalProgress(state);
@@ -1496,20 +1525,16 @@ function drawWaterfallCaveMirrorPedestal(c,x,y,cave,obj,tk){
 
   const objY=topY+1;
   const pulse=0.55+0.45*Math.sin((tk+(cave&&cave.t||0))*0.10);
-  c.globalCompositeOperation='lighter';
-  c.globalAlpha=0.14+0.22*rise*pulse;
-  c.fillStyle='#aeefff';
-  fillPixelPoly(c,[[px-20,objY+2],[px-8,objY-15],[px+8,objY-15],[px+20,objY+2],[px+8,objY+13],[px-8,objY+13]]);
-  c.globalCompositeOperation='source-over';
-  c.globalAlpha=1;
-  c.fillStyle='#24282c';
-  fillPixelPoly(c,[[px-9,objY+8],[px-12,objY-3],[px-3,objY-13],[px+8,objY-8],[px+12,objY+5],[px+2,objY+13]]);
-  c.fillStyle='#6fe8ff';
-  c.fillRect(px-4,objY-7,2,15);
-  c.fillStyle='#ff70df';
-  c.fillRect(px+3,objY-4,2,11);
-  c.fillStyle='#dffcff';
-  c.fillRect(px-2,objY-11,3,3);
+  const finsGone=!!(state.swimFinsCollected||(G.hasHolySwimFins&&G.hasHolySwimFins()));
+  if(!finsGone){
+    drawWaterfallCaveMirrorSwimFins(c,px,objY,tk,rise*pulse);
+  }else{
+    c.globalAlpha=0.18+0.20*clamp((state.swimFinsPickupT||0)/96,0,1);
+    c.fillStyle='#9eefff';
+    c.fillRect(px-14,objY+8,28,1);
+    c.fillRect(px-8,objY+12,16,1);
+    c.globalAlpha=1;
+  }
   c.restore();
   return true;
 }
