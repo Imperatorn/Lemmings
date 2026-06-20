@@ -1975,7 +1975,8 @@ function waterfallCaveCrystalChargeState(cave,obj){
   const rem=clamp(Number.isFinite(obj.chargeT)?obj.chargeT:0,0,dur);
   if(rem<=0)return null;
   const p=clamp((dur-rem)/dur,0,1);
-  return {dur,rem,p,fade:clamp(rem/28,0,1)};
+  const fadeTicks=clamp(Math.round(dur*0.24),6,18);
+  return {dur,rem,p,fade:clamp(rem/fadeTicks,0,1)};
 }
 
 function waterfallCaveCrystalChargeHit(cave){

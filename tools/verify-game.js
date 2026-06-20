@@ -2226,10 +2226,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.practiceHolyTeleportStoneCharged = false;
   songCrystal.obj.hintT = 0;
   G.handleWaterfallCaveKey(' ');
-  if (!G.practiceHolyTeleportStoneCharged || !(songCrystal.obj.chargeT >= 120) || !(songCrystal.obj.chargeDur >= 120) || !(songCrystal.obj.hintT > 0) || crystalChargeSounds !== chargeSoundsBefore + 1) {
+  if (!G.practiceHolyTeleportStoneCharged || !(songCrystal.obj.chargeT >= 30 && songCrystal.obj.chargeT <= 40) || !(songCrystal.obj.chargeDur >= 30 && songCrystal.obj.chargeDur <= 40) || !(songCrystal.obj.hintT > 0) || crystalChargeSounds !== chargeSoundsBefore + 1) {
     throw new Error('Song crystal did not charge an uncharged teleport stone with Space');
   }
-  if (!(G.waterfallCave.crystalChargeLockT >= 120)) {
+  if (!(G.waterfallCave.crystalChargeLockT >= 30 && G.waterfallCave.crystalChargeLockT <= 40)) {
     throw new Error('Crystal charging should briefly lock cave control during the dramatic charge sequence');
   }
   if (!drawWaterfallCaveView(WCTX, 38)) {
@@ -2240,7 +2240,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.tick();
   G.handleWaterfallCaveKeyUp('ArrowRight');
   if (G.waterfallCave.lemX !== lockX || G.waterfallCave.lemY !== lockY || !(songCrystal.obj.chargeT < songCrystal.obj.chargeDur)) {
-    throw new Error('Crystal charging should hold the lemmel still while the long animation advances');
+    throw new Error('Crystal charging should hold the lemmel still while the charge animation advances');
   }
   songCrystal.obj.chargeT = 0;
   G.waterfallCave.crystalChargeLockT = 0;
