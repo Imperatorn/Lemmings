@@ -120,74 +120,41 @@ function drawUnderwaterObjects(c,cave,tk){
 function underwaterSwimPhase(cave,tk){
   const speed=Math.hypot(cave.vx||0,cave.vy||0),moving=speed>0.08,fast=!!(moving&&cave.keys&&cave.keys.run&&cave.swimFins);
   const t=(cave.t||0)+tk,strokeT=Number.isFinite(cave.swimStrokeT)?cave.swimStrokeT+tk*0.035:t*(moving?(fast?0.16:0.10):0.035);
-  const wave=Math.sin(strokeT),reach=Math.sin(strokeT+Math.PI*0.65);
+  const wave=Math.sin(strokeT);
   return {
     speed,moving,fast,
-    wave,reach,
-    kick:moving?Math.round(wave*1.15):0,
-    arm:moving?Math.round(reach*1.1):0,
+    phase:moving?(Math.floor(strokeT*2.0)&3):0,
+    kick:moving?Math.round(wave):0,
     bob:Math.round(Math.sin(t*(moving?0.10:0.07))*1.2)
   };
 }
 function drawUnderwaterLemmingSide(c,x,y,d,anim,hasFins){
   const colors=typeof COL==='object'&&COL?COL:{hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb'};
   const hair=colors.hair,skin=colors.skin,body=colors.body,leg=colors.leg,dark='#102040';
-  const kick=anim.kick||0,arm=anim.arm||0;
+  const phase=anim.phase||0,kick=anim.kick||0;
   c.save();
   c.translate(x,y+anim.bob);
   c.scale(2,2);
-  function mx(px,w){return d>0?px:-px-w}
-  function p(px,py,w,h,col){c.fillStyle=col;c.fillRect(mx(px,w),py,w,h)}
-  function poly(pts,col){c.fillStyle=col;uwPoly(c,pts.map(pt=>[d>0?pt[0]:-pt[0],pt[1]]))}
-  // Side-swimming pose: head forward, fins behind.
-  p(-9,-4+kick,4,1,leg);
-  p(-8,-2+kick,4,1,leg);
-  p(-9,-1-kick,4,1,leg);
-  p(-8,1-kick,4,1,leg);
-  if(hasFins){
-    p(-13,-5+kick,5,2,'#020304');
-    p(-12,0-kick,5,2,'#020304');
-    p(-11,-4+kick,3,1,'#172028');
-    p(-10,1-kick,3,1,'#172028');
+  c.scale(d>=0?1:-1,1);
+  c.rotate(Math.PI/2);
+  function p(px,py,w,h,col){c.fillStyle=col;c.fillRect(px,py+5,w,h)}
+  function drawSwimLegs(){
+    if(!anim.moving||phase===0){p(-2,-2,2,2,leg);p(1,-2,2,2,leg)}
+    else if(phase===1){p(-3,-1,2,1,leg);p(-2,-2,2,1,leg);p(1,-2-kick,2,2,leg)}
+    else if(phase===2){p(-1,-2,2,2,leg);p(0,-2,1,2,leg)}
+    else{p(-2,-2+kick,2,2,leg);p(2,-1,2,1,leg);p(1,-2,2,1,leg)}
   }
-  poly([[-6,-6],[2,-6],[4,-4],[4,-2],[1,0],[-6,0],[-8,-2],[-8,-4]],body);
-  p(-5,-5,4,1,'#315df0');
-  p(1,-2+arm,5,1,skin);
-  p(-4,-1-arm,4,1,skin);
-  poly([[3,-7],[6,-6],[7,-4],[6,-2],[3,-1],[1,-3],[1,-5]],skin);
-  p(2,-8,4,2,hair);
-  p(5,-6,2,1,hair);
-  p(5,-4,1,1,dark);
-  p(1,-6,1,2,hair);
-  c.restore();
-}
-function drawUnderwaterLemmingFrontBack(c,x,y,face,anim,hasFins){
-  const colors=typeof COL==='object'&&COL?COL:{hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb'};
-  const hair=colors.hair,skin=colors.skin,body=colors.body,leg=colors.leg,dark='#102040';
-  const kick=anim.phase===1?1:(anim.phase===3?-1:0),reach=anim.phase===0?1:(anim.phase===2?-1:0);
-  const back=face==='back';
-  c.save();
-  c.translate(x,y+anim.bob);
-  c.scale(2,2);
-  function p(px,py,w,h,col){c.fillStyle=col;c.fillRect(px,py,w,h)}
-  p(-2,-2+kick,1,2,leg);
-  p(1,-2-kick,1,2,leg);
-  p(-1,-1-kick,1,1,leg);
-  p(0,-1+kick,1,1,leg);
+  drawSwimLegs();
   if(hasFins){
-    p(-4,0+kick,3,1,'#020304');
-    p(1,0-kick,3,1,'#020304');
+    p(-3,0+kick,3,2,'#020304');
+    p(1,0-kick,3,2,'#020304');
+    p(-2,1+kick,2,1,'#172028');
+    p(2,1-kick,2,1,'#172028');
   }
   p(-2,-6,4,4,body);
-  p(-3,-6+reach,1,3,skin);
-  p(2,-6-reach,1,3,skin);
-  if(back){
-    p(-2,-10,4,2,hair);p(-2,-8,4,2,hair);p(-1,-11,2,1,hair);
-  }else{
-    p(-2,-8,4,2,skin);
-    p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
-    p(-1,-8,1,1,dark);p(1,-8,1,1,dark);
-  }
+  p(0,-8,2,2,skin);
+  p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
+  p(1,-8,1,1,dark);
   c.restore();
 }
 function drawUnderwaterLemming(c,cave,tk){
@@ -225,6 +192,62 @@ function drawUnderwaterBubbles(c,cave,tk){
     c.fillRect(x,y,1+(i%3===0?1:0),1+(i%4===0?1:0));
   }
   c.restore();
+}
+function drawUnderwaterOctopusTentacle(c,x0,y0,x1,y1,seed,tk,front){
+  const steps=13,amp=8+seed%3*2;
+  for(let i=0;i<=steps;i++){
+    const p=i/steps;
+    const sway=Math.sin((tk||0)*0.055+seed*1.7+p*5.4)*amp*(1-p*0.35);
+    const x=x0+(x1-x0)*p+sway*Math.sin(p*Math.PI);
+    const y=y0+(y1-y0)*p-Math.sin(p*Math.PI)*(18+seed%4*3);
+    const s=front?4:3;
+    c.fillStyle='#010203';
+    c.fillRect(Math.round(x-s/2),Math.round(y-s/2),s,s);
+    if(i%2===0){
+      c.fillStyle=front?'#17222a':'#0b151c';
+      c.fillRect(Math.round(x+s/2-1),Math.round(y-s/2),1,Math.max(1,s-1));
+    }
+    if(front&&i%3===1){
+      c.fillStyle='#22333b';
+      c.fillRect(Math.round(x-1),Math.round(y+1),1,1);
+    }
+  }
+}
+function drawUnderwaterOctopusThreat(c,cave,tk,front){
+  const o=cave&&cave.octopus;
+  if(!o||!o.active||cave.swimFins)return false;
+  const sx=Math.round(cave.swimX||240),sy=Math.round(cave.swimY||150);
+  const ox=Math.round(Number.isFinite(o.x)?o.x:sx),bodyY=Math.round(Number.isFinite(o.bodyY)?o.bodyY:CH+58);
+  const grab=o.phase==='grab',reach=clamp(o.reach||0,0,1);
+  if(front&&!grab)return false;
+  c.save();
+  c.globalAlpha=front?0.90:(0.30+0.54*reach);
+  if(!front){
+    c.fillStyle='#010204';
+    uwPoly(c,[[ox-76,bodyY+50],[ox-62,bodyY+10],[ox-34,bodyY-18],[ox,bodyY-28],[ox+36,bodyY-16],[ox+64,bodyY+12],[ox+78,bodyY+52]]);
+    c.fillStyle='#050b10';
+    uwPoly(c,[[ox-52,bodyY+22],[ox-28,bodyY-8],[ox,bodyY-16],[ox+30,bodyY-7],[ox+54,bodyY+22],[ox+34,bodyY+38],[ox-32,bodyY+38]]);
+    c.globalAlpha*=0.55;
+    c.fillStyle='#18313a';
+    c.fillRect(ox-30,bodyY-4,18,2);
+    c.fillRect(ox+12,bodyY-3,18,2);
+    c.globalAlpha=0.34+0.48*reach;
+  }
+  const offsets=[-64,-43,-22,0,24,46,66];
+  for(let i=0;i<offsets.length;i++){
+    const side=offsets[i],baseX=ox+side,baseY=bodyY+20+Math.abs(side)*0.08;
+    const tx=grab?sx+clamp(side*0.12,-10,10):sx+clamp(side*0.24,-24,24);
+    const reachY=Number.isFinite(o.tipY)?o.tipY:CH+24;
+    const ty=grab?sy+8+Math.sin((tk||0)*0.08+i)*5:Math.max(reachY+i%3*7,sy+24+Math.abs(side)*0.04);
+    drawUnderwaterOctopusTentacle(c,baseX,baseY,tx,ty,i+17,tk,front);
+  }
+  if(front&&grab){
+    c.globalAlpha=0.96;
+    drawUnderwaterOctopusTentacle(c,sx-36,sy+44,sx-6,sy+4,31,tk,true);
+    drawUnderwaterOctopusTentacle(c,sx+40,sy+46,sx+10,sy+6,37,tk,true);
+  }
+  c.restore();
+  return true;
 }
 function drawUnderwaterCaveDarkness(c,cave,tk){
   if(underwaterCaveLitRoom(cave))return false;
@@ -298,12 +321,15 @@ function drawUnderwaterCaveView(c,tk){
   drawUnderwaterRoomDetails(c,cave,tk);
   drawUnderwaterObjects(c,cave,tk);
   drawUnderwaterBubbles(c,cave,tk);
+  drawUnderwaterOctopusThreat(c,cave,tk,false);
   const dark=drawUnderwaterCaveDarkness(c,cave,tk);
   drawUnderwaterHolyLight(c,cave,tk,dark);
   drawUnderwaterLemming(c,cave,tk);
+  drawUnderwaterOctopusThreat(c,cave,tk,true);
   const def=typeof underwaterCaveSceneDef==='function'?underwaterCaveSceneDef(cave.scene):null;
   drawText(c,def&&def.label?def.label:'Undervattnet',12,12,1,'#bdf8ff');
-  if(cave.hintT>0)drawTextC(c,(cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP':'PILAR SIMMAR  M KARTA  ESC UPP'),CW/2,CH-18,1,'#d8fbff');
+  const octopus=!!(cave.octopus&&cave.octopus.active&&!cave.swimFins);
+  if(cave.hintT>0)drawTextC(c,octopus?'PIL UPP TILL YTAN':(cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP':'PILAR SIMMAR  M KARTA  ESC UPP'),CW/2,CH-18,1,octopus?'#fff0a0':'#d8fbff');
   const hit=G.underwaterCavePromptObject?G.underwaterCavePromptObject(cave):null;
   if(hit&&hit.obj&&hit.obj.near){
     drawTextC(c,'MELLANSLAG: UNDERSÖK',Math.round(cave.swimX||240),Math.max(22,Math.round((cave.swimY||150)-28)),1,'#fff0a0');

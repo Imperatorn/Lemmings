@@ -498,6 +498,8 @@
     G.spawned=G.level.lem;
     G.manual={used:true,active:true,lemId:holy.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     G.holyBlessingUnlocked=true;
+    G.practiceHolySwimFinsUnlocked=true;
+    holy.swimFins=true;
     G.holyLevelLemId=holy.id;
     G.paused=false;
     G.cam=clamp(x-180,0,G.maxCam());

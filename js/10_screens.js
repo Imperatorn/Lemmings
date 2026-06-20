@@ -433,7 +433,7 @@ function drawBrief(c,tk){
 }
 
 function drawResult(c,tk){
-  const L=G.level,win=G.saved>=L.save;
+  const L=G.level,win=!G.levelForceFail&&G.saved>=L.save;
   const practice=G.practiceRunActive&&G.practiceRunActive();
   const comp=!practice&&G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
   const runeGuide=G.levelRuneGuidance?G.levelRuneGuidance(G.levelIdx):null;

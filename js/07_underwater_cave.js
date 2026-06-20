@@ -5,6 +5,7 @@ const UNDERWATER_SWIM_RUN_ACCEL=0.50;
 const UNDERWATER_SWIM_MAX=1.70;
 const UNDERWATER_SWIM_RUN_MAX=3.75;
 const UNDERWATER_SWIM_DRAG=0.87;
+const UNDERWATER_OCTOPUS_GRAB_TICKS=44;
 Object.assign(G,{
   underwaterCaveActive(){return !!(this.underwaterCave&&this.underwaterCave.active)},
   underwaterCaveSceneDef(cave){
@@ -145,6 +146,7 @@ Object.assign(G,{
     this.clearRopeAim();
     const spawn=underwaterCaveSceneSpawn('entryPool','entry');
     const key=(this.levelIdx||0)+':'+Math.round(z.x||0)+','+Math.round(z.y||0)+','+Math.round(z.w||0);
+    const hasFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     this.underwaterCave={
       active:true,
       scene:'entryPool',
@@ -165,7 +167,8 @@ Object.assign(G,{
       vy:0,
       swimStrokeT:0,
       facing:spawn.facing||'front',
-      swimFins:!!(this.hasHolySwimFins&&this.hasHolySwimFins()),
+      swimFins:hasFins,
+      octopus:hasFins?null:{active:true,t:0,phase:'rise',x:spawn.x,bodyY:CH+70,tipY:CH+40,reach:0,grabT:0,warned:false},
       keys:{left:false,right:false,up:false,down:false,run:false},
       sceneState:{},
       bubbles:[],
@@ -185,8 +188,9 @@ Object.assign(G,{
     }
     this.setUnderwaterCaveSceneAudio('entryPool',{force:true,audio:caveAudio});
     this.clearTransientText();
-    this.toast('DEN HELIGA LÄMMELN SIMMAR NER',120);
+    this.toast(hasFins?'DEN HELIGA LÄMMELN SIMMAR NER':'NÅGOT RÖR SIG UNDER VATTNET',120);
     if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
+    if(!hasFins&&AU.sWarn)AU.sWarn();
     return true;
   },
   exitUnderwaterCave(reason){
@@ -255,6 +259,14 @@ Object.assign(G,{
       if(Number.isFinite(e.yMin)&&y<e.yMin)continue;
       if(Number.isFinite(e.yMax)&&y>e.yMax)continue;
       if(!e.target)return this.exitUnderwaterCave(e.reason||'surface');
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){
+        cave.hintT=Math.max(cave.hintT||0,80);
+        if(cave.octopus&&(!cave.octopus.blockToastT||cave.octopus.blockToastT<=0)){
+          cave.octopus.blockToastT=80;
+          this.toast('INTE UTAN SIMFÖTTER',80);
+        }
+        return false;
+      }
       return this.setUnderwaterCaveScene(e.target,e.spawn);
     }
     return false;
@@ -276,6 +288,77 @@ Object.assign(G,{
     }
     return false;
   },
+  underwaterCaveOctopusThreatActive(cave){
+    return !!(cave&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
+  },
+  finishUnderwaterCaveOctopusCatch(cave){
+    const l=cave&&this.findLemById?this.findLemById(cave.lemId):null;
+    if(l){
+      l.state='DROWN';
+      l.busyT=99;
+      l.dead=true;
+      this.dropLampIfCarrier(l);
+    }
+    if(this.manual){
+      this.manual.active=false;
+      this.manual.lemId=null;
+      this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
+      this.manual.jumpQueued=null;
+    }
+    this.underwaterCave=null;
+    this.underwaterCaveExitCooldown=64;
+    this.underwaterCaveResumeMusic=false;
+    this.underwaterCaveResumeWeather=null;
+    this.levelForceFail=true;
+    this.state='RESULT';
+    this.recordLevelResult(false);
+    if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
+    if(AU.clearMusicDuck)AU.clearMusicDuck(0.05);
+    if(AU.stopMusic)AU.stopMusic();
+    if(AU.stopWeather)AU.stopWeather();
+    if(AU.jingle)AU.jingle(false);
+    return true;
+  },
+  updateUnderwaterCaveOctopusThreat(cave){
+    if(!this.underwaterCaveOctopusThreatActive(cave))return false;
+    const o=cave.octopus;
+    o.t=(o.t||0)+1;
+    if(o.blockToastT>0)o.blockToastT--;
+    const k=cave.keys||{}, sx=cave.swimX||240, sy=cave.swimY||150;
+    if(!Number.isFinite(o.x))o.x=sx;
+    o.x+=clamp((sx-o.x)*0.045,-1.4,1.4);
+    const upEscape=!!(k.up&&sy<=70);
+    const rise=clamp((o.t-16)/172,0,1);
+    o.reach=upEscape?Math.max(0,(o.reach||0)-0.035):rise;
+    o.bodyY=CH+72-clamp((o.t-8)/132,0,1)*64;
+    o.tipY=CH+38-(o.reach||0)*236;
+    if(!o.warned&&o.t>30){
+      o.warned=true;
+      this.toast('SIMMA UPP!',90);
+      if(AU.sWarn)AU.sWarn();
+    }
+    if(o.phase==='grab'){
+      o.grabT=(o.grabT||0)+1;
+      cave.vx=(cave.vx||0)*0.16;
+      cave.vy=Math.max(0,cave.vy||0)*0.18+0.10;
+      cave.swimY=Math.min(CH-34,(cave.swimY||sy)+0.34);
+      if(o.grabT>=UNDERWATER_OCTOPUS_GRAB_TICKS)return this.finishUnderwaterCaveOctopusCatch(cave);
+      return true;
+    }
+    if(upEscape)return false;
+    const closeX=Math.abs((o.x||sx)-sx)<76;
+    const catchByReach=o.t>76&&closeX&&(o.tipY||CH)<=sy+19&&sy>72;
+    const catchByTime=o.t>250&&sy>70;
+    if(catchByReach||catchByTime){
+      o.phase='grab';
+      o.grabT=0;
+      cave.vx=0;cave.vy=0;
+      this.toast('BLÄCKFISKEN FÅR TAG I LÄMMELN!',96);
+      if(AU.sDrown)AU.sDrown();
+      return true;
+    }
+    return false;
+  },
   updateUnderwaterCave(){
     if(!this.underwaterCaveActive())return false;
     const cave=this.underwaterCave;
@@ -285,9 +368,12 @@ Object.assign(G,{
     cave.swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     const b=this.underwaterCaveSceneBounds(cave);
     if(cave.mapOpen){
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave))cave.mapOpen=false;
+      else{
       cave.vx=0;cave.vy=0;
       this.updateUnderwaterCaveObjects(cave);
       return true;
+      }
     }
     const h=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     const v=(cave.keys.down?1:0)-(cave.keys.up?1:0);
@@ -323,6 +409,7 @@ Object.assign(G,{
       cave.bubbles=cave.bubbles.filter(bbl=>bbl.t>0&&bbl.y>24);
     }
     if(cave.hintT>0)cave.hintT--;
+    if(this.updateUnderwaterCaveOctopusThreat&&this.updateUnderwaterCaveOctopusThreat(cave))return true;
     this.updateUnderwaterCaveObjects(cave);
     if(this.underwaterCaveTryExit(cave))return true;
     return true;
@@ -420,7 +507,10 @@ Object.assign(G,{
   },
   handleUnderwaterCaveInput(p,kind){
     if(!this.underwaterCaveActive())return false;
-    if(kind==='context'){this.exitUnderwaterCave('cancel');return true}
+    if(kind==='context'){
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(this.underwaterCave)){this.toast('SIMMA UPP!',60);return true}
+      this.exitUnderwaterCave('cancel');return true;
+    }
     if(kind==='click')return this.activateUnderwaterCaveObject()||true;
     return true;
   },
@@ -428,8 +518,14 @@ Object.assign(G,{
     if(!this.underwaterCaveActive())return false;
     const cave=this.underwaterCave;
     cave.keys=cave.keys||{};
-    if(key==='Escape'){this.exitUnderwaterCave('cancel');return true}
-    if(key==='m'||key==='M'){cave.mapOpen=!cave.mapOpen;return true}
+    if(key==='Escape'){
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){this.toast('SIMMA UPP!',60);return true}
+      this.exitUnderwaterCave('cancel');return true;
+    }
+    if(key==='m'||key==='M'){
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){this.toast('INTE NU',50);return true}
+      cave.mapOpen=!cave.mapOpen;return true;
+    }
     if(key===' '||key==='Spacebar'||key==='Enter')return this.activateUnderwaterCaveObject()||true;
     if(key==='ArrowLeft'){cave.keys.left=true;return true}
     if(key==='ArrowRight'){cave.keys.right=true;return true}

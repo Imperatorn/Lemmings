@@ -80,7 +80,7 @@ function createLevelDecorApi(game){
 const G={
   state:'TITLE', levelIdx:0, level:null, T:null,
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
-  cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
+  cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0, levelForceFail:false,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', levelRunMode:'campaign', tempoIdx:1, cutscenesOn:true,
   lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{},archives:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null, underwaterCave:null, underwaterCaveExitCooldown:0, underwaterCaveResumeMusic:false, underwaterCaveResumeWeather:null,
   holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneCharged:false, practiceHolyTeleportStoneUnlocked:false, practiceHolyTeleportStoneCharged:false, holyTeleportStoneLemId:null, holySwimFinsUnlocked:false, practiceHolySwimFinsUnlocked:false, portalStone:null,
@@ -869,7 +869,7 @@ const G={
   },
   advanceFromResult(){
     if(!this.level){this.goToMenu();return}
-    const win=this.saved>=this.level.save;
+    const win=!this.levelForceFail&&this.saved>=this.level.save;
     if(win&&this.levelIdx<LEVELS.length-1){
       const next=this.levelIdx+1;
       if(!this.levelUnlocked||this.levelUnlocked(next)){
@@ -985,7 +985,7 @@ const G={
     const D=createLevelDecorApi(this);
     if(L.decor)L.decor(D);
     // status
-    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.portalStone=null;this.waterfallCaveLooted={};this.waterfallCaveEntryHints={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.underwaterCave=null;this.underwaterCaveExitCooldown=0;this.underwaterCaveResumeMusic=false;this.underwaterCaveResumeWeather=null;this.holyLevelLemId=null;this.holyTeleportStoneLemId=null;this.practiceHolyTeleportStoneCharged=false;this.practiceHolySwimFinsUnlocked=false;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.portalStone=null;this.waterfallCaveLooted={};this.waterfallCaveEntryHints={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.underwaterCave=null;this.underwaterCaveExitCooldown=0;this.underwaterCaveResumeMusic=false;this.underwaterCaveResumeWeather=null;this.levelForceFail=false;this.holyLevelLemId=null;this.holyTeleportStoneLemId=null;this.practiceHolyTeleportStoneCharged=false;this.practiceHolySwimFinsUnlocked=false;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;this.sunSurpriseT=0;
     this.meteorT=(L.night&&!L.cave)?Math.round((18+this.rand()*34)*1000/TICK):0;
     this.cam=clamp(L.hatch.x-160,0,this.maxCamFor(L));
@@ -3582,7 +3582,7 @@ const G={
       if(this.endT>16){
         this.endT=0;
         this.state='RESULT';
-        const win=this.saved>=L.save;
+        const win=!this.levelForceFail&&this.saved>=L.save;
         this.recordLevelResult(win);
         if(win)this.markLevelCleared(this.levelIdx);
         AU.stopMusic();AU.stopWeather();AU.jingle(win);

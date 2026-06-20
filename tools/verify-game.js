@@ -178,7 +178,7 @@ for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderw
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
 }
-for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG']) {
+for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_GRAB_TICKS']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave swim tuning is missing ${token}`);
   }
@@ -191,18 +191,18 @@ for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','underwa
     throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
   }
 }
-for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','createRadialGradient']) {
+for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterOctopusThreat','createRadialGradient']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
 }
-for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','swimStrokeT','anim.kick','anim.fast','hasFins','drawDir']) {
+for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','swimStrokeT','anim.kick','anim.phase','anim.fast','hasFins','drawDir']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater lemming swim animation is missing ${token}`);
   }
 }
-if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('Side-swimming pose')) {
-  throw new Error('Underwater lemming should use a compact side-swimming pixel pose');
+if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('c.rotate(Math.PI/2)') || !underwaterRenderCode.includes('p(-2,-6,4,4,body)')) {
+  throw new Error('Underwater lemming should reuse the compact waterfall-cave pixel body rotated into a swim pose');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
   throw new Error('Input routing should send pointer and keyboard events to the underwater cave overlay');
@@ -674,7 +674,7 @@ const requiredRuntimeMethods = [
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone','chargeWaterfallCaveTeleportStoneAtCrystal',
   'waterfallCaveMirrorPoolHit','waterfallCaveMirrorPoolState','resetWaterfallCaveMirrorPoolVisit','triggerWaterfallCaveMirrorPedestal','updateWaterfallCaveMirrorPedestal','waterfallCaveMirrorThrowStonePile','waterfallCaveMirrorStoneHeld','waterfallCaveMirrorStoneThrowLocks','pickWaterfallCaveMirrorStone','throwWaterfallCaveMirrorStone','handleWaterfallCaveMirrorStoneAction','clearWaterfallCaveMirrorStone','updateWaterfallCaveMirrorStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
-  'underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','underwaterCaveDeepRuneEntries','syncUnderwaterCaveDeepRuneObjectProgress','readUnderwaterCaveDeepRunes','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
+  'underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','underwaterCaveOctopusThreatActive','finishUnderwaterCaveOctopusCatch','updateUnderwaterCaveOctopusThreat','underwaterCaveDeepRuneEntries','syncUnderwaterCaveDeepRuneObjectProgress','readUnderwaterCaveDeepRunes','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -895,7 +895,107 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.underwaterCave.vx = -1.1;
   G.underwaterCave.swimStrokeT = 2.8;
   if (!drawUnderwaterCaveView(WCTX, 14)) throw new Error('Underwater cave mirrored side-swim view did not render');
+  G.underwaterCave = {
+    active:true,
+    scene:'entryPool',
+    sceneState:{},
+    swimX:240,
+    swimY:116,
+    vx:0,
+    vy:0,
+    swimStrokeT:0.6,
+    facing:'right',
+    swimFins:false,
+    octopus:{active:true,t:120,phase:'rise',x:240,bodyY:258,tipY:120,reach:0.72,grabT:0,warned:true},
+    keys:{left:false,right:false,up:false,down:false,run:false},
+    bubbles:[],
+    mapOpen:false,
+    hintT:12,
+    messageT:0,
+    t:58
+  };
+  if (!drawUnderwaterCaveView(WCTX, 15)) throw new Error('Underwater cave octopus warning view did not render');
   G.underwaterCave = prevUnderwater;
+}
+{
+  const prevUnderwater = G.underwaterCave;
+  const prevState = G.state;
+  const prevLevel = G.level;
+  const prevLevelIdx = G.levelIdx;
+  const prevLevelRunMode = G.levelRunMode;
+  const prevLevelForceFail = G.levelForceFail;
+  const prevLems = G.lems;
+  const prevManual = G.manual;
+  const prevSaved = G.saved;
+  const prevToasts = G.toasts;
+  const prevHolySwimFinsUnlocked = G.holySwimFinsUnlocked;
+  const prevPracticeHolySwimFinsUnlocked = G.practiceHolySwimFinsUnlocked;
+  const prevJingle = AU.jingle;
+  let failJingles = 0;
+  AU.jingle = win => { if (!win) failJingles++; };
+  const makeOctopusCave = (lem, keys, y) => ({
+    active:true,
+    scene:'entryPool',
+    sceneState:{},
+    lemId:lem.id,
+    water:{x:120,y:110,w:260,lava:false,sourceX:120,sourceY:110,sourceW:260},
+    returnSpot:{x:lem.x,y:104},
+    swimX:240,
+    swimY:y,
+    vx:0,
+    vy:0,
+    swimStrokeT:0,
+    facing:'right',
+    swimFins:false,
+    octopus:{active:true,t:0,phase:'rise',x:240,bodyY:370,tipY:340,reach:0,grabT:0,warned:false},
+    keys:Object.assign({left:false,right:false,up:false,down:false,run:false},keys),
+    bubbles:[],
+    mapOpen:false,
+    hintT:0,
+    messageT:0,
+    t:0
+  });
+  G.state = 'PLAY';
+  G.level = LEVELS[0];
+  G.levelIdx = 0;
+  G.levelRunMode = 'practice';
+  G.levelForceFail = false;
+  G.holySwimFinsUnlocked = false;
+  G.practiceHolySwimFinsUnlocked = false;
+  G.toasts = [];
+  const escaping = new Lemming(180, 104);
+  escaping.holy = true;
+  G.lems = [escaping];
+  G.manual = {used:true,active:true,lemId:escaping.id,lampOn:false,keys:{},jumpQueued:null,aimAngle:0};
+  G.underwaterCave = makeOctopusCave(escaping, {up:true}, 63);
+  G.updateUnderwaterCave();
+  if (G.underwaterCave || G.state !== 'PLAY' || G.levelForceFail) {
+    throw new Error('Holy lemmel without swim fins should still escape the octopus by immediately swimming up');
+  }
+  const caught = new Lemming(190, 104);
+  caught.holy = true;
+  G.lems = [caught];
+  G.manual = {used:true,active:true,lemId:caught.id,lampOn:false,keys:{},jumpQueued:null,aimAngle:0};
+  G.saved = G.level.save;
+  G.levelForceFail = false;
+  G.underwaterCave = makeOctopusCave(caught, {}, 118);
+  for (let i = 0; i < 340 && G.underwaterCaveActive(); i++) G.updateUnderwaterCave();
+  if (G.state !== 'RESULT' || !G.levelForceFail || failJingles < 1) {
+    throw new Error('Waiting underwater without swim fins should let the octopus catch the holy lemmel and force a loss');
+  }
+  AU.jingle = prevJingle;
+  G.underwaterCave = prevUnderwater;
+  G.state = prevState;
+  G.level = prevLevel;
+  G.levelIdx = prevLevelIdx;
+  G.levelRunMode = prevLevelRunMode;
+  G.levelForceFail = prevLevelForceFail;
+  G.lems = prevLems;
+  G.manual = prevManual;
+  G.saved = prevSaved;
+  G.toasts = prevToasts;
+  G.holySwimFinsUnlocked = prevHolySwimFinsUnlocked;
+  G.practiceHolySwimFinsUnlocked = prevPracticeHolySwimFinsUnlocked;
 }
 {
   const prevRuneProgress = G.runeProgress;
