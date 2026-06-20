@@ -67,7 +67,7 @@ if (debugHtml) {
     'animFishRing','animFishRingRope','animWaterfallCave','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
     'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
   ];
-  requiredDebugActions.push('spawnMushroom','spawnTree','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest');
+  requiredDebugActions.push('spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest');
   for (const action of requiredDebugActions) {
     if (!debugHtml.includes(`data-action="${action}"`)) {
       throw new Error(`debug.html is missing debug action: ${action}`);
@@ -85,7 +85,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest']) {
+  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','makeDebugLemmingHoly','debugLemmingTarget','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
   if (debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {

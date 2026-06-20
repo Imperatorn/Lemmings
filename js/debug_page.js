@@ -269,6 +269,43 @@
     return (G.lems||[]).find(l=>l&&l.alive&&l.alive())||addDebugLemming();
   }
 
+  function liveDebugLemmings(){
+    return (G.lems||[]).filter(l=>l&&l.alive&&l.alive());
+  }
+
+  function debugLemmingTarget(){
+    const live=liveDebugLemmings();
+    if(!live.length)return null;
+    if(G.hoverLem&&live.includes(G.hoverLem))return G.hoverLem;
+    const manual=G.manual&&G.manual.lemId!=null&&G.findLemById?G.findLemById(G.manual.lemId):null;
+    if(manual&&live.includes(manual))return manual;
+    const p=G.screenToWorld?G.screenToWorld({x:G.mx||CW/2,y:Math.min(G.my||CH/2,HUDY-1)}):{x:(G.cam||0)+VW/2,y:VH/2};
+    let best=live[0],bestD=Infinity;
+    for(const l of live){
+      const dx=(l.x||0)-p.x,dy=(l.y||0)-p.y;
+      const d=dx*dx+dy*dy*0.7;
+      if(d<bestD){best=l;bestD=d}
+    }
+    return best;
+  }
+
+  function makeDebugLemmingHoly(){
+    const overlayActive=(G.underwaterCaveActive&&G.underwaterCaveActive())||(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive());
+    if(overlayActive){setStatus('Gå tillbaka till vanlig nivåvy innan du gör en lämmel helig.','warn');return}
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    const l=debugLemmingTarget();
+    if(!l){setStatus('Ingen levande lämmel att göra helig.','warn');return}
+    l.holy=true;
+    l.holySaveT=-999;
+    G.holyBlessingUnlocked=true;
+    const holy=G.normalizeHolyLemmings?G.normalizeHolyLemmings(l):l;
+    if(!G.normalizeHolyLemmings)G.holyLevelLemId=l.id;
+    if(G.holyLemmingGlow)G.holyLemmingGlow(holy||l,'blessing');
+    if(G.toast)G.toast('DEBUG: LÄMMELN ÄR NU HELIG');
+    renderDebug();
+    setStatus('Lämmel '+l.id+' är nu helig. Flytta muspekaren nära en annan lämmel för att välja mål.','ok');
+  }
+
   function ensureNightLevelForMeteor(){
     if(G.level&&G.level.night&&!G.level.cave)return true;
     const idx=LEVELS.findIndex(L=>L&&L.night&&!L.cave);
@@ -664,6 +701,7 @@
     if(action&&action.indexOf('anim')===0){doAnimation(action);return}
     if(action==='portalStoneTest'){setupPortalStoneTest();return}
     if(action==='underwaterCaveTest'){setupUnderwaterCaveTest();return}
+    if(action==='makeHolyLem'){makeDebugLemmingHoly();return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;
     }
