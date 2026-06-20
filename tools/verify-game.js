@@ -185,13 +185,16 @@ for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderw
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
 }
-for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_WAKE_DELAY','UNDERWATER_OCTOPUS_GRAB_TICKS']) {
+for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_WAKE_DELAY','UNDERWATER_OCTOPUS_GRAB_TICKS','UNDERWATER_OCTOPUS_DRAG_DEPTH']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave swim tuning is missing ${token}`);
   }
 }
 if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_WAKE_DELAY=60') || !underwaterRuntimeCode.includes('wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY') || !underwaterRuntimeCode.includes('threatT=Math.max(0,(o.t||0)-wakeDelay)') || !underwaterRuntimeCode.includes('escapeWindow') || !underwaterRuntimeCode.includes('opts.splash!==false') || !underwaterRuntimeCode.includes("return this.exitUnderwaterCave('surface')") || underwaterRuntimeCode.includes('if(!hasFins&&AU.sWarn)AU.sWarn()')) {
   throw new Error('Underwater octopus threat should wait briefly before the warning, rise and catch sequence starts');
+}
+if (underwaterRuntimeCode.includes("this.toast('SIMMA UPP!") || underwaterRuntimeCode.includes("this.toast('BLÄCKFISKEN") || underwaterRuntimeCode.includes("this.toast('NÅGOT RÖR SIG UNDER VATTNET")) {
+  throw new Error('Underwater octopus threat should not show text over the octopus/eyes');
 }
 if (!underwaterRuntimeCode.includes('cave.keys.run&&cave.swimFins') || !underwaterRuntimeCode.includes('swimFast?UNDERWATER_SWIM_RUN_MAX:UNDERWATER_SWIM_MAX') || !underwaterRuntimeCode.includes('cave.t%(swimFast?4:7)')) {
   throw new Error('Shift-swimming should require swim fins and then use a higher underwater max speed and stronger bubble cadence');
@@ -214,10 +217,10 @@ for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','swimStro
 if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('c.rotate(Math.PI/2)') || !underwaterRenderCode.includes('rp(-2,-6,4,4,body)') || !underwaterRenderCode.includes('p(2,-5,2,2,skin)')) {
   throw new Error('Underwater lemming should use a rotated waterfall-cave body with a naturally oriented side-facing head');
 }
-if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.includes('dangerFade') || !underwaterRenderCode.includes('octopusAwake') || !underwaterRenderCode.includes('hintY=octopusAwake?34:CH-18') || !underwaterRenderCode.includes('rgba(0,1,4,0.94)') || !underwaterRenderCode.includes('rgba(255,230,130,0.38)')) {
+if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.includes('dangerFade') || !underwaterRenderCode.includes('cave.hintT>0&&!octopus') || underwaterRenderCode.includes('PIL UPP TILL YTAN') || !underwaterRenderCode.includes('rgba(0,1,4,0.94)') || !underwaterRenderCode.includes('rgba(255,230,130,0.38)')) {
   throw new Error('Underwater octopus threat should make the lit room darker and more dangerous');
 }
-if (!underwaterRenderCode.includes('drawUnderwaterOctopusEyes') || !underwaterRenderCode.includes('escapeFade') || !underwaterRenderCode.includes('#ffd45c') || !underwaterRenderCode.includes('#ff4a24') || !underwaterRenderCode.includes("globalCompositeOperation='lighter'")) {
+if (!underwaterRenderCode.includes('drawUnderwaterOctopusEyes') || !underwaterRenderCode.includes('escapeFade') || !underwaterRenderCode.includes('dragFade') || !underwaterRenderCode.includes('#ffd45c') || !underwaterRenderCode.includes('#ff4a24') || !underwaterRenderCode.includes("globalCompositeOperation='lighter'")) {
   throw new Error('Underwater octopus threat should show faint glowing red/yellow eyes near the bottom');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
@@ -1049,6 +1052,24 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   for (let i = 0; i < 16 && G.underwaterCaveActive(); i++) G.updateUnderwaterCave();
   if (G.underwaterCave || G.state !== 'PLAY' || G.levelForceFail) {
     throw new Error('Holy lemmel without swim fins should be able to escape by swimming upward before the tentacles grab');
+  }
+  const dragged = new Lemming(186, 104);
+  dragged.holy = true;
+  G.lems = [dragged];
+  G.manual = {used:true,active:true,lemId:dragged.id,lampOn:false,keys:{},jumpQueued:null,aimAngle:0};
+  G.levelForceFail = false;
+  G.holySwimFinsUnlocked = false;
+  G.practiceHolySwimFinsUnlocked = false;
+  G.underwaterCave = makeOctopusCave(dragged, {}, 118);
+  G.underwaterCave.swimFins = false;
+  G.underwaterCave.octopus.phase = 'grab';
+  G.underwaterCave.octopus.dragTargetY = 390;
+  G.underwaterCave.vy = 1.25;
+  for (let i = 0; i < 30 && G.underwaterCaveActive(); i++) {
+    G.updateUnderwaterCaveOctopusThreat(G.underwaterCave);
+  }
+  if (!G.underwaterCaveActive() || G.underwaterCave.swimY < 308 || !(G.underwaterCave.octopus.dragFade > 0.25)) {
+    throw new Error('Octopus grab should pull the holy lemmel quickly down into the deep before the failure resolves');
   }
   const caught = new Lemming(190, 104);
   caught.holy = true;

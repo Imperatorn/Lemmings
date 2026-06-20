@@ -6,7 +6,8 @@ const UNDERWATER_SWIM_MAX=1.70;
 const UNDERWATER_SWIM_RUN_MAX=3.75;
 const UNDERWATER_SWIM_DRAG=0.87;
 const UNDERWATER_OCTOPUS_WAKE_DELAY=60;
-const UNDERWATER_OCTOPUS_GRAB_TICKS=44;
+const UNDERWATER_OCTOPUS_GRAB_TICKS=38;
+const UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+70;
 Object.assign(G,{
   underwaterCaveActive(){return !!(this.underwaterCave&&this.underwaterCave.active)},
   underwaterCaveSceneDef(cave){
@@ -200,7 +201,7 @@ Object.assign(G,{
     }
     this.setUnderwaterCaveSceneAudio('entryPool',{force:true,audio:caveAudio});
     this.clearTransientText();
-    this.toast(hasFins?'DEN HELIGA LÄMMELN SIMMAR NER':'NÅGOT RÖR SIG UNDER VATTNET',120);
+    if(hasFins)this.toast('DEN HELIGA LÄMMELN SIMMAR NER',120);
     if(!opts||opts.splash!==false){
       if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
     }
@@ -348,6 +349,18 @@ Object.assign(G,{
     const escapeWindow=!!(swimmingUp&&sy<=96&&o.phase!=='grab');
     if(escapeWindow)o.escapeT=18;
     else if(o.escapeT>0)o.escapeT--;
+    if(o.phase==='grab'){
+      o.grabT=(o.grabT||0)+1;
+      const p=clamp(o.grabT/UNDERWATER_OCTOPUS_GRAB_TICKS,0,1);
+      const targetY=Number.isFinite(o.dragTargetY)?o.dragTargetY:UNDERWATER_OCTOPUS_DRAG_DEPTH;
+      cave.vx=(cave.vx||0)*0.08+((o.x||sx)-sx)*0.006;
+      cave.vy=Math.max(4.50,cave.vy||0)*0.52+2.60+p*4.40;
+      cave.swimX=clamp((cave.swimX||sx)+cave.vx,28,CW-28);
+      cave.swimY=Math.min(targetY,(cave.swimY||sy)+cave.vy);
+      o.dragFade=clamp(((cave.swimY||sy)-(CH-54))/66,0,1);
+      if(o.grabT>=UNDERWATER_OCTOPUS_GRAB_TICKS)return this.finishUnderwaterCaveOctopusCatch(cave);
+      return true;
+    }
     const wakeDelay=Number.isFinite(o.wakeDelay)?o.wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY;
     const threatT=Math.max(0,(o.t||0)-wakeDelay);
     o.wakeT=threatT;
@@ -364,16 +377,7 @@ Object.assign(G,{
     o.tipY=CH+38-(o.reach||0)*236;
     if(!o.warned&&threatT>30){
       o.warned=true;
-      this.toast('SIMMA UPP!',90);
       if(AU.sWarn)AU.sWarn();
-    }
-    if(o.phase==='grab'){
-      o.grabT=(o.grabT||0)+1;
-      cave.vx=(cave.vx||0)*0.16;
-      cave.vy=Math.max(0,cave.vy||0)*0.18+0.10;
-      cave.swimY=Math.min(CH-34,(cave.swimY||sy)+0.34);
-      if(o.grabT>=UNDERWATER_OCTOPUS_GRAB_TICKS)return this.finishUnderwaterCaveOctopusCatch(cave);
-      return true;
     }
     if(upEscape||escapeWindow)return false;
     const closeX=Math.abs((o.x||sx)-sx)<76;
@@ -382,8 +386,9 @@ Object.assign(G,{
     if(catchByReach||catchByTime){
       o.phase='grab';
       o.grabT=0;
-      cave.vx=0;cave.vy=0;
-      this.toast('BLÄCKFISKEN FÅR TAG I LÄMMELN!',96);
+      o.dragTargetY=UNDERWATER_OCTOPUS_DRAG_DEPTH;
+      o.dragFade=0;
+      cave.vx=0;cave.vy=1.25;
       if(AU.sDrown)AU.sDrown();
       return true;
     }
@@ -538,7 +543,7 @@ Object.assign(G,{
   handleUnderwaterCaveInput(p,kind){
     if(!this.underwaterCaveActive())return false;
     if(kind==='context'){
-      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(this.underwaterCave)){this.toast('SIMMA UPP!',60);return true}
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(this.underwaterCave)){if(AU.sWarn)AU.sWarn();return true}
       this.exitUnderwaterCave('cancel');return true;
     }
     if(kind==='click')return this.activateUnderwaterCaveObject()||true;
@@ -549,11 +554,11 @@ Object.assign(G,{
     const cave=this.underwaterCave;
     cave.keys=cave.keys||{};
     if(key==='Escape'){
-      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){this.toast('SIMMA UPP!',60);return true}
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){if(AU.sWarn)AU.sWarn();return true}
       this.exitUnderwaterCave('cancel');return true;
     }
     if(key==='m'||key==='M'){
-      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){this.toast('INTE NU',50);return true}
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave))return true;
       cave.mapOpen=!cave.mapOpen;return true;
     }
     if(key===' '||key==='Spacebar'||key==='Enter')return this.activateUnderwaterCaveObject()||true;
