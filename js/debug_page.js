@@ -315,12 +315,12 @@
     return true;
   }
 
-  function ensureWaterLevelForFishRing(){
+  function ensureWaterLevelForFishRing(opts){
     if(G.level&&Array.isArray(G.level.water)&&G.level.water.some(z=>z&&!z.lava))return true;
     const idx=LEVELS.findIndex(L=>L&&Array.isArray(L.water)&&L.water.some(z=>z&&!z.lava));
     if(idx<0)return false;
     DBG.levelSelect.value=String(idx);
-    startSelectedLevel();
+    startSelectedLevel({audio:!(opts&&opts.audio===false)});
     return true;
   }
 
@@ -485,7 +485,7 @@
     const withFins=opts.swimFins!==false;
     if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
     if(G.exitUnderwaterCave)G.exitUnderwaterCave('silent');
-    if(!ensureWaterLevelForFishRing()){setStatus('Ingen vattenbana hittades för undervattenstest.','warn');return}
+    if(!ensureWaterLevelForFishRing({audio:false})){setStatus('Ingen vattenbana hittades för undervattenstest.','warn');return}
     audioReady();
     clearDebugActors();
     DBG.gameInput=true;
@@ -701,12 +701,12 @@
       setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:true,levelName:spec.level,caveVariant:spec.variant});
       return;
     }
+    if(action==='underwaterCaveTest'){setupUnderwaterCaveTest({swimFins:true});return}
+    if(action==='underwaterCaveNoFinsTest'){setupUnderwaterCaveTest({swimFins:false});return}
     if(action!=='camLeft'&&action!=='camRight'&&!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
     audioReady();
     if(action&&action.indexOf('anim')===0){doAnimation(action);return}
     if(action==='portalStoneTest'){setupPortalStoneTest();return}
-    if(action==='underwaterCaveTest'){setupUnderwaterCaveTest({swimFins:true});return}
-    if(action==='underwaterCaveNoFinsTest'){setupUnderwaterCaveTest({swimFins:false});return}
     if(action==='makeHolyLem'){makeDebugLemmingHoly();return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;

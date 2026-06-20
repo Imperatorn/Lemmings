@@ -85,7 +85,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','makeDebugLemmingHoly','debugLemmingTarget','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest','underwaterCaveNoFinsTest','setupUnderwaterCaveTest({swimFins:true})','setupUnderwaterCaveTest({swimFins:false})','G.enterUnderwaterCave(holy,z,{splash:false})']) {
+  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','makeDebugLemmingHoly','debugLemmingTarget','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','ensureWaterLevelForFishRing({audio:false})','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest','underwaterCaveNoFinsTest','setupUnderwaterCaveTest({swimFins:true})','setupUnderwaterCaveTest({swimFins:false})','G.enterUnderwaterCave(holy,z,{splash:false})']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
   if (debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {
@@ -96,6 +96,10 @@ if (debugHtml) {
   }
   if (!debugPageCode.includes('G.enterUnderwaterCave(holy,z,{splash:false})')) {
     throw new Error('debug_page.js should suppress the initial underwater splash in direct debug jumps');
+  }
+  const debugDoAction = debugPageCode.slice(debugPageCode.indexOf('function doAction'));
+  if (!debugPageCode.includes("if(action==='underwaterCaveTest'){setupUnderwaterCaveTest({swimFins:true});return}") || debugDoAction.indexOf("if(action==='underwaterCaveTest'") > debugDoAction.indexOf("startSelectedLevel();")) {
+    throw new Error('debug_page.js should route underwater debug actions before generic audible level startup');
   }
   if (!debugPageCode.includes("'caveMystery','Runarkiv'") || !debugPageCode.includes('if(withAudio)audioReady();') || !debugPageCode.includes("G.setWaterfallCaveScene(sceneId,spawnId||'entry',{audio:withAudio})")) {
     throw new Error('debug_page.js should expose and initialize the glyph archive mystery music in debug mode');
