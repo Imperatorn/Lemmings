@@ -1,4 +1,4 @@
-// ------------------------ TELEPORTERINGSSTEN ------------------------
+// ---------------------------- PORTALSTEN -----------------------------
 const PORTAL_STONE_MAX_DIST=Math.round(VW*1.5);
 const PORTAL_STONE_ENTER_COOLDOWN=22;
 
@@ -52,7 +52,7 @@ Object.assign(G,{
   },
   portalStoneUnavailableReason(){
     const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
-    if(!hasStone)return 'TELEPORTERINGSSTEN SAKNAS';
+    if(!hasStone)return 'PORTALSTENEN SAKNAS';
     if(!this.portalStoneOwner())return 'STENEN KRÄVER DEN HELIGA LÄMMELN';
     if(!this.holyTeleportStoneIsCharged())return this.portalStoneUnchargedMessage();
     return '';
@@ -116,7 +116,7 @@ Object.assign(G,{
   },
   handlePortalStoneClick(wx,wy){
     const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():!!this.holyTeleportStoneUnlocked;
-    if(!hasStone){this.toast('TELEPORTERINGSSTEN SAKNAS');AU.sShrug();return false}
+    if(!hasStone){this.toast('PORTALSTENEN SAKNAS');AU.sShrug();return false}
     if(!this.holyTeleportStoneIsCharged()){this.toast(this.portalStoneUnchargedMessage());AU.sShrug();return false}
     const l=this.findPortalStoneTarget(wx,wy);
     if(!l){this.toast('KLICKA PÅ DEN HELIGA LÄMMELN');AU.sShrug();return false}

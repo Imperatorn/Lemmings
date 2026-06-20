@@ -206,17 +206,17 @@
     mode=(mode==='box')?'box':'fullscreen';
     return {
       id:'teleport-stone-found',
-      label:'Teleporteringssten',
+      label:'Portalstenen',
       group:'Grottan',
       order:55,
-      title:'TELEPORTERINGSSTENEN',
+      title:'PORTALSTENEN',
       mode,
       pauseGame:true,
       skippable:true,
       advanceOnInput:false,
       shots:[{
         duration:Math.max(1,Math.floor(3200/TICK)),
-        title:'TELEPORTERINGSSTENEN',
+        title:'PORTALSTENEN',
         text:['BAKOM ALTARET VAKNAR EN STEN AV LJUS.'],
         draw:drawTeleportStoneCloseup
       }]

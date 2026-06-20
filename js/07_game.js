@@ -2215,7 +2215,7 @@ const G={
       return 'FRÅGEPAKET: TRÄD VÄXER!';
     }
     this.grantSupplySkill(p.skill,p.x,p.y);
-    return (p&&p.loot?'LOOT HÄMTAT':'PAKET HÄMTAT')+': +1 '+this.skillName(p.skill);
+    return (p&&p.loot?'FYND HÄMTAT':'PAKET HÄMTAT')+': +1 '+this.skillName(p.skill);
   },
   grantSupplyTreeFromPackage(p){
     if(!p)return null;
@@ -3428,6 +3428,8 @@ const G={
 
   // ---- logik-tick ----
   tick(){
+    const transientView=!!((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()));
+    if(this.state==='PLAY'&&(!this.paused||transientView))this.updateToasts();
     if(this.updateWaterfallCave&&this.updateWaterfallCave())return;
     if(this.updateCutscene&&this.updateCutscene())return;
     if(this.state!=='PLAY'||this.paused)return;
@@ -3435,7 +3437,6 @@ const G={
     this.doorT++;this.weatherT++;
     if(this.sunSurpriseT>0)this.sunSurpriseT--;
     this.updateThunder();
-    this.updateToasts();
     // spawn
     if(this.doorT>24&&this.spawned<L.lem){
       if(--this.spawnT<=0){

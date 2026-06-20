@@ -867,7 +867,7 @@
       }
       G.clearRopeAim();
       G.selSkill='portal';
-      G.toast('VALD TELEPORTERINGSSTEN - KLICKA PÅ DEN HELIGA LÄMMELN');
+      G.toast('VALD PORTALSTEN - KLICKA PÅ DEN HELIGA LÄMMELN');
       AU.sClick();
       return true;
     }

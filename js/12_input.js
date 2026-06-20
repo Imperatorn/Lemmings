@@ -41,7 +41,7 @@ function selectSkill(k){
     }
     G.clearRopeAim();
     G.selSkill='portal';
-    G.toast('VALD TELEPORTERINGSSTEN - KLICKA PÅ DEN HELIGA LÄMMELN');
+    G.toast('VALD PORTALSTEN - KLICKA PÅ DEN HELIGA LÄMMELN');
     return;
   }
   const s=SKILLS.find(q=>q.k===k);

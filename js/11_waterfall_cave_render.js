@@ -2249,7 +2249,7 @@ function drawWaterfallCaveRuneReadPanel(c,cave,tk){
     if(typeof drawTextC==='function')drawTextC(c,lines[i],x+w/2,y+12+i*13,1,col);
   }
   if(total>0&&typeof drawTextC==='function'){
-    const suffix=obj.readComplete?'HEL TEXT FUNNEN':'LÄSTA RUNOR '+readCount+'/'+total;
+    const suffix=obj.readComplete?'ALLA RUNOR LÄSTA':'LÄSTA RUNOR '+readCount+'/'+total;
     drawTextC(c,suffix,x+w/2,y+h-13,1,obj.readComplete?'#fff0a8':'#a89068');
   }
   c.restore();

@@ -303,7 +303,7 @@ Object.assign(G,{
       return {
         complete:true,
         menuLabel:'FULL',
-        briefingLines:['RUNORNA BAKOM FALLET ÄR LÄSTA'],
+        briefingLines:['RUNORNA BAKOM VATTENFALLET ÄR LÄSTA'],
         resultLines:['BANA FULLBORDAD - ALLA RUNOR FUNNA'],
         entryHint:'RUNORNA HÄR ÄR REDAN LÄSTA'
       };
@@ -312,17 +312,17 @@ Object.assign(G,{
       return {
         complete:false,
         menuLabel:'RUNOR '+read+'/'+total,
-        briefingLines:['FALLETS RISTNINGAR ÄR DELVIS LÄSTA','ÅTERVÄND BAKOM VATTNET FÖR RESTEN'],
-        resultLines:['BANA KLARAD - FALLETS RUNOR SAKNAS','ÅTERVÄND BAKOM VATTENFALLET'],
+        briefingLines:['RUNORNA ÄR DELVIS LÄSTA','ÅTERVÄND BAKOM VATTENFALLET FÖR RESTEN'],
+        resultLines:['BANA KLARAD - RUNOR SAKNAS','ÅTERVÄND BAKOM VATTENFALLET'],
         entryHint:'TRYCK UPP: FORTSÄTT LÄSA RUNORNA'
       };
     }
     return {
       complete:false,
-      menuLabel:'FALLRUNOR',
-      briefingLines:['DET FINNS RISTNINGAR BAKOM VATTENFALLET','HÖGERKLICKA EN LÄMMEL, GÅ TILL FALLET OCH TRYCK UPP'],
-      resultLines:['BANA KLARAD - FALLETS RUNOR SAKNAS','DIREKTSTYR EN LÄMMEL BAKOM VATTNET'],
-      entryHint:'TRYCK UPP: GÅ BAKOM VATTENFALLET'
+      menuLabel:'RUNOR',
+      briefingLines:['DET FINNS RISTNINGAR BAKOM VATTENFALLET','HÖGERKLICKA PÅ EN LÄMMEL, GÅ TILL VATTENFALLET OCH TRYCK UPP'],
+      resultLines:['BANA KLARAD - RUNOR SAKNAS','DIREKTSTYR EN LÄMMEL BAKOM VATTENFALLET'],
+      entryHint:'TRYCK UPP: GÅ IN BAKOM VATTENFALLET'
     };
   },
   levelFullyCompleted(idx){

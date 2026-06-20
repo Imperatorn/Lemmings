@@ -206,7 +206,7 @@ const LEVELS=[
   skills:{climb:2,float:4,bomb:3,block:3,build:6,downbuild:4,bash:3,mine:4,dig:3,baz:5,jet:4,rope:4},
   hatch:{x:85,y:150}, exit:{x:1210,y:149},
   water:[],
-  hint:'ETT SCHAKT MED KRISTALLPELARE. RÖJ LAGOM, ANNARS TAPPADE DU VÄGEN.',
+  hint:'ETT SCHAKT MED KRISTALLPELARE. RÖJ LAGOM, ANNARS TAPPAR DU BORT VÄGEN.',
   build(P){ P.rect(0,200,260,40); P.rect(300,160,190,80); P.rect(545,125,190,115);
     P.rect(790,175,210,65); P.rect(1080,150,220,90);
     P.rect(405,82,20,78); P.rect(650,62,22,63); P.rect(920,110,22,65);
@@ -355,7 +355,7 @@ const LEVELS=[
   skills:{climb:4,float:5,bomb:4,block:4,build:10,downbuild:5,bash:5,mine:4,dig:5,baz:3,jet:3,flame:2,rope:5},
   hatch:{x:90,y:124}, exit:{x:1410,y:154},
   water:[{x:625,w:140,y:214,lava:false}],
-  hint:'OASEN BRYTER AV SANDEN. BROA ÖVER VATTNET OCH TA DIG GENOM DE GAMLA PELARNA.',
+  hint:'OASEN BRYTER AV SANDEN. BYGG BRO ÖVER VATTNET OCH TA DIG GENOM DE GAMLA PELARNA.',
   build(P){ P.rect(0,180,340,60); P.ramp(340,210,90,30,-1);
     P.rect(430,190,260,50); P.erase.rect(625,190,115,50);
     P.rect(765,170,245,70); P.ramp(1010,170,120,44,1); P.rect(1130,155,370,85);
@@ -421,7 +421,7 @@ const LEVELS=[
   materialZones:[{x:480,w:500,theme:'cave'},{x:980,w:520,theme:'desert'},{x:1500,w:400,theme:'city'}],
   loot:[{x:585,y:205,skill:'rope'},{x:1274,y:159,skill:'flame'},{x:1580,y:205,skill:'baz'}],
   rescues:[{button:{x:615,y:129},release:{x:815,y:104},open:{x:704,y:132,w:28,h:38},count:3,dir:1}],
-  hint:'SISTA PROVET: VATTEN, LAVA, RUINER, REP, LOOT OCH BONUSLEMLAR. PLANERA VÄGEN OCH RÄDDA FLER ÄN KRAVET.',
+  hint:'SISTA PROVET: VATTEN, LAVA, RUINER, REP, FYND OCH BONUSLEMLAR. PLANERA VÄGEN OCH RÄDDA FLER ÄN KRAVET.',
   build(P){ P.rect(0,130,260,20); P.rect(0,190,360,50); P.ramp(260,190,100,60,1);
     P.erase.rect(360,190,120,50);
     P.rect(480,170,220,70); P.erase.rect(520,202,145,28); P.rect(590,130,54,14);
@@ -434,8 +434,8 @@ const LEVELS=[
     P.disc(175,166,20); P.disc(555,145,18); P.disc(1130,150,22); P.disc(1540,160,20); },
   decor(D){ D.waterfall(420,54,158,30);
     D.tree(150,190,1.15);D.tree(245,190,0.9);D.bush(70,129);D.bush(520,169);D.mush(545,169);D.marker(615,129,'BONUS');
-    D.torch(585,130);D.torch(845,150);D.crystal(884,150);D.marker(585,205,'LOOT');
-    D.pyramid(1140,175,0.95);D.mummy(1135,174,130,0.15);D.cactus(1175,175,0.9);D.rock(1215,175,0.9);D.marker(1274,159,'LOOT');
+    D.torch(585,130);D.torch(845,150);D.crystal(884,150);D.marker(585,205,'FYND');
+    D.pyramid(1140,175,0.95);D.mummy(1135,174,130,0.15);D.cactus(1175,175,0.9);D.rock(1215,175,0.9);D.marker(1274,159,'FYND');
     D.streetlamp(1545,185);D.cityscape(1510,185,190,92);D.subway(1525,185,145);D.road(1544,226,301);D.taxi(1560,226,270,1,0.42);
-    D.sign(1760,104,'MÅL');D.marker(1580,205,'LOOT');D.bush(1685,154);D.mush(1710,154); } }
+    D.sign(1760,104,'MÅL');D.marker(1580,205,'FYND');D.bush(1685,154);D.mush(1710,154); } }
 ];

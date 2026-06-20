@@ -1,6 +1,7 @@
 // ------------------------------ HUD ---------------------------------
 const BTNW=26,BTNY=252,BTNH=CH-BTNY;
 const BUTTONS=[...SKILLS.map(s=>({k:s.k})),{k:'portal'},{k:'troll'},{k:'save'}];
+const HUD_INFO_X=4, HUD_STATUS_X=170, HUD_IN_X=242, HUD_TIME_X=330, HUD_PAUSE_X=430;
 function hudButtons(){
   return BUTTONS.filter(b=>b.k!=='portal'||(G.portalStoneButtonVisible&&G.portalStoneButtonVisible()));
 }
@@ -93,6 +94,23 @@ function drawIcon(c,k,x,y){
   }
 }
 
+function hudFitText(s,maxW){
+  s=String(s||'');
+  if(typeof textW!=='function'||textW(s,1)<=maxW)return s;
+  const suffix='..';
+  let out=s;
+  while(out.length>0&&textW(out+suffix,1)>maxW)out=out.slice(0,-1);
+  return out?out+suffix:'';
+}
+function drawHudInfoText(c,s,x,y,maxW,col){
+  c.save();
+  c.beginPath();
+  c.rect(x,HUDY,Math.max(0,maxW),12);
+  c.clip();
+  drawText(c,hudFitText(s,maxW),x,y,1,col);
+  c.restore();
+}
+
 function drawHUD(c,tk){
   c.fillStyle='#101010';c.fillRect(0,HUDY,CW,CH-HUDY);
   const buttons=hudButtons();
@@ -103,21 +121,21 @@ function drawHUD(c,tk){
   const hs=hb?SKILLS.find(s=>s.k===hb.k):null;
   if(hb&&hb.k==='troll')info=G.trollUsed?'TROLLFÖRVANDLING ANVÄND':'FÖRVANDLA LEMMEL TILL TROLL';
   else if(hb&&hb.k==='save')info='SPARA LÄGE';
-  else if(hb&&hb.k==='portal')info=(G.portalStoneButtonAvailable&&G.portalStoneButtonAvailable())?'TELEPORTERINGSSTEN LADDAD':((G.portalStoneUnavailableReason&&G.portalStoneUnavailableReason())||'STENEN KRÄVER DEN HELIGA LÄMMELN');
+  else if(hb&&hb.k==='portal')info=(G.portalStoneButtonAvailable&&G.portalStoneButtonAvailable())?'PORTALSTENEN LADDAD':((G.portalStoneUnavailableReason&&G.portalStoneUnavailableReason())||'STENEN KRÄVER DEN HELIGA LÄMMELN');
   else if(hs)info=hs.name+' '+(G.skills&&G.skills[hs.k]!=null?G.skills[hs.k]:'');
   else if(G.hoverLem)info=roleName(G.hoverLem);
   else if(G.selSkill==='troll')info='FÖRVANDLA LEMMEL TILL TROLL';
-  else if(G.selSkill==='portal')info=(G.portalStone&&G.portalStone.placingExit)?'PLACERA UTGÅNGSPORTAL':'TELEPORTERINGSSTEN - KLICKA HELIG LÄMMEL';
+  else if(G.selSkill==='portal')info=(G.portalStone&&G.portalStone.placingExit)?'PLACERA UTGÅNGSPORTAL':'PORTALSTENEN - KLICKA HELIG LÄMMEL';
   else if(G.selSkill){const ss=SKILLS.find(s=>s.k===G.selSkill);info=(ss?ss.name:G.selSkill)+' '+(G.skills?G.skills[G.selSkill]:'');}
   else info='VÄDER '+G.weatherShort()+'  ZOOM '+Math.round((G.viewZoom||1)*100)+'%';
-  if(G.manual&&G.manual.active)info='DIREKT: PILAR STYR  SHIFT SPRING  CTRL SIKTE  L LAMPA';
-  drawText(c,info,4,HUDY+4,1,G.manual&&G.manual.active?'#80d8ff':'#40ff40');
-  drawText(c,'UTE '+G.out+'/'+L.lem,170,HUDY+4,1,'#40ff40');
+  if(G.manual&&G.manual.active)info='DIREKT: PILAR/HOPP SHIFT CTRL L';
+  drawHudInfoText(c,info,HUD_INFO_X,HUDY+4,HUD_STATUS_X-HUD_INFO_X-8,G.manual&&G.manual.active?'#80d8ff':'#40ff40');
+  drawText(c,'UTE '+G.out+'/'+L.lem,HUD_STATUS_X,HUDY+4,1,'#40ff40');
   const pct=Math.floor(G.saved/L.lem*100);
-  drawText(c,'INNE '+pct+'%',242,HUDY+4,1,'#40ff40');
+  drawText(c,'INNE '+pct+'%',HUD_IN_X,HUDY+4,1,'#40ff40');
   const secs=Math.max(0,Math.floor(G.timeT*TICK/1000));
-  drawText(c,'TID '+Math.floor(secs/60)+'-'+String(secs%60).padStart(2,'0'),330,HUDY+4,1,'#40ff40');
-  if(G.paused)drawText(c,'PAUS',430,HUDY+4,1,'#ffd040');
+  drawText(c,'TID '+Math.floor(secs/60)+'-'+String(secs%60).padStart(2,'0'),HUD_TIME_X,HUDY+4,1,'#40ff40');
+  if(G.paused)drawText(c,'PAUS',HUD_PAUSE_X,HUDY+4,1,'#ffd040');
   // knappar
   for(let i=0;i<buttons.length;i++){
     const b=buttons[i],r=btnRect(i);

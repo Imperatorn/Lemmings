@@ -242,7 +242,7 @@ Object.assign(G,{
       cave.flags.runesComplete=true;
       if(AU.sWaterfallCaveRunesComplete)AU.sWaterfallCaveRunesComplete();
       else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
-      this.toast('RUNORNAS BUDSKAP ÄR HELT',150);
+      this.toast('RUNORNAS BUDSKAP ÄR FULLSTÄNDIGT',150);
     }
     return true;
   },
@@ -427,7 +427,7 @@ Object.assign(G,{
     if(AU.sWaterfallCaveTeleportStone)AU.sWaterfallCaveTeleportStone();
     else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
     if(this.playTeleportStoneCutscene)this.playTeleportStoneCutscene(l,'fullscreen');
-    this.toast('TELEPORTERINGSSTEN HITTAD - DEN ÄR OLADDAD',170);
+    this.toast('PORTALSTENEN HITTAD - DEN ÄR OLADDAD',170);
     return true;
   },
   updateWaterfallCaveTeleportStone(cave){
@@ -483,7 +483,7 @@ Object.assign(G,{
     if(this.clearWaterfallCaveMoveKeys)this.clearWaterfallCaveMoveKeys(cave);
     if(AU.sWaterfallCaveTeleportCharge)AU.sWaterfallCaveTeleportCharge();
     else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
-    this.toast('TELEPORTERINGSSTENEN ÄR LADDAD',150);
+    this.toast('PORTALSTENEN ÄR LADDAD',150);
     return true;
   },
   waterfallCaveMirrorPoolHit(cave){
@@ -920,7 +920,7 @@ Object.assign(G,{
     this.waterfallCaveEntryHints=this.waterfallCaveEntryHints||{};
     if(this.waterfallCaveEntryHints[key])return false;
     this.waterfallCaveEntryHints[key]=true;
-    this.toast(guide.entryHint||'TRYCK UPP VID FALLET',150);
+    this.toast(guide.entryHint||'TRYCK UPP VID VATTENFALLET',150);
     return true;
   },
   tryEnterWaterfallCaveFromManual(){

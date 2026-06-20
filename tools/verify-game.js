@@ -98,6 +98,15 @@ const hudCode = fs.readFileSync(path.join(root, 'js/09_hud.js'), 'utf8');
 if (!hudCode.includes("'UTE '+G.out+'/'+L.lem")) {
   throw new Error('HUD active lemming counter must show active/total');
 }
+if (!hudCode.includes('drawHudInfoText') || !hudCode.includes('hudFitText') || !hudCode.includes('HUD_STATUS_X-HUD_INFO_X-8')) {
+  throw new Error('HUD info text should be clipped to its reserved area before the status counters');
+}
+if (!hudCode.includes('DIREKT: PILAR/HOPP SHIFT CTRL L') || hudCode.includes('DIREKT: PILAR STYR  SHIFT SPRING  CTRL SIKTE  L LAMPA')) {
+  throw new Error('Manual-control HUD hint should be compact enough to avoid overlapping status counters');
+}
+if (!hudCode.includes('PORTALSTENEN LADDAD') || !hudCode.includes('PORTALSTENEN - KLICKA HELIG LÄMMEL')) {
+  throw new Error('Portal stone HUD text should use the Portalstenen wording');
+}
 if (!fs.existsSync(path.join(root, 'assets/lands-of-lore-pixel.png'))) {
   throw new Error('Missing Lands of Lore pixel-art asset');
 }
@@ -137,6 +146,13 @@ const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cav
 const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
 const waterfallRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
 const screensCode = fs.readFileSync(path.join(root, 'js/10_screens.js'), 'utf8');
+const tickIdx = gameCode.indexOf('  tick(){');
+const toastTickIdx = gameCode.indexOf('this.updateToasts()', tickIdx);
+const waterfallEarlyIdx = gameCode.indexOf('this.updateWaterfallCave&&this.updateWaterfallCave()', tickIdx);
+const cutsceneEarlyIdx = gameCode.indexOf('this.updateCutscene&&this.updateCutscene()', tickIdx);
+if (tickIdx < 0 || toastTickIdx < 0 || waterfallEarlyIdx < 0 || cutsceneEarlyIdx < 0 || toastTickIdx > waterfallEarlyIdx || toastTickIdx > cutsceneEarlyIdx) {
+  throw new Error('Toast timers should tick before waterfall/cutscene early returns');
+}
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
@@ -204,11 +220,17 @@ for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','pro
 for (const token of ['FRITT SPEL: ÖVNING','PROGRESSION SPARADES INTE']) {
   if (!screensCode.includes(token)) throw new Error(`Practice mode should be visible in screens: ${token}`);
 }
-for (const token of ['HÖGERKLICKA EN LÄMMEL','TRYCK UPP','FALLETS RUNOR SAKNAS']) {
+for (const token of ['HÖGERKLICKA PÅ EN LÄMMEL','TRYCK UPP','BANA KLARAD - RUNOR SAKNAS']) {
   if (!runeCode.includes(token)) throw new Error(`Rune/waterfall guidance should be defined in rune guidance data: ${token}`);
 }
-for (const token of ['VATTENFALL: DIREKTSTYR EN LÄMMEL','TRYCK UPP VID FALLET']) {
+for (const token of ['VATTENFALL: DIREKTSTYR EN LÄMMEL','TRYCK UPP VID VATTENFALLET']) {
   if (!screensCode.includes(token)) throw new Error(`Direct-control waterfall guidance should be visible in help/screens: ${token}`);
+}
+for (const token of ['FALLRUNOR','FALLETS RUNOR','FALLETS RISTNINGAR','BAKOM VATTNET','TILL FALLET']) {
+  if (runeCode.includes(token)) throw new Error(`Rune guidance should avoid outdated Swedish wording: ${token}`);
+}
+for (const token of ['TRYCK UPP VID FALLET','HÖGERKLICKA LEMMEL']) {
+  if (screensCode.includes(token)) throw new Error(`Help text should avoid outdated Swedish wording: ${token}`);
 }
 if (!inputCode.includes("G.selectMenuLevel") || !inputCode.includes("G.toggleLevelSelectMode")) {
   throw new Error('Menu input should route level selection through progression rules');
@@ -1955,7 +1977,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!blessedLem || !blessedLem.holy) {
     throw new Error('Priest blessing should make the cave lemmel holy');
   }
-  if (!(G.toasts || []).some(t => String(t && t.text || '').includes('GUDS VÄLSIGNELSE') && String(t && t.text || '').includes('ODÖDLIG'))) {
+  if (!(G.waterfallCave.blessingMessageLines || []).join(' ').includes('GUDS VÄLSIGNELSE')) {
     throw new Error('Priest blessing should explain that the lemmel is now immortal');
   }
   if (!(G.waterfallCave.blessingMessageT > 0) || !(G.waterfallCave.blessingMessageLines || []).join(' ').includes('OD')) {
