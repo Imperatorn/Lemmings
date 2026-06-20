@@ -49,6 +49,69 @@ Object.assign(G,{
     }
     return dark;
   },
+  underwaterCaveDryStandAt(x,surfaceY){
+    if(!this.T)return null;
+    const T=this.T,xx=clamp(Math.round(x),4,T.W-5),baseY=Math.round(surfaceY||160);
+    const valid=y=>{
+      y=Math.round(y);
+      if(y<8||y>T.H-5)return false;
+      if(T.solid(xx,y)||!T.solid(xx,y+1))return false;
+      if(T.solid(xx,y-8)||T.solid(xx-3,y-4)||T.solid(xx+3,y-4))return false;
+      if(this.liquidAt(xx,y,0)||this.liquidAt(xx,y+4,0))return false;
+      return true;
+    };
+    for(let d=0;d<=132;d++){
+      const up=baseY-d;
+      if(valid(up))return {x:xx,y:up,dry:true};
+      if(d<=28){
+        const down=baseY+d;
+        if(valid(down))return {x:xx,y:down,dry:true};
+      }
+    }
+    return null;
+  },
+  underwaterCaveSurfaceExitSpot(cave){
+    if(!cave)return null;
+    const water=cave.water||{},ret=cave.returnSpot||{};
+    const entryX=Number.isFinite(ret.x)?ret.x:Math.round((water.x||0)+(water.w||0)/2);
+    const surfaceY=Math.round(water.sourceY||water.y||ret.y||160);
+    const sourceX=Number.isFinite(water.sourceX)?water.sourceX:(Number.isFinite(water.x)?water.x:entryX-20);
+    const sourceW=Number.isFinite(water.sourceW)?Math.max(1,water.sourceW):(Number.isFinite(water.w)?Math.max(1,water.w):40);
+    const center=sourceX+sourceW/2,preferredSide=entryX<=center?-1:1;
+    const probes=[];
+    const pushProbe=(x,side,extra)=>{
+      probes.push({x:Math.round(x),side,extra:extra||0});
+    };
+    for(let r=0;r<=96;r+=4){
+      pushProbe(entryX-r,entryX-r<=center?-1:1,r*0.08);
+      if(r)pushProbe(entryX+r,entryX+r<=center?-1:1,r*0.08);
+    }
+    for(let r=0;r<=116;r+=4){
+      pushProbe(sourceX-6-r,-1,r*0.06);
+      pushProbe(sourceX+sourceW+6+r,1,r*0.06);
+      if(r<=28){
+        pushProbe(sourceX+4+r,-1,18+r*0.3);
+        pushProbe(sourceX+sourceW-4-r,1,18+r*0.3);
+      }
+    }
+    let best=null,bestScore=Infinity;
+    const seen=new Set();
+    for(const p of probes){
+      const x=clamp(p.x,4,this.T?this.T.W-5:9999);
+      if(seen.has(x))continue;
+      seen.add(x);
+      const spot=this.underwaterCaveDryStandAt(x,surfaceY-5);
+      if(!spot)continue;
+      const sidePenalty=p.side===preferredSide?0:18;
+      const score=Math.abs(spot.x-entryX)*1.25+Math.abs(spot.y-(surfaceY-8))*0.34+sidePenalty+(p.extra||0);
+      if(score<bestScore){best=spot;bestScore=score}
+    }
+    if(best){
+      best.dir=best.x<entryX?-1:1;
+      return best;
+    }
+    return null;
+  },
   tryEnterUnderwaterCaveFromManual(l,z){
     if(!l||!z||z.lava||this.underwaterCaveActive())return false;
     if(this.waterfallCaveActive&&this.waterfallCaveActive())return false;
@@ -73,7 +136,12 @@ Object.assign(G,{
       levelIdx:this.levelIdx||0,
       lemId:l.id,
       waterKey:key,
-      water:{x:z.x,y:z.y,w:z.w,lava:false},
+      water:{
+        x:z.x,y:z.y,w:z.w,lava:false,
+        sourceX:z.source&&Number.isFinite(z.source.x)?z.source.x:z.x,
+        sourceY:z.source&&Number.isFinite(z.source.y)?z.source.y:z.y,
+        sourceW:z.source&&Number.isFinite(z.source.w)?z.source.w:z.w
+      },
       returnSpot:{x:Math.round(l.x),y:Math.round((z.y||l.y)-7)},
       t:0,
       swimX:spawn.x,
@@ -111,10 +179,13 @@ Object.assign(G,{
     if(!cave||!cave.active)return false;
     const l=this.findLemById?this.findLemById(cave.lemId):null;
     if(l&&l.alive&&l.alive()){
-      const spot=cave.returnSpot||{};
+      const fallback=cave.returnSpot||{};
+      const shore=this.underwaterCaveSurfaceExitSpot?this.underwaterCaveSurfaceExitSpot(cave):null;
+      const spot=shore||fallback;
       l.x=clamp(Math.round(spot.x==null?l.x:spot.x),4,this.level?this.level.W-5:9999);
       l.y=Math.round(spot.y==null?l.y:spot.y);
-      l.state='MANUAL';l.fall=0;l.manualVy=-1.2;l.jumpT=0;l.jumpVy=0;l.busyT=0;l.swimRing=false;l.fishRingTried=true;
+      l.dir=Number.isFinite(spot.dir)?spot.dir:l.dir;
+      l.state='MANUAL';l.fall=0;l.manualVy=spot.dry?0:-1.2;l.jumpT=0;l.jumpVy=0;l.busyT=0;l.swimRing=false;l.fishRingTried=true;
       if(this.manual){
         this.manual.active=true;
         this.manual.lemId=l.id;

@@ -173,7 +173,7 @@ for (const token of ['UNDERWATER_CAVE_SCENES','entryPool:{','siltTunnel:{','airB
     throw new Error(`Underwater cave scene registry is missing ${token}`);
   }
 }
-for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp']) {
+for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
@@ -651,7 +651,7 @@ const requiredRuntimeMethods = [
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone','chargeWaterfallCaveTeleportStoneAtCrystal',
   'waterfallCaveMirrorPoolHit','waterfallCaveMirrorPoolState','resetWaterfallCaveMirrorPoolVisit','triggerWaterfallCaveMirrorPedestal','updateWaterfallCaveMirrorPedestal','waterfallCaveMirrorThrowStonePile','waterfallCaveMirrorStoneHeld','waterfallCaveMirrorStoneThrowLocks','pickWaterfallCaveMirrorStone','throwWaterfallCaveMirrorStone','handleWaterfallCaveMirrorStoneAction','clearWaterfallCaveMirrorStone','updateWaterfallCaveMirrorStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
-  'underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
+  'underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -678,6 +678,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevMusicOn = AU.musicOn;
   const prevSfxOn = AU.sfxOn;
   const prevLevel = G.level;
+  const prevT = G.T;
+  const prevLiquidCache = G.liquidCache;
   const prevLevelIdx = G.levelIdx;
   const prevState = G.state;
   const prevLems = G.lems;
@@ -706,6 +708,22 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   holy.holy = true;
   holy.state = 'MANUAL';
   G.level = LEVELS[waterIdx];
+  G.liquidCache = null;
+  {
+    const poolLeft = Math.round(water.x);
+    const poolRight = Math.round(water.x + water.w);
+    const shoreGroundY = Math.round(water.y) - 7;
+    G.T = {
+      W:G.level.W||Math.max(260,poolRight+80),
+      H:260,
+      solid(x,y){
+        x = Math.round(x);
+        y = Math.round(y);
+        if (x >= poolLeft && x < poolRight && y >= shoreGroundY) return false;
+        return y >= shoreGroundY;
+      }
+    };
+  }
   G.levelIdx = waterIdx;
   G.state = 'PLAY';
   G.weatherKind = 'rain';
@@ -728,6 +746,9 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   if (G.underwaterCaveActive() || underwaterStarts !== 2 || underwaterStops < 3 || !musicStarted.length || weatherStarted[weatherStarted.length-1] !== 'rain') {
     throw new Error('Leaving underwater cave should stop underwater music and restore level music/weather');
   }
+  if (holy.manualVy !== 0 || !G.T.solid(holy.x, holy.y+1) || G.liquidAt(holy.x, holy.y+4, 0)) {
+    throw new Error('Leaving underwater cave should place the holy lemmel on a dry shore when one is available');
+  }
   AU.startUnderwaterCaveMysteryMusic = prevStartUnderwaterMusic;
   AU.stopUnderwaterCaveMysteryMusic = prevStopUnderwaterMusic;
   AU.silenceMusic = prevSilenceMusic;
@@ -739,6 +760,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   AU.musicOn = prevMusicOn;
   AU.sfxOn = prevSfxOn;
   G.level = prevLevel;
+  G.T = prevT;
+  G.liquidCache = prevLiquidCache;
   G.levelIdx = prevLevelIdx;
   G.state = prevState;
   G.lems = prevLems;
