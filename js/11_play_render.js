@@ -151,7 +151,9 @@ function render(){
     ctx.imageSmoothingEnabled=false;
     ctx.drawImage(WORLD_CV,0,sy,sw,sh,0,0,VW,VH);
     // meddelanden och HUD ligger stabilt ovanpå medan själva banan skakar/zoomar.
-    if(G.waterfallCaveActive&&G.waterfallCaveActive()){
+    if(G.underwaterCaveActive&&G.underwaterCaveActive()){
+      drawUnderwaterCaveView(ctx,tickCount);
+    }else if(G.waterfallCaveActive&&G.waterfallCaveActive()){
       drawWaterfallCaveView(ctx,tickCount);
     }else{
       drawToastStack(ctx);
@@ -161,7 +163,7 @@ function render(){
     // Skarp spelmarkör. Använd bara integer-snäppade fillRect-pixlar:
     // strokeRect på fractional mouse-coordinates blev ibland anti-aliased/suddigt
     // när canvasen skalades i browsern.
-    if(G.my<VH&&!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive())){
+    if(G.my<VH&&!(G.underwaterCaveActive&&G.underwaterCaveActive())&&!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive())){
       const cx=Math.round(G.mx), cy=Math.round(G.my);
       const col=G.hoverLem?'#40ff40':'#ffffff';
       ctx.fillStyle='rgba(0,0,0,0.55)';

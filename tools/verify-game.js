@@ -14,7 +14,7 @@ const debugScripts = debugHtml
 
 if (scripts.length === 0) throw new Error('No script tags found in LEMMEL.html');
 
-const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_runes.js','js/07_progression.js','js/07_portal_stone.js','js/07_waterfall_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
+const runtimeScripts = ['js/07_game.js','js/07_rope.js','js/07_save_state.js','js/07_manual_control.js','js/07_waterfall_cave_scenes.js','js/07_underwater_cave_scenes.js','js/07_runes.js','js/07_progression.js','js/07_portal_stone.js','js/07_waterfall_cave.js','js/07_underwater_cave.js','js/07_living_world.js','js/07_cutscenes.js','js/07_cutscene_scenes.js'];
 for (let i = 0; i < runtimeScripts.length; i++) {
   const idx = scripts.indexOf(runtimeScripts[i]);
   if (idx < 0) throw new Error(`Missing script tag: ${runtimeScripts[i]}`);
@@ -23,9 +23,13 @@ for (let i = 0; i < runtimeScripts.length; i++) {
   }
 }
 const waterfallRenderIdx = scripts.indexOf('js/11_waterfall_cave_render.js');
+const underwaterRenderIdx = scripts.indexOf('js/11_underwater_cave_render.js');
 const playRenderIdx = scripts.indexOf('js/11_play_render.js');
 if (waterfallRenderIdx < 0 || playRenderIdx < 0 || waterfallRenderIdx >= playRenderIdx) {
   throw new Error('Waterfall cave render script must load before js/11_play_render.js');
+}
+if (underwaterRenderIdx < 0 || underwaterRenderIdx <= waterfallRenderIdx || underwaterRenderIdx >= playRenderIdx) {
+  throw new Error('Underwater cave render script must load between waterfall cave render and js/11_play_render.js');
 }
 
 if (debugHtml) {
@@ -43,24 +47,27 @@ if (debugHtml) {
   const debugRopeIdx = debugScripts.indexOf('js/07_rope.js');
   const debugManualIdx = debugScripts.indexOf('js/07_manual_control.js');
   const debugWaterfallScenesIdx = debugScripts.indexOf('js/07_waterfall_cave_scenes.js');
+  const debugUnderwaterScenesIdx = debugScripts.indexOf('js/07_underwater_cave_scenes.js');
   const debugRunesIdx = debugScripts.indexOf('js/07_runes.js');
   const debugProgressionIdx = debugScripts.indexOf('js/07_progression.js');
   const debugPortalStoneIdx = debugScripts.indexOf('js/07_portal_stone.js');
   const debugWaterfallIdx = debugScripts.indexOf('js/07_waterfall_cave.js');
+  const debugUnderwaterIdx = debugScripts.indexOf('js/07_underwater_cave.js');
   const debugLivingIdx = debugScripts.indexOf('js/07_living_world.js');
   const debugCutsceneIdx = debugScripts.indexOf('js/07_cutscenes.js');
   const debugCutsceneScenesIdx = debugScripts.indexOf('js/07_cutscene_scenes.js');
   const debugWaterfallRenderIdx = debugScripts.indexOf('js/11_waterfall_cave_render.js');
+  const debugUnderwaterRenderIdx = debugScripts.indexOf('js/11_underwater_cave_render.js');
   const debugPlayRenderIdx = debugScripts.indexOf('js/11_play_render.js');
   const debugPageIdx = debugScripts.indexOf('js/debug_page.js');
-  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugRunesIdx <= debugWaterfallScenesIdx || debugProgressionIdx <= debugRunesIdx || debugPortalStoneIdx <= debugProgressionIdx || debugWaterfallIdx <= debugPortalStoneIdx || debugLivingIdx <= debugWaterfallIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugPlayRenderIdx <= debugWaterfallRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
+  if (debugGameIdx < 0 || debugRopeIdx <= debugGameIdx || debugManualIdx <= debugRopeIdx || debugWaterfallScenesIdx <= debugManualIdx || debugUnderwaterScenesIdx <= debugWaterfallScenesIdx || debugRunesIdx <= debugUnderwaterScenesIdx || debugProgressionIdx <= debugRunesIdx || debugPortalStoneIdx <= debugProgressionIdx || debugWaterfallIdx <= debugPortalStoneIdx || debugUnderwaterIdx <= debugWaterfallIdx || debugLivingIdx <= debugUnderwaterIdx || debugCutsceneIdx <= debugLivingIdx || debugCutsceneScenesIdx <= debugCutsceneIdx || debugWaterfallRenderIdx <= debugCutsceneScenesIdx || debugUnderwaterRenderIdx <= debugWaterfallRenderIdx || debugPlayRenderIdx <= debugUnderwaterRenderIdx || debugPageIdx <= debugPlayRenderIdx) {
     throw new Error('debug.html script order is wrong');
   }
   const requiredDebugActions = [
     'animFishRing','animFishRingRope','animWaterfallCave','animClimb','animFloat','animBomb','animBlock','animBuild','animDownbuild',
     'animBash','animMine','animDig','animRope','animJet','animFlame','animBazooka'
   ];
-  requiredDebugActions.push('spawnMushroom','spawnTree','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest');
+  requiredDebugActions.push('spawnMushroom','spawnTree','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest');
   for (const action of requiredDebugActions) {
     if (!debugHtml.includes(`data-action="${action}"`)) {
       throw new Error(`debug.html is missing debug action: ${action}`);
@@ -78,7 +85,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest']) {
+  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveForestRavineArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
   if (debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {
@@ -145,16 +152,47 @@ const inputCode = fs.readFileSync(path.join(root, 'js/12_input.js'), 'utf8');
 const waterfallScenesCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave_scenes.js'), 'utf8');
 const waterfallRuntimeCode = fs.readFileSync(path.join(root, 'js/07_waterfall_cave.js'), 'utf8');
 const waterfallRenderCode = fs.readFileSync(path.join(root, 'js/11_waterfall_cave_render.js'), 'utf8');
+const underwaterScenesCode = fs.readFileSync(path.join(root, 'js/07_underwater_cave_scenes.js'), 'utf8');
+const underwaterRuntimeCode = fs.readFileSync(path.join(root, 'js/07_underwater_cave.js'), 'utf8');
+const underwaterRenderCode = fs.readFileSync(path.join(root, 'js/11_underwater_cave_render.js'), 'utf8');
+const saveStateCode = fs.readFileSync(path.join(root, 'js/07_save_state.js'), 'utf8');
 const screensCode = fs.readFileSync(path.join(root, 'js/10_screens.js'), 'utf8');
 const tickIdx = gameCode.indexOf('  tick(){');
 const toastTickIdx = gameCode.indexOf('this.updateToasts()', tickIdx);
+const underwaterEarlyIdx = gameCode.indexOf('this.updateUnderwaterCave&&this.updateUnderwaterCave()', tickIdx);
 const waterfallEarlyIdx = gameCode.indexOf('this.updateWaterfallCave&&this.updateWaterfallCave()', tickIdx);
 const cutsceneEarlyIdx = gameCode.indexOf('this.updateCutscene&&this.updateCutscene()', tickIdx);
-if (tickIdx < 0 || toastTickIdx < 0 || waterfallEarlyIdx < 0 || cutsceneEarlyIdx < 0 || toastTickIdx > waterfallEarlyIdx || toastTickIdx > cutsceneEarlyIdx) {
-  throw new Error('Toast timers should tick before waterfall/cutscene early returns');
+if (tickIdx < 0 || toastTickIdx < 0 || underwaterEarlyIdx < 0 || waterfallEarlyIdx < 0 || cutsceneEarlyIdx < 0 || toastTickIdx > underwaterEarlyIdx || toastTickIdx > waterfallEarlyIdx || toastTickIdx > cutsceneEarlyIdx || underwaterEarlyIdx > waterfallEarlyIdx) {
+  throw new Error('Toast timers should tick before underwater/waterfall/cutscene early returns, with underwater before waterfall');
 }
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
+}
+for (const token of ['UNDERWATER_CAVE_SCENES','entryPool:{','siltTunnel:{','airBell:{','crystalReef:{','sunkenArchive:{','exits:[','objects:[','underwaterCaveSceneDef','underwaterCaveSceneBoundsFor','underwaterCaveMapGraph']) {
+  if (!underwaterScenesCode.includes(token)) {
+    throw new Error(`Underwater cave scene registry is missing ${token}`);
+  }
+}
+for (const token of ['underwaterCaveActive','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp']) {
+  if (!underwaterRuntimeCode.includes(token)) {
+    throw new Error(`Underwater cave runtime is missing ${token}`);
+  }
+}
+for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','tryEnterUnderwaterCaveFromManual&&this.tryEnterUnderwaterCaveFromManual(l,z)','updateUnderwaterCave&&this.updateUnderwaterCave()']) {
+  if (!gameCode.includes(token)) {
+    throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
+  }
+}
+for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects']) {
+  if (!underwaterRenderCode.includes(token)) {
+    throw new Error(`Underwater cave renderer is missing ${token}`);
+  }
+}
+if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
+  throw new Error('Input routing should send pointer and keyboard events to the underwater cave overlay');
+}
+if (!saveStateCode.includes('underwaterCaveActive')) {
+  throw new Error('Saving should be blocked while the underwater cave overlay is active');
 }
 for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_VARIANTS','WATERFALL_CAVE_MAP_KINDS','main:{','deep:{','camp:{','emberPassage:{','crystalGallery:{','mirrorPool:{','glyphArchive:{','church:{','churchInterior:{','toCrystalGallery','churchCard','churchModel','viewCard','map:{','exits:[','objects:[','waterfallCaveVariantId','waterfallCaveSceneDef','waterfallCaveSceneRenderKey','waterfallCaveMapGraph','waterfallCaveObjectDefault']) {
   if (!waterfallScenesCode.includes(token)) {
@@ -359,6 +397,9 @@ if (!audioCode.includes("rateFx('waterfall-cave-pedestal-rise',2.90)") || !audio
   throw new Error('Mirror pool pedestal rise should have a long layered stone, water, sub-bass, and settling sound');
 }
 const playRenderCode = fs.readFileSync(path.join(root, 'js/11_play_render.js'), 'utf8');
+if (!playRenderCode.includes('drawUnderwaterCaveView') || !playRenderCode.includes('underwaterCaveActive')) {
+  throw new Error('World render should route active underwater cave overlays to js/11_underwater_cave_render.js');
+}
 if (!baseRenderCode.includes('drawPortalStonePortal') || !baseRenderCode.includes('drawPortalStoneWorld') || !playRenderCode.includes('drawPortalStoneWorld')) {
   throw new Error('World render should draw active teleport stone portals before lemmels');
 }

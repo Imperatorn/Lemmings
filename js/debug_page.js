@@ -156,6 +156,12 @@
       WCTX.clearRect(0,0,VW,VH);
       drawPlayWorld(WCTX,G.level,G.cam|0,DBG.tick++);
       ctx.drawImage(WORLD_CV,0,0);
+      if(G.underwaterCaveActive&&G.underwaterCaveActive()){
+        drawUnderwaterCaveView(ctx,DBG.tick);
+        if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
+        drawToastStack(ctx);
+        return;
+      }
       if(G.waterfallCaveActive&&G.waterfallCaveActive()){
         drawWaterfallCaveView(ctx,DBG.tick);
         if(G.cutsceneActive&&G.cutsceneActive())drawCutsceneOverlay(ctx,DBG.tick);
@@ -434,7 +440,32 @@
     G.rate=50;
     G.cam=clamp(x-120,0,G.maxCam());
     G.toast('DEBUG: VÄLJ PT OCH KLICKA DEN HELIGA LÄMMELN');
-    finishAnimationSetup('Teleportsten: använd vanliga HUD-knappen PT, klicka den heliga lämmeln och placera utgångsportalen i världen.');
+    finishAnimationSetup('Portalsten: använd vanliga HUD-knappen PT, klicka den heliga lämmeln och placera utgångsportalen i världen.');
+  }
+
+  function setupUnderwaterCaveTest(){
+    if(G.exitWaterfallCave)G.exitWaterfallCave('silent');
+    if(G.exitUnderwaterCave)G.exitUnderwaterCave('silent');
+    if(!ensureWaterLevelForFishRing()){setStatus('Ingen vattenbana hittades för undervattenstest.','warn');return}
+    audioReady();
+    clearDebugActors();
+    DBG.gameInput=true;
+    const z=(G.level.water||[]).find(w=>w&&!w.lava);
+    if(!z){setStatus('Aktuell nivå saknar vanligt vatten.','warn');return}
+    const x=clamp(Math.round(z.x+z.w/2),10,G.level.W-10);
+    const y=Math.round(z.y+8);
+    const holy=resetDebugLemming(new Lemming(x,y),x,y);
+    holy.dir=1;holy.holy=true;holy.holySaveT=-999;holy.state='MANUAL';holy.fall=0;holy.manualVy=0;
+    G.lems=[holy];
+    G.out=1;
+    G.spawned=G.level.lem;
+    G.manual={used:true,active:true,lemId:holy.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    G.holyBlessingUnlocked=true;
+    G.holyLevelLemId=holy.id;
+    G.paused=false;
+    G.cam=clamp(x-180,0,G.maxCam());
+    if(!G.enterUnderwaterCave||!G.enterUnderwaterCave(holy,z)){setStatus('Kunde inte öppna undervattensgrottan.','warn');return}
+    finishAnimationSetup('Undervattensgrotta: styr med piltangenterna, Shift simmar snabbare, M visar kartan.');
   }
 
   function setupFishRingAnimation(){
@@ -632,6 +663,7 @@
     audioReady();
     if(action&&action.indexOf('anim')===0){doAnimation(action);return}
     if(action==='portalStoneTest'){setupPortalStoneTest();return}
+    if(action==='underwaterCaveTest'){setupUnderwaterCaveTest();return}
     if(action==='camLeft'){
       G.cam=clamp((G.cam||0)-120,0,G.maxCam());renderDebug();setStatus('Kamera flyttad vänster.');return;
     }
@@ -887,7 +919,7 @@
   }
 
   function handleDebugGamePointer(e,kind){
-    const overlayActive=(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive());
+    const overlayActive=(G.underwaterCaveActive&&G.underwaterCaveActive())||(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive());
     if(!DBG.gameInput||G.state!=='PLAY'||!(G.level&&G.T)||overlayActive)return false;
     e.preventDefault();
     audioReady();
@@ -923,7 +955,7 @@
   }
 
   function handleDebugGameKeyDown(e){
-    const overlayActive=(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive());
+    const overlayActive=(G.underwaterCaveActive&&G.underwaterCaveActive())||(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive());
     if(!DBG.gameInput||debugTypingTarget(e.target)||G.state!=='PLAY'||overlayActive)return false;
     if(G.portalStone&&G.portalStone.placingExit&&(e.key==='Escape'||e.key==='b'||e.key==='B')){
       G.cancelPortalStonePlacement();
@@ -947,11 +979,12 @@
   }
 
   function handleDebugCavePointer(e,kind){
-    if(!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive()))return false;
+    if(!(G.underwaterCaveActive&&G.underwaterCaveActive())&&!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive()))return false;
     e.preventDefault();
     audioReady();
     const p=debugCanvasPos(e);
     if(G.cutsceneActive&&G.cutsceneActive())G.handleCutsceneInput(p,kind||'click');
+    else if(G.underwaterCaveActive&&G.underwaterCaveActive())G.handleUnderwaterCaveInput(p,kind||'click');
     else if(G.waterfallCaveActive&&G.waterfallCaveActive())G.handleWaterfallCaveInput(p,kind||'click');
     renderDebug();
     ensureLoop();
@@ -962,6 +995,14 @@
     if(debugTypingTarget(e.target))return;
     if(G.cutsceneActive&&G.cutsceneActive()){
       if(G.handleCutsceneKey)G.handleCutsceneKey(e.key);
+      e.preventDefault();
+      renderDebug();
+      ensureLoop();
+      return;
+    }
+    if(G.underwaterCaveActive&&G.underwaterCaveActive()){
+      audioReady();
+      G.handleUnderwaterCaveKey(e.key);
       e.preventDefault();
       renderDebug();
       ensureLoop();
@@ -978,6 +1019,12 @@
 
   function handleDebugCaveKeyUp(e){
     if(debugTypingTarget(e.target))return;
+    if(G.underwaterCaveActive&&G.underwaterCaveActive()){
+      if(G.handleUnderwaterCaveKeyUp)G.handleUnderwaterCaveKeyUp(e.key);
+      e.preventDefault();
+      renderDebug();
+      return;
+    }
     if(G.waterfallCaveActive&&G.waterfallCaveActive()){
       if(G.handleWaterfallCaveKeyUp)G.handleWaterfallCaveKeyUp(e.key);
       e.preventDefault();

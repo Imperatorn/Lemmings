@@ -79,7 +79,7 @@ const G={
   lems:[], parts:[], glows:[], rockets:[], hooks:[], ropes:[], planes:[], packages:[], monkeys:[], bananas:[], trolls:[], trollRocks:[], settledTrollRocks:[], trees:[], dolphins:[], flashes:[], decor:[], rescues:[], fireflies:[], meteors:[], caveDrips:[], ambientBugs:[], ambientFish:[], ambientGrass:[], warnings:[], queuedEvents:[],
   cam:0, out:0, saved:0, spawned:0, rate:50, spawnT:0, doorT:0,
   timeT:0, levelTimeT:0, selSkill:'build', paused:false, trollUsed:false, mode:'chaos', levelSelectMode:'campaign', levelRunMode:'campaign', tempoIdx:1, cutscenesOn:true,
-  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{},archives:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null,
+  lamp:null, cleared:new Array(LEVELS.length).fill(false), money:0, pendingSkillBonus:{}, profileStats:{levels:{}}, runeProgress:{v:1,discovered:{},sets:{},archives:{}}, waterfallCaveLooted:{}, waterfallCaveExitNeedsUpRelease:false, waterfallCaveResumeMusic:false, waterfallCaveResumeWeather:null, underwaterCave:null, underwaterCaveExitCooldown:0,
   holyBlessingUnlocked:false, holyLevelLemId:null, holyTeleportStoneUnlocked:false, holyTeleportStoneCharged:false, practiceHolyTeleportStoneUnlocked:false, practiceHolyTeleportStoneCharged:false, holyTeleportStoneLemId:null, portalStone:null,
   mx:240, my:150, mDown:false, hoverLem:null, hoverBtn:-1, endT:0, menuChapter:0, profileOverlay:null, profileOverlayButtons:[], leaderboardButtons:[],
   msg:'', msgT:0, toasts:[], showHelp:false, titleLems:[], supplyT:0, supplyDrops:0, supplyMax:0, supplyLastX:null, supplyRecentXs:[], supplyMegaDropped:false, supplyMegaPlanned:false, supplyMegaForceAt:0, supplyLateMegaScheduled:false,
@@ -412,13 +412,14 @@ const G={
     return typeof activeProfileId==='function'?activeProfileId():null;
   },
   switchProfile(id,opts){
-    if(!id||this.state==='PLAY'||(this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive())){
+    if(!id||this.state==='PLAY'||(this.underwaterCaveActive&&this.underwaterCaveActive())||(this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive())){
       this.toast('BYT PROFIL FRÅN MENYN');
       return false;
     }
     if(!opts||!opts.skipSave)this.savePrefs();
     if(!setActiveProfile(id)){this.toast('PROFIL SAKNAS');AU.sShrug();return false}
     if(this.clearCutscene)this.clearCutscene('profile');
+    if(this.exitUnderwaterCave)this.exitUnderwaterCave('silent');
     if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     this.clearRopeAim();
     this.clearPortalStone();
@@ -798,6 +799,7 @@ const G={
   },
   goToMenu(){
     if(this.clearCutscene)this.clearCutscene('menu');
+    if(this.exitUnderwaterCave)this.exitUnderwaterCave('silent');
     if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     this.clearRopeAim();
     this.clearPortalStone();
@@ -811,6 +813,7 @@ const G={
   },
   restartCurrentLevel(){
     if(this.clearCutscene)this.clearCutscene('restart');
+    if(this.exitUnderwaterCave)this.exitUnderwaterCave('silent');
     if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     this.clearRopeAim();
     this.clearPortalStone();
@@ -904,6 +907,7 @@ const G={
 
   startLevel(idx,opts){
     if(this.clearCutscene)this.clearCutscene('level-start');
+    if(this.exitUnderwaterCave)this.exitUnderwaterCave('silent');
     if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     AU.stopWeather();
     if(opts&&opts.audio===false&&AU.stopMusic)AU.stopMusic();
@@ -928,7 +932,7 @@ const G={
     const D=createLevelDecorApi(this);
     if(L.decor)L.decor(D);
     // status
-    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.portalStone=null;this.waterfallCaveLooted={};this.waterfallCaveEntryHints={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.holyLevelLemId=null;this.holyTeleportStoneLemId=null;this.practiceHolyTeleportStoneCharged=false;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+    this.lems=[];this.parts=[];this.rockets=[];this.hooks=[];this.ropes=[];this.planes=[];this.packages=[];this.monkeys=[];this.bananas=[];this.trolls=[];this.trollRocks=[];this.settledTrollRocks=[];this.settledTrollRockSeq=0;this.trees=[];this.dolphins=[];this.flashes=[];this.rescues=[];this.meteors=[];this.caveDrips=[];this.ambientBugs=[];this.ambientFish=[];this.ambientGrass=[];this.warnings=[];this.queuedEvents=[];this.toasts=[];this.msg='';this.msgT=0;this.megaBoom=null;this.megaArmed=null;this.eventLockT=0;this.shakeT=0;this.shakePow=0;this.ropeAim=null;this.ropeSeq=1;this.portalStone=null;this.waterfallCaveLooted={};this.waterfallCaveEntryHints={};this.waterfallCaveExitNeedsUpRelease=false;this.waterfallCaveResumeMusic=false;this.waterfallCaveResumeWeather=null;this.underwaterCave=null;this.underwaterCaveExitCooldown=0;this.holyLevelLemId=null;this.holyTeleportStoneLemId=null;this.practiceHolyTeleportStoneCharged=false;this.manual={used:false,active:false,lemId:null,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
     this.weatherKind=this.normalizeWeatherForLevel(this.pickWeather(),L);this.weatherT=0;this.thunderT=0;this.thunderFlash=0;this.thunderX=0;this.thunderPath=null;this.sunSurpriseT=0;
     this.meteorT=(L.night&&!L.cave)?Math.round((18+this.rand()*34)*1000/TICK):0;
     this.cam=clamp(L.hatch.x-160,0,this.maxCamFor(L));
@@ -1638,6 +1642,8 @@ const G={
       if(z.lava){
         l.swimRing=false;
         l.kill('burn');
+      }else if(this.tryEnterUnderwaterCaveFromManual&&this.tryEnterUnderwaterCaveFromManual(l,z)){
+        return;
       }else if(l.swimRing){
         if(l.state!=='SWIM'){
           l.state='SWIM';l.fall=0;l.busyT=0;l.chute=false;l.soft=true;
@@ -3428,8 +3434,10 @@ const G={
 
   // ---- logik-tick ----
   tick(){
-    const transientView=!!((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()));
+    if(this.underwaterCaveExitCooldown>0)this.underwaterCaveExitCooldown--;
+    const transientView=!!((this.underwaterCaveActive&&this.underwaterCaveActive())||(this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()));
     if(this.state==='PLAY'&&(!this.paused||transientView))this.updateToasts();
+    if(this.updateUnderwaterCave&&this.updateUnderwaterCave())return;
     if(this.updateWaterfallCave&&this.updateWaterfallCave())return;
     if(this.updateCutscene&&this.updateCutscene())return;
     if(this.state!=='PLAY'||this.paused)return;

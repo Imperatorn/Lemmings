@@ -24,7 +24,7 @@ function updateCanvasCursor(){
   // I spelvärlden ritar vi egen markeringsruta. I HUD/menyer ska användaren se
   // vanlig muspekare så knapparna går att pricka utan att pekaren försvinner.
   if(!cvs||!cvs.style)return;
-  const showNative=(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive())||G.state!=='PLAY'||G.my>=HUDY||G.showHelp||G.paused||GAME_ERROR;
+  const showNative=(G.underwaterCaveActive&&G.underwaterCaveActive())||(G.waterfallCaveActive&&G.waterfallCaveActive())||(G.cutsceneActive&&G.cutsceneActive())||G.state!=='PLAY'||G.my>=HUDY||G.showHelp||G.paused||GAME_ERROR;
   cvs.style.cursor=showNative?'default':'none';
 }
 function refreshPointer(p){
@@ -63,6 +63,7 @@ function pressAt(p){
   refreshPointer(p);
   AU.init();
   if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
+  if(G.underwaterCaveActive&&G.underwaterCaveActive()){G.handleUnderwaterCaveInput(p,'click');return}
   if(G.waterfallCaveActive&&G.waterfallCaveActive()){G.handleWaterfallCaveInput(p,'click');return}
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'click');return}
   if(G.state==='TITLE'){G.state='MENU';AU.sClick();AU.startMusic('menu');return}
@@ -138,6 +139,7 @@ function rightClickAt(p){
   refreshPointer(p);
   AU.init();
   if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
+  if(G.underwaterCaveActive&&G.underwaterCaveActive()){G.handleUnderwaterCaveInput(p,'context');return}
   if(G.waterfallCaveActive&&G.waterfallCaveActive()){G.handleWaterfallCaveInput(p,'context');return}
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneInput(p,'context');return}
   if(G.state==='PLAY'&&p.y<VH){
@@ -148,7 +150,7 @@ function rightClickAt(p){
 }
 const ACTIVE_POINTERS=new Map();
 let DRAG=null,PINCH=null;
-function playWorldPoint(p){return !(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive())&&G.state==='PLAY'&&p.y<VH}
+function playWorldPoint(p){return !(G.underwaterCaveActive&&G.underwaterCaveActive())&&!(G.waterfallCaveActive&&G.waterfallCaveActive())&&!(G.cutsceneActive&&G.cutsceneActive())&&G.state==='PLAY'&&p.y<VH}
 function startPointerAction(id,p,kind){
   refreshPointer(p);
   ACTIVE_POINTERS.set(id,{x:p.x,y:p.y,world:playWorldPoint(p),kind:kind||'pointer'});
@@ -250,6 +252,7 @@ function bindInput(){
 bindInput();
 window.addEventListener('keydown',e=>{
   if(e.key==='f'||e.key==='F'){toggleFullscreen();e.preventDefault();return}
+  if(G.underwaterCaveActive&&G.underwaterCaveActive()){G.handleUnderwaterCaveKey(e.key);e.preventDefault();return}
   if(G.waterfallCaveActive&&G.waterfallCaveActive()){G.handleWaterfallCaveKey(e.key);e.preventDefault();return}
   if(G.cutsceneActive&&G.cutsceneActive()){G.handleCutsceneKey(e.key);e.preventDefault();return}
   if(e.key==='h'||e.key==='H'){G.toggleHelp();e.preventDefault();return}
@@ -317,6 +320,7 @@ window.addEventListener('keydown',e=>{
 
 window.addEventListener('keyup',e=>{
   if(e.key==='ArrowUp'&&G.releaseWaterfallCaveEntryBlock)G.releaseWaterfallCaveEntryBlock(e.key);
+  if(G.underwaterCaveActive&&G.underwaterCaveActive()){if(G.handleUnderwaterCaveKeyUp)G.handleUnderwaterCaveKeyUp(e.key);e.preventDefault();return}
   if(G.waterfallCaveActive&&G.waterfallCaveActive()){if(G.handleWaterfallCaveKeyUp)G.handleWaterfallCaveKeyUp(e.key);e.preventDefault();return}
   if(G.cutsceneActive&&G.cutsceneActive()){e.preventDefault();return}
   if(G.state==='PLAY'&&G.isManualActive&&G.isManualActive()){
