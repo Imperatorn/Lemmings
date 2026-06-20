@@ -14,12 +14,14 @@ const SKILLS=[
   {k:'flame', name:'ELDKASTARE'},
   {k:'rope',  name:'REPKROK'}
 ];
-const MENU_CHAPTER_NAMES=['BÖRJAN','FARORNA','VÄRLDAR'];
+const LEVELS_PER_CHAPTER=10;
+const SKY_CHAPTER_INDEX=3;
+const MENU_CHAPTER_NAMES=['BÖRJAN','FARORNA','VÄRLDAR','HIMLEN'];
 function menuChapters(){
-  const n=LEVELS.length, size=Math.ceil(n/3), out=[];
-  for(let i=0;i<3;i++){
+  const n=LEVELS.length, size=LEVELS_PER_CHAPTER, out=[];
+  for(let i=0;i<Math.ceil(n/size);i++){
     const from=i*size, to=Math.min(n,(i+1)*size);
-    out.push({name:MENU_CHAPTER_NAMES[i]||('KAPITEL '+(i+1)),from,to});
+    out.push({name:MENU_CHAPTER_NAMES[i]||('KAPITEL '+(i+1)),from,to,gate:i===SKY_CHAPTER_INDEX?'sky':null});
   }
   return out;
 }
@@ -70,7 +72,8 @@ function createLevelDecorApi(game){
     taxi:(x,y,w,dir,speed)=>add({t:'taxi',x,y,w:w||220,dir:dir||1,speed:speed||0.55,v:RND()}),
     streetlamp:(x,y)=>add({t:'streetlamp',x,y,v:RND()}),
     sign:(x,y,text)=>add({t:'sign',x,y,text:text||'',v:RND()}),
-    marker:(x,y,text)=>add({t:'marker',x,y,text:text||'',v:RND()})
+    marker:(x,y,text)=>add({t:'marker',x,y,text:text||'',v:RND()}),
+    cloud:(x,y,w,h)=>add({t:'cloud',x,y,w:w||120,h:h||34,v:RND()})
   };
 }
 
@@ -163,6 +166,7 @@ const G={
     const r=this.rand();
     if(L.cave)return 'cave';
     if(L.night)return r<0.68?'rain':'snow';
+    if(L.theme==='sky')return r<0.78?'sun':(r<0.92?'rain':'snow');
     if(L.theme==='desert')return r<0.88?'sun':'rain';
     if(L.theme==='city')return r<0.50?'sun':(r<0.88?'rain':'snow');
     if(L.theme==='crystal'||L.theme==='glass')return r<0.48?'snow':(r<0.70?'rain':'sun');
@@ -842,9 +846,16 @@ const G={
     if(!this.level){this.goToMenu();return}
     const win=this.saved>=this.level.save;
     if(win&&this.levelIdx<LEVELS.length-1){
-      this.levelIdx++;
-      this.savePrefs();
-      this.state='BRIEF';
+      const next=this.levelIdx+1;
+      if(!this.levelUnlocked||this.levelUnlocked(next)){
+        this.levelIdx=next;
+        this.savePrefs();
+        this.state='BRIEF';
+      }else{
+        this.savePrefs();
+        this.toast('BANA LÅST - '+(this.levelLockedReason?this.levelLockedReason(next):'LÅST'));
+        this.goToMenu();
+      }
     }else this.goToMenu();
   },
   markLevelCleared(idx){

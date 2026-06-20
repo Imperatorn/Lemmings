@@ -34,10 +34,50 @@ Object.assign(G,{
   hasHolyTeleportStone(){
     return !!(this.holyTeleportStoneUnlocked||this.practiceHolyTeleportStoneUnlocked);
   },
+  skyChapter(){
+    const chapters=typeof menuChapters==='function'?menuChapters():[];
+    return chapters.find(ch=>ch&&ch.gate==='sky')||null;
+  },
+  skyChapterStart(){
+    const ch=this.skyChapter();
+    return ch?ch.from:LEVELS.length;
+  },
+  skyUnlockProgress(){
+    const ch=this.skyChapter();
+    const start=ch?ch.from:LEVELS.length;
+    const finalIdx=Math.max(0,Math.min(start-1,LEVELS.length-1));
+    const surface=this.surfaceRuneSummary?this.surfaceRuneSummary():{read:0,total:32,complete:false};
+    const deep=this.deepRuneSummary?this.deepRuneSummary():{read:0,total:10,complete:false};
+    const finalCleared=!!(this.cleared&&this.cleared[finalIdx]);
+    return {
+      exists:!!ch,
+      start,
+      finalLevelIdx:finalIdx,
+      finalCleared,
+      surfaceRead:surface.read||0,
+      surfaceTotal:surface.total||32,
+      surfaceComplete:!!surface.complete,
+      deepRead:deep.read||0,
+      deepTotal:deep.total||10,
+      deepComplete:!!deep.complete,
+      unlocked:!!(ch&&finalCleared&&surface.complete&&deep.complete)
+    };
+  },
+  skyChapterUnlocked(){
+    return !!(this.skyUnlockProgress&&this.skyUnlockProgress().unlocked);
+  },
+  skyLockedReason(){
+    const p=this.skyUnlockProgress?this.skyUnlockProgress():null;
+    if(!p||!p.exists)return '';
+    if(!p.finalCleared)return 'KLARA BANA '+String((p.finalLevelIdx||0)+1).padStart(2,'0');
+    if(!p.surfaceComplete)return 'RUNOR '+p.surfaceRead+'/'+p.surfaceTotal;
+    if(!p.deepComplete)return 'DJUPRUNOR '+p.deepRead+'/'+p.deepTotal;
+    return '';
+  },
   campaignUnlockedCount(){
     if(!this.campaignModeEnabled())return LEVELS.length;
-    let n=LEVELS.length?1:0;
-    while(n<LEVELS.length&&this.cleared&&this.cleared[n-1])n++;
+    let n=0;
+    while(n<LEVELS.length&&this.levelUnlocked(n))n++;
     return clamp(n,0,LEVELS.length);
   },
   highestUnlockedLevelIdx(){
@@ -47,11 +87,22 @@ Object.assign(G,{
     idx=clamp(idx|0,0,Math.max(0,LEVELS.length-1));
     if(!this.campaignModeEnabled())return true;
     if(idx===0)return true;
+    const skyStart=this.skyChapterStart?this.skyChapterStart():LEVELS.length;
+    if(idx>=skyStart){
+      if(!this.skyChapterUnlocked||!this.skyChapterUnlocked())return false;
+      if(idx===skyStart)return true;
+      return !!(this.cleared&&this.cleared[idx-1]);
+    }
     return !!(this.cleared&&this.cleared[idx-1]);
   },
   levelLockedReason(idx){
     idx=clamp(idx|0,0,Math.max(0,LEVELS.length-1));
     if(this.levelUnlocked(idx))return '';
+    const skyStart=this.skyChapterStart?this.skyChapterStart():LEVELS.length;
+    if(idx>=skyStart&&this.skyLockedReason){
+      const reason=this.skyLockedReason();
+      if(reason)return reason;
+    }
     return 'KLARA BANA '+String(idx).padStart(2,'0');
   },
   visibleLevelName(idx){
@@ -62,6 +113,7 @@ Object.assign(G,{
     if(!this.campaignModeEnabled())return true;
     const ch=typeof chOrIdx==='number'?menuChapters()[chOrIdx]:chOrIdx;
     if(!ch)return false;
+    if(ch.gate==='sky')return this.skyChapterUnlocked?this.skyChapterUnlocked():false;
     return (ch.from|0)<this.campaignUnlockedCount();
   },
   chapterProgress(chOrIdx){

@@ -246,13 +246,13 @@ for (const token of ['resetProfilePrefs','switchProfile','recordLevelAttempt','r
 }
 if (!gameCode.includes('levelSelectMode')) throw new Error('Profile state is missing levelSelectMode for campaign/free selection');
 if (!gameCode.includes('levelRunMode')) throw new Error('Runtime state is missing levelRunMode for campaign/practice separation');
-for (const token of ['LEVEL_SELECT_MODE_CAMPAIGN','LEVEL_SELECT_MODE_FREE','LEVEL_RUN_MODE_CAMPAIGN','LEVEL_RUN_MODE_PRACTICE','normalizeLevelSelectMode','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode']) {
+for (const token of ['LEVEL_SELECT_MODE_CAMPAIGN','LEVEL_SELECT_MODE_FREE','LEVEL_RUN_MODE_CAMPAIGN','LEVEL_RUN_MODE_PRACTICE','normalizeLevelSelectMode','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','skyChapter','skyChapterStart','skyUnlockProgress','skyChapterUnlocked','skyLockedReason','campaignModeEnabled','campaignUnlockedCount','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode']) {
   if (!progressionCode.includes(token)) throw new Error(`Progression module is missing ${token}`);
 }
 for (const token of ['levelUnlocked(idx){','selectMenuLevel(idx){','toggleLevelSelectMode(){']) {
   if (gameCode.includes(token)) throw new Error(`07_game.js should not own campaign progression implementation: ${token}`);
 }
-for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','progression:{']) {
+for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','HIMMEL','progression:{']) {
   if (!screensCode.includes(token)) throw new Error(`Menu rendering should expose campaign locked-state visually: ${token}`);
 }
 for (const token of ['FRITT SPEL: ÖVNING','PROGRESSION SPARADES INTE']) {
@@ -376,6 +376,10 @@ if (!caveRenderCode.includes('faceLit') || !caveRenderCode.includes("globalCompo
 const baseRenderCode = fs.readFileSync(path.join(root, 'js/08_render.js'), 'utf8');
 if (!baseRenderCode.includes('drawHolyLemmingAura')) {
   throw new Error('Holy lemmels should have a visible aura in the normal world');
+}
+const themesCode = fs.readFileSync(path.join(root, 'js/03_themes.js'), 'utf8');
+if (!themesCode.includes('sky:{') || !baseRenderCode.includes("L.theme==='sky'") || !baseRenderCode.includes("case 'cloud'") || !gameCode.includes("cloud:(x,y,w,h)") || !levelsCode.includes("theme:'sky'")) {
+  throw new Error('Sky chapter should define a sky terrain theme, cloud rendering, cloud decor, and sky levels');
 }
 const audioCode = fs.readFileSync(path.join(root, 'js/02_audio.js'), 'utf8');
 if (audioCode.includes('4300,0.46') || audioCode.includes('900+Math.random()*850') || !audioCode.includes('0.65+Math.random()*1.55')) {
@@ -619,7 +623,7 @@ const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
   'runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeTypedSummary','surfaceRuneSummary','deepRuneSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
-  'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
+  'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','skyChapter','skyChapterStart','skyUnlockProgress','skyChapterUnlocked','skyLockedReason','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
   'clearRopeAim','handleRopeClick','fireRopeHook','updateHooksAndRopes','findClimbableRope',
@@ -3377,6 +3381,53 @@ if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol || !G.
   G.msg = prevMsg;
   G.msgT = prevMsgT;
 }
+{
+  const prevMode = G.levelSelectMode;
+  const prevRunMode = G.levelRunMode;
+  const prevCleared = G.cleared.slice();
+  const prevLevelIdx = G.levelIdx;
+  const prevMenuChapter = G.menuChapter;
+  const prevRuneProgress = G.runeProgress;
+  const prevToasts = G.toasts;
+  const prevSavePrefs = G.savePrefs;
+  G.savePrefs = () => {};
+  G.levelSelectMode = 'campaign';
+  G.levelRunMode = 'campaign';
+  G.cleared = new Array(LEVELS.length).fill(false);
+  G.runeProgress = G.normalizeRuneProgress({});
+  G.toasts = [];
+  const skyStart = G.skyChapterStart();
+  if (skyStart !== 30 || !LEVELS[skyStart] || LEVELS[skyStart].theme !== 'sky') {
+    throw new Error('Sky chapter should start at level 31 with a sky-themed level');
+  }
+  for (let i = 0; i < skyStart; i++) G.cleared[i] = true;
+  if (G.skyChapterUnlocked() || G.levelUnlocked(skyStart) || G.campaignUnlockedCount() !== skyStart || !G.levelLockedReason(skyStart).includes('RUNOR 0/32')) {
+    throw new Error('Sky chapter should stay locked after the base campaign until all 32 surface runes are read');
+  }
+  for (const rune of G.runeCatalog('surface').runes || []) G.recordRuneDiscovery(rune);
+  if (G.skyChapterUnlocked() || G.levelUnlocked(skyStart) || !G.levelLockedReason(skyStart).includes('DJUPRUNOR 0/10')) {
+    throw new Error('Sky chapter should stay locked after 32 surface runes until all 10 deep runes are read');
+  }
+  for (const rune of G.runeCatalog('deep').runes || []) G.recordRuneDiscovery(rune);
+  if (!G.skyChapterUnlocked() || !G.levelUnlocked(skyStart) || !G.chapterUnlocked(3) || !G.selectMenuLevel(skyStart) || G.levelIdx !== skyStart) {
+    throw new Error('Sky chapter should unlock after base campaign completion plus 32 surface and 10 deep runes');
+  }
+  if (G.levelUnlocked(skyStart + 1)) {
+    throw new Error('Second sky level should still require clearing the first sky level');
+  }
+  G.cleared[skyStart] = true;
+  if (!G.levelUnlocked(skyStart + 1)) {
+    throw new Error('Clearing the first sky level should unlock the second sky level');
+  }
+  G.levelSelectMode = prevMode;
+  G.levelRunMode = prevRunMode;
+  G.cleared = prevCleared;
+  G.levelIdx = prevLevelIdx;
+  G.menuChapter = prevMenuChapter;
+  G.runeProgress = prevRuneProgress;
+  G.toasts = prevToasts;
+  G.savePrefs = prevSavePrefs;
+}
 
 const levelNames = new Set();
 function rootDecorHasSupport(T, x, y) {
@@ -3521,9 +3572,16 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
 }
 
 const chapters = menuChapters();
-if (chapters.length !== 3) throw new Error(`Expected 3 menu chapters, got ${chapters.length}`);
+if (chapters.length !== 4) throw new Error(`Expected 4 menu chapters, got ${chapters.length}`);
 if (Math.max(...chapters.map(ch => ch.to - ch.from)) > 10) {
   throw new Error('Too many rows in a menu chapter');
+}
+if (!chapters[3] || chapters[3].name !== 'HIMLEN' || chapters[3].from !== 30 || chapters[3].to !== 40 || chapters[3].gate !== 'sky') {
+  throw new Error('Fourth menu chapter should be the gated HIMLEN chapter with levels 31-40');
+}
+const skyLevels = LEVELS.slice(30, 40);
+if (skyLevels.length !== 10 || skyLevels.some(L => !L || L.theme !== 'sky')) {
+  throw new Error('Sky chapter should contain exactly 10 sky-themed levels');
 }
 
 function withLocalStorage(initial, fn) {

@@ -1,6 +1,6 @@
 // --------------------------- HUVUDRENDER ----------------------------
 let tickCount=0;
-const BACKGROUND_DECOR_TYPES=new Set(['tree','pyramid','waterfall','cityscape','subway']);
+const BACKGROUND_DECOR_TYPES=new Set(['tree','pyramid','waterfall','cityscape','subway','cloud']);
 function isBackgroundDecor(dec){return !!dec&&BACKGROUND_DECOR_TYPES.has(dec.t)}
 
 function drawPlayWorld(c,L,cam,tk){

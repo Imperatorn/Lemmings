@@ -96,6 +96,15 @@ const THEMES={
       if(((x*5+y*3)&95)===0||n>0.982)c=[255,255,255];
       if(dTop<2)c=[245,255,255];
       return c; } }
+  ,sky:{ sky:['#79b8ff','#eef9ff'], brick:'#eff8ff',
+    px(x,y,dTop){ const n=hash2(x,y), billow=Math.sin(x*0.055+y*0.025)+Math.sin(x*0.021-y*0.047)*0.8;
+      let shade=0.72+billow*0.13+(n-0.5)*0.18;
+      shade=clamp(shade,0,1);
+      let c=shade<0.48?[174,210,232]:(shade<0.66?[206,230,244]:(shade<0.84?[232,244,252]:[248,253,255]));
+      if(dTop<4)c=[250,254,255];
+      if(dTop>18&&billow<-1.05)c=[154,190,218];
+      if(n>0.982)c=[255,255,255];
+      return c; } }
 };
 
 function terrainThemeKeyAt(level,x,y){

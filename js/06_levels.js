@@ -437,5 +437,152 @@ const LEVELS=[
     D.torch(585,130);D.torch(845,150);D.crystal(884,150);D.marker(585,205,'FYND');
     D.pyramid(1140,175,0.95);D.mummy(1135,174,130,0.15);D.cactus(1175,175,0.9);D.rock(1215,175,0.9);D.marker(1274,159,'FYND');
     D.streetlamp(1545,185);D.cityscape(1510,185,190,92);D.subway(1525,185,145);D.road(1544,226,301);D.taxi(1560,226,270,1,0.42);
-    D.sign(1760,104,'MÅL');D.marker(1580,205,'FYND');D.bush(1685,154);D.mush(1710,154); } }
+    D.sign(1760,104,'MÅL');D.marker(1580,205,'FYND');D.bush(1685,154);D.mush(1710,154); } },
+{ name:'FÖRSTA MOLNET', theme:'sky', night:false, W:1000,
+  lem:16, save:12, rate:42, time:360,
+  skills:{climb:2,float:6,bomb:2,block:2,build:8,downbuild:4,bash:2,mine:0,dig:2,baz:0,jet:1,flame:0,rope:3},
+  hatch:{x:92,y:128}, exit:{x:902,y:177},
+  water:[],
+  hint:'HIMLEN BÄR, MEN MELLAN MOLNEN FINNS INGET ATT LANDA PÅ. BYGG LÅGT OCH LÅT FALLSKÄRMARNA TA DE LÅNGA STEGEN.',
+  build(P){ P.rect(0,180,245,46); P.disc(70,178,34); P.disc(156,178,38);
+    P.rect(382,194,214,38); P.disc(430,192,32); P.disc(548,192,36);
+    P.rect(724,178,276,54); P.disc(790,176,38); P.disc(900,176,42); },
+  decor(D){ D.cloud(170,72,170,38);D.cloud(470,92,150,34);D.cloud(790,58,220,44);
+    D.marker(176,180,'START');D.marker(902,178,'MÅL'); } },
+
+{ name:'VINDTRAPPAN', theme:'sky', night:false, W:1100,
+  lem:18, save:13, rate:38, time:390,
+  skills:{climb:3,float:7,bomb:2,block:3,build:9,downbuild:6,bash:1,mine:1,dig:2,baz:0,jet:2,flame:0,rope:4},
+  hatch:{x:86,y:176}, exit:{x:1018,y:105},
+  water:[],
+  hint:'VINDEN LYFTER BLICKEN UPPÅT. BYGG I KORTA STEG OCH SPARA ETT REP TILL DEN SISTA HÖJDEN.',
+  build(P){ P.rect(0,228,210,34); P.disc(96,226,34);
+    P.rect(292,204,170,34); P.disc(340,202,30); P.disc(420,202,28);
+    P.rect(535,170,175,34); P.disc(594,168,32); P.disc(674,168,30);
+    P.rect(792,136,170,36); P.disc(846,134,30); P.disc(920,134,34);
+    P.rect(990,106,110,46); P.disc(1028,104,28); },
+  decor(D){ D.cloud(124,82,160,34);D.cloud(420,68,180,40);D.cloud(746,54,150,32);D.cloud(990,40,170,38);
+    D.marker(1018,106,'MÅL'); } },
+
+{ name:'MOLNBRON', theme:'sky', night:false, W:1200,
+  lem:20, save:15, rate:44, time:420,
+  skills:{climb:2,float:5,bomb:3,block:4,build:12,downbuild:4,bash:2,mine:1,dig:2,baz:1,jet:1,flame:0,rope:5},
+  hatch:{x:88,y:128}, exit:{x:1112,y:167},
+  water:[],
+  hint:'DEN LÅNGA BRON BEHÖVER EN LUGN START. HÅLL FLOKKEN STILL OCH BYGG ÖVER DET STORA LJUSA GLAPPET.',
+  build(P){ P.rect(0,178,260,44); P.disc(86,176,36); P.disc(190,176,34);
+    P.rect(460,202,150,32); P.disc(520,200,34);
+    P.rect(790,194,145,34); P.disc(846,192,32);
+    P.rect(1018,168,182,54); P.disc(1070,166,34); P.disc(1142,166,30); },
+  decor(D){ D.cloud(160,62,190,42);D.cloud(578,86,210,44);D.cloud(890,74,170,36);D.cloud(1100,52,180,40);
+    D.marker(1112,168,'MÅL'); } },
+
+{ name:'SOLSCHAKTET', theme:'sky', night:false, W:1200,
+  lem:18, save:12, rate:34, time:430,
+  skills:{climb:5,float:8,bomb:3,block:3,build:8,downbuild:7,bash:2,mine:2,dig:3,baz:1,jet:4,flame:0,rope:5},
+  hatch:{x:92,y:184}, exit:{x:1086,y:83},
+  water:[],
+  hint:'MÅLET LIGGER HÖGT I SOLSKENET. ANVÄND JETPACK ELLER REP FÖR ATT SKAPA DEN FÖRSTA VÄGEN UPP.',
+  build(P){ P.rect(0,234,235,32); P.disc(92,232,34);
+    P.rect(306,210,150,32); P.disc(370,208,30);
+    P.rect(538,176,150,32); P.disc(602,174,32);
+    P.rect(758,134,150,34); P.disc(824,132,32);
+    P.rect(1010,84,190,48); P.disc(1078,82,34); P.disc(1148,82,28);
+    P.rect(920,150,28,76); },
+  decor(D){ D.cloud(118,72,170,36);D.cloud(420,64,160,34);D.cloud(730,48,180,38);D.cloud(1030,36,210,44);
+    D.marker(1086,84,'MÅL'); } },
+
+{ name:'HÖGA STRÖMMAR', theme:'sky', night:false, W:1300,
+  lem:22, save:16, rate:50, time:450,
+  skills:{climb:3,float:10,bomb:4,block:4,build:10,downbuild:5,bash:2,mine:2,dig:2,baz:2,jet:5,flame:0,rope:4},
+  hatch:{x:88,y:116}, exit:{x:1210,y:201},
+  water:[],
+  hint:'DE HÖGA STRÖMMARNA GER LÅNGA FALL. FALLSKÄRMAR RÄDDAR FLOKKEN, MEN EN LITEN GRUPP MÅSTE VISA VÄGEN.',
+  build(P){ P.rect(0,166,230,38); P.disc(90,164,34);
+    P.rect(330,210,160,34); P.disc(388,208,30);
+    P.rect(610,150,170,36); P.disc(684,148,34);
+    P.rect(910,216,150,34); P.disc(972,214,30);
+    P.rect(1130,202,170,44); P.disc(1200,200,36); },
+  decor(D){ D.cloud(168,58,180,38);D.cloud(398,96,150,34);D.cloud(680,50,210,44);D.cloud(1010,102,180,38);
+    D.marker(1210,202,'MÅL'); } },
+
+{ name:'LJUSPLATÅN', theme:'sky', night:false, W:1350,
+  lem:24, save:18, rate:40, time:470,
+  skills:{climb:4,float:7,bomb:4,block:5,build:11,downbuild:6,bash:3,mine:2,dig:3,baz:2,jet:3,flame:0,rope:6},
+  hatch:{x:86,y:148}, exit:{x:1265,y:145},
+  water:[],
+  hint:'PLATÅERNA SER NÄRA UT MEN HÖJDERNA LURAR. BYGG NED NÄR MOLNET FALLER UNDAN.',
+  build(P){ P.rect(0,198,245,38); P.disc(92,196,34);
+    P.rect(320,174,185,34); P.disc(386,172,32); P.disc(466,172,28);
+    P.rect(580,214,170,32); P.disc(646,212,30);
+    P.rect(840,188,170,34); P.disc(908,186,32);
+    P.rect(1160,146,190,48); P.disc(1228,144,36); P.disc(1300,144,30);
+    P.erase.rect(682,214,32,32); },
+  decor(D){ D.cloud(134,64,180,40);D.cloud(434,82,170,36);D.cloud(710,100,150,34);D.cloud(980,76,190,42);D.cloud(1230,48,180,38);
+    D.marker(1265,146,'MÅL'); } },
+
+{ name:'SKYAR I RÖRELSE', theme:'sky', night:false, W:1450,
+  lem:26, save:19, rate:58, time:500,
+  skills:{climb:4,float:9,bomb:5,block:5,build:12,downbuild:6,bash:4,mine:3,dig:3,baz:2,jet:4,flame:0,rope:6},
+  hatch:{x:90,y:120}, exit:{x:1360,y:185},
+  water:[],
+  hint:'NÄR FLOKKEN KOMMER FORT BEHÖVS EN TYDLIG STOPPUNKT. BLOCKERA TIDIGT OCH SLÄPP FRAM DEM NÄR VÄGEN ÄR KLAR.',
+  build(P){ P.rect(0,172,230,42); P.disc(92,170,36);
+    P.rect(314,202,150,32); P.disc(380,200,30);
+    P.rect(548,158,150,34); P.disc(614,156,32);
+    P.rect(782,214,165,32); P.disc(852,212,30);
+    P.rect(1035,174,160,34); P.disc(1102,172,32);
+    P.rect(1274,186,176,46); P.disc(1350,184,36); },
+  decor(D){ D.cloud(120,62,160,34);D.cloud(360,86,150,32);D.cloud(630,50,180,38);D.cloud(890,96,160,34);D.cloud(1170,72,200,42);
+    D.marker(1360,186,'MÅL'); } },
+
+{ name:'OVANFÖR ALLT', theme:'sky', night:false, W:1600,
+  lem:28, save:21, rate:46, time:560,
+  skills:{climb:5,float:10,bomb:6,block:6,build:14,downbuild:8,bash:5,mine:4,dig:4,baz:3,jet:5,flame:0,rope:7},
+  hatch:{x:90,y:180}, exit:{x:1510,y:111},
+  water:[],
+  hint:'BANAN STRÄCKER SIG ÖVER HELA HIMLEN. SPARA RESURSER TILL SISTA STIGNINGEN OCH LÅT INTE ALLA GÅ PÅ EN GÅNG.',
+  build(P){ P.rect(0,230,245,36); P.disc(90,228,34);
+    P.rect(322,204,180,34); P.disc(392,202,32);
+    P.rect(590,176,170,34); P.disc(658,174,32);
+    P.rect(846,206,165,34); P.disc(914,204,30);
+    P.rect(1100,158,180,36); P.disc(1172,156,34);
+    P.rect(1408,112,192,52); P.disc(1480,110,36); P.disc(1548,110,30);
+    P.rect(1280,134,28,92); },
+  decor(D){ D.cloud(150,70,200,42);D.cloud(430,92,170,36);D.cloud(720,64,190,40);D.cloud(1030,86,180,38);D.cloud(1350,54,220,46);
+    D.marker(1510,112,'MÅL'); } },
+
+{ name:'DEN SISTA PORTEN', theme:'sky', night:false, W:1700,
+  lem:30, save:23, rate:52, time:590,
+  skills:{climb:6,float:10,bomb:6,block:6,build:15,downbuild:8,bash:5,mine:4,dig:5,baz:3,jet:6,flame:0,rope:8},
+  hatch:{x:92,y:114}, exit:{x:1606,y:133},
+  water:[],
+  hint:'PORTEN ÄR NÄRA MEN VÄGEN ÄR BRUTEN. KOMBINERA REP, BYGGE OCH FALLSKÄRMAR I RÄTT ORDNING.',
+  build(P){ P.rect(0,166,230,42); P.disc(92,164,36);
+    P.rect(310,190,150,34); P.disc(372,188,30);
+    P.rect(550,224,150,32); P.disc(612,222,30);
+    P.rect(790,180,150,34); P.disc(854,178,32);
+    P.rect(1048,142,165,36); P.disc(1116,140,34);
+    P.rect(1328,188,150,34); P.disc(1392,186,32);
+    P.rect(1540,134,160,50); P.disc(1608,132,36);
+    P.erase.rect(1160,142,34,36); },
+  decor(D){ D.cloud(120,56,180,38);D.cloud(450,78,170,36);D.cloud(700,112,160,34);D.cloud(1030,48,210,44);D.cloud(1420,76,180,38);
+    D.marker(1606,134,'PORT'); } },
+
+{ name:'HIMLAVÄGEN', theme:'sky', night:false, W:1800,
+  lem:32, save:25, rate:48, time:640,
+  skills:{climb:6,float:12,bomb:6,block:7,build:16,downbuild:9,bash:6,mine:5,dig:5,baz:4,jet:6,flame:0,rope:9},
+  hatch:{x:92,y:158}, exit:{x:1708,y:93},
+  water:[],
+  hint:'SISTA HIMLAVÄGEN: SAMLA FLOKKEN, BYGG ÖVER TOMRUMMEN OCH LYFT EN VÄGVISARE TILL DEN HÖGSTA PORTEN.',
+  build(P){ P.rect(0,212,250,38); P.disc(96,210,36); P.disc(190,210,30);
+    P.rect(330,184,170,34); P.disc(398,182,32);
+    P.rect(594,214,170,32); P.disc(664,212,30);
+    P.rect(856,170,170,34); P.disc(928,168,32);
+    P.rect(1118,198,176,34); P.disc(1190,196,32);
+    P.rect(1388,150,172,36); P.disc(1460,148,34);
+    P.rect(1640,94,160,56); P.disc(1708,92,36); P.rect(1560,118,30,106);
+    P.erase.rect(1218,198,36,34); },
+  decor(D){ D.cloud(130,62,190,40);D.cloud(380,76,160,34);D.cloud(680,96,180,38);D.cloud(980,58,210,44);D.cloud(1280,84,180,38);D.cloud(1600,44,220,46);
+    D.marker(1708,94,'SLUT'); } }
 ];

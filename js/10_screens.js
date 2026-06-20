@@ -266,8 +266,11 @@ function drawMenu(c,tk){
   G.menuRows=[];G.menuTabs=[];
   const chapters=menuChapters();
   G.menuChapter=clamp(G.menuChapter|0,0,chapters.length-1);
+  const tabGap=8, tabMargin=28;
+  const tabW=Math.floor((CW-tabMargin*2-tabGap*Math.max(0,chapters.length-1))/Math.max(1,chapters.length));
+  const tabStart=Math.round((CW-(tabW*chapters.length+tabGap*Math.max(0,chapters.length-1)))/2);
   for(let i=0;i<chapters.length;i++){
-    const r={x:42+i*132,y:40,w:118,h:19,idx:i}, active=i===G.menuChapter;
+    const r={x:tabStart+i*(tabW+tabGap),y:40,w:tabW,h:19,idx:i}, active=i===G.menuChapter;
     const hov=G.mx>=r.x&&G.mx<r.x+r.w&&G.my>=r.y&&G.my<r.y+r.h;
     const locked=G.chapterUnlocked?!G.chapterUnlocked(i):false;
     c.fillStyle=locked?(active?'#1c1a18':(hov?'#201914':'#11100d')):(active?'#3a2818':(hov?'#2a2117':'#17120d'));
@@ -311,7 +314,8 @@ function drawMenu(c,tk){
         const label=guide&&guide.menuLabel?guide.menuLabel:(comp.full?'FULL':(comp.cleared?'RUNOR KVAR':'RUNOR'));
         drawText(c,label,x+w-164,y+1,1,comp.full?'#ffe880':'#caa0ff');
       }
-      if(L.cave)drawText(c,'GROTTA',x+w-84,y+1,1,'#a8b8c8');
+      if(L.theme==='sky')drawText(c,'HIMMEL',x+w-84,y+1,1,'#d8f6ff');
+      else if(L.cave)drawText(c,'GROTTA',x+w-84,y+1,1,'#a8b8c8');
       else if(L.theme==='desert')drawText(c,'ÖKEN',x+w-64,y+1,1,'#ffd070');
       else if(L.theme==='city')drawText(c,'STAD',x+w-64,y+1,1,'#a8d8ff');
       else if(L.night)drawText(c,'NATT',x+w-64,y+1,1,'#a0a0d0');
