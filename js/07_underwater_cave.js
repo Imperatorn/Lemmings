@@ -1,5 +1,10 @@
 // ------------------------- UNDERVATTENSGROTTA ------------------------
 const UNDERWATER_ENTRY_MUSIC_DUCK=0.34;
+const UNDERWATER_SWIM_ACCEL=0.26;
+const UNDERWATER_SWIM_RUN_ACCEL=0.50;
+const UNDERWATER_SWIM_MAX=2.25;
+const UNDERWATER_SWIM_RUN_MAX=3.75;
+const UNDERWATER_SWIM_DRAG=0.87;
 Object.assign(G,{
   underwaterCaveActive(){return !!(this.underwaterCave&&this.underwaterCave.active)},
   underwaterCaveSceneDef(cave){
@@ -284,15 +289,17 @@ Object.assign(G,{
     const h=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     const v=(cave.keys.down?1:0)-(cave.keys.up?1:0);
     const mag=Math.hypot(h,v);
-    const accel=(cave.keys.run?0.34:0.22);
+    const swimFast=!!cave.keys.run;
+    const accel=swimFast?UNDERWATER_SWIM_RUN_ACCEL:UNDERWATER_SWIM_ACCEL;
+    const maxSpeed=swimFast?UNDERWATER_SWIM_RUN_MAX:UNDERWATER_SWIM_MAX;
     if(mag>0){
-      cave.vx=clamp((cave.vx||0)+h/mag*accel,-2.45,2.45);
-      cave.vy=clamp((cave.vy||0)+v/mag*accel,-2.45,2.45);
+      cave.vx=clamp((cave.vx||0)+h/mag*accel,-maxSpeed,maxSpeed);
+      cave.vy=clamp((cave.vy||0)+v/mag*accel,-maxSpeed,maxSpeed);
       if(Math.abs(h)>Math.abs(v))cave.facing=h>0?'right':'left';
       else cave.facing=v<0?'back':'front';
     }
-    cave.vx=(cave.vx||0)*0.86;
-    cave.vy=(cave.vy||0)*0.86;
+    cave.vx=(cave.vx||0)*UNDERWATER_SWIM_DRAG;
+    cave.vy=(cave.vy||0)*UNDERWATER_SWIM_DRAG;
     let nx=clamp((cave.swimX||240)+cave.vx,b.minX,b.maxX);
     let ny=clamp((cave.swimY||150)+cave.vy,b.minY,b.maxY);
     if(this.underwaterCaveBlockerAt(cave,nx,ny)){
@@ -302,9 +309,9 @@ Object.assign(G,{
     }
     cave.swimX=nx;cave.swimY=ny;
     const moving=Math.abs(cave.vx)>0.08||Math.abs(cave.vy)>0.08;
-    if(moving&&cave.t%7===0){
+    if(moving&&cave.t%(swimFast?4:7)===0){
       cave.bubbles=cave.bubbles||[];
-      if(cave.bubbles.length<34)cave.bubbles.push({x:nx-8+RND()*16,y:ny-5+RND()*8,vy:0.35+RND()*0.55,r:1+Math.floor(RND()*3),t:54+Math.floor(RND()*24)});
+      if(cave.bubbles.length<42)cave.bubbles.push({x:nx-8+RND()*16,y:ny-5+RND()*8,vy:0.35+RND()*0.55,r:1+Math.floor(RND()*3),t:54+Math.floor(RND()*24)});
     }
     if(cave.bubbles){
       for(const bbl of cave.bubbles){bbl.y-=bbl.vy;bbl.t--}

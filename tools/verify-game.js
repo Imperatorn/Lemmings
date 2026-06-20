@@ -178,6 +178,14 @@ for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderw
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
 }
+for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG']) {
+  if (!underwaterRuntimeCode.includes(token)) {
+    throw new Error(`Underwater cave swim tuning is missing ${token}`);
+  }
+}
+if (!underwaterRuntimeCode.includes('swimFast?UNDERWATER_SWIM_RUN_MAX:UNDERWATER_SWIM_MAX') || !underwaterRuntimeCode.includes('cave.t%(swimFast?4:7)')) {
+  throw new Error('Shift-swimming should use a higher underwater max speed and stronger bubble cadence');
+}
 for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','underwaterCaveResumeMusic','underwaterCaveResumeWeather','tryEnterUnderwaterCaveFromManual&&this.tryEnterUnderwaterCaveFromManual(l,z)','updateUnderwaterCave&&this.updateUnderwaterCave()']) {
   if (!gameCode.includes(token)) {
     throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
@@ -187,6 +195,14 @@ for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwate
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
+}
+for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','drawUnderwaterLemmingFrontBack','anim.phase','anim.fast']) {
+  if (!underwaterRenderCode.includes(token)) {
+    throw new Error(`Underwater lemming swim animation is missing ${token}`);
+  }
+}
+if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('Samma kompakta grundform som vattenfallsgrottan')) {
+  throw new Error('Underwater lemming should keep the compact waterfall-cave pixel proportions');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
   throw new Error('Input routing should send pointer and keyboard events to the underwater cave overlay');
@@ -800,6 +816,43 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.underwaterCaveResumeMusic = prevResumeMusic;
   G.underwaterCaveResumeWeather = prevResumeWeather;
   G.weatherKind = prevWeatherKind;
+  G.toasts = prevToasts;
+}
+{
+  const prevUnderwater = G.underwaterCave;
+  const prevToasts = G.toasts;
+  const makeSwimCave = run => ({
+    active:true,
+    scene:'entryPool',
+    sceneState:{},
+    swimX:240,
+    swimY:130,
+    vx:0,
+    vy:0,
+    facing:'right',
+    keys:{left:false,right:true,up:false,down:false,run},
+    bubbles:[],
+    mapOpen:false,
+    hintT:0,
+    messageT:0,
+    t:0
+  });
+  G.toasts = [];
+  G.underwaterCave = makeSwimCave(false);
+  for (let i = 0; i < 18; i++) G.updateUnderwaterCave();
+  const normalDx = G.underwaterCave.swimX - 240;
+  const normalBubbles = (G.underwaterCave.bubbles || []).length;
+  G.underwaterCave = makeSwimCave(true);
+  for (let i = 0; i < 18; i++) G.updateUnderwaterCave();
+  const fastDx = G.underwaterCave.swimX - 240;
+  const fastBubbles = (G.underwaterCave.bubbles || []).length;
+  if (!(fastDx > normalDx * 1.45)) {
+    throw new Error(`Shift underwater swimming should be clearly faster, normal=${normalDx.toFixed(2)} fast=${fastDx.toFixed(2)}`);
+  }
+  if (fastBubbles <= normalBubbles) {
+    throw new Error('Fast underwater swimming should leave a stronger bubble trail');
+  }
+  G.underwaterCave = prevUnderwater;
   G.toasts = prevToasts;
 }
 {

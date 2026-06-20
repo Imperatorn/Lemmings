@@ -117,24 +117,88 @@ function drawUnderwaterObjects(c,cave,tk){
     c.restore();
   }
 }
+function underwaterSwimPhase(cave,tk){
+  const speed=Math.hypot(cave.vx||0,cave.vy||0),moving=speed>0.08,fast=!!(moving&&cave.keys&&cave.keys.run);
+  const t=(cave.t||0)+tk;
+  return {
+    speed,moving,fast,
+    phase:moving?(Math.floor(t*(fast?0.72:0.48))&3):0,
+    bob:Math.round(Math.sin(t*(moving?(fast?0.28:0.22):0.12))*2)
+  };
+}
+function drawUnderwaterLemmingSide(c,x,y,d,anim){
+  const colors=typeof COL==='object'&&COL?COL:{hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb'};
+  const hair=colors.hair,skin=colors.skin,body=colors.body,leg=colors.leg,dark='#102040';
+  const kick=anim.phase===1?1:(anim.phase===3?-1:0),reach=anim.phase===0?1:(anim.phase===2?-1:0);
+  c.save();
+  c.translate(x,y+anim.bob);
+  c.scale(2,2);
+  function p(px,py,w,h,col){c.fillStyle=col;c.fillRect(px,py,w,h)}
+  // Samma kompakta grundform som vattenfallsgrottan, men med lugna simtag.
+  p(d>0?-4:2,-2+kick,2,1,leg);
+  p(d>0?-5:3,-1+kick,2,1,leg);
+  p(d>0?-2:0,-1-kick,2,1,leg);
+  p(d>0?-3:1,0-kick,2,1,leg);
+  p(-2,-6,4,4,body);
+  p(-1+(d>0?0:-1)+1,-8,2,2,skin);
+  p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
+  p(d>0?1:-2,-8,1,1,dark);
+  p(d>0?2:-4,-6+reach,2,1,skin);
+  p(d>0?-4:2,-5-reach,2,1,skin);
+  c.restore();
+}
+function drawUnderwaterLemmingFrontBack(c,x,y,face,anim){
+  const colors=typeof COL==='object'&&COL?COL:{hair:'#6fb4ff',skin:'#ffd9a8',body:'#2244ee',leg:'#1a33bb'};
+  const hair=colors.hair,skin=colors.skin,body=colors.body,leg=colors.leg,dark='#102040';
+  const kick=anim.phase===1?1:(anim.phase===3?-1:0),reach=anim.phase===0?1:(anim.phase===2?-1:0);
+  const back=face==='back';
+  c.save();
+  c.translate(x,y+anim.bob);
+  c.scale(2,2);
+  function p(px,py,w,h,col){c.fillStyle=col;c.fillRect(px,py,w,h)}
+  p(-2,-2+kick,1,2,leg);
+  p(1,-2-kick,1,2,leg);
+  p(-1,-1-kick,1,1,leg);
+  p(0,-1+kick,1,1,leg);
+  p(-2,-6,4,4,body);
+  p(-3,-6+reach,1,3,skin);
+  p(2,-6-reach,1,3,skin);
+  if(back){
+    p(-2,-10,4,2,hair);p(-2,-8,4,2,hair);p(-1,-11,2,1,hair);
+  }else{
+    p(-2,-8,4,2,skin);
+    p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
+    p(-1,-8,1,1,dark);p(1,-8,1,1,dark);
+  }
+  c.restore();
+}
 function drawUnderwaterLemming(c,cave,tk){
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150),face=cave.facing||'right';
-  const d=face==='left'?-1:1,bob=Math.round(Math.sin(((cave.t||0)+tk)*0.18)*2);
+  const anim=underwaterSwimPhase(cave,tk);
   c.save();
-  c.globalAlpha=0.22;c.fillStyle='#d8f8ff';uwRect(c,x-18,y+10,36,3);c.globalAlpha=1;
-  c.globalAlpha=0.22+0.08*Math.sin(tk*0.25);c.fillStyle='#fff4a8';
-  uwRect(c,x-12,y-17+bob,24,28);uwRect(c,x-20,y-9+bob,40,12);
-  c.globalAlpha=1;
-  c.fillStyle=COL.body;uwRect(c,x-7*d,y-7+bob,14*d,6);
-  c.fillStyle=COL.skin;uwRect(c,x+4*d,y-10+bob,5*d,5);
-  c.fillStyle=COL.hair;uwRect(c,x+3*d,y-13+bob,7*d,3);
-  c.fillStyle='#102040';uwRect(c,x+7*d,y-9+bob,1,1);
-  c.fillStyle=COL.leg;
-  uwRect(c,x-10*d,y-2+bob,8*d,2);
-  uwRect(c,x-12*d,y+3+bob,9*d,2);
-  c.fillStyle=COL.skin;
-  uwRect(c,x-2*d,y-11+bob,8*d,2);
-  uwRect(c,x-4*d,y-2+bob,8*d,2);
+  c.globalAlpha=0.18;c.fillStyle='#d8f8ff';uwRect(c,x-14,y+5,28,2);c.globalAlpha=1;
+  c.globalCompositeOperation='lighter';
+  const g=c.createRadialGradient(x,y-9,2,x,y-9,anim.fast?28:22);
+  g.addColorStop(0,'rgba(255,242,150,0.22)');
+  g.addColorStop(0.46,'rgba(150,232,255,0.10)');
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=g;c.fillRect(x-32,y-36,64,56);
+  c.globalCompositeOperation='source-over';
+  if(anim.moving){
+    c.globalAlpha=anim.fast?0.34:0.22;
+    c.fillStyle='#bdf8ff';
+    if(face==='left'||face==='right'){
+      const d=face==='right'?1:-1;
+      uwRect(c,x-d*(anim.fast?20:15),y-2+anim.bob,anim.fast?14:10,1);
+      uwRect(c,x-d*(anim.fast?16:12),y+4+anim.bob,anim.fast?10:7,1);
+    }else{
+      uwRect(c,x-10,y+5+anim.bob,20,1);
+      uwRect(c,x-6,y+9+anim.bob,12,1);
+    }
+    c.globalAlpha=1;
+  }
+  if(face==='left'||face==='right')drawUnderwaterLemmingSide(c,x,y,face==='left'?-1:1,anim);
+  else drawUnderwaterLemmingFrontBack(c,x,y,face,anim);
   c.restore();
 }
 function drawUnderwaterBubbles(c,cave,tk){
