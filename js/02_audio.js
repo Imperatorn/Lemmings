@@ -7,7 +7,7 @@ const CHURCH_HYMN_LOOP_START_SECONDS=1;
 const CHURCH_HYMN_LOOP_SECONDS=32;
 const CHURCH_HYMN_LOOP_FADE_SECONDS=1;
 const AU={
-  ctx:null, master:null, musGain:null, sfxGain:null, on:true, musicOn:true, sfxOn:true, musicVol:1, sfxVol:1, started:false,
+  ctx:null, master:null, musGain:null, sfxGain:null, on:true, musicOn:true, sfxOn:true, musicVol:1, sfxVol:1, musicDuck:1, started:false,
   weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, waterfallCave:{loopNodes:[]}, churchHymn:null, fxLast:{},
   init(){
     if(this.ctx) return;
@@ -38,16 +38,37 @@ const AU={
   },
   now(){return this.ctx?this.ctx.currentTime:0},
   sfxDest(){return this.sfxGain||this.master},
+  musicGainTarget(kind){
+    kind=kind||(this.mus&&this.mus.kind);
+    const mysteryBoost=kind==='caveMystery'?CAVE_MYSTERY_GAIN_BOOST:(kind==='underwaterMystery'?UNDERWATER_MYSTERY_GAIN_BOOST:1);
+    const duck=clamp(Number.isFinite(this.musicDuck)?this.musicDuck:1,0,1);
+    return MUSIC_GAIN_BASE*mysteryBoost*duck*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+  },
   applyVolumes(){
     const t=this.now();
-    const kind=this.mus&&this.mus.kind;
-    const mysteryBoost=kind==='caveMystery'?CAVE_MYSTERY_GAIN_BOOST:(kind==='underwaterMystery'?UNDERWATER_MYSTERY_GAIN_BOOST:1);
-    const mv=MUSIC_GAIN_BASE*mysteryBoost*clamp(Number.isFinite(this.musicVol)?this.musicVol:1,0,1);
+    const mv=this.musicGainTarget();
     const sv=clamp(Number.isFinite(this.sfxVol)?this.sfxVol:1,0,1);
     if(this.musGain&&this.musGain.gain)this.gainRamp(this.musGain,this.musGain.gain,t,mv,'linear');
     if(this.sfxGain&&this.sfxGain.gain)this.gainRamp(this.sfxGain,this.sfxGain.gain,t,sv,'linear');
     if(this.updateWaterfallCaveChurchHymnVolume)this.updateWaterfallCaveChurchHymnVolume(0.08);
   },
+  setMusicDuck(v,fade){
+    v=Number(v);
+    this.musicDuck=Number.isFinite(v)?clamp(v,0,1):1;
+    if(!this.musGain||!this.musGain.gain)return this.musicDuck;
+    const t=this.now(), dur=Math.max(0,Number(fade)||0), target=this.musicGainTarget();
+    const p=this.musGain.gain;
+    try{
+      if(p.cancelScheduledValues)p.cancelScheduledValues(t);
+      if(p.setValueAtTime)p.setValueAtTime(Math.max(0.00005,p.value||0.0001),t);
+      if(dur>0&&p.linearRampToValueAtTime)p.linearRampToValueAtTime(Math.max(0.00005,target),t+dur);
+      else if(dur>0&&p.exponentialRampToValueAtTime)p.exponentialRampToValueAtTime(Math.max(0.00005,target),t+dur);
+      else if(p.setValueAtTime)p.setValueAtTime(Math.max(0.00005,target),t);
+      else p.value=Math.max(0.00005,target);
+    }catch(_){try{p.value=Math.max(0.00005,target)}catch(__){}}
+    return this.musicDuck;
+  },
+  clearMusicDuck(fade){return this.setMusicDuck(1,fade)},
   setMusicVolume(v){
     v=Number(v);
     this.musicVol=Number.isFinite(v)?clamp(v,0,1):1;

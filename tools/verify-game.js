@@ -660,7 +660,7 @@ const requiredRuntimeMethods = [
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusic','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startUnderwaterCaveMysteryMusic','stopUnderwaterCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sWaterfallCavePedestalRise','sPortalStoneOpen','sPortalStoneTravel']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','setMusicDuck','clearMusicDuck','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusic','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startUnderwaterCaveMysteryMusic','stopUnderwaterCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sWaterfallCavePedestalRise','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -669,6 +669,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
 {
   const prevStartUnderwaterMusic = AU.startUnderwaterCaveMysteryMusic;
   const prevStopUnderwaterMusic = AU.stopUnderwaterCaveMysteryMusic;
+  const prevSetMusicDuck = AU.setMusicDuck;
+  const prevClearMusicDuck = AU.clearMusicDuck;
   const prevSilenceMusic = AU.silenceMusic;
   const prevStopMusic = AU.stopMusic;
   const prevStartMusic = AU.startMusic;
@@ -676,6 +678,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevStartWeather = AU.startWeather;
   const prevSplash = AU.sSplash;
   const prevMusicOn = AU.musicOn;
+  const prevMusicDuck = AU.musicDuck;
+  const prevMus = AU.mus;
   const prevSfxOn = AU.sfxOn;
   const prevLevel = G.level;
   const prevT = G.T;
@@ -691,15 +695,20 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevToasts = G.toasts;
   let underwaterStarts = 0, underwaterStops = 0, silenced = 0, musicStops = 0, weatherStops = 0;
   const musicStarted = [], weatherStarted = [];
-  AU.startUnderwaterCaveMysteryMusic = fade => { underwaterStarts++; return true; };
-  AU.stopUnderwaterCaveMysteryMusic = fade => { underwaterStops++; return true; };
+  const musicDucks = [], musicDuckClears = [];
+  AU.startUnderwaterCaveMysteryMusic = fade => { underwaterStarts++; AU.mus = {timer:1,step:0,next:0,kind:'underwaterMystery'}; return true; };
+  AU.stopUnderwaterCaveMysteryMusic = fade => { underwaterStops++; if (AU.mus && AU.mus.kind === 'underwaterMystery') AU.mus = {timer:null,step:0,next:0,kind:'underwaterMystery'}; return true; };
+  AU.setMusicDuck = (v, fade) => { musicDucks.push({v, fade}); AU.musicDuck = v; return v; };
+  AU.clearMusicDuck = fade => { musicDuckClears.push(fade); AU.musicDuck = 1; return 1; };
   AU.silenceMusic = fade => { silenced++; };
   AU.stopMusic = () => { musicStops++; };
-  AU.startMusic = kind => { musicStarted.push(kind); };
+  AU.startMusic = kind => { musicStarted.push(kind); AU.mus = {timer:1,step:0,next:0,kind}; };
   AU.stopWeather = () => { weatherStops++; };
   AU.startWeather = kind => { weatherStarted.push(kind); };
   AU.sSplash = () => {};
   AU.musicOn = true;
+  AU.musicDuck = 1;
+  AU.mus = {timer:1,step:0,next:0,kind:'day'};
   AU.sfxOn = true;
   const waterIdx = LEVELS.findIndex(L => L && Array.isArray(L.water) && L.water.some(w => w && !w.lava));
   if (waterIdx < 0) throw new Error('Verify could not find a level with water for underwater music');
@@ -730,16 +739,16 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.lems = [holy];
   G.manual = {used:true,active:true,lemId:holy.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
   if (!G.enterUnderwaterCave(holy, water)) throw new Error('Underwater cave should open for a holy manual lemmel');
-  if (underwaterStarts !== 0 || !G.underwaterCaveActive() || G.underwaterCave.scene !== 'entryPool' || silenced !== 1 || weatherStops !== 1) {
-    throw new Error('Underwater entry should silence level audio but not start mystery music in the lit first room');
+  if (underwaterStarts !== 0 || !G.underwaterCaveActive() || G.underwaterCave.scene !== 'entryPool' || silenced !== 0 || weatherStops !== 1 || musicStarted.length !== 0 || musicDucks.length !== 1 || Math.abs(musicDucks[0].v - 0.34) > 0.001) {
+    throw new Error('Underwater entry should duck level music but not start mystery music in the lit first room');
   }
   G.setUnderwaterCaveScene('siltTunnel','fromPool');
-  if (underwaterStarts !== 1 || G.underwaterCave.scene !== 'siltTunnel') {
-    throw new Error('Entering a dark underwater room should start underwater mystery music');
+  if (underwaterStarts !== 1 || G.underwaterCave.scene !== 'siltTunnel' || musicDuckClears.length < 1) {
+    throw new Error('Entering a dark underwater room should clear level ducking and start underwater mystery music');
   }
   G.setUnderwaterCaveScene('entryPool','fromTunnel');
-  if (underwaterStops < 2 || G.underwaterCave.scene !== 'entryPool') {
-    throw new Error('Returning to the lit underwater room should fade out underwater mystery music');
+  if (underwaterStops < 2 || G.underwaterCave.scene !== 'entryPool' || musicDucks.length < 2 || !musicStarted.length) {
+    throw new Error('Returning to the lit underwater room should restore ducked level music');
   }
   G.setUnderwaterCaveScene('siltTunnel','fromPool');
   G.exitUnderwaterCave('surface');
@@ -751,6 +760,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   }
   AU.startUnderwaterCaveMysteryMusic = prevStartUnderwaterMusic;
   AU.stopUnderwaterCaveMysteryMusic = prevStopUnderwaterMusic;
+  AU.setMusicDuck = prevSetMusicDuck;
+  AU.clearMusicDuck = prevClearMusicDuck;
   AU.silenceMusic = prevSilenceMusic;
   AU.stopMusic = prevStopMusic;
   AU.startMusic = prevStartMusic;
@@ -758,6 +769,8 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   AU.startWeather = prevStartWeather;
   AU.sSplash = prevSplash;
   AU.musicOn = prevMusicOn;
+  AU.musicDuck = prevMusicDuck;
+  AU.mus = prevMus;
   AU.sfxOn = prevSfxOn;
   G.level = prevLevel;
   G.T = prevT;

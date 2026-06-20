@@ -1,4 +1,5 @@
 // ------------------------- UNDERVATTENSGROTTA ------------------------
+const UNDERWATER_ENTRY_MUSIC_DUCK=0.34;
 Object.assign(G,{
   underwaterCaveActive(){return !!(this.underwaterCave&&this.underwaterCave.active)},
   underwaterCaveSceneDef(cave){
@@ -42,10 +43,19 @@ Object.assign(G,{
   },
   setUnderwaterCaveSceneAudio(scene,opts){
     const dark=this.underwaterCaveSceneDark(scene);
+    if(opts&&opts.audio===false)return dark;
     if(dark){
+      if(AU.clearMusicDuck)AU.clearMusicDuck(opts&&opts.force?0.2:0.75);
       if(AU.startUnderwaterCaveMysteryMusic)AU.startUnderwaterCaveMysteryMusic(opts&&opts.force?0.55:1.35);
-    }else if(AU.stopUnderwaterCaveMysteryMusic){
-      AU.stopUnderwaterCaveMysteryMusic(opts&&opts.force?0.35:0.75);
+    }else{
+      const wasUnderwaterMusic=!!(AU.mus&&AU.mus.kind==='underwaterMystery');
+      if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(opts&&opts.force?0.35:0.75);
+      const restartLevelMusic=this.underwaterCaveResumeMusic&&AU.musicOn&&AU.startMusic&&this.state==='PLAY'&&this.level&&(!AU.mus||!AU.mus.timer||wasUnderwaterMusic);
+      if(restartLevelMusic&&AU.setMusicDuck)AU.setMusicDuck(UNDERWATER_ENTRY_MUSIC_DUCK,0);
+      if(restartLevelMusic){
+        AU.startMusic(this.musicKindForLevel(this.levelIdx));
+      }
+      if(AU.setMusicDuck)AU.setMusicDuck(UNDERWATER_ENTRY_MUSIC_DUCK,restartLevelMusic?0.05:(opts&&opts.force?0.85:0.75));
     }
     return dark;
   },
@@ -159,8 +169,6 @@ Object.assign(G,{
     this.underwaterCaveResumeMusic=caveAudio&&!!AU.musicOn;
     this.underwaterCaveResumeWeather=caveAudio?this.weatherKind||null:null;
     if(caveAudio){
-      if(AU.silenceMusic)AU.silenceMusic(0.85);
-      else if(AU.stopMusic)AU.stopMusic();
       if(AU.stopWeather)AU.stopWeather();
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
     }else{
@@ -168,7 +176,7 @@ Object.assign(G,{
       this.underwaterCaveResumeWeather=null;
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0);
     }
-    this.setUnderwaterCaveSceneAudio('entryPool',{force:true});
+    this.setUnderwaterCaveSceneAudio('entryPool',{force:true,audio:caveAudio});
     this.clearTransientText();
     this.toast('DEN HELIGA LÄMMELN SIMMAR NER',120);
     if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
@@ -196,12 +204,16 @@ Object.assign(G,{
     this.underwaterCave=null;
     this.underwaterCaveExitCooldown=48;
     if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(reason==='silent'?0.05:0.55);
+    if(AU.clearMusicDuck)AU.clearMusicDuck(reason==='silent'?0.05:0.35);
     const resumeMusic=!!this.underwaterCaveResumeMusic;
     const resumeWeather=this.underwaterCaveResumeWeather;
     this.underwaterCaveResumeMusic=false;
     this.underwaterCaveResumeWeather=null;
     if(reason!=='silent'&&resumeWeather&&AU.sfxOn&&AU.startWeather)AU.startWeather(resumeWeather);
-    if(reason!=='silent'&&resumeMusic&&AU.musicOn&&AU.startMusic&&this.state==='PLAY'&&this.level)AU.startMusic(this.musicKindForLevel(this.levelIdx));
+    if(reason!=='silent'&&resumeMusic&&AU.musicOn&&AU.startMusic&&this.state==='PLAY'&&this.level){
+      const levelMusic=this.musicKindForLevel(this.levelIdx);
+      if(!(AU.mus&&AU.mus.timer&&AU.mus.kind===levelMusic))AU.startMusic(levelMusic);
+    }
     if(reason!=='silent')this.toast(reason==='surface'?'UPPE VID YTAN':'UTE UR UNDERVATTNET',100);
     return true;
   },
@@ -318,7 +330,7 @@ Object.assign(G,{
     obj.pulseT=Math.max(obj.pulseT||0,80);
     obj.hintT=Math.max(obj.hintT||0,120);
     cave.messageT=110;
-    cave.messageLines=underwaterCaveCloneData(obj.hintLines||['VATTNET SVARAR TYST']);
+    cave.messageLines=underwaterCaveCloneData(obj.hintLines||['VATTNET SVARAR INTE ÄN']);
     this.toast((def&&def.label)||'NÅGOT RÖR SIG I VATTNET',70);
     if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.8);
     return true;

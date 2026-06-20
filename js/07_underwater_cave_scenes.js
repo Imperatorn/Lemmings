@@ -16,7 +16,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toSiltTunnel',key:'right',xMin:418,yMin:116,yMax:246,target:'siltTunnel',spawn:'fromPool'}
     ],
     objects:[
-      {id:'surfaceLight',kind:'glow',default:{x:240,y:62,near:false,pulseT:0,hintT:0,hintLines:['LJUSET DARRAR OVANFÖR','UPP TAR DIG TILLBAKA']},hit:{type:'ellipse',rx:78,ry:22},verbs:['look']}
+      {id:'surfaceLight',kind:'glow',default:{x:240,y:62,near:false,pulseT:0,hintT:0,hintLines:['YTLJUSET DARRAR OVANFÖR','SIMMA UPP NÄR DU VILL ÅTERVÄNDA']},hit:{type:'ellipse',rx:78,ry:22},verbs:['look']}
     ]
   },
   siltTunnel:{
@@ -72,7 +72,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toArchive',key:'right',xMin:410,yMin:158,yMax:260,target:'sunkenArchive',spawn:'fromReef'}
     ],
     objects:[
-      {id:'blueCrystal',kind:'crystal',default:{x:258,y:202,near:false,pulseT:0,hintT:0,hintLines:['KRISTALLEN PULSERAR I VATTNET','DEN VERKAR VÄNTA PÅ EN FRAMTIDA HEMLIGHET']},hit:{type:'ellipse',rx:40,ry:42},block:{type:'ellipse',rx:34,ry:26,dy:8},blocker:true,verbs:['look','touch']}
+      {id:'blueCrystal',kind:'crystal',default:{x:258,y:202,near:false,pulseT:0,hintT:0,hintLines:['KRISTALLEN PULSERAR I VATTNET','ETT SVAGT TECKEN LIGGER GÖMT I DEN']},hit:{type:'ellipse',rx:40,ry:42},block:{type:'ellipse',rx:34,ry:26,dy:8},blocker:true,verbs:['look','touch']}
     ]
   },
   sunkenArchive:{
@@ -90,7 +90,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toCrystalReef',key:'left',xMax:84,yMin:158,yMax:260,target:'crystalReef',spawn:'fromArchive'}
     ],
     objects:[
-      {id:'sealedRunes',kind:'sealedRunes',default:{x:242,y:174,near:false,pulseT:0,hintT:0,hintLines:['FÖRSEGLADE SPECIALRUNOR','DE ÄR INTE REDO ATT LÄSAS ÄN']},hit:{type:'rect',w:136,h:60,dy:-6},verbs:['read']}
+      {id:'sealedRunes',kind:'sealedRunes',default:{x:242,y:174,near:false,pulseT:0,hintT:0,hintLines:['RUNORNA LIGGER BAKOM EN TUNN HINNA','LJUSET NÅR DEM INTE ÄN']},hit:{type:'rect',w:136,h:60,dy:-6},verbs:['read']}
     ]
   }
 };
