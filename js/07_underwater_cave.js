@@ -7,7 +7,9 @@ const UNDERWATER_SWIM_RUN_MAX=3.75;
 const UNDERWATER_SWIM_DRAG=0.87;
 const UNDERWATER_OCTOPUS_WAKE_DELAY=60;
 const UNDERWATER_OCTOPUS_GRAB_TICKS=38;
-const UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+70;
+const UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96;
+const UNDERWATER_OCTOPUS_GONE_Y=CH+34;
+const UNDERWATER_OCTOPUS_GONE_TICKS=10;
 Object.assign(G,{
   underwaterCaveActive(){return !!(this.underwaterCave&&this.underwaterCave.active)},
   underwaterCaveSceneDef(cave){
@@ -358,7 +360,8 @@ Object.assign(G,{
       cave.swimX=clamp((cave.swimX||sx)+cave.vx,28,CW-28);
       cave.swimY=Math.min(targetY,(cave.swimY||sy)+cave.vy);
       o.dragFade=clamp(((cave.swimY||sy)-(CH-54))/66,0,1);
-      if(o.grabT>=UNDERWATER_OCTOPUS_GRAB_TICKS)return this.finishUnderwaterCaveOctopusCatch(cave);
+      o.goneT=(cave.swimY>=UNDERWATER_OCTOPUS_GONE_Y)?((o.goneT||0)+1):0;
+      if(o.grabT>=UNDERWATER_OCTOPUS_GRAB_TICKS&&o.goneT>=UNDERWATER_OCTOPUS_GONE_TICKS)return this.finishUnderwaterCaveOctopusCatch(cave);
       return true;
     }
     const wakeDelay=Number.isFinite(o.wakeDelay)?o.wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY;
@@ -388,6 +391,7 @@ Object.assign(G,{
       o.grabT=0;
       o.dragTargetY=UNDERWATER_OCTOPUS_DRAG_DEPTH;
       o.dragFade=0;
+      o.goneT=0;
       cave.vx=0;cave.vy=1.25;
       if(AU.sDrown)AU.sDrown();
       return true;
@@ -409,6 +413,9 @@ Object.assign(G,{
       this.updateUnderwaterCaveObjects(cave);
       return true;
       }
+    }
+    if(cave.octopus&&cave.octopus.phase==='grab'){
+      if(this.updateUnderwaterCaveOctopusThreat&&this.updateUnderwaterCaveOctopusThreat(cave))return true;
     }
     const h=(cave.keys.right?1:0)-(cave.keys.left?1:0);
     const v=(cave.keys.down?1:0)-(cave.keys.up?1:0);

@@ -185,13 +185,16 @@ for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderw
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
 }
-for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_WAKE_DELAY','UNDERWATER_OCTOPUS_GRAB_TICKS','UNDERWATER_OCTOPUS_DRAG_DEPTH']) {
+for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_WAKE_DELAY','UNDERWATER_OCTOPUS_GRAB_TICKS','UNDERWATER_OCTOPUS_DRAG_DEPTH','UNDERWATER_OCTOPUS_GONE_Y','UNDERWATER_OCTOPUS_GONE_TICKS']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave swim tuning is missing ${token}`);
   }
 }
 if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_WAKE_DELAY=60') || !underwaterRuntimeCode.includes('wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY') || !underwaterRuntimeCode.includes('threatT=Math.max(0,(o.t||0)-wakeDelay)') || !underwaterRuntimeCode.includes('escapeWindow') || !underwaterRuntimeCode.includes('opts.splash!==false') || !underwaterRuntimeCode.includes("return this.exitUnderwaterCave('surface')") || underwaterRuntimeCode.includes('if(!hasFins&&AU.sWarn)AU.sWarn()')) {
   throw new Error('Underwater octopus threat should wait briefly before the warning, rise and catch sequence starts');
+}
+if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96') || !underwaterRuntimeCode.includes("cave.octopus&&cave.octopus.phase==='grab'") || !underwaterRuntimeCode.includes('cave.swimY>=UNDERWATER_OCTOPUS_GONE_Y') || !underwaterRuntimeCode.includes('o.goneT>=UNDERWATER_OCTOPUS_GONE_TICKS')) {
+  throw new Error('Underwater octopus grab should pull the lemmel fully below the view before resolving failure');
 }
 if (underwaterRuntimeCode.includes("this.toast('SIMMA UPP!") || underwaterRuntimeCode.includes("this.toast('BLÄCKFISKEN") || underwaterRuntimeCode.includes("this.toast('NÅGOT RÖR SIG UNDER VATTNET")) {
   throw new Error('Underwater octopus threat should not show text over the octopus/eyes');
@@ -204,7 +207,7 @@ for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','underwa
     throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
   }
 }
-for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterOctopusThreat','createRadialGradient']) {
+for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterOctopusThreat','drawUnderwaterOctopusWarning','createRadialGradient']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
@@ -220,7 +223,10 @@ if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.incl
 if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.includes('dangerFade') || !underwaterRenderCode.includes('cave.hintT>0&&!octopus') || underwaterRenderCode.includes('PIL UPP TILL YTAN') || !underwaterRenderCode.includes('rgba(0,1,4,0.94)') || !underwaterRenderCode.includes('rgba(255,230,130,0.38)')) {
   throw new Error('Underwater octopus threat should make the lit room darker and more dangerous');
 }
-if (!underwaterRenderCode.includes('drawUnderwaterOctopusEyes') || !underwaterRenderCode.includes('escapeFade') || !underwaterRenderCode.includes('dragFade') || !underwaterRenderCode.includes('#ffd45c') || !underwaterRenderCode.includes('#ff4a24') || !underwaterRenderCode.includes("globalCompositeOperation='lighter'")) {
+if (!underwaterRenderCode.includes('drawUnderwaterOctopusWarning') || !underwaterRenderCode.includes("SIMMA UPP\\u00c5T!") || !underwaterRenderCode.includes('const x=CW-82,y=24')) {
+  throw new Error('Underwater octopus warning should be shown as a small top warning, away from the octopus eyes');
+}
+if (!underwaterRenderCode.includes('drawUnderwaterOctopusEyes') || !underwaterRenderCode.includes('escapeFade') || !underwaterRenderCode.includes('dragFade') || !underwaterRenderCode.includes('goneFade') || !underwaterRenderCode.includes('visible<=0') || !underwaterRenderCode.includes('#ffd45c') || !underwaterRenderCode.includes('#ff4a24') || !underwaterRenderCode.includes("globalCompositeOperation='lighter'")) {
   throw new Error('Underwater octopus threat should show faint glowing red/yellow eyes near the bottom');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {

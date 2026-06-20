@@ -170,14 +170,17 @@ function drawUnderwaterLemming(c,cave,tk){
   const drawDir=face==='left'?-1:(face==='right'?1:((cave.vx||0)<-0.05?-1:1));
   const grab=!!(cave.octopus&&cave.octopus.phase==='grab');
   const dragFade=grab?clamp(cave.octopus.dragFade||0,0,1):0;
+  const goneFade=grab?clamp((y-(CH+2))/32,0,1):0;
+  const visible=1-goneFade;
+  if(visible<=0)return;
   c.save();
-  c.globalAlpha=(0.18*(1-dragFade));c.fillStyle='#d8f8ff';uwRect(c,x-14,y+5,28,2);c.globalAlpha=1;
+  c.globalAlpha=(0.18*(1-dragFade))*visible;c.fillStyle='#d8f8ff';uwRect(c,x-14,y+5,28,2);c.globalAlpha=1;
   c.globalCompositeOperation='lighter';
   const g=c.createRadialGradient(x,y-9,2,x,y-9,anim.fast?28:22);
   g.addColorStop(0,grab?'rgba(255,190,120,0.10)':'rgba(255,242,150,0.22)');
   g.addColorStop(0.46,grab?'rgba(150,80,90,0.06)':'rgba(150,232,255,0.10)');
   g.addColorStop(1,'rgba(0,0,0,0)');
-  c.globalAlpha=1-dragFade*0.75;
+  c.globalAlpha=(1-dragFade*0.75)*visible;
   c.fillStyle=g;c.fillRect(x-32,y-36,64,56);
   c.globalCompositeOperation='source-over';
   if(anim.moving&&!grab){
@@ -188,10 +191,10 @@ function drawUnderwaterLemming(c,cave,tk){
     c.globalAlpha=1;
   }
   if(grab){
-    c.globalAlpha=0.20+0.26*(1-dragFade);
+    c.globalAlpha=(0.20+0.26*(1-dragFade))*visible;
     c.fillStyle='#13070a';
     uwRect(c,x-11,y+12,22,Math.max(8,Math.round(18+dragFade*30)));
-    c.globalAlpha=clamp(1-dragFade*0.92,0.04,1);
+    c.globalAlpha=clamp(1-dragFade*0.92,0.04,1)*visible;
   }
   drawUnderwaterLemmingSide(c,x,y,drawDir,anim,hasFins);
   c.restore();
@@ -326,6 +329,10 @@ function drawUnderwaterHolyLight(c,cave,tk,dark){
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150);
   const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.14);
   const danger=!!(cave&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
+  const grab=!!(cave&&cave.octopus&&cave.octopus.phase==='grab');
+  const goneFade=grab?clamp((y-(CH+2))/32,0,1):0;
+  const visible=1-goneFade;
+  if(visible<=0)return;
   const dangerFade=danger?clamp(((cave.octopus&&cave.octopus.t)||0)/60,0,1):0;
   c.save();
   c.globalCompositeOperation='lighter';
@@ -334,15 +341,30 @@ function drawUnderwaterHolyLight(c,cave,tk,dark){
   g.addColorStop(0.24,danger?'rgba(150,220,255,0.15)':'rgba(190,240,255,0.25)');
   g.addColorStop(0.65,danger?'rgba(40,120,160,0.045)':'rgba(80,190,220,0.08)');
   g.addColorStop(1,'rgba(0,0,0,0)');
+  c.globalAlpha=visible;
   c.fillStyle=g;
   c.fillRect(0,0,CW,CH);
   if(dark){
-    c.globalAlpha=0.20+0.08*pulse;
+    c.globalAlpha=(0.20+0.08*pulse)*visible;
     c.fillStyle='#fff0a0';
     c.fillRect(x-42,y-2,84,2);
     c.fillRect(x-26,y+12,52,1);
   }
   c.restore();
+}
+function drawUnderwaterOctopusWarning(c,cave,tk){
+  const o=cave&&cave.octopus;
+  if(!o||!o.active||cave.swimFins||!o.warned||o.phase==='grab')return false;
+  const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.16);
+  const x=CW-82,y=24,w=118,h=16;
+  c.save();
+  c.globalAlpha=0.44+0.12*pulse;
+  c.fillStyle='rgba(0,0,0,0.68)';
+  c.fillRect(x-Math.floor(w/2),y-10,w,h);
+  c.globalAlpha=0.82+0.18*pulse;
+  drawTextC(c,'SIMMA UPP\u00c5T!',x,y-5,1,pulse>0.48?'#fff0a0':'#ffd45c');
+  c.restore();
+  return true;
 }
 function drawUnderwaterMap(c,cave){
   const graph=typeof underwaterCaveMapGraph==='function'?underwaterCaveMapGraph():{nodes:[],links:[]};
@@ -383,6 +405,7 @@ function drawUnderwaterCaveView(c,tk){
   drawUnderwaterOctopusThreat(c,cave,tk,true);
   const def=typeof underwaterCaveSceneDef==='function'?underwaterCaveSceneDef(cave.scene):null;
   drawText(c,def&&def.label?def.label:'Undervattnet',12,12,1,'#bdf8ff');
+  drawUnderwaterOctopusWarning(c,cave,tk);
   const octopus=!!(cave.octopus&&cave.octopus.active&&!cave.swimFins);
   if(cave.hintT>0&&!octopus)drawTextC(c,cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP':'PILAR SIMMAR  M KARTA  ESC UPP',CW/2,CH-18,1,'#d8fbff');
   const hit=G.underwaterCavePromptObject?G.underwaterCavePromptObject(cave):null;
