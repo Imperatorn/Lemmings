@@ -2,6 +2,11 @@
 // Data for the "behind the waterfall" mode lives here so the mode can grow
 // into a small adventure/point-and-click system without hardcoding every room
 // transition in the runtime loop.
+const RUNE_KIND_SURFACE='surface';
+const RUNE_KIND_DEEP='deep';
+const SURFACE_RUNE_TOTAL=32;
+const DEEP_RUNE_TOTAL=10;
+
 const WATERFALL_CAVE_SCENES={
   main:{
     id:'main',
@@ -327,11 +332,11 @@ const WATERFALL_CAVE_RUNE_SETS={
 function waterfallCaveMakeRuneSet(id,title,order,parts){
   const total=WATERFALL_CAVE_RUNE_LAYOUT.length;
   return {
-    runeSet:{id,title,source:'Runarkivet',world:'Bakom vattenfallet',order},
+    runeSet:{id,title,source:'Runarkivet',world:'Bakom vattenfallet',order,kind:RUNE_KIND_SURFACE},
     readLines:['Runorna viskar:',title,'Läs varje tecken i stenen.'],
     runes:WATERFALL_CAVE_RUNE_LAYOUT.map((base,i)=>{
       const text=Array.isArray(parts&&parts[i])?parts[i]:['Runorna viskar.'];
-      return Object.assign({},base,{lines:['Runa '+(i+1)+'/'+total].concat(text)});
+      return Object.assign({},base,{kind:RUNE_KIND_SURFACE,lines:['Runa '+(i+1)+'/'+total].concat(text)});
     })
   };
 }
@@ -460,8 +465,43 @@ function waterfallCaveObjectDefault(sceneId,objectId,variantId){
   return waterfallCaveCloneData(obj&&obj.default||null);
 }
 
+function waterfallCaveRuneSetOrder(){
+  return Object.keys(WATERFALL_CAVE_RUNE_SETS).map(id=>{
+    const set=(WATERFALL_CAVE_RUNE_SETS[id]&&WATERFALL_CAVE_RUNE_SETS[id].runeSet)||{};
+    return {
+      id,
+      order:Number.isFinite(set.order)?set.order:9999,
+      title:String(set.title||id)
+    };
+  }).sort((a,b)=>(a.order-b.order)||a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
+}
+
+function waterfallCaveSurfaceRuneLimit(setId){
+  const ordered=waterfallCaveRuneSetOrder();
+  const idx=ordered.findIndex(s=>s.id===String(setId||''));
+  if(idx<0||!ordered.length)return 0;
+  const base=Math.floor(SURFACE_RUNE_TOTAL/ordered.length);
+  const extra=SURFACE_RUNE_TOTAL%ordered.length;
+  return Math.max(0,Math.min(WATERFALL_CAVE_RUNE_LAYOUT.length,base+(idx<extra?1:0)));
+}
+
+function waterfallCaveApplySurfaceRuneLimit(raw,setId){
+  const out=waterfallCaveCloneData(raw);
+  if(!out)return out;
+  const id=String(setId||(out.runeSet&&out.runeSet.id)||'');
+  const limit=waterfallCaveSurfaceRuneLimit(id);
+  out.runeSet=Object.assign({},out.runeSet||{},{kind:RUNE_KIND_SURFACE,total:limit});
+  out.runes=(Array.isArray(out.runes)?out.runes:[]).slice(0,limit).map((r,i)=>{
+    const rr=Object.assign({},r,{kind:RUNE_KIND_SURFACE,total:limit});
+    if(Array.isArray(rr.lines)&&rr.lines.length)rr.lines=['Runa '+(i+1)+'/'+limit].concat(rr.lines.slice(1));
+    return rr;
+  });
+  return out;
+}
+
 function waterfallCaveRuneSet(id){
-  return waterfallCaveCloneData(WATERFALL_CAVE_RUNE_SETS[String(id||'')]||null);
+  const setId=String(id||'');
+  return waterfallCaveApplySurfaceRuneLimit(WATERFALL_CAVE_RUNE_SETS[setId]||null,setId);
 }
 
 function waterfallCaveRuneObjectForSet(sceneId,obj,setId){
@@ -508,6 +548,7 @@ function waterfallCaveRuneSetMeta(sceneId,obj){
     source:String(raw.source||waterfallCaveSceneDef(sceneId).label||sceneId||'Okänd plats'),
     world:String(raw.world||'Bakom vattenfallet'),
     order:Number.isFinite(raw.order)?raw.order:0,
+    kind:String(raw.kind||RUNE_KIND_SURFACE),
     sceneId:String(sceneId||''),
     objectId
   };
@@ -525,6 +566,7 @@ function waterfallCaveRuneEntry(sceneId,obj,rune,index,total){
     setTitle:set.title,
     runeId,
     title:String(r.title||('Runa '+((index||0)+1))),
+    kind:String(r.kind||set.kind||RUNE_KIND_SURFACE),
     order:Number.isFinite(r.order)?r.order:((index||0)+1),
     total:Math.max(1,total||1),
     sceneId:set.sceneId,

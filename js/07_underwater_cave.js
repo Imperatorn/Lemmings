@@ -256,6 +256,7 @@ Object.assign(G,{
     for(const hit of this.underwaterCaveSceneObjects(cave)){
       const def=hit.def,obj=hit.obj;
       if(!def||!obj)continue;
+      if(def.kind==='sealedRunes'&&this.syncUnderwaterCaveDeepRuneObjectProgress)this.syncUnderwaterCaveDeepRuneObjectProgress(def,obj);
       if(Number.isFinite(obj.pulseT))obj.pulseT=Math.max(0,obj.pulseT-1);
       if(Number.isFinite(obj.hintT))obj.hintT=Math.max(0,obj.hintT-1);
       obj.near=this.underwaterCaveObjectContains(def,obj,cave.swimX||0,cave.swimY||0,1.35);
@@ -320,12 +321,82 @@ Object.assign(G,{
     }
     return null;
   },
+  underwaterCaveDeepRuneEntries(){
+    const catalog=typeof underwaterCaveRuneCatalog==='function'?underwaterCaveRuneCatalog():{runes:[]};
+    return Array.isArray(catalog.runes)?catalog.runes:[];
+  },
+  syncUnderwaterCaveDeepRuneObjectProgress(def,obj){
+    if(!obj)return null;
+    const surface=this.surfaceRuneSummary?this.surfaceRuneSummary():{read:0,total:SURFACE_RUNE_TOTAL,complete:false};
+    const deep=this.deepRuneSummary?this.deepRuneSummary():{read:0,total:DEEP_RUNE_TOTAL,complete:false};
+    obj.surfaceComplete=!!surface.complete;
+    obj.surfaceRead=surface.read||0;
+    obj.surfaceTotal=surface.total||SURFACE_RUNE_TOTAL;
+    obj.deepRead=deep.read||0;
+    obj.deepTotal=deep.total||DEEP_RUNE_TOTAL;
+    obj.readComplete=!!deep.complete;
+    if(obj.readComplete)obj.hintLines=['ALLA DJUPRUNOR ÄR LÄSTA','ARKIVET LYSER STILLA'];
+    else if(obj.surfaceComplete)obj.hintLines=['DET SJUNKNA ARKIVET ÖPPNAS','LÄS NÄSTA DJUPRUNA'];
+    else obj.hintLines=['ARKIVET ÄR FÖRSEGLAT','LÄS DE 32 ARKEN FÖRST'];
+    return obj;
+  },
+  readUnderwaterCaveDeepRunes(hit){
+    const cave=this.underwaterCave;
+    const obj=hit&&hit.obj,def=hit&&hit.def;
+    if(!cave||!obj||!def)return false;
+    this.syncUnderwaterCaveDeepRuneObjectProgress(def,obj);
+    obj.activated=true;
+    obj.pulseT=Math.max(obj.pulseT||0,100);
+    obj.hintT=Math.max(obj.hintT||0,140);
+    const meta=typeof underwaterCaveDeepRuneSetMeta==='function'?underwaterCaveDeepRuneSetMeta():{
+      id:'underwater.deepArchive',
+      title:'Djuprunor',
+      source:'Det sjunkna arkivet',
+      world:'Undervattnet',
+      kind:RUNE_KIND_DEEP,
+      sceneId:'sunkenArchive',
+      objectId:'sealedRunes'
+    };
+    if(this.recordRuneArchiveVisit)this.recordRuneArchiveVisit(Object.assign({},meta,{setId:meta.id}));
+    if(!obj.surfaceComplete){
+      cave.messageT=130;
+      cave.messageLines=['ARKIVET ÄR FÖRSEGLAT','LÄS DE 32 ARKEN FÖRST'];
+      this.toast('DJUPRUNORNA VÄNTAR',80);
+      if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.65);
+      return true;
+    }
+    const entries=this.underwaterCaveDeepRuneEntries();
+    const progress=this.normalizeRuneProgress?this.normalizeRuneProgress(this.runeProgress):{discovered:{}};
+    const nextIndex=entries.findIndex(e=>e&&e.key&&!progress.discovered[e.key]);
+    if(nextIndex<0){
+      cave.messageT=140;
+      cave.messageLines=['ALLA DJUPRUNOR ÄR LÄSTA','ARKIVET LYSER STILLA'];
+      this.toast('DJUPRUNOR 10/10',90);
+      if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.85);
+      return true;
+    }
+    const entry=entries[nextIndex];
+    const res=this.recordRuneDiscovery?this.recordRuneDiscovery(entry):{newly:false,setCompletedNow:false};
+    this.syncUnderwaterCaveDeepRuneObjectProgress(def,obj);
+    const line1=entry.lines&&entry.lines[0]?entry.lines[0]:('DJUPRUNA '+(nextIndex+1)+'/'+entries.length);
+    const line2=entry.lines&&entry.lines[1]?entry.lines[1]:(entry.title||'Runan svarar.');
+    cave.messageT=170;
+    cave.messageLines=[line1,line2];
+    this.toast('DJUPRUNA '+Math.min(entries.length,nextIndex+1)+'/'+entries.length,90);
+    if(res&&res.newly&&AU.sWaterfallCaveRuneDiscover)AU.sWaterfallCaveRuneDiscover();
+    if(res&&res.setCompletedNow){
+      this.toast('ALLA DJUPRUNOR ÄR LÄSTA',130);
+      if(AU.sWaterfallCaveRunesComplete)AU.sWaterfallCaveRunesComplete();
+    }else if(!(res&&res.newly)&&AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.75);
+    return true;
+  },
   activateUnderwaterCaveObject(){
     const cave=this.underwaterCave;
     if(!cave||!cave.active)return false;
     const hit=this.underwaterCavePromptObject(cave);
     if(!hit)return false;
     const obj=hit.obj,def=hit.def;
+    if(def&&def.kind==='sealedRunes'&&this.readUnderwaterCaveDeepRunes)return this.readUnderwaterCaveDeepRunes(hit);
     obj.activated=true;
     obj.pulseT=Math.max(obj.pulseT||0,80);
     obj.hintT=Math.max(obj.hintT||0,120);

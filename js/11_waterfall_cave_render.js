@@ -1065,6 +1065,25 @@ function drawWaterfallCaveArchivePage(c,bx,by,slot,state,style,tk){
   c.restore();
 }
 
+function drawWaterfallCaveArchiveDeepHint(c,state,tk){
+  if(!state||state.visibleLit<SURFACE_RUNE_TOTAL||state.visibleTotal<SURFACE_RUNE_TOTAL)return false;
+  const total=state.deepTotal||DEEP_RUNE_TOTAL;
+  const read=state.deepRead||0;
+  if(total<=0||read>=total)return false;
+  const pulse=0.5+0.5*Math.sin(tk*0.08);
+  c.save();
+  c.globalAlpha=0.20+0.12*pulse;
+  c.fillStyle='#ffd080';
+  c.fillRect(170,250,140,1);
+  c.globalAlpha=0.76;
+  if(typeof drawTextC==='function'){
+    drawTextC(c,'ALLA 32 ARK LYSER',CW/2,262,1,'#ffe6a0');
+    drawTextC(c,read>0?('DJUPRUNOR '+read+'/'+total):'DE SISTA 10 FINNS I DJUPET',CW/2,276,1,'#d8fbff');
+  }
+  c.restore();
+  return true;
+}
+
 function drawWaterfallCaveAdventureDetails(c,cave,tk,style){
   const scene=cave.scene||'emberPassage', wf=cave.wf||{}, t=cave.t||0;
   if(scene==='emberPassage'){
@@ -1160,6 +1179,7 @@ function drawWaterfallCaveAdventureDetails(c,cave,tk,style){
     c.fillRect(190,204,100,2);
     c.fillRect(204,218,72,2);
     c.globalAlpha=1;
+    drawWaterfallCaveArchiveDeepHint(c,archivePages,tk+t);
     c.restore();
   }else if(scene==='church'){
     drawWaterfallCaveAmbientMotes(c,cave,tk,'#d8ecff',24,901,0.22);

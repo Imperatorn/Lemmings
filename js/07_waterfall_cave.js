@@ -852,6 +852,7 @@ Object.assign(G,{
         title:rs.title,
         source:rs.source,
         world:rs.world,
+        kind:rs.kind||RUNE_KIND_SURFACE,
         sceneId:def.id,
         objectId:runeWall&&runeWall.def&&runeWall.def.id
       });

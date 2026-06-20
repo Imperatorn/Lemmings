@@ -95,12 +95,84 @@ const UNDERWATER_CAVE_SCENES={
   }
 };
 
+const UNDERWATER_CAVE_DEEP_RUNE_SET={
+  runeSet:{
+    id:'underwater.deepArchive',
+    title:'Djuprunor',
+    source:'Det sjunkna arkivet',
+    world:'Undervattnet',
+    order:100,
+    kind:RUNE_KIND_DEEP,
+    total:DEEP_RUNE_TOTAL
+  },
+  readLines:['Det sjunkna arkivet öppnas.','Djuprunorna svarar på den heliga lågan.'],
+  runes:[
+    {id:'deep01',title:'Djupets första tecken',lines:['Djupruna 1/10','Djupet minns vägen upp.']},
+    {id:'deep02',title:'Slamtunnelns tecken',lines:['Djupruna 2/10','Stillheten flyttar sig när du simmar.']},
+    {id:'deep03',title:'Luftklockans tecken',lines:['Djupruna 3/10','Andas där vattnet håller andan.']},
+    {id:'deep04',title:'Kristallrevets tecken',lines:['Djupruna 4/10','Ljuset behöver mörker för att synas.']},
+    {id:'deep05',title:'Arkivets mitt',lines:['Djupruna 5/10','Fem tecken öppnar vägen inåt.']},
+    {id:'deep06',title:'Den sjunkna raden',lines:['Djupruna 6/10','Gamla ord sjunker inte.']},
+    {id:'deep07',title:'Strömmens tecken',lines:['Djupruna 7/10','Följ inte strömmen för snabbt.']},
+    {id:'deep08',title:'Den mörka hålan',lines:['Djupruna 8/10','När kartan saknas, följ skenet.']},
+    {id:'deep09',title:'Den sista porten',lines:['Djupruna 9/10','Nästan hela raden lyser.']},
+    {id:'deep10',title:'Djupets sluttecken',lines:['Djupruna 10/10','Det som låg under pekar uppåt.']}
+  ]
+};
+
 function underwaterCaveCloneData(v){
   if(v==null||typeof v!=='object')return v;
   if(Array.isArray(v))return v.map(underwaterCaveCloneData);
   const out={};
   for(const k in v)out[k]=underwaterCaveCloneData(v[k]);
   return out;
+}
+function underwaterCaveDeepRuneSet(){
+  return underwaterCaveCloneData(UNDERWATER_CAVE_DEEP_RUNE_SET);
+}
+function underwaterCaveDeepRuneSetMeta(){
+  const raw=UNDERWATER_CAVE_DEEP_RUNE_SET.runeSet||{};
+  return {
+    id:String(raw.id||'underwater.deepArchive'),
+    title:String(raw.title||'Djuprunor'),
+    source:String(raw.source||'Det sjunkna arkivet'),
+    world:String(raw.world||'Undervattnet'),
+    order:Number.isFinite(raw.order)?raw.order:100,
+    kind:String(raw.kind||RUNE_KIND_DEEP),
+    sceneId:'sunkenArchive',
+    objectId:'sealedRunes',
+    total:Math.max(0,Number(raw.total)|0)
+  };
+}
+function underwaterCaveRuneEntry(rune,index,total){
+  const set=underwaterCaveDeepRuneSetMeta();
+  const r=rune||{};
+  const runeId=String(r.id||('deep'+String((index||0)+1).padStart(2,'0')));
+  const key=String(r.key||set.id+'.'+runeId);
+  const lines=underwaterCaveCloneData(Array.isArray(r.lines)&&r.lines.length?r.lines:[]);
+  return {
+    key,
+    setId:set.id,
+    setTitle:set.title,
+    runeId,
+    title:String(r.title||('Djupruna '+((index||0)+1))),
+    kind:RUNE_KIND_DEEP,
+    order:Number.isFinite(r.order)?r.order:((index||0)+1),
+    total:Math.max(1,total||DEEP_RUNE_TOTAL),
+    sceneId:set.sceneId,
+    objectId:set.objectId,
+    source:set.source,
+    world:set.world,
+    lines,
+    text:lines.length?lines.join('\n'):String(r.text||'')
+  };
+}
+function underwaterCaveRuneCatalog(){
+  const set=underwaterCaveDeepRuneSet();
+  const meta=underwaterCaveDeepRuneSetMeta();
+  const runes=Array.isArray(set.runes)?set.runes.map((r,i)=>underwaterCaveRuneEntry(r,i,set.runes.length)):[];
+  meta.total=runes.length;
+  return {sets:[meta],runes};
 }
 function underwaterCaveSceneDef(id){
   return UNDERWATER_CAVE_SCENES[String(id||'entryPool')]||UNDERWATER_CAVE_SCENES.entryPool;

@@ -106,7 +106,13 @@ function drawUnderwaterObjects(c,cave,tk){
     }else if(def.kind==='sealedRunes'){
       c.fillStyle='#1a2630';c.fillRect(x-68,y-32,136,62);
       c.strokeStyle=pulse?'#bdf8ff':'#496a76';c.strokeRect(x-68.5,y-32.5,136,62);
-      if(typeof drawTextC==='function')drawTextC(c,'SPECIALRUNOR',x,y-5,1,pulse?'#bdf8ff':'#7398a6');
+      let label='FÖRSEGLAT';
+      const surface=G.surfaceRuneSummary?G.surfaceRuneSummary():null;
+      const deep=G.deepRuneSummary?G.deepRuneSummary():null;
+      if(deep&&deep.complete)label='DJUPRUNOR 10/10';
+      else if(surface&&surface.complete&&deep)label='DJUPRUNOR '+deep.read+'/'+deep.total;
+      else if(surface&&surface.complete)label='DJUPRUNOR';
+      if(typeof drawTextC==='function')drawTextC(c,label,x,y-5,1,pulse?'#bdf8ff':'#7398a6');
     }
     c.restore();
   }

@@ -168,7 +168,7 @@ if (tickIdx < 0 || toastTickIdx < 0 || underwaterEarlyIdx < 0 || waterfallEarlyI
 if (!waterfallRuntimeCode.includes('enterWaterfallCave') || manualControlCode.includes('enterWaterfallCave') || gameCode.includes('collectWaterfallCaveChest')) {
   throw new Error('Waterfall cave runtime code should live in js/07_waterfall_cave.js');
 }
-for (const token of ['UNDERWATER_CAVE_SCENES','entryPool:{','siltTunnel:{','airBell:{','crystalReef:{','sunkenArchive:{','exits:[','objects:[','underwaterCaveSceneDef','underwaterCaveSceneBoundsFor','underwaterCaveMapGraph']) {
+for (const token of ['UNDERWATER_CAVE_SCENES','UNDERWATER_CAVE_DEEP_RUNE_SET','entryPool:{','siltTunnel:{','airBell:{','crystalReef:{','sunkenArchive:{','exits:[','objects:[','underwaterCaveSceneDef','underwaterCaveSceneBoundsFor','underwaterCaveMapGraph','underwaterCaveRuneCatalog','underwaterCaveRuneEntry']) {
   if (!underwaterScenesCode.includes(token)) {
     throw new Error(`Underwater cave scene registry is missing ${token}`);
   }
@@ -202,7 +202,7 @@ for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_VARIANTS','WATERFAL
 if (waterfallScenesCode.includes('rootSanctum') || waterfallScenesCode.includes('rootHeart') || waterfallScenesCode.includes("audio:'root-mystery'")) {
   throw new Error('Waterfall cave scene registry should rename the old root sanctum to the church scene');
 }
-if (!waterfallScenesCode.includes('WATERFALL_CAVE_RUNE_SETS') || !waterfallScenesCode.includes('waterfallCaveRuneSet') || !waterfallScenesCode.includes('waterfallCaveRuneObjectForSet') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog') || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
+if (!waterfallScenesCode.includes('WATERFALL_CAVE_RUNE_SETS') || !waterfallScenesCode.includes('SURFACE_RUNE_TOTAL=32') || !waterfallScenesCode.includes('DEEP_RUNE_TOTAL=10') || !waterfallScenesCode.includes('waterfallCaveSurfaceRuneLimit') || !waterfallScenesCode.includes('waterfallCaveRuneSet') || !waterfallScenesCode.includes('waterfallCaveRuneObjectForSet') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog') || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
   throw new Error('Glyph archive rune wall should define separate readable rune text segments');
 }
 if (!waterfallScenesCode.includes('stoneInscription') || !waterfallScenesCode.includes('BROSTENEN') || !waterfallScenesCode.includes('KAOSSTENEN') || !waterfallRenderCode.includes('drawWaterfallCaveStoneGlyph')) {
@@ -274,10 +274,10 @@ if (!inputCode.includes("G.selectMenuLevel") || !inputCode.includes("G.toggleLev
   throw new Error('Menu input should route level selection through progression rules');
 }
 if (!gameCode.includes('runeProgress')) throw new Error('Profile state is missing runeProgress');
-for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus']) {
+for (const token of ['runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeTypedSummary','surfaceRuneSummary','deepRuneSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus']) {
   if (!runeCode.includes(token)) throw new Error(`Rune module is missing ${token}`);
 }
-for (const token of ['runeCatalog(){','normalizeRuneProgress(data)','recordRuneArchiveVisit(desc)','recordRuneDiscovery(desc)','runeProgressSummary(data)','runeArchiveProgress(data,limit)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelRuneGuidance(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
+for (const token of ['runeCatalog(kind){','normalizeRuneProgress(data)','recordRuneArchiveVisit(desc)','recordRuneDiscovery(desc)','runeProgressSummary(data)','runeTypedSummary(kind,data)','surfaceRuneSummary(data)','deepRuneSummary(data)','runeArchiveProgress(data,limit)','levelRuneRequirements(idx)','levelRuneStatus(idx)','levelRuneGuidance(idx)','levelFullyCompleted(idx)','levelCompletionStatus(idx)']) {
   if (gameCode.includes(token)) throw new Error(`07_game.js should not own rune/completion implementation: ${token}`);
 }
 if (runeCode.includes('String(L.decor)') || runeCode.includes('waterfall\\s*\\(')) {
@@ -618,7 +618,7 @@ const minGameplayCutsceneTicks = Math.max(1, Math.floor(2400 / TICK));
 const requiredRuntimeMethods = [
   'makeSaveState','restoreSaveState','promptSaveGame','promptLoadGame',
   'setMusicVolume','setSfxVolume',
-  'runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
+  'runeCatalog','normalizeRuneProgress','recordRuneArchiveVisit','recordRuneDiscovery','runeProgressSummary','runeTypedSummary','surfaceRuneSummary','deepRuneSummary','runeArchiveProgress','levelSecretRuneSets','levelHasWaterfallSecrets','levelRuneRequirements','levelRuneStatus','levelRuneGuidance','levelFullyCompleted','levelCompletionStatus',
   'normalizeLevelSelectMode','levelSelectModeName','normalizeLevelRunMode','levelRunModeName','selectedLevelAffectsProgress','currentRunAffectsProgress','practiceRunActive','hasHolyTeleportStone','campaignModeEnabled','campaignUnlockedCount','highestUnlockedLevelIdx','levelUnlocked','levelLockedReason','visibleLevelName','chapterUnlocked','chapterProgress','clampLevelSelectionForProgression','selectMenuLevel','toggleLevelSelectMode',
   'unlockHolyBlessing','unlockHolyTeleportStone','normalizeHolyLemmings','assignHolyLemmingForLevel',
   'holyTeleportStoneIsCharged','setHolyTeleportStoneCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','portalStoneUnavailableReason','portalStoneButtonVisible','portalStoneOwner','portalStoneButtonAvailable','portalStoneSurfaceClear','portalStoneSurfaceAt','portalStoneEntranceFor','findPortalStoneTarget','handlePortalStoneClick','beginPortalStonePlacement','portalStoneExitCandidate','portalStoneCanPlaceExit','placePortalStoneExit','cancelPortalStonePlacement','clearPortalStone','portalStoneSpark','updatePortalStone',
@@ -651,7 +651,7 @@ const requiredRuntimeMethods = [
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone','chargeWaterfallCaveTeleportStoneAtCrystal',
   'waterfallCaveMirrorPoolHit','waterfallCaveMirrorPoolState','resetWaterfallCaveMirrorPoolVisit','triggerWaterfallCaveMirrorPedestal','updateWaterfallCaveMirrorPedestal','waterfallCaveMirrorThrowStonePile','waterfallCaveMirrorStoneHeld','waterfallCaveMirrorStoneThrowLocks','pickWaterfallCaveMirrorStone','throwWaterfallCaveMirrorStone','handleWaterfallCaveMirrorStoneAction','clearWaterfallCaveMirrorStone','updateWaterfallCaveMirrorStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
-  'underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
+  'underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','underwaterCaveDeepRuneEntries','syncUnderwaterCaveDeepRuneObjectProgress','readUnderwaterCaveDeepRunes','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -659,6 +659,19 @@ const requiredRuntimeMethods = [
 ];
 for (const name of requiredRuntimeMethods) {
   if (typeof G[name] !== 'function') throw new Error(`Missing G method after script split: ${name}`);
+}
+{
+  const all = G.runeCatalog();
+  const surface = G.runeCatalog('surface');
+  const deep = G.runeCatalog('deep');
+  if (!all || !surface || !deep || (surface.runes || []).length !== 32 || (deep.runes || []).length !== 10 || (all.runes || []).length !== 42) {
+    throw new Error('Rune catalog should split the existing progression into 32 surface runes and 10 underwater deep runes');
+  }
+  const emptySurface = G.surfaceRuneSummary();
+  const emptyDeep = G.deepRuneSummary();
+  if (!emptySurface || emptySurface.total !== 32 || emptySurface.read !== 0 || !emptyDeep || emptyDeep.total !== 10 || emptyDeep.read !== 0) {
+    throw new Error('Typed rune summaries should report empty 32/10 progress on a fresh profile');
+  }
 }
 for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','setMusicDuck','clearMusicDuck','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusic','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startUnderwaterCaveMysteryMusic','stopUnderwaterCaveMysteryMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sWaterfallCavePedestalRise','sPortalStoneOpen','sPortalStoneTravel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
@@ -784,6 +797,80 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.underwaterCaveResumeWeather = prevResumeWeather;
   G.weatherKind = prevWeatherKind;
   G.toasts = prevToasts;
+}
+{
+  const prevRuneProgress = G.runeProgress;
+  const prevUnderwater = G.underwaterCave;
+  const prevLevelRunMode = G.levelRunMode;
+  const prevLevel = G.level;
+  const prevLevelIdx = G.levelIdx;
+  const prevToasts = G.toasts;
+  const prevSavePrefs = G.savePrefs;
+  const prevRuneDiscover = AU.sWaterfallCaveRuneDiscover;
+  const prevRunesComplete = AU.sWaterfallCaveRunesComplete;
+  const prevCrystalChime = AU.sWaterfallCaveCrystalChime;
+  let discoverSounds = 0, completeSounds = 0;
+  G.savePrefs = () => {};
+  AU.sWaterfallCaveRuneDiscover = () => { discoverSounds++; };
+  AU.sWaterfallCaveRunesComplete = () => { completeSounds++; };
+  AU.sWaterfallCaveCrystalChime = () => {};
+  G.runeProgress = G.normalizeRuneProgress({});
+  G.levelRunMode = 'campaign';
+  G.level = LEVELS[0] || null;
+  G.levelIdx = 0;
+  G.toasts = [];
+  G.underwaterCave = {
+    active:true,
+    scene:'sunkenArchive',
+    sceneState:{},
+    swimX:242,
+    swimY:174,
+    t:0,
+    keys:{},
+    bubbles:[],
+    mapOpen:false
+  };
+  let sealed = G.underwaterCaveSceneObjects(G.underwaterCave).find(hit => hit && hit.def && hit.def.kind === 'sealedRunes');
+  if (!sealed) throw new Error('Sunken archive should expose a sealed deep-rune object');
+  sealed.obj.near = true;
+  if (!G.activateUnderwaterCaveObject()) throw new Error('Sealed deep-rune archive should be interactable');
+  if (G.deepRuneSummary().read !== 0 || !(G.underwaterCave.messageLines || []).join(' ').includes('32')) {
+    throw new Error('Deep rune archive should stay locked until all 32 surface runes are read');
+  }
+  for (const rune of G.runeCatalog('surface').runes || []) G.recordRuneDiscovery(rune);
+  const surfaceDone = G.surfaceRuneSummary();
+  if (!surfaceDone.complete || surfaceDone.read !== 32) {
+    throw new Error('Seeding the surface catalog should complete exactly 32 normal rune pages');
+  }
+  const archiveAfterSurface = G.runeArchiveProgress(null, 32);
+  if (!archiveAfterSurface.surfaceComplete || archiveAfterSurface.visibleLit !== 32 || archiveAfterSurface.deepRead !== 0) {
+    throw new Error('Completing surface runes should light all 32 archive pages without reading deep runes');
+  }
+  for (let i = 0; i < 10; i++) {
+    sealed = G.underwaterCaveSceneObjects(G.underwaterCave).find(hit => hit && hit.def && hit.def.kind === 'sealedRunes');
+    sealed.obj.near = true;
+    if (!G.activateUnderwaterCaveObject()) throw new Error(`Deep rune ${i + 1} was not readable`);
+    const deep = G.deepRuneSummary();
+    if (deep.read !== i + 1) throw new Error(`Deep rune archive should read sequentially, expected ${i + 1}, got ${deep.read}`);
+  }
+  const deepDone = G.deepRuneSummary();
+  if (!deepDone.complete || deepDone.read !== 10 || completeSounds !== 1 || discoverSounds !== 10) {
+    throw new Error('Deep rune archive should complete exactly 10 underwater runes with one completion sound');
+  }
+  sealed = G.underwaterCaveSceneObjects(G.underwaterCave).find(hit => hit && hit.def && hit.def.kind === 'sealedRunes');
+  if (!sealed.obj.readComplete || sealed.obj.deepRead !== 10 || !sealed.obj.surfaceComplete) {
+    throw new Error('Sealed archive object should mirror completed surface/deep rune state');
+  }
+  G.runeProgress = prevRuneProgress;
+  G.underwaterCave = prevUnderwater;
+  G.levelRunMode = prevLevelRunMode;
+  G.level = prevLevel;
+  G.levelIdx = prevLevelIdx;
+  G.toasts = prevToasts;
+  G.savePrefs = prevSavePrefs;
+  AU.sWaterfallCaveRuneDiscover = prevRuneDiscover;
+  AU.sWaterfallCaveRunesComplete = prevRunesComplete;
+  AU.sWaterfallCaveCrystalChime = prevCrystalChime;
 }
 {
   const prevChurchHymn = AU.churchHymn;
@@ -1916,7 +2003,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
     throw new Error('Rune wall did not show readable rune text when approached');
   }
   if (!drawWaterfallCaveView(WCTX, 50)) throw new Error('Glyph archive rune reading panel did not render');
-  if (!Array.isArray(runeWall.def.runes) || runeWall.def.runes.length < 6) {
+  if (!Array.isArray(runeWall.def.runes) || runeWall.def.runes.length < 4) {
     throw new Error('Rune wall should define several individually readable runes');
   }
   if (!runeWall.def.runeSet || runeWall.def.runeSet.id !== expectedRuneSetsByLevel['BYGG EN BRO']) {
@@ -1965,8 +2052,11 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!archiveProgress || archiveProgress.visibleTotal !== 32 || archiveProgress.visibleLit !== runeWall.def.runes.length || archiveProgress.visitedSets !== 1) {
     throw new Error('Global rune archive page progress should expose the first 32 profile rune slots');
   }
+  if (archiveProgress.hiddenTotal !== 0 || archiveProgress.deepTotal !== 10 || archiveProgress.deepRead !== 0) {
+    throw new Error('Global rune archive page progress should keep the 10 deep runes separate from the 32 visible archive pages');
+  }
   if (archiveProgress.pages.slice(0, runeWall.def.runes.length).some(p => !p || !p.read) || archiveProgress.pages.slice(runeWall.def.runes.length).some(p => p && p.read)) {
-    throw new Error('Completing the first rune archive should light only the first six global archive pages');
+    throw new Error('Completing the first rune archive should light only that archive count of global archive pages');
   }
   const firstRuneKey = 'waterfall.glyphArchive.' + runeWall.def.runes[0].id;
   if (!runtimeRunes.discovered || !runtimeRunes.discovered[firstRuneKey] || runtimeRunes.discovered[firstRuneKey].setTitle !== runeWall.def.runeSet.title) {
