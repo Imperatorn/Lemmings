@@ -502,7 +502,7 @@
     G.paused=false;
     G.cam=clamp(x-180,0,G.maxCam());
     if(!G.enterUnderwaterCave||!G.enterUnderwaterCave(holy,z)){setStatus('Kunde inte öppna undervattensgrottan.','warn');return}
-    finishAnimationSetup('Undervattensgrotta: styr med piltangenterna, Shift simmar snabbare, M visar kartan.');
+    finishAnimationSetup('Undervattensgrotta: styr med piltangenterna, Shift simmar snabbare med simfötter, M visar kartan.');
   }
 
   function setupFishRingAnimation(){

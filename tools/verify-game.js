@@ -248,10 +248,10 @@ if (!gameCode.includes('clearTransientText') || !waterfallRuntimeCode.includes('
 if (!gameCode.includes('holyBlessingUnlocked') || !gameCode.includes('assignHolyLemmingForLevel') || !gameCode.includes('normalizeHolyLemmings')) {
   throw new Error('Blessed lemmels should unlock exactly one persistent holy hatch lemmel for future levels');
 }
-if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneCharged') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('holySwimFinsUnlocked') || !gameCode.includes('portalStone:null')) {
+if (!gameCode.includes('holyTeleportStoneUnlocked') || !gameCode.includes('holyTeleportStoneCharged') || !gameCode.includes('holyTeleportStoneLemId') || !gameCode.includes('holySwimFinsUnlocked') || !gameCode.includes('practiceHolySwimFinsUnlocked') || !gameCode.includes('portalStone:null')) {
   throw new Error('Holy item profile and runtime state should remain in js/07_game.js');
 }
-for (const token of ['hasHolySwimFins','unlockHolySwimFins','swimFins=!!this.holySwimFinsUnlocked']) {
+for (const token of ['hasHolySwimFins','unlockHolySwimFins','swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins())']) {
   if (!gameCode.includes(token)) throw new Error(`Holy swim fins state is missing ${token}`);
 }
 for (const token of ['PORTAL_STONE_MAX_DIST','PORTAL_STONE_ENTER_COOLDOWN','unlockHolyTeleportStone','holyTeleportStoneIsCharged','chargeHolyTeleportStone','consumeHolyTeleportStoneCharge','portalStoneUnchargedMessage','SÖK UPP EN KRISTALL','beginPortalStonePlacement','placePortalStoneExit','updatePortalStone']) {
@@ -825,6 +825,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevUnderwater = G.underwaterCave;
   const prevToasts = G.toasts;
   const prevHolySwimFinsUnlocked = G.holySwimFinsUnlocked;
+  const prevPracticeHolySwimFinsUnlocked = G.practiceHolySwimFinsUnlocked;
   const makeSwimCave = run => ({
     active:true,
     scene:'entryPool',
@@ -843,6 +844,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   });
   G.toasts = [];
   G.holySwimFinsUnlocked = false;
+  G.practiceHolySwimFinsUnlocked = false;
   G.underwaterCave = makeSwimCave(false);
   for (let i = 0; i < 18; i++) G.updateUnderwaterCave();
   const normalDx = G.underwaterCave.swimX - 240;
@@ -866,6 +868,7 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.underwaterCave = prevUnderwater;
   G.toasts = prevToasts;
   G.holySwimFinsUnlocked = prevHolySwimFinsUnlocked;
+  G.practiceHolySwimFinsUnlocked = prevPracticeHolySwimFinsUnlocked;
 }
 {
   const prevRuneProgress = G.runeProgress;
@@ -2049,8 +2052,10 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   for (let i = 0; i < 80 && mirrorState.pedestalT < 92; i++) G.tick();
   const pedestalLem = G.findLemById(G.waterfallCave.lemId);
   if (!pedestalLem) throw new Error('Mirror pool swim fins should be collected by the cave lemmel');
-  G.waterfallCave.lemX = mirrorPool.obj.x;
-  G.waterfallCave.lemY = 230;
+  const pickupSpot = G.waterfallCaveMirrorPedestalItemSpot(G.waterfallCave, mirrorState);
+  if (!pickupSpot) throw new Error('Mirror pool swim fins should expose a pickup spot on the raised pedestal');
+  G.waterfallCave.lemX = pickupSpot.x;
+  G.waterfallCave.lemY = pickupSpot.topY - 18;
   G.tick();
   if (!mirrorState.swimFinsCollected || !G.holySwimFinsUnlocked || !pedestalLem.swimFins || !(mirrorState.swimFinsPickupT > 0)) {
     throw new Error('Cave lemmel did not collect persistent black swim fins from the raised mirror-pool pedestal');
@@ -3787,6 +3792,9 @@ withLocalStorage({}, store => {
   if (!G.practiceHolyTeleportStoneUnlocked || !G.portalStoneButtonVisible()) {
     throw new Error('Practice teleport stone should be temporary and usable only during the run');
   }
+  if (!G.practiceHolySwimFinsUnlocked || !G.hasHolySwimFins()) {
+    throw new Error('Practice swim fins should be temporary and usable only during the run');
+  }
   if (G.T) {
     G.T.clearRect(52, 120, 230, 76);
     G.T.brick(48, 191, 250, 8, '#777777');
@@ -3805,7 +3813,7 @@ withLocalStorage({}, store => {
   G.cancelPortalStonePlacement();
   G.savePrefs();
   G.loadPrefs();
-  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.holySwimFinsUnlocked || G.practiceHolyTeleportStoneUnlocked || G.practiceHolyTeleportStoneCharged) {
+  if (G.cleared.some(Boolean) || G.runeProgressSummary().discovered !== 0 || G.runeProgressSummary().visitedArchives !== 0 || G.money !== 0 || G.holyBlessingUnlocked || G.holyTeleportStoneUnlocked || G.holyTeleportStoneCharged || G.holySwimFinsUnlocked || G.practiceHolyTeleportStoneUnlocked || G.practiceHolyTeleportStoneCharged || G.practiceHolySwimFinsUnlocked) {
     throw new Error('Practice state should not persist after save/load');
   }
 });

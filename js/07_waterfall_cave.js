@@ -503,7 +503,7 @@ Object.assign(G,{
     bucket.pedestalT=Math.max(0,bucket.pedestalT|0);
     bucket.pedestalSplashT=Math.max(0,bucket.pedestalSplashT|0);
     bucket.pedestalShakeT=Math.max(0,bucket.pedestalShakeT|0);
-    bucket.swimFinsCollected=!!(bucket.swimFinsCollected||this.holySwimFinsUnlocked);
+    bucket.swimFinsCollected=!!(bucket.swimFinsCollected||(this.hasHolySwimFins&&this.hasHolySwimFins()));
     bucket.swimFinsPickupT=Math.max(0,bucket.swimFinsPickupT|0);
     return bucket;
   },
@@ -538,7 +538,7 @@ Object.assign(G,{
     if(state.swimFinsCollected||state.pedestalT<WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_FRAMES)return false;
     const spot=this.waterfallCaveMirrorPedestalItemSpot(cave,state);
     if(!spot)return false;
-    const near=Math.abs((cave.lemX||0)-spot.x)<=42&&(cave.lemY||0)>=spot.topY+8&&(cave.lemY||0)<=spot.baseY+18;
+    const near=Math.abs((cave.lemX||0)-spot.x)<=54&&(cave.lemY||0)>=spot.topY-28&&(cave.lemY||0)<=spot.baseY+22;
     if(!near)return false;
     const l=this.findLemById?this.findLemById(cave.lemId):null;
     if(!l)return false;

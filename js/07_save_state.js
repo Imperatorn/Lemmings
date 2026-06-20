@@ -77,6 +77,7 @@ Object.assign(G,{
     this.holySwimFinsUnlocked=!!(this.holySwimFinsUnlocked||persisted.holySwimFinsUnlocked);
     this.practiceHolyTeleportStoneUnlocked=false;
     this.practiceHolyTeleportStoneCharged=false;
+    this.practiceHolySwimFinsUnlocked=false;
     this.levelRunMode='campaign';
     if(this.selSkill==='nuke')this.selSkill=null;
     this.paused=false;
