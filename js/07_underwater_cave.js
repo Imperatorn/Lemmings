@@ -5,7 +5,7 @@ const UNDERWATER_SWIM_RUN_ACCEL=0.50;
 const UNDERWATER_SWIM_MAX=1.70;
 const UNDERWATER_SWIM_RUN_MAX=3.75;
 const UNDERWATER_SWIM_DRAG=0.87;
-const UNDERWATER_OCTOPUS_WAKE_DELAY=84;
+const UNDERWATER_OCTOPUS_WAKE_DELAY=60;
 const UNDERWATER_OCTOPUS_GRAB_TICKS=44;
 Object.assign(G,{
   underwaterCaveActive(){return !!(this.underwaterCave&&this.underwaterCave.active)},
@@ -201,7 +201,9 @@ Object.assign(G,{
     this.setUnderwaterCaveSceneAudio('entryPool',{force:true,audio:caveAudio});
     this.clearTransientText();
     this.toast(hasFins?'DEN HELIGA LÄMMELN SIMMAR NER':'NÅGOT RÖR SIG UNDER VATTNET',120);
-    if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
+    if(!opts||opts.splash!==false){
+      if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
+    }
     return true;
   },
   exitUnderwaterCave(reason){
@@ -340,7 +342,12 @@ Object.assign(G,{
     const k=cave.keys||{}, sx=cave.swimX||240, sy=cave.swimY||150;
     if(!Number.isFinite(o.x))o.x=sx;
     o.x+=clamp((sx-o.x)*0.045,-1.4,1.4);
+    const upwardSpeed=-(cave.vy||0);
+    const swimmingUp=!!(k.up&&upwardSpeed>0.22);
     const upEscape=!!(k.up&&sy<=70);
+    const escapeWindow=!!(swimmingUp&&sy<=96&&o.phase!=='grab');
+    if(escapeWindow)o.escapeT=18;
+    else if(o.escapeT>0)o.escapeT--;
     const wakeDelay=Number.isFinite(o.wakeDelay)?o.wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY;
     const threatT=Math.max(0,(o.t||0)-wakeDelay);
     o.wakeT=threatT;
@@ -350,8 +357,9 @@ Object.assign(G,{
       o.tipY=CH+52;
       return false;
     }
+    if(escapeWindow&&sy<=78)return this.exitUnderwaterCave('surface');
     const rise=clamp((threatT-16)/172,0,1);
-    o.reach=upEscape?Math.max(0,(o.reach||0)-0.035):rise;
+    o.reach=(upEscape||escapeWindow)?Math.max(0,(o.reach||0)-(upEscape?0.040:0.026)):rise;
     o.bodyY=CH+72-clamp((threatT-8)/132,0,1)*64;
     o.tipY=CH+38-(o.reach||0)*236;
     if(!o.warned&&threatT>30){
@@ -367,7 +375,7 @@ Object.assign(G,{
       if(o.grabT>=UNDERWATER_OCTOPUS_GRAB_TICKS)return this.finishUnderwaterCaveOctopusCatch(cave);
       return true;
     }
-    if(upEscape)return false;
+    if(upEscape||escapeWindow)return false;
     const closeX=Math.abs((o.x||sx)-sx)<76;
     const catchByReach=threatT>76&&closeX&&(o.tipY||CH)<=sy+19&&sy>72;
     const catchByTime=threatT>250&&sy>70;

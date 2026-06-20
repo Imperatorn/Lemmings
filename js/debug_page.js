@@ -506,7 +506,7 @@
     G.holyLevelLemId=holy.id;
     G.paused=false;
     G.cam=clamp(x-180,0,G.maxCam());
-    if(!G.enterUnderwaterCave||!G.enterUnderwaterCave(holy,z)){setStatus('Kunde inte öppna undervattensgrottan.','warn');return}
+    if(!G.enterUnderwaterCave||!G.enterUnderwaterCave(holy,z,{splash:false})){setStatus('Kunde inte öppna undervattensgrottan.','warn');return}
     finishAnimationSetup(withFins?'Undervattensgrotta med simfötter: piltangenter styr, Shift simmar snabbare, M visar kartan.':'Undervattensgrotta utan simfötter: simma upp för att fly från bläckfisken.');
   }
 
