@@ -216,7 +216,7 @@ Object.assign(G,{
       swimStrokeT:0,
       facing:spawn.facing||'front',
       swimFins:hasFins,
-      octopus:(!manualLampDive&&!hasFins)?{active:true,t:0,wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY,wakeT:0,phase:'rise',x:spawn.x,bodyY:CH+72,tipY:CH+52,reach:0,grabT:0,warned:false}:null,
+      octopus:(manualLampDive||!hasFins)?{active:true,t:0,wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY,wakeT:0,phase:'rise',x:spawn.x,bodyY:CH+72,tipY:CH+52,reach:0,grabT:0,warned:false}:null,
       keys:{left:false,right:false,up:false,down:false,run:false},
       sceneState:{},
       bubbles:[],
@@ -313,6 +313,10 @@ Object.assign(G,{
       if(Number.isFinite(e.yMax)&&y>e.yMax)continue;
       if(!e.target)return this.exitUnderwaterCave(e.reason||'surface');
       if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){
+        if(cave.swimFins){
+          cave.octopus=null;
+          return this.setUnderwaterCaveScene(e.target,e.spawn);
+        }
         cave.hintT=Math.max(cave.hintT||0,80);
         if(cave.octopus&&(!cave.octopus.blockToastT||cave.octopus.blockToastT<=0)){
           cave.octopus.blockToastT=80;
@@ -342,7 +346,7 @@ Object.assign(G,{
     return false;
   },
   underwaterCaveOctopusThreatActive(cave){
-    return !!(cave&&!cave.manualLampDive&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
+    return !!(cave&&cave.octopus&&cave.octopus.active&&(!cave.swimFins||cave.manualLampDive));
   },
   finishUnderwaterCaveOctopusCatch(cave){
     const l=cave&&this.findLemById?this.findLemById(cave.lemId):null;

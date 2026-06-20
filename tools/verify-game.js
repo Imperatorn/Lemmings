@@ -884,21 +884,62 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     const manualMysteryBefore = underwaterStarts;
     const manualDuckBefore = musicDucks.length;
     const manualDuckClearsBefore = musicDuckClears.length;
+    const manualPanicBefore = panicStarts;
     if (!G.tryEnterUnderwaterCaveFromManual(manualDive, water)) {
       throw new Error('A normal manual lemmel should be able to lamp-dive in water fed by a waterfall');
     }
-    if (!G.underwaterCave.manualLampDive || G.underwaterCave.diverKind !== 'manualLamp' || G.underwaterCave.octopus || !G.underwaterCave.swimFins) {
-      throw new Error('Manual waterfall dive should use unlocked swim fins without starting octopus state');
+    if (!G.underwaterCave.manualLampDive || G.underwaterCave.diverKind !== 'manualLamp' || !G.underwaterCave.octopus || !G.underwaterCave.swimFins) {
+      throw new Error('Manual waterfall dive should show octopus threat while using unlocked swim fins');
     }
-    if (underwaterStarts !== manualMysteryBefore || musicDucks.length <= manualDuckBefore || musicDuckClears.length !== manualDuckClearsBefore) {
-      throw new Error('Manual waterfall lamp dive with swim fins should duck level music instead of starting mystery music');
+    if (panicStarts !== manualPanicBefore + 1 || underwaterStarts !== manualMysteryBefore || musicDucks.length !== manualDuckBefore || musicDuckClears.length <= manualDuckClearsBefore || AU.mus.kind !== 'underwaterPanic') {
+      throw new Error('Manual waterfall lamp dive should start octopus panic music even when swim fins are unlocked');
     }
     G.handleUnderwaterCaveKey('l');
     if (!G.manual.lampOn || !(G.underwaterCave.lampPulseT > 0)) {
       throw new Error('Manual underwater lamp dive should let L toggle the direct lamp');
     }
+    const panicStopBeforeEscape = panicStops;
+    G.underwaterCave.swimX = 420;
+    G.underwaterCave.swimY = 184;
+    G.handleUnderwaterCaveKey('ArrowRight');
+    G.tick();
+    G.handleUnderwaterCaveKeyUp('ArrowRight');
+    if (!G.underwaterCaveActive() || G.underwaterCave.scene !== 'siltTunnel' || G.underwaterCave.octopus) {
+      throw new Error('Manual waterfall dive with swim fins should escape the octopus by reaching the next room');
+    }
+    if (panicStops <= panicStopBeforeEscape || underwaterStarts <= manualMysteryBefore) {
+      throw new Error('Escaping the manual dive octopus into the next room should stop panic and start underwater mystery music');
+    }
     G.exitUnderwaterCave('silent');
     G.underwaterCaveExitCooldown = 0;
+    {
+      const manualNoFins = new Lemming(water.x + Math.min(14, Math.max(7, water.w/2)), water.y - 6);
+      manualNoFins.holy = false;
+      manualNoFins.state = 'MANUAL';
+      G.lems = [manualNoFins];
+      G.manual = {used:true,active:true,lemId:manualNoFins.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
+      G.holySwimFinsUnlocked = false;
+      G.practiceHolySwimFinsUnlocked = false;
+      G.underwaterCave = null;
+      G.underwaterCaveExitCooldown = 0;
+      const noFinsPanicBefore = panicStarts;
+      if (!G.tryEnterUnderwaterCaveFromManual(manualNoFins, water)) {
+        throw new Error('A normal manual lemmel without swim fins should still be able to lamp-dive in waterfall-fed water');
+      }
+      if (!G.underwaterCave.manualLampDive || !G.underwaterCave.octopus || G.underwaterCave.swimFins || panicStarts !== noFinsPanicBefore + 1) {
+        throw new Error('Manual waterfall dive without swim fins should show the octopus threat');
+      }
+      G.underwaterCave.swimX = 420;
+      G.underwaterCave.swimY = 184;
+      G.handleUnderwaterCaveKey('ArrowRight');
+      G.tick();
+      G.handleUnderwaterCaveKeyUp('ArrowRight');
+      if (!G.underwaterCaveActive() || G.underwaterCave.scene !== 'entryPool') {
+        throw new Error('Manual waterfall dive without swim fins should not escape into the next room');
+      }
+      G.exitUnderwaterCave('silent');
+      G.underwaterCaveExitCooldown = 0;
+    }
     const normalPool = {x:water.x+180,w:50,y:water.y,lava:false};
     const dryManual = new Lemming(normalPool.x + 10, normalPool.y - 6);
     dryManual.holy = false;

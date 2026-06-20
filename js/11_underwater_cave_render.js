@@ -261,7 +261,7 @@ function drawUnderwaterOctopusEyes(c,ox,bodyY,o,tk,front){
 }
 function drawUnderwaterOctopusThreat(c,cave,tk,front){
   const o=cave&&cave.octopus;
-  if(!o||!o.active||cave.swimFins)return false;
+  if(!o||!o.active)return false;
   const sx=Math.round(cave.swimX||240),sy=Math.round(cave.swimY||150);
   const ox=Math.round(Number.isFinite(o.x)?o.x:sx),bodyY=Math.round(Number.isFinite(o.bodyY)?o.bodyY:CH+58);
   const grab=o.phase==='grab',reach=clamp(o.reach||0,0,1);
@@ -467,7 +467,7 @@ function drawUnderwaterManualLampLight(c,cave,tk,dark){
 }
 function drawUnderwaterOctopusWarning(c,cave,tk){
   const o=cave&&cave.octopus;
-  if(!o||!o.active||cave.swimFins||!o.warned||o.phase==='grab')return false;
+  if(!o||!o.active||!o.warned||o.phase==='grab')return false;
   const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.16);
   const x=CW-82,y=24,w=118,h=16;
   c.save();
@@ -475,7 +475,7 @@ function drawUnderwaterOctopusWarning(c,cave,tk){
   c.fillStyle='rgba(0,0,0,0.68)';
   c.fillRect(x-Math.floor(w/2),y-10,w,h);
   c.globalAlpha=0.82+0.18*pulse;
-  drawTextC(c,'SIMMA UPP\u00c5T!',x,y-5,1,pulse>0.48?'#fff0a0':'#ffd45c');
+  drawTextC(c,cave.swimFins?'SIMMA VIDARE!':'SIMMA UPP\u00c5T!',x,y-5,1,pulse>0.48?'#fff0a0':'#ffd45c');
   c.restore();
   return true;
 }
@@ -524,7 +524,7 @@ function drawUnderwaterCaveView(c,tk){
   const def=typeof underwaterCaveSceneDef==='function'?underwaterCaveSceneDef(cave.scene):null;
   drawText(c,def&&def.label?def.label:'Undervattnet',12,12,1,'#bdf8ff');
   drawUnderwaterOctopusWarning(c,cave,tk);
-  const octopus=!!(cave.octopus&&cave.octopus.active&&!cave.swimFins);
+  const octopus=!!(cave.octopus&&cave.octopus.active);
   if(cave.hintT>0&&!octopus)drawTextC(c,underwaterCaveHintText(cave),CW/2,CH-18,1,'#d8fbff');
   const hit=G.underwaterCavePromptObject?G.underwaterCavePromptObject(cave):null;
   if(hit&&hit.obj&&hit.obj.near){
