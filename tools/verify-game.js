@@ -196,7 +196,7 @@ if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_WAKE_DELAY=60') || !unde
 if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96') || !underwaterRuntimeCode.includes("cave.octopus&&cave.octopus.phase==='grab'") || !underwaterRuntimeCode.includes('cave.swimY>=UNDERWATER_OCTOPUS_GONE_Y') || !underwaterRuntimeCode.includes('o.goneT>=UNDERWATER_OCTOPUS_GONE_TICKS')) {
   throw new Error('Underwater octopus grab should pull the lemmel fully below the view before resolving failure');
 }
-if (!underwaterRuntimeCode.includes('manualLampDive') || !underwaterRuntimeCode.includes('waterfallDive') || !underwaterRuntimeCode.includes("key==='l'||key==='L'") || !underwaterRuntimeCode.includes('LAMPAN RÄCKER INTE')) {
+if (!underwaterRuntimeCode.includes('manualLampDive') || !underwaterRuntimeCode.includes('waterfallDive') || !underwaterRuntimeCode.includes('entryNeedsMystery') || !underwaterRuntimeCode.includes('!cave.swimFins') || !underwaterRuntimeCode.includes("key==='l'||key==='L'") || !underwaterRuntimeCode.includes('LAMPAN RÄCKER INTE')) {
   throw new Error('Manual waterfall lamp diving should have separate state, lamp input, and progression guardrails');
 }
 if (underwaterRuntimeCode.includes("this.toast('SIMMA UPP!") || underwaterRuntimeCode.includes("this.toast('BLÄCKFISKEN") || underwaterRuntimeCode.includes("this.toast('NÅGOT RÖR SIG UNDER VATTNET")) {
@@ -881,11 +881,17 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     G.practiceHolySwimFinsUnlocked = true;
     G.underwaterCave = null;
     G.underwaterCaveExitCooldown = 0;
+    const manualMysteryBefore = underwaterStarts;
+    const manualDuckBefore = musicDucks.length;
+    const manualDuckClearsBefore = musicDuckClears.length;
     if (!G.tryEnterUnderwaterCaveFromManual(manualDive, water)) {
       throw new Error('A normal manual lemmel should be able to lamp-dive in water fed by a waterfall');
     }
     if (!G.underwaterCave.manualLampDive || G.underwaterCave.diverKind !== 'manualLamp' || G.underwaterCave.octopus || G.underwaterCave.swimFins) {
       throw new Error('Manual waterfall dive should not inherit holy fins or octopus state');
+    }
+    if (underwaterStarts !== manualMysteryBefore + 1 || AU.mus.kind !== 'underwaterMystery' || musicDucks.length !== manualDuckBefore || musicDuckClears.length <= manualDuckClearsBefore) {
+      throw new Error('Manual waterfall lamp dive without swim fins should start underwater mystery music instead of ducking normal level music');
     }
     G.handleUnderwaterCaveKey('l');
     if (!G.manual.lampOn || !(G.underwaterCave.lampPulseT > 0)) {

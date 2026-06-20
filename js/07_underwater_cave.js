@@ -52,8 +52,10 @@ Object.assign(G,{
     return String(scene||'entryPool')!=='entryPool';
   },
   setUnderwaterCaveSceneAudio(scene,opts){
-    const panic=!!((this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(this.underwaterCave))||(opts&&opts.panic));
+    const cave=this.underwaterCave;
+    const panic=!!((this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave))||(opts&&opts.panic));
     const dark=this.underwaterCaveSceneDark(scene);
+    const entryNeedsMystery=!!(cave&&!dark&&!cave.swimFins);
     if(opts&&opts.audio===false)return dark;
     if(panic){
       if(AU.clearMusicDuck)AU.clearMusicDuck(opts&&opts.force?0.05:0.2);
@@ -61,7 +63,7 @@ Object.assign(G,{
       if(AU.startUnderwaterCavePanicMusic)AU.startUnderwaterCavePanicMusic(opts&&opts.force?0.85:0.45);
       return true;
     }
-    if(dark){
+    if(dark||entryNeedsMystery){
       if(AU.clearMusicDuck)AU.clearMusicDuck(opts&&opts.force?0.2:0.75);
       if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0.08);
       if(AU.startUnderwaterCaveMysteryMusic)AU.startUnderwaterCaveMysteryMusic(opts&&opts.force?0.55:1.35);
@@ -76,7 +78,7 @@ Object.assign(G,{
       }
       if(AU.setMusicDuck)AU.setMusicDuck(UNDERWATER_ENTRY_MUSIC_DUCK,restartLevelMusic?0.05:(opts&&opts.force?0.85:0.75));
     }
-    return dark;
+    return dark||entryNeedsMystery;
   },
   underwaterCaveDryStandAt(x,surfaceY){
     if(!this.T)return null;
