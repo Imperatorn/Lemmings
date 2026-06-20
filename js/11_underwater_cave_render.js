@@ -136,25 +136,31 @@ function drawUnderwaterLemmingSide(c,x,y,d,anim,hasFins){
   c.translate(x,y+anim.bob);
   c.scale(2,2);
   c.scale(d>=0?1:-1,1);
+  function p(px,py,w,h,col){c.fillStyle=col;c.fillRect(px,py,w,h)}
+  c.save();
   c.rotate(Math.PI/2);
-  function p(px,py,w,h,col){c.fillStyle=col;c.fillRect(px,py+5,w,h)}
+  function rp(px,py,w,h,col){c.fillStyle=col;c.fillRect(px,py+5,w,h)}
   function drawSwimLegs(){
-    if(!anim.moving||phase===0){p(-2,-2,2,2,leg);p(1,-2,2,2,leg)}
-    else if(phase===1){p(-3,-1,2,1,leg);p(-2,-2,2,1,leg);p(1,-2-kick,2,2,leg)}
-    else if(phase===2){p(-1,-2,2,2,leg);p(0,-2,1,2,leg)}
-    else{p(-2,-2+kick,2,2,leg);p(2,-1,2,1,leg);p(1,-2,2,1,leg)}
+    if(!anim.moving||phase===0){rp(-2,-2,2,2,leg);rp(1,-2,2,2,leg)}
+    else if(phase===1){rp(-3,-1,2,1,leg);rp(-2,-2,2,1,leg);rp(1,-2-kick,2,2,leg)}
+    else if(phase===2){rp(-1,-2,2,2,leg);rp(0,-2,1,2,leg)}
+    else{rp(-2,-2+kick,2,2,leg);rp(2,-1,2,1,leg);rp(1,-2,2,1,leg)}
   }
   drawSwimLegs();
   if(hasFins){
-    p(-3,0+kick,3,2,'#020304');
-    p(1,0-kick,3,2,'#020304');
-    p(-2,1+kick,2,1,'#172028');
-    p(2,1-kick,2,1,'#172028');
+    rp(-3,0+kick,3,2,'#020304');
+    rp(1,0-kick,3,2,'#020304');
+    rp(-2,1+kick,2,1,'#172028');
+    rp(2,1-kick,2,1,'#172028');
   }
-  p(-2,-6,4,4,body);
-  p(0,-8,2,2,skin);
-  p(-2,-10,4,2,hair);p(-2,-8,1,2,hair);p(1,-8,1,2,hair);
-  p(1,-8,1,1,dark);
+  rp(-2,-6,4,4,body);
+  c.restore();
+  p(-1,-3,3,3,body);
+  p(2,-5,2,2,skin);
+  p(1,-7,4,2,hair);p(1,-5,1,2,hair);p(4,-5,1,2,hair);
+  p(4,-5,1,1,dark);
+  if(anim.moving&&phase===1)p(2,-1,3,1,skin);
+  else p(1,0,3,1,skin);
   c.restore();
 }
 function drawUnderwaterLemming(c,cave,tk){

@@ -201,8 +201,8 @@ for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','swimStro
     throw new Error(`Underwater lemming swim animation is missing ${token}`);
   }
 }
-if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('c.rotate(Math.PI/2)') || !underwaterRenderCode.includes('p(-2,-6,4,4,body)')) {
-  throw new Error('Underwater lemming should reuse the compact waterfall-cave pixel body rotated into a swim pose');
+if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('c.rotate(Math.PI/2)') || !underwaterRenderCode.includes('rp(-2,-6,4,4,body)') || !underwaterRenderCode.includes('p(2,-5,2,2,skin)')) {
+  throw new Error('Underwater lemming should use a rotated waterfall-cave body with a naturally oriented side-facing head');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
   throw new Error('Input routing should send pointer and keyboard events to the underwater cave overlay');
