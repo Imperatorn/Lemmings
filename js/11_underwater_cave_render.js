@@ -169,7 +169,7 @@ function drawUnderwaterLemmingSide(c,x,y,d,anim,hasFins){
 function drawUnderwaterLemming(c,cave,tk){
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150),face=cave.facing||'right';
   const anim=underwaterSwimPhase(cave,tk);
-  const hasFins=!!(cave.swimFins||(!cave.manualLampDive&&G.hasHolySwimFins&&G.hasHolySwimFins()));
+  const hasFins=!!(cave.swimFins||(G.hasHolySwimFins&&G.hasHolySwimFins()));
   const drawDir=face==='left'?-1:(face==='right'?1:((cave.vx||0)<-0.05?-1:1));
   const grab=!!(cave.octopus&&cave.octopus.phase==='grab');
   const dragFade=grab?clamp(cave.octopus.dragFade||0,0,1):0;
@@ -480,7 +480,7 @@ function drawUnderwaterOctopusWarning(c,cave,tk){
   return true;
 }
 function underwaterCaveHintText(cave){
-  if(cave&&cave.manualLampDive)return 'PILAR SIMMAR  L LAMPA  M KARTA  ESC UPP';
+  if(cave&&cave.manualLampDive)return cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  L LAMPA  M KARTA  ESC UPP':'PILAR SIMMAR  L LAMPA  M KARTA  ESC UPP';
   return cave&&cave.swimFins?'PILAR SIMMAR  SHIFT SNABBT  M KARTA  ESC UPP':'PILAR SIMMAR  M KARTA  ESC UPP';
 }
 function drawUnderwaterMap(c,cave){

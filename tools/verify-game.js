@@ -887,11 +887,11 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     if (!G.tryEnterUnderwaterCaveFromManual(manualDive, water)) {
       throw new Error('A normal manual lemmel should be able to lamp-dive in water fed by a waterfall');
     }
-    if (!G.underwaterCave.manualLampDive || G.underwaterCave.diverKind !== 'manualLamp' || G.underwaterCave.octopus || G.underwaterCave.swimFins) {
-      throw new Error('Manual waterfall dive should not inherit holy fins or octopus state');
+    if (!G.underwaterCave.manualLampDive || G.underwaterCave.diverKind !== 'manualLamp' || G.underwaterCave.octopus || !G.underwaterCave.swimFins) {
+      throw new Error('Manual waterfall dive should use unlocked swim fins without starting octopus state');
     }
-    if (underwaterStarts !== manualMysteryBefore + 1 || AU.mus.kind !== 'underwaterMystery' || musicDucks.length !== manualDuckBefore || musicDuckClears.length <= manualDuckClearsBefore) {
-      throw new Error('Manual waterfall lamp dive without swim fins should start underwater mystery music instead of ducking normal level music');
+    if (underwaterStarts !== manualMysteryBefore || musicDucks.length <= manualDuckBefore || musicDuckClears.length !== manualDuckClearsBefore) {
+      throw new Error('Manual waterfall lamp dive with swim fins should duck level music instead of starting mystery music');
     }
     G.handleUnderwaterCaveKey('l');
     if (!G.manual.lampOn || !(G.underwaterCave.lampPulseT > 0)) {
@@ -2366,6 +2366,11 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.tick();
   if (!mirrorState.swimFinsCollected || !G.holySwimFinsUnlocked || !pedestalLem.swimFins || !(mirrorState.swimFinsPickupT > 0)) {
     throw new Error('Cave lemmel did not collect persistent black swim fins from the raised mirror-pool pedestal');
+  }
+  pedestalLem.holy = false;
+  if (G.normalizeHolyLemmings) G.normalizeHolyLemmings();
+  if (!pedestalLem.swimFins) {
+    throw new Error('A non-holy cave lemmel should keep unlocked swim fins after holy-state normalization');
   }
   if (!drawWaterfallCaveView(WCTX, 48.5)) throw new Error('Mirror pool empty pedestal after swim fins pickup did not render');
   G.setWaterfallCaveScene('glyphArchive','fromPool',{audio:false});

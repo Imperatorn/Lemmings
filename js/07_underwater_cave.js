@@ -189,7 +189,7 @@ Object.assign(G,{
     const key=(this.levelIdx||0)+':'+Math.round(z.x||0)+','+Math.round(z.y||0)+','+Math.round(z.w||0);
     const manualLampDive=!!(opts.manualLampDive&&!l.holy);
     const holyDiver=!!(l.holy&&!manualLampDive);
-    const hasFins=!!(holyDiver&&this.hasHolySwimFins&&this.hasHolySwimFins());
+    const hasFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     const wf=opts.waterfallDive||null;
     this.underwaterCave={
       active:true,
@@ -441,7 +441,7 @@ Object.assign(G,{
     if(cave.messageT>0)cave.messageT--;
     if(cave.lampPulseT>0)cave.lampPulseT--;
     cave.keys=cave.keys||{};
-    cave.swimFins=!!(!cave.manualLampDive&&this.hasHolySwimFins&&this.hasHolySwimFins());
+    cave.swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     const b=this.underwaterCaveSceneBounds(cave);
     if(cave.mapOpen){
       if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave))cave.mapOpen=false;

@@ -351,14 +351,15 @@ const G={
   },
   normalizeHolyLemmings(preferred){
     let keep=(preferred&&preferred.holy&&!preferred.dead)?preferred:null;
+    const hasFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     for(const l of this.lems||[]){
       if(!l)continue;
-      if(!l.holy){l.teleportStone=false;l.swimFins=false;continue}
+      if(!l.holy){l.teleportStone=false;l.swimFins=hasFins;continue}
       if(!keep&&!l.dead)keep=l;
-      else if(l!==keep){l.holy=false;l.teleportStone=false;l.swimFins=false}
+      else if(l!==keep){l.holy=false;l.teleportStone=false;l.swimFins=hasFins}
     }
     this.holyLevelLemId=(keep&&!keep.dead)?keep.id:null;
-    if(keep&&!keep.dead)keep.swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
+    if(keep&&!keep.dead)keep.swimFins=hasFins;
     const hasStone=this.hasHolyTeleportStone?this.hasHolyTeleportStone():this.holyTeleportStoneUnlocked;
     if(keep&&!keep.dead&&hasStone){
       keep.teleportStone=true;
