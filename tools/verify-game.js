@@ -178,10 +178,13 @@ for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderw
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
 }
-for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_GRAB_TICKS']) {
+for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_WAKE_DELAY','UNDERWATER_OCTOPUS_GRAB_TICKS']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave swim tuning is missing ${token}`);
   }
+}
+if (!underwaterRuntimeCode.includes('wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY') || !underwaterRuntimeCode.includes('threatT=Math.max(0,(o.t||0)-wakeDelay)') || underwaterRuntimeCode.includes('if(!hasFins&&AU.sWarn)AU.sWarn()')) {
+  throw new Error('Underwater octopus threat should wait briefly before the warning, rise and catch sequence starts');
 }
 if (!underwaterRuntimeCode.includes('cave.keys.run&&cave.swimFins') || !underwaterRuntimeCode.includes('swimFast?UNDERWATER_SWIM_RUN_MAX:UNDERWATER_SWIM_MAX') || !underwaterRuntimeCode.includes('cave.t%(swimFast?4:7)')) {
   throw new Error('Shift-swimming should require swim fins and then use a higher underwater max speed and stronger bubble cadence');
@@ -204,8 +207,11 @@ for (const token of ['underwaterSwimPhase','drawUnderwaterLemmingSide','swimStro
 if (!underwaterRenderCode.includes('c.scale(2,2)') || !underwaterRenderCode.includes('c.rotate(Math.PI/2)') || !underwaterRenderCode.includes('rp(-2,-6,4,4,body)') || !underwaterRenderCode.includes('p(2,-5,2,2,skin)')) {
   throw new Error('Underwater lemming should use a rotated waterfall-cave body with a naturally oriented side-facing head');
 }
-if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.includes('rgba(0,1,4,0.94)') || !underwaterRenderCode.includes('rgba(255,230,130,0.38)')) {
+if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.includes('dangerFade') || !underwaterRenderCode.includes('octopusAwake') || !underwaterRenderCode.includes('rgba(0,1,4,0.94)') || !underwaterRenderCode.includes('rgba(255,230,130,0.38)')) {
   throw new Error('Underwater octopus threat should make the lit room darker and more dangerous');
+}
+if (!underwaterRenderCode.includes('drawUnderwaterOctopusEyes') || !underwaterRenderCode.includes('#ffd45c') || !underwaterRenderCode.includes('#ff4a24') || !underwaterRenderCode.includes("globalCompositeOperation='lighter'")) {
+  throw new Error('Underwater octopus threat should show faint glowing red/yellow eyes near the bottom');
 }
 if (!inputCode.includes('underwaterCaveActive') || !inputCode.includes('handleUnderwaterCaveInput') || !inputCode.includes('handleUnderwaterCaveKey')) {
   throw new Error('Input routing should send pointer and keyboard events to the underwater cave overlay');
@@ -415,6 +421,9 @@ if (!audioCode.includes('underwaterMystery') || !audioCode.includes('startUnderw
 }
 if (!audioCode.includes('underwaterPanic') || !audioCode.includes('startUnderwaterCavePanicMusic') || !audioCode.includes('stopUnderwaterCavePanicMusic') || !audioCode.includes('UNDERWATER_PANIC_GAIN_BOOST')) {
   throw new Error('Underwater octopus threat should have a dedicated stressful panic music variant');
+}
+if (!audioCode.includes('underwaterPanic:{bpm:124') || !audioCode.includes('subVol=0.104') || !audioCode.includes("const lead=underwaterPanic?'triangle'")) {
+  throw new Error('Underwater panic music should be lower, bass-heavier and less high-pitched');
 }
 if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('CHURCH_HYMN_LOOP_SECONDS=32') || !audioCode.includes('CHURCH_HYMN_LOOP_FADE_SECONDS=1') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');

@@ -5,6 +5,7 @@ const UNDERWATER_SWIM_RUN_ACCEL=0.50;
 const UNDERWATER_SWIM_MAX=1.70;
 const UNDERWATER_SWIM_RUN_MAX=3.75;
 const UNDERWATER_SWIM_DRAG=0.87;
+const UNDERWATER_OCTOPUS_WAKE_DELAY=84;
 const UNDERWATER_OCTOPUS_GRAB_TICKS=44;
 Object.assign(G,{
   underwaterCaveActive(){return !!(this.underwaterCave&&this.underwaterCave.active)},
@@ -54,7 +55,7 @@ Object.assign(G,{
     if(panic){
       if(AU.clearMusicDuck)AU.clearMusicDuck(opts&&opts.force?0.05:0.2);
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
-      if(AU.startUnderwaterCavePanicMusic)AU.startUnderwaterCavePanicMusic(opts&&opts.force?0.08:0.22);
+      if(AU.startUnderwaterCavePanicMusic)AU.startUnderwaterCavePanicMusic(opts&&opts.force?0.85:0.45);
       return true;
     }
     if(dark){
@@ -177,7 +178,7 @@ Object.assign(G,{
       swimStrokeT:0,
       facing:spawn.facing||'front',
       swimFins:hasFins,
-      octopus:hasFins?null:{active:true,t:0,phase:'rise',x:spawn.x,bodyY:CH+70,tipY:CH+40,reach:0,grabT:0,warned:false},
+      octopus:hasFins?null:{active:true,t:0,wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY,wakeT:0,phase:'rise',x:spawn.x,bodyY:CH+72,tipY:CH+52,reach:0,grabT:0,warned:false},
       keys:{left:false,right:false,up:false,down:false,run:false},
       sceneState:{},
       bubbles:[],
@@ -201,7 +202,6 @@ Object.assign(G,{
     this.clearTransientText();
     this.toast(hasFins?'DEN HELIGA LÄMMELN SIMMAR NER':'NÅGOT RÖR SIG UNDER VATTNET',120);
     if(AU.sSplash)AU.sSplash(); else if(AU.sWaterfallCaveStoneSplash)AU.sWaterfallCaveStoneSplash(1);
-    if(!hasFins&&AU.sWarn)AU.sWarn();
     return true;
   },
   exitUnderwaterCave(reason){
@@ -341,11 +341,20 @@ Object.assign(G,{
     if(!Number.isFinite(o.x))o.x=sx;
     o.x+=clamp((sx-o.x)*0.045,-1.4,1.4);
     const upEscape=!!(k.up&&sy<=70);
-    const rise=clamp((o.t-16)/172,0,1);
+    const wakeDelay=Number.isFinite(o.wakeDelay)?o.wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY;
+    const threatT=Math.max(0,(o.t||0)-wakeDelay);
+    o.wakeT=threatT;
+    if(threatT<=0){
+      o.reach=0;
+      o.bodyY=CH+72;
+      o.tipY=CH+52;
+      return false;
+    }
+    const rise=clamp((threatT-16)/172,0,1);
     o.reach=upEscape?Math.max(0,(o.reach||0)-0.035):rise;
-    o.bodyY=CH+72-clamp((o.t-8)/132,0,1)*64;
+    o.bodyY=CH+72-clamp((threatT-8)/132,0,1)*64;
     o.tipY=CH+38-(o.reach||0)*236;
-    if(!o.warned&&o.t>30){
+    if(!o.warned&&threatT>30){
       o.warned=true;
       this.toast('SIMMA UPP!',90);
       if(AU.sWarn)AU.sWarn();
@@ -360,8 +369,8 @@ Object.assign(G,{
     }
     if(upEscape)return false;
     const closeX=Math.abs((o.x||sx)-sx)<76;
-    const catchByReach=o.t>76&&closeX&&(o.tipY||CH)<=sy+19&&sy>72;
-    const catchByTime=o.t>250&&sy>70;
+    const catchByReach=threatT>76&&closeX&&(o.tipY||CH)<=sy+19&&sy>72;
+    const catchByTime=threatT>250&&sy>70;
     if(catchByReach||catchByTime){
       o.phase='grab';
       o.grabT=0;
