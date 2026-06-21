@@ -1172,6 +1172,18 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.holySwimFinsUnlocked = false;
   G.practiceHolySwimFinsUnlocked = false;
   G.toasts = [];
+  const threatenedUi = new Lemming(178, 104);
+  threatenedUi.holy = true;
+  G.lems = [threatenedUi];
+  G.manual = {used:true,active:true,lemId:threatenedUi.id,lampOn:false,keys:{},jumpQueued:null,aimAngle:0};
+  G.underwaterCave = makeOctopusCave(threatenedUi, {}, 62);
+  G.updateUnderwaterCaveObjects(G.underwaterCave);
+  const threatenedHit = G.underwaterCavePromptObject(G.underwaterCave);
+  G.handleUnderwaterCaveInput({x:240,y:62}, 'click');
+  G.handleUnderwaterCaveKey(' ');
+  if (G.underwaterCave.messageT > 0 || (threatenedHit && threatenedHit.obj && threatenedHit.obj.activated)) {
+    throw new Error('Underwater octopus threat should block object activation so warning/repel text stays unobstructed');
+  }
   const escaping = new Lemming(180, 104);
   escaping.holy = true;
   G.lems = [escaping];

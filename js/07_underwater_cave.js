@@ -60,7 +60,7 @@ Object.assign(G,{
     const x=spawn&&Number.isFinite(spawn.x)?spawn.x:(cave&&Number.isFinite(cave.swimX)?cave.swimX:240);
     return {active:true,t:0,wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY,wakeT:0,phase:'rise',x,bodyY:CH+72,tipY:CH+52,reach:0,grabT:0,warned:false};
   },
-  startUnderwaterCaveHolyOctopusRepel(cave,o,l){
+  startUnderwaterCaveHolyOctopusRepel(cave,o){
     if(!cave||!o)return false;
     o.phase='holyRepel';
     o.repelT=0;
@@ -428,7 +428,7 @@ Object.assign(G,{
     const upwardSpeed=-(cave.vy||0);
     const swimmingUp=!!(k.up&&upwardSpeed>0.22);
     const upEscape=!!(k.up&&sy<=70);
-    const escapeWindow=!!(swimmingUp&&sy<=96&&o.phase!=='grab');
+    const escapeWindow=!!(swimmingUp&&sy<=96&&o.phase!=='grab'&&o.phase!=='holyRepel');
     if(escapeWindow)o.escapeT=18;
     else if(o.escapeT>0)o.escapeT--;
     if(o.phase==='holyRepel'){
@@ -455,7 +455,7 @@ Object.assign(G,{
       const p=clamp(o.grabT/UNDERWATER_OCTOPUS_GRAB_TICKS,0,1);
       const targetY=Number.isFinite(o.dragTargetY)?o.dragTargetY:UNDERWATER_OCTOPUS_DRAG_DEPTH;
       const l=this.findLemById?this.findLemById(cave.lemId):null;
-      if(l&&l.holy&&o.grabT>=UNDERWATER_OCTOPUS_HOLY_REPEL_DELAY)return this.startUnderwaterCaveHolyOctopusRepel(cave,o,l);
+      if(l&&l.holy&&o.grabT>=UNDERWATER_OCTOPUS_HOLY_REPEL_DELAY)return this.startUnderwaterCaveHolyOctopusRepel(cave,o);
       cave.vx=(cave.vx||0)*0.08+((o.x||sx)-sx)*0.006;
       cave.vy=Math.max(4.50,cave.vy||0)*0.52+2.60+p*4.40;
       cave.swimX=clamp((cave.swimX||sx)+cave.vx,28,CW-28);
@@ -664,7 +664,10 @@ Object.assign(G,{
       if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(this.underwaterCave)){if(AU.sWarn)AU.sWarn();return true}
       this.exitUnderwaterCave('cancel');return true;
     }
-    if(kind==='click')return this.activateUnderwaterCaveObject()||true;
+    if(kind==='click'){
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(this.underwaterCave)){if(AU.sWarn)AU.sWarn();return true}
+      return this.activateUnderwaterCaveObject()||true;
+    }
     return true;
   },
   handleUnderwaterCaveKey(key){
@@ -685,7 +688,10 @@ Object.assign(G,{
       cave.lampPulseT=18;
       return true;
     }
-    if(key===' '||key==='Spacebar'||key==='Enter')return this.activateUnderwaterCaveObject()||true;
+    if(key===' '||key==='Spacebar'||key==='Enter'){
+      if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave)){if(AU.sWarn)AU.sWarn();return true}
+      return this.activateUnderwaterCaveObject()||true;
+    }
     if(key==='ArrowLeft'){cave.keys.left=true;return true}
     if(key==='ArrowRight'){cave.keys.right=true;return true}
     if(key==='ArrowUp'){cave.keys.up=true;return true}
