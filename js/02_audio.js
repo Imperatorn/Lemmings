@@ -624,6 +624,18 @@ const AU={
     this.tone(1320,0.08,'sine',0.018,0.86,t+0.04);
     this.softNoise(0.12,0.007,2600,0.42,t,{type:'bandpass',q:0.90,smooth:0.70,attack:0.010,release:0.08});
   },
+  sUnderwaterHolyRepel(){
+    if(!this.rateFx('underwater-holy-repel',1.20))return;
+    const t=this.now(), bassDest=this.boomGain||this.sfxDest();
+    this.tone(54,0.62,'sine',0.030,0.42,t,bassDest);
+    this.softNoise(0.52,0.018,120,0.36,t+0.02,{type:'lowpass',smooth:0.94,attack:0.03,release:0.30,dest:bassDest});
+    this.padTone(392,0.88,'sine',0.020,t+0.04);
+    this.padTone(784,1.08,'triangle',0.030,t+0.10);
+    this.padTone(1175,1.18,'sine',0.022,t+0.18);
+    this.tone(1568,0.18,'triangle',0.038,1.08,t+0.34);
+    this.tone(2093,0.16,'sine',0.030,0.96,t+0.48);
+    this.softNoise(0.58,0.010,3800,0.72,t+0.22,{type:'bandpass',q:0.80,smooth:0.64,attack:0.04,release:0.28});
+  },
   // --- effekter ---
   rateFx(name,gap){
     if(!this.ctx||!this.on||!this.sfxOn)return false;

@@ -241,16 +241,17 @@ function drawUnderwaterOctopusEyes(c,ox,bodyY,o,tk,front){
   const reach=clamp(o&&o.reach||0,0,1);
   const wake=clamp(Number.isFinite(o&&o.wakeT)?o.wakeT/120:Math.max(0,((o&&o.t)||0)-60)/120,0,1);
   const escapeFade=clamp(((o&&o.escapeT)||0)/18,0,1);
+  const repelFade=o&&o.phase==='holyRepel'?clamp((o.repelT||0)/Math.max(1,o.repelDur||54),0,1):0;
   const pulse=0.5+0.5*Math.sin((tk||0)*0.12+((o&&o.t)||0)*0.035);
   const y=Math.round(clamp((Number.isFinite(bodyY)?bodyY:CH+52)-18,CH-34,CH-16));
   const spread=22+Math.round(reach*5);
   c.save();
   c.globalCompositeOperation='lighter';
-  c.globalAlpha=((front?0.26:0.18)+(front?0.28:0.18)*pulse+0.10*wake)*(1-escapeFade*0.28);
+  c.globalAlpha=((front?0.26:0.18)+(front?0.28:0.18)*pulse+0.10*wake)*(1-escapeFade*0.28)*(1-repelFade*0.72);
   c.fillStyle='rgba(255,42,18,0.28)';
   c.fillRect(ox-spread-8,y-5,16,9);
   c.fillRect(ox+spread-8,y-5,16,9);
-  c.globalAlpha=(front?0.48:0.34)+0.20*pulse+0.10*wake;
+  c.globalAlpha=((front?0.48:0.34)+0.20*pulse+0.10*wake)*(1-repelFade*0.72);
   c.fillStyle='#ff4a24';
   c.fillRect(ox-spread-4,y-2,8,3);
   c.fillRect(ox+spread-4,y-2,8,3);
@@ -265,13 +266,14 @@ function drawUnderwaterOctopusThreat(c,cave,tk,front){
   const sx=Math.round(cave.swimX||240),sy=Math.round(cave.swimY||150);
   const ox=Math.round(Number.isFinite(o.x)?o.x:sx),bodyY=Math.round(Number.isFinite(o.bodyY)?o.bodyY:CH+58);
   const grab=o.phase==='grab',reach=clamp(o.reach||0,0,1);
-  if(front&&!grab){
+  const repel=o.phase==='holyRepel',repelP=repel?clamp((o.repelT||0)/Math.max(1,o.repelDur||54),0,1):0;
+  if(front&&!grab&&!repel){
     drawUnderwaterOctopusEyes(c,ox,bodyY,o,tk,true);
     return true;
   }
   c.save();
   const escapeFade=clamp((o.escapeT||0)/18,0,1);
-  c.globalAlpha=(front?0.90:(0.30+0.54*reach))*(1-escapeFade*0.18);
+  c.globalAlpha=(front?0.90:(0.30+0.54*reach))*(1-escapeFade*0.18)*(1-repelP*0.70);
   if(!front){
     c.fillStyle='#010204';
     uwPoly(c,[[ox-76,bodyY+50],[ox-62,bodyY+10],[ox-34,bodyY-18],[ox,bodyY-28],[ox+36,bodyY-16],[ox+64,bodyY+12],[ox+78,bodyY+52]]);
@@ -287,9 +289,9 @@ function drawUnderwaterOctopusThreat(c,cave,tk,front){
   const offsets=[-64,-43,-22,0,24,46,66];
   for(let i=0;i<offsets.length;i++){
     const side=offsets[i],baseX=ox+side,baseY=bodyY+20+Math.abs(side)*0.08;
-    const tx=grab?sx+clamp(side*0.12,-10,10):sx+clamp(side*0.24,-24,24);
+    const tx=repel?ox+clamp(side*0.42,-34,34):(grab?sx+clamp(side*0.12,-10,10):sx+clamp(side*0.24,-24,24));
     const reachY=Number.isFinite(o.tipY)?o.tipY:CH+24;
-    const ty=grab?sy+8+Math.sin((tk||0)*0.08+i)*5:Math.max(reachY+i%3*7,sy+24+Math.abs(side)*0.04);
+    const ty=repel?bodyY+54+i%3*9+repelP*32:(grab?sy+8+Math.sin((tk||0)*0.08+i)*5:Math.max(reachY+i%3*7,sy+24+Math.abs(side)*0.04));
     drawUnderwaterOctopusTentacle(c,baseX,baseY,tx,ty,i+17,tk,front);
   }
   if(front&&grab){
@@ -297,6 +299,7 @@ function drawUnderwaterOctopusThreat(c,cave,tk,front){
     drawUnderwaterOctopusTentacle(c,sx-36,sy+44,sx-6,sy+4,31,tk,true);
     drawUnderwaterOctopusTentacle(c,sx+40,sy+46,sx+10,sy+6,37,tk,true);
   }
+  if(front&&repel)drawUnderwaterOctopusEyes(c,ox,bodyY,o,tk,true);
   c.restore();
   return true;
 }
@@ -404,16 +407,19 @@ function drawUnderwaterHolyLight(c,cave,tk,dark){
   const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.14);
   const danger=!!(cave&&cave.octopus&&cave.octopus.active&&!cave.swimFins);
   const grab=!!(cave&&cave.octopus&&cave.octopus.phase==='grab');
+  const repel=!!(cave&&cave.octopus&&cave.octopus.phase==='holyRepel');
+  const repelP=repel?clamp((cave.octopus.repelT||0)/Math.max(1,cave.octopus.repelDur||54),0,1):0;
   const goneFade=grab?clamp((y-(CH+2))/32,0,1):0;
   const visible=1-goneFade;
   if(visible<=0)return;
   const dangerFade=danger?clamp(((cave.octopus&&cave.octopus.t)||0)/60,0,1):0;
   c.save();
   c.globalCompositeOperation='lighter';
-  let g=c.createRadialGradient(x,y,2,x,y,danger?76-Math.round(dangerFade*18)+Math.round(pulse*7):(dark?96+Math.round(pulse*12):46));
-  g.addColorStop(0,danger?'rgba(255,230,130,0.38)':'rgba(255,245,170,0.46)');
-  g.addColorStop(0.24,danger?'rgba(150,220,255,0.15)':'rgba(190,240,255,0.25)');
-  g.addColorStop(0.65,danger?'rgba(40,120,160,0.045)':'rgba(80,190,220,0.08)');
+  const radius=repel?(104+Math.round(repelP*116)+Math.round(pulse*14)):(danger?76-Math.round(dangerFade*18)+Math.round(pulse*7):(dark?96+Math.round(pulse*12):46));
+  let g=c.createRadialGradient(x,y,2,x,y,radius);
+  g.addColorStop(0,repel?'rgba(255,255,210,0.86)':(danger?'rgba(255,230,130,0.38)':'rgba(255,245,170,0.46)'));
+  g.addColorStop(0.24,repel?'rgba(255,238,150,0.36)':(danger?'rgba(150,220,255,0.15)':'rgba(190,240,255,0.25)'));
+  g.addColorStop(0.65,repel?'rgba(120,220,255,0.11)':(danger?'rgba(40,120,160,0.045)':'rgba(80,190,220,0.08)'));
   g.addColorStop(1,'rgba(0,0,0,0)');
   c.globalAlpha=visible;
   c.fillStyle=g;
@@ -425,6 +431,49 @@ function drawUnderwaterHolyLight(c,cave,tk,dark){
     c.fillRect(x-26,y+12,52,1);
   }
   c.restore();
+}
+function drawUnderwaterHolyRepelLight(c,cave,tk){
+  const o=cave&&cave.octopus;
+  if(!o||o.phase!=='holyRepel')return false;
+  const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150);
+  const p=clamp((o.repelT||0)/Math.max(1,o.repelDur||54),0,1);
+  const burst=1-Math.abs(p-0.34)/0.34;
+  const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.24);
+  const r=38+Math.round(170*Math.min(1,p*1.35));
+  c.save();
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=0.24+0.34*clamp(burst,0,1)+0.10*pulse;
+  c.fillStyle='#fff6b8';
+  fillPixelPoly(c,[[x,y-r],[x+Math.round(r*0.32),y-Math.round(r*0.28)],[x+r,y],[x+Math.round(r*0.32),y+Math.round(r*0.28)],[x,y+r],[x-Math.round(r*0.32),y+Math.round(r*0.28)],[x-r,y],[x-Math.round(r*0.32),y-Math.round(r*0.28)]]);
+  c.globalAlpha=0.18+0.16*pulse;
+  c.fillStyle='#bdf8ff';
+  c.fillRect(x-r-20,y-1,r*2+40,2);
+  c.fillRect(x-1,y-r-12,2,r*2+24);
+  c.globalAlpha=0.18+0.20*clamp(1-p,0,1);
+  c.fillStyle='#ffffff';
+  for(let i=0;i<10;i++){
+    const a=i*Math.PI/5+((tk||0)*0.015),rr=Math.round(r*(0.48+0.05*(i%2)));
+    const x2=x+Math.round(Math.cos(a)*rr),y2=y+Math.round(Math.sin(a)*rr);
+    pixelLine(c,x,y,x2,y2,i%2?'#fff0a0':'#bdf8ff');
+  }
+  c.restore();
+  return true;
+}
+function drawUnderwaterHolyRepelText(c,cave,tk){
+  const o=cave&&cave.octopus;
+  if(!o||o.phase!=='holyRepel'||typeof drawTextC!=='function')return false;
+  const p=clamp((o.repelT||0)/Math.max(1,o.repelDur||54),0,1);
+  const fade=clamp(Math.min(p/0.18,(1-p)/0.18),0,1);
+  const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.18);
+  c.save();
+  c.globalAlpha=0.32+0.36*fade;
+  c.fillStyle='rgba(1,6,10,0.62)';
+  fillPixelPoly(c,[[116,38],[132,30],[348,30],[364,38],[354,74],[126,74]]);
+  c.globalAlpha=fade;
+  drawTextC(c,'FIAT LUX',CW/2,43,2,pulse>0.48?'#ffffff':'#fff0a0');
+  drawTextC(c,'LUX VINCIT TENEBRAS',CW/2,64,1,'#bdf8ff');
+  c.restore();
+  return true;
 }
 function underwaterManualLampOn(cave){
   return !!(cave&&cave.manualLampDive&&G.manual&&G.manual.active&&G.manual.lemId===cave.lemId&&G.manual.lampOn);
@@ -467,7 +516,7 @@ function drawUnderwaterManualLampLight(c,cave,tk,dark){
 }
 function drawUnderwaterOctopusWarning(c,cave,tk){
   const o=cave&&cave.octopus;
-  if(!o||!o.active||!o.warned||o.phase==='grab')return false;
+  if(!o||!o.active||!o.warned||o.phase==='grab'||o.phase==='holyRepel')return false;
   const pulse=0.5+0.5*Math.sin(((cave.t||0)+tk)*0.16);
   const x=CW-82,y=24,w=118,h=16;
   c.save();
@@ -518,12 +567,14 @@ function drawUnderwaterCaveView(c,tk){
   drawUnderwaterOctopusThreat(c,cave,tk,false);
   const dark=drawUnderwaterCaveDarkness(c,cave,tk);
   drawUnderwaterHolyLight(c,cave,tk,dark);
+  drawUnderwaterHolyRepelLight(c,cave,tk);
   drawUnderwaterLemming(c,cave,tk);
   drawUnderwaterManualLampLight(c,cave,tk,dark);
   drawUnderwaterOctopusThreat(c,cave,tk,true);
   const def=typeof underwaterCaveSceneDef==='function'?underwaterCaveSceneDef(cave.scene):null;
   drawText(c,def&&def.label?def.label:'Undervattnet',12,12,1,'#bdf8ff');
   drawUnderwaterOctopusWarning(c,cave,tk);
+  drawUnderwaterHolyRepelText(c,cave,tk);
   const octopus=!!(cave.octopus&&cave.octopus.active);
   if(cave.hintT>0&&!octopus)drawTextC(c,underwaterCaveHintText(cave),CW/2,CH-18,1,'#d8fbff');
   const hit=G.underwaterCavePromptObject?G.underwaterCavePromptObject(cave):null;

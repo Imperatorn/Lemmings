@@ -185,7 +185,7 @@ for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderw
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
 }
-for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_WAKE_DELAY','UNDERWATER_OCTOPUS_GRAB_TICKS','UNDERWATER_OCTOPUS_DRAG_DEPTH','UNDERWATER_OCTOPUS_GONE_Y','UNDERWATER_OCTOPUS_GONE_TICKS']) {
+for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERWATER_SWIM_MAX','UNDERWATER_SWIM_RUN_MAX','UNDERWATER_SWIM_DRAG','UNDERWATER_OCTOPUS_WAKE_DELAY','UNDERWATER_OCTOPUS_GRAB_TICKS','UNDERWATER_OCTOPUS_DRAG_DEPTH','UNDERWATER_OCTOPUS_GONE_Y','UNDERWATER_OCTOPUS_GONE_TICKS','UNDERWATER_OCTOPUS_HOLY_REPEL_DELAY','UNDERWATER_OCTOPUS_HOLY_REPEL_TICKS']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave swim tuning is missing ${token}`);
   }
@@ -193,8 +193,11 @@ for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERW
 if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_WAKE_DELAY=60') || !underwaterRuntimeCode.includes('wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY') || !underwaterRuntimeCode.includes('threatT=Math.max(0,(o.t||0)-wakeDelay)') || !underwaterRuntimeCode.includes('escapeWindow') || !underwaterRuntimeCode.includes('opts.splash!==false') || !underwaterRuntimeCode.includes("return this.exitUnderwaterCave('surface')") || underwaterRuntimeCode.includes('if(!hasFins&&AU.sWarn)AU.sWarn()')) {
   throw new Error('Underwater octopus threat should wait briefly before the warning, rise and catch sequence starts');
 }
-if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96') || !underwaterRuntimeCode.includes("cave.octopus&&cave.octopus.phase==='grab'") || !underwaterRuntimeCode.includes('cave.swimY>=UNDERWATER_OCTOPUS_GONE_Y') || !underwaterRuntimeCode.includes('o.goneT>=UNDERWATER_OCTOPUS_GONE_TICKS')) {
-  throw new Error('Underwater octopus grab should pull the lemmel fully below the view before resolving failure');
+if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96') || !underwaterRuntimeCode.includes("o.phase==='grab'") || !underwaterRuntimeCode.includes("phase==='holyRepel'") || !underwaterRuntimeCode.includes('cave.swimY>=UNDERWATER_OCTOPUS_GONE_Y') || !underwaterRuntimeCode.includes('o.goneT>=UNDERWATER_OCTOPUS_GONE_TICKS')) {
+  throw new Error('Underwater octopus grab should pull mortal lemmels fully below the view and branch holy lemmels into repel');
+}
+if (!underwaterRuntimeCode.includes('startUnderwaterCaveHolyOctopusRepel') || !underwaterRuntimeCode.includes("o.phase='holyRepel'") || !underwaterRuntimeCode.includes("'FIAT LUX'") || !underwaterRuntimeCode.includes("'LUX VINCIT TENEBRAS'") || !underwaterRuntimeCode.includes('AU.sUnderwaterHolyRepel')) {
+  throw new Error('Holy lemmels should repel the underwater octopus with a dedicated light sequence instead of dying');
 }
 if (!underwaterRuntimeCode.includes('manualLampDive') || !underwaterRuntimeCode.includes('waterfallDive') || !underwaterRuntimeCode.includes('entryNeedsMystery') || !underwaterRuntimeCode.includes('!cave.swimFins') || !underwaterRuntimeCode.includes("key==='l'||key==='L'") || !underwaterRuntimeCode.includes('LAMPAN RÄCKER INTE')) {
   throw new Error('Manual waterfall lamp diving should have separate state, lamp input, and progression guardrails');
@@ -210,7 +213,7 @@ for (const token of ['underwaterCave:null','underwaterCaveExitCooldown','underwa
     throw new Error(`Normal water handling is missing underwater cave hook/state: ${token}`);
   }
 }
-for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterLampDiveDarkness','drawUnderwaterManualLampCutout','drawUnderwaterManualLampLight','drawUnderwaterOctopusThreat','drawUnderwaterOctopusWarning','createRadialGradient']) {
+for (const token of ['drawUnderwaterCaveView','drawUnderwaterMap','drawUnderwaterLemming','drawUnderwaterObjects','underwaterCaveLitRoom','drawUnderwaterCaveDarkness','drawUnderwaterHolyLight','drawUnderwaterHolyRepelLight','drawUnderwaterHolyRepelText','drawUnderwaterLampDiveDarkness','drawUnderwaterManualLampCutout','drawUnderwaterManualLampLight','drawUnderwaterOctopusThreat','drawUnderwaterOctopusWarning','createRadialGradient']) {
   if (!underwaterRenderCode.includes(token)) {
     throw new Error(`Underwater cave renderer is missing ${token}`);
   }
@@ -228,6 +231,9 @@ if (!underwaterRenderCode.includes('const danger=!!') || !underwaterRenderCode.i
 }
 if (!underwaterRenderCode.includes('drawUnderwaterOctopusWarning') || !underwaterRenderCode.includes("SIMMA UPP\\u00c5T!") || !underwaterRenderCode.includes('const x=CW-82,y=24')) {
   throw new Error('Underwater octopus warning should be shown as a small top warning, away from the octopus eyes');
+}
+if (!underwaterRenderCode.includes('FIAT LUX') || !underwaterRenderCode.includes('LUX VINCIT TENEBRAS') || !underwaterRenderCode.includes("o.phase!=='holyRepel'") || !underwaterRenderCode.includes('repelP')) {
+  throw new Error('Holy octopus repel should render Latin text and an explicit light-over-darkness animation');
 }
 if (!underwaterRenderCode.includes('UW_DARK_CV') || !underwaterRenderCode.includes("globalCompositeOperation='destination-out'") || !underwaterRenderCode.includes('drawUnderwaterLampDiveDarkness(c,cave,tk)') || !underwaterRenderCode.includes('if(!lampDive){') || !underwaterRenderCode.includes('L LAMPA') || !underwaterRenderCode.includes('cave&&cave.manualLampDive)return false')) {
   throw new Error('Manual underwater lamp dive should use a darkness mask and lamp cutout without holy aura');
@@ -450,7 +456,7 @@ if (!audioCode.includes('underwaterPanic:{bpm:124') || !audioCode.includes('subV
 if (!audioCode.includes('assets/blessthelord.mp3') || !audioCode.includes('0.47') || !audioCode.includes('CHURCH_HYMN_LOOP_SECONDS=32') || !audioCode.includes('CHURCH_HYMN_LOOP_FADE_SECONDS=1') || !audioCode.includes('startWaterfallCaveChurchHymn') || !audioCode.includes('startWaterfallCaveChurchHymnDistant') || !audioCode.includes('setWaterfallCaveChurchHymnDistantLevel') || !audioCode.includes('stopWaterfallCaveChurchHymn')) {
   throw new Error('Church interior should play the Bless the Lord MP3 asset');
 }
-if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveTeleportCharge') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete')) {
+if (!audioCode.includes('sWaterfallCaveTeleportStone') || !audioCode.includes('sWaterfallCaveTeleportCharge') || !audioCode.includes('sWaterfallCaveRuneDiscover') || !audioCode.includes('sWaterfallCaveRunesComplete') || !audioCode.includes('sUnderwaterHolyRepel')) {
   throw new Error('Teleport stone discovery and rune reading should have dedicated magical sounds');
 }
 if (!audioCode.includes("rateFx('waterfall-cave-teleport-charge',2.1)") || !audioCode.includes('t+0.02') || !audioCode.includes('t+1.64')) {
@@ -733,7 +739,7 @@ for (const name of requiredRuntimeMethods) {
     throw new Error('Typed rune summaries should report empty 32/10 progress on a fresh profile');
   }
 }
-for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','setMusicDuck','clearMusicDuck','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusic','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startUnderwaterCaveMysteryMusic','stopUnderwaterCaveMysteryMusic','startUnderwaterCavePanicMusic','stopUnderwaterCavePanicMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sWaterfallCavePedestalRise','sPortalStoneOpen','sPortalStoneTravel']) {
+for (const name of ['setMusicVolume','setSfxVolume','applyVolumes','setMusicDuck','clearMusicDuck','startWaterfallCave','stopWaterfallCave','setWaterfallCaveWaterLevel','startWaterfallCaveFire','stopWaterfallCaveFire','updateWaterfallCaveCampfire','silenceMusic','silenceMusicForWaterfallCave','startWaterfallCaveMysteryMusic','stopWaterfallCaveMysteryMusic','startUnderwaterCaveMysteryMusic','stopUnderwaterCaveMysteryMusic','startUnderwaterCavePanicMusic','stopUnderwaterCavePanicMusic','waterfallCaveChurchHymnLoopGain','applyWaterfallCaveChurchHymnVolume','setupWaterfallCaveChurchHymnLoop','enforceWaterfallCaveChurchHymnLoop','startWaterfallCaveChurchHymnDistant','setWaterfallCaveChurchHymnDistantLevel','sWaterfallCaveStep','sWaterfallCaveCrystalChime','sWaterfallCaveRuneDiscover','sWaterfallCaveRunesComplete','sWaterfallCaveTeleportStone','sWaterfallCaveTeleportCharge','sWaterfallCaveStonePickup','sWaterfallCaveStoneThrow','sWaterfallCaveStoneSplash','sWaterfallCavePedestalRise','sPortalStoneOpen','sPortalStoneTravel','sUnderwaterHolyRepel']) {
   if (typeof AU[name] !== 'function') throw new Error(`Missing AU volume method: ${name}`);
 }
 for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
@@ -909,6 +915,19 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     }
     if (panicStops <= panicStopBeforeEscape || underwaterStarts <= manualMysteryBefore) {
       throw new Error('Escaping the manual dive octopus into the next room should stop panic and start underwater mystery music');
+    }
+    const panicStartBeforeReturn = panicStarts;
+    const underwaterStopBeforeReturn = underwaterStops;
+    G.underwaterCave.swimX = 60;
+    G.underwaterCave.swimY = 184;
+    G.handleUnderwaterCaveKey('ArrowLeft');
+    G.tick();
+    G.handleUnderwaterCaveKeyUp('ArrowLeft');
+    if (!G.underwaterCaveActive() || G.underwaterCave.scene !== 'entryPool' || !G.underwaterCave.octopus) {
+      throw new Error('Returning to the entry pool as a manual diver with fins should bring the octopus back');
+    }
+    if (panicStarts !== panicStartBeforeReturn + 1 || underwaterStops <= underwaterStopBeforeReturn || AU.mus.kind !== 'underwaterPanic') {
+      throw new Error('Returning to the entry pool with the octopus should restart panic music');
     }
     G.exitUnderwaterCave('silent');
     G.underwaterCaveExitCooldown = 0;
@@ -1119,8 +1138,10 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevHolySwimFinsUnlocked = G.holySwimFinsUnlocked;
   const prevPracticeHolySwimFinsUnlocked = G.practiceHolySwimFinsUnlocked;
   const prevJingle = AU.jingle;
-  let failJingles = 0;
+  const prevHolyRepelSfx = AU.sUnderwaterHolyRepel;
+  let failJingles = 0, holyRepels = 0;
   AU.jingle = win => { if (!win) failJingles++; };
+  AU.sUnderwaterHolyRepel = () => { holyRepels++; };
   const makeOctopusCave = (lem, keys, y) => ({
     active:true,
     scene:'entryPool',
@@ -1190,8 +1211,11 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   for (let i = 0; i < 30 && G.underwaterCaveActive(); i++) {
     G.updateUnderwaterCaveOctopusThreat(G.underwaterCave);
   }
-  if (!G.underwaterCaveActive() || G.underwaterCave.swimY < 308 || !(G.underwaterCave.octopus.dragFade > 0.25)) {
-    throw new Error('Octopus grab should pull the holy lemmel quickly down into the deep before the failure resolves');
+  if (!G.underwaterCaveActive() || G.underwaterCave.octopus.phase !== 'holyRepel' || holyRepels < 1 || !(G.underwaterCave.octopus.latinLines || []).includes('FIAT LUX')) {
+    throw new Error('Octopus grab should trigger the holy repel sequence instead of killing a holy lemmel');
+  }
+  if (!drawUnderwaterCaveView(WCTX, 17)) {
+    throw new Error('Holy octopus repel sequence did not render');
   }
   const caught = new Lemming(190, 104);
   caught.holy = true;
@@ -1200,11 +1224,24 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.saved = G.level.save;
   G.levelForceFail = false;
   G.underwaterCave = makeOctopusCave(caught, {}, 118);
+  for (let i = 0; i < 430 && G.underwaterCaveActive(); i++) G.updateUnderwaterCave();
+  if (G.underwaterCaveActive() || G.state !== 'PLAY' || G.levelForceFail || caught.dead || !G.manual.active) {
+    throw new Error('Holy lemmel caught by the octopus should repel it and return safely to the surface');
+  }
+  const mortal = new Lemming(192, 104);
+  mortal.holy = false;
+  G.lems = [mortal];
+  G.manual = {used:true,active:true,lemId:mortal.id,lampOn:false,keys:{},jumpQueued:null,aimAngle:0};
+  G.state = 'PLAY';
+  G.saved = G.level.save;
+  G.levelForceFail = false;
+  G.underwaterCave = makeOctopusCave(mortal, {}, 118);
   for (let i = 0; i < 340 && G.underwaterCaveActive(); i++) G.updateUnderwaterCave();
-  if (G.state !== 'RESULT' || !G.levelForceFail || failJingles < 1) {
-    throw new Error('Waiting underwater without swim fins should let the octopus catch the holy lemmel and force a loss');
+  if (G.state !== 'RESULT' || !G.levelForceFail || failJingles < 1 || !mortal.dead) {
+    throw new Error('Waiting underwater without swim fins should still let the octopus catch a non-holy lemmel and force a loss');
   }
   AU.jingle = prevJingle;
+  AU.sUnderwaterHolyRepel = prevHolyRepelSfx;
   G.underwaterCave = prevUnderwater;
   G.state = prevState;
   G.level = prevLevel;
