@@ -204,7 +204,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'flodaChurch',
     label:'Floda kyrkgrotta',
     archiveStyle:'floda',
-    stoneInscription:{title:'BROSTENEN',glyph:'bridge',color:'#d99a54',lines:['Två plankor över vattnet.','En dold port lyssnar.']},
+    stoneInscription:{title:'BROSTENEN',glyph:'bridge',color:'#d99a54',lines:['Första bron väcker fallet.','Bakom vattnet börjar raden.']},
     hiddenScenes:[],
     scenes:{}
   },
@@ -212,7 +212,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'darkForestArchive',
     label:'Skogens runarkiv',
     archiveStyle:'forest',
-    stoneInscription:{title:'ROTSTENEN',glyph:'root',color:'#8fb96a',lines:['Rötterna bär natten.','Lyktan får inte slockna.']},
+    stoneInscription:{title:'ROTSTENEN',glyph:'root',color:'#8fb96a',lines:['Rötterna håller mörkret.','Bär ljuset nära marken.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{
       deep:{objectDefaults:{cover:{coverAsset:'amigaA1200Cover',coverRect:{x:84,y:46,w:312,h:208},coverBackLines:['Tack till Anders Gunderson']}}},
@@ -223,7 +223,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'marbleArchive',
     label:'Marmorns runarkiv',
     archiveStyle:'marble',
-    stoneInscription:{title:'MARMORSTENEN',glyph:'vein',color:'#e6dcc2',lines:['Vit ådra, svart spricka.','Knappen sover ovanför.']},
+    stoneInscription:{title:'MARMORSTENEN',glyph:'vein',color:'#e6dcc2',lines:['Vit sten gömmer sprickan.','Höj blicken innan du slår.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -231,7 +231,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'forestRavineArchive',
     label:'Ravinens runarkiv',
     archiveStyle:'ravine',
-    stoneInscription:{title:'RAVINSTENEN',glyph:'rope',color:'#b9d68a',lines:['Repet minns andra sidan.','Djupet svarar långsamt.']},
+    stoneInscription:{title:'RAVINSTENEN',glyph:'rope',color:'#b9d68a',lines:['Repet ger djupet en kant.','Fäst först, gå sedan.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -239,7 +239,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'doublePondsArchive',
     label:'Dammarnas runarkiv',
     archiveStyle:'water',
-    stoneInscription:{title:'DAMMSTENEN',glyph:'waves',color:'#9eefff',lines:['Två speglar delar vägen.','Bygg lågt där vattnet väntar.']},
+    stoneInscription:{title:'DAMMSTENEN',glyph:'waves',color:'#9eefff',lines:['Två dammar delar skenet.','Den låga vägen håller.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -247,7 +247,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'chaosArchive',
     label:'Kaosets runarkiv',
     archiveStyle:'chaos',
-    stoneInscription:{title:'KAOSSTENEN',glyph:'fracture',color:'#ff6a80',lines:['Mönstret gömmer sig skevt.','Samla vägarna till en.']},
+    stoneInscription:{title:'KAOSSTENEN',glyph:'fracture',color:'#ff6a80',lines:['När vägarna bråkar, vänta.','Ett tecken samlar dem.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -255,7 +255,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'masterTrialArchive',
     label:'Mästarprovets runarkiv',
     archiveStyle:'master',
-    stoneInscription:{title:'MÄSTARSTENEN',glyph:'crown',color:'#d8b65a',lines:['Alla prov lämnar spår.','Sista tecknet pekar vidare.']},
+    stoneInscription:{title:'MÄSTARSTENEN',glyph:'crown',color:'#d8b65a',lines:['När alla ark har tänts','söker ljuset djupare.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   }
