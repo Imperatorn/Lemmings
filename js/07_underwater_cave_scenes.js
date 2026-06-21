@@ -16,7 +16,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toSiltTunnel',key:'right',xMin:418,yMin:116,yMax:246,target:'siltTunnel',spawn:'fromPool'}
     ],
     objects:[
-      {id:'surfaceLight',kind:'glow',default:{x:240,y:62,near:false,pulseT:0,hintT:0,hintLines:['YTLJUSET DARRAR OVANFÖR','SIMMA UPP NÄR DU VILL ÅTERVÄNDA']},hit:{type:'ellipse',rx:78,ry:22},verbs:['look']}
+      {id:'surfaceLight',kind:'glow',label:'Ytljuset',default:{x:240,y:62,near:false,pulseT:0,hintT:0,hintLines:['YTLJUSET BRYTS I VATTNET','OVANFÖR FINNS LUFT OCH LAND']},hit:{type:'ellipse',rx:78,ry:22},verbs:['look']}
     ]
   },
   siltTunnel:{
@@ -36,7 +36,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toCrystalReef',key:'down',x0:148,x1:324,yMin:254,target:'crystalReef',spawn:'fromTunnel'}
     ],
     objects:[
-      {id:'shellEcho',kind:'shell',default:{x:246,y:158,near:false,pulseT:0,hintT:0,hintLines:['SNÄCKAN SVARAR MED ETT LÅGT EKO','NÅGOT RÖR SIG DJUPARE IN']},hit:{type:'ellipse',rx:34,ry:22},verbs:['look','touch']}
+      {id:'shellEcho',kind:'shell',label:'Ekosnäckan',default:{x:246,y:158,near:false,pulseT:0,hintT:0,hintLines:['ETT DOVT EKO RULLAR GENOM SLAMMET','TUNNELN FORTSÄTTER LÄNGRE IN']},hit:{type:'ellipse',rx:34,ry:22},verbs:['look','touch']}
     ]
   },
   airBell:{
@@ -54,7 +54,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toArchive',key:'down',x0:154,x1:330,yMin:254,target:'sunkenArchive',spawn:'fromBell'}
     ],
     objects:[
-      {id:'airPocket',kind:'airPocket',default:{x:244,y:96,near:false,pulseT:0,hintT:0,hintLines:['HÄR FINNS EN STILLASTÅENDE LUFTFICKA','DEN HELIGA LÄMMELN KAN VILA HÄR']},hit:{type:'ellipse',rx:62,ry:34},verbs:['rest']}
+      {id:'airPocket',kind:'airPocket',label:'Luftfickan',default:{x:244,y:96,near:false,pulseT:0,hintT:0,hintLines:['LUFTEN STÅR STILL I KLOCKAN','HÄR BLIR VATTNET NÄSTAN TYST']},hit:{type:'ellipse',rx:62,ry:34},verbs:['rest']}
     ]
   },
   crystalReef:{
@@ -72,7 +72,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toArchive',key:'right',xMin:410,yMin:158,yMax:260,target:'sunkenArchive',spawn:'fromReef'}
     ],
     objects:[
-      {id:'blueCrystal',kind:'crystal',default:{x:258,y:202,near:false,pulseT:0,hintT:0,hintLines:['KRISTALLEN PULSERAR I VATTNET','ETT SVAGT TECKEN LIGGER GÖMT I DEN']},hit:{type:'ellipse',rx:40,ry:42},block:{type:'ellipse',rx:34,ry:26,dy:8},blocker:true,verbs:['look','touch']}
+      {id:'blueCrystal',kind:'crystal',label:'Blå kristall',default:{x:258,y:202,near:false,pulseT:0,hintT:0,hintLines:['KRISTALLEN SAMLAR DET SVAGA LJUSET','NÅGOT RITAS I DESS KÄRNA']},hit:{type:'ellipse',rx:40,ry:42},block:{type:'ellipse',rx:34,ry:26,dy:8},blocker:true,verbs:['look','touch']}
     ]
   },
   sunkenArchive:{
@@ -90,7 +90,7 @@ const UNDERWATER_CAVE_SCENES={
       {id:'toCrystalReef',key:'left',xMax:84,yMin:158,yMax:260,target:'crystalReef',spawn:'fromArchive'}
     ],
     objects:[
-      {id:'sealedRunes',kind:'sealedRunes',default:{x:242,y:174,near:false,pulseT:0,hintT:0,hintLines:['RUNORNA LIGGER BAKOM EN TUNN HINNA','LJUSET NÅR DEM INTE ÄN']},hit:{type:'rect',w:136,h:60,dy:-6},verbs:['read']}
+      {id:'sealedRunes',kind:'sealedRunes',label:'Djuparkivet',default:{x:242,y:174,near:false,pulseT:0,hintT:0,hintLines:['TUNNA ARK VILAR BAKOM GLASIGT SLAM','DE VÄNTAR PÅ ETT STARKARE SKEN']},hit:{type:'rect',w:136,h:60,dy:-6},verbs:['read']}
     ]
   }
 };
@@ -105,18 +105,18 @@ const UNDERWATER_CAVE_DEEP_RUNE_SET={
     kind:RUNE_KIND_DEEP,
     total:DEEP_RUNE_TOTAL
   },
-  readLines:['Det sjunkna arkivet öppnas.','Djuprunorna svarar på den heliga lågan.'],
+  readLines:['Det sjunkna arkivet öppnas.','Djuprunorna svarar på skenet.'],
   runes:[
-    {id:'deep01',title:'Djupets första tecken',lines:['Djupruna 1/10','Djupet minns vägen upp.']},
-    {id:'deep02',title:'Slamtunnelns tecken',lines:['Djupruna 2/10','Stillheten flyttar sig när du simmar.']},
-    {id:'deep03',title:'Luftklockans tecken',lines:['Djupruna 3/10','Andas där vattnet håller andan.']},
-    {id:'deep04',title:'Kristallrevets tecken',lines:['Djupruna 4/10','Ljuset behöver mörker för att synas.']},
-    {id:'deep05',title:'Arkivets mitt',lines:['Djupruna 5/10','Fem tecken öppnar vägen inåt.']},
-    {id:'deep06',title:'Den sjunkna raden',lines:['Djupruna 6/10','Gamla ord sjunker inte.']},
-    {id:'deep07',title:'Strömmens tecken',lines:['Djupruna 7/10','Följ inte strömmen för snabbt.']},
-    {id:'deep08',title:'Den mörka hålan',lines:['Djupruna 8/10','När kartan saknas, följ skenet.']},
-    {id:'deep09',title:'Den sista porten',lines:['Djupruna 9/10','Nästan hela raden lyser.']},
-    {id:'deep10',title:'Djupets sluttecken',lines:['Djupruna 10/10','Det som låg under pekar uppåt.']}
+    {id:'deep01',title:'Djupets första tecken',lines:['Djupruna 1/10','Ytljuset följer med ned.']},
+    {id:'deep02',title:'Slamtunnelns tecken',lines:['Djupruna 2/10','Slammet rör sig först när du gör det.']},
+    {id:'deep03',title:'Luftklockans tecken',lines:['Djupruna 3/10','Luften gömmer sig där stenen buktar.']},
+    {id:'deep04',title:'Kristallrevets tecken',lines:['Djupruna 4/10','Kristallens kant minns varje sken.']},
+    {id:'deep05',title:'Arkivets mitt',lines:['Djupruna 5/10','Fem tecken får arkivet att lyssna.']},
+    {id:'deep06',title:'Den sjunkna raden',lines:['Djupruna 6/10','Gamla ord ligger kvar i mörkret.']},
+    {id:'deep07',title:'Strömmens tecken',lines:['Djupruna 7/10','Motströmmen visar var väggen släpper.']},
+    {id:'deep08',title:'Den mörka hålan',lines:['Djupruna 8/10','När kartan tystnar, håll dig nära skenet.']},
+    {id:'deep09',title:'Den sista porten',lines:['Djupruna 9/10','En rad återstår innan djupet svarar.']},
+    {id:'deep10',title:'Djupets sluttecken',lines:['Djupruna 10/10','Det som vilade under pekar uppåt.']}
   ]
 };
 

@@ -1134,6 +1134,10 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   const prevLems = G.lems;
   const prevManual = G.manual;
   const prevSaved = G.saved;
+  const prevSpawned = G.spawned;
+  const prevOut = G.out;
+  const prevTimeT = G.timeT;
+  const prevEndT = G.endT;
   const prevToasts = G.toasts;
   const prevHolySwimFinsUnlocked = G.holySwimFinsUnlocked;
   const prevPracticeHolySwimFinsUnlocked = G.practiceHolySwimFinsUnlocked;
@@ -1241,16 +1245,41 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     throw new Error('Holy lemmel caught by the octopus should repel it and return safely to the surface');
   }
   const mortal = new Lemming(192, 104);
+  const bystander = new Lemming(214, 104);
   mortal.holy = false;
-  G.lems = [mortal];
+  bystander.holy = false;
+  G.lems = [mortal, bystander];
   G.manual = {used:true,active:true,lemId:mortal.id,lampOn:false,keys:{},jumpQueued:null,aimAngle:0};
   G.state = 'PLAY';
-  G.saved = G.level.save;
+  G.saved = 0;
+  G.spawned = G.level.lem;
+  G.out = 2;
+  G.endT = 0;
   G.levelForceFail = false;
   G.underwaterCave = makeOctopusCave(mortal, {}, 118);
   for (let i = 0; i < 340 && G.underwaterCaveActive(); i++) G.updateUnderwaterCave();
-  if (G.state !== 'RESULT' || !G.levelForceFail || failJingles < 1 || !mortal.dead) {
-    throw new Error('Waiting underwater without swim fins should still let the octopus catch a non-holy lemmel and force a loss');
+  if (G.underwaterCaveActive() || G.state !== 'PLAY' || G.levelForceFail || !mortal.dead || bystander.dead || G.manual.active || failJingles > 0) {
+    throw new Error('Octopus catch should only kill a non-holy manual lemmel while other lemmels can continue');
+  }
+  const lastMortal = new Lemming(192, 104);
+  lastMortal.holy = false;
+  G.lems = [lastMortal];
+  G.manual = {used:true,active:true,lemId:lastMortal.id,lampOn:false,keys:{},jumpQueued:null,aimAngle:0};
+  G.state = 'PLAY';
+  G.saved = 0;
+  G.spawned = G.level.lem;
+  G.out = 1;
+  G.timeT = 999;
+  G.endT = 0;
+  G.levelForceFail = false;
+  G.underwaterCave = makeOctopusCave(lastMortal, {}, 118);
+  for (let i = 0; i < 340 && G.underwaterCaveActive(); i++) G.updateUnderwaterCave();
+  if (G.underwaterCaveActive() || G.state !== 'PLAY' || G.levelForceFail || !lastMortal.dead) {
+    throw new Error('Octopus catch should not force an immediate level result before the normal last-lemmel check');
+  }
+  for (let i = 0; i < 25 && G.state === 'PLAY'; i++) G.tick();
+  if (G.state !== 'RESULT' || G.levelForceFail || failJingles < 1) {
+    throw new Error('The level should end normally after the octopus kills the last available lemmel');
   }
   AU.jingle = prevJingle;
   AU.sUnderwaterHolyRepel = prevHolyRepelSfx;
@@ -1263,6 +1292,10 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.lems = prevLems;
   G.manual = prevManual;
   G.saved = prevSaved;
+  G.spawned = prevSpawned;
+  G.out = prevOut;
+  G.timeT = prevTimeT;
+  G.endT = prevEndT;
   G.toasts = prevToasts;
   G.holySwimFinsUnlocked = prevHolySwimFinsUnlocked;
   G.practiceHolySwimFinsUnlocked = prevPracticeHolySwimFinsUnlocked;

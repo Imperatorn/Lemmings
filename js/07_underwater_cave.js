@@ -396,6 +396,9 @@ Object.assign(G,{
       l.dead=true;
       this.dropLampIfCarrier(l);
     }
+    const hasOtherLem=(this.lems||[]).some(q=>q&&q!==l&&q.alive&&q.alive());
+    const hasQueuedLem=!!(this.level&&this.spawned<this.level.lem);
+    const canContinue=this.state==='PLAY'&&(hasOtherLem||hasQueuedLem);
     if(this.manual){
       this.manual.active=false;
       this.manual.lemId=null;
@@ -404,17 +407,24 @@ Object.assign(G,{
     }
     this.underwaterCave=null;
     this.underwaterCaveExitCooldown=64;
+    const resumeMusic=!!this.underwaterCaveResumeMusic;
+    const resumeWeather=this.underwaterCaveResumeWeather;
     this.underwaterCaveResumeMusic=false;
     this.underwaterCaveResumeWeather=null;
-    this.levelForceFail=true;
-    this.state='RESULT';
-    this.recordLevelResult(false);
     if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.05);
     if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0.05);
-    if(AU.clearMusicDuck)AU.clearMusicDuck(0.05);
-    if(AU.stopMusic)AU.stopMusic();
-    if(AU.stopWeather)AU.stopWeather();
-    if(AU.jingle)AU.jingle(false);
+    if(AU.clearMusicDuck)AU.clearMusicDuck(canContinue?0.25:0.05);
+    if(canContinue){
+      if(resumeWeather&&AU.sfxOn&&AU.startWeather)AU.startWeather(resumeWeather);
+      if(resumeMusic&&AU.musicOn&&AU.startMusic&&this.level){
+        const levelMusic=this.musicKindForLevel?this.musicKindForLevel(this.levelIdx):null;
+        if(levelMusic&&!(AU.mus&&AU.mus.timer&&AU.mus.kind===levelMusic))AU.startMusic(levelMusic);
+      }
+      this.toast('LÄMMELN TOGS AV BLÄCKFISKEN',100);
+    }else{
+      if(AU.stopMusic)AU.stopMusic();
+      if(AU.stopWeather)AU.stopWeather();
+    }
     return true;
   },
   updateUnderwaterCaveOctopusThreat(cave){
@@ -580,9 +590,9 @@ Object.assign(G,{
     obj.deepRead=deep.read||0;
     obj.deepTotal=deep.total||DEEP_RUNE_TOTAL;
     obj.readComplete=!!deep.complete;
-    if(obj.readComplete)obj.hintLines=['ALLA DJUPRUNOR ÄR LÄSTA','ARKIVET LYSER STILLA'];
-    else if(obj.surfaceComplete)obj.hintLines=['DET SJUNKNA ARKIVET ÖPPNAS','LÄS NÄSTA DJUPRUNA'];
-    else obj.hintLines=['ARKIVET ÄR FÖRSEGLAT','LÄS DE 32 ARKEN FÖRST'];
+    if(obj.readComplete)obj.hintLines=['DJUPARKIVET LYSER STILLA','ALLA 10 RUNOR ÄR LÄSTA'];
+    else if(obj.surfaceComplete)obj.hintLines=['DET SJUNKNA ARKIVET HAR ÖPPNATS','LÄS NÄSTA DJUPRUNA'];
+    else obj.hintLines=['ARKIVET HÅLLER SIG STÄNGT','LÄS DE 32 ARKEN FÖRST'];
     return obj;
   },
   readUnderwaterCaveDeepRunes(hit){
@@ -595,7 +605,7 @@ Object.assign(G,{
     obj.hintT=Math.max(obj.hintT||0,140);
     if(cave.manualLampDive){
       cave.messageT=130;
-      cave.messageLines=['RUNORNA SVARAR INTE PÅ LAMPAN','ETT HELIGT SKEN KRÄVS'];
+      cave.messageLines=['LAMPAN FÅR INTE ARKET ATT VAKNA','ETT HELIGT SKEN KRÄVS'];
       this.toast('LAMPAN RÄCKER INTE',80);
       if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.45);
       return true;
@@ -612,7 +622,7 @@ Object.assign(G,{
     if(this.recordRuneArchiveVisit)this.recordRuneArchiveVisit(Object.assign({},meta,{setId:meta.id}));
     if(!obj.surfaceComplete){
       cave.messageT=130;
-      cave.messageLines=['ARKIVET ÄR FÖRSEGLAT','LÄS DE 32 ARKEN FÖRST'];
+      cave.messageLines=['ARKIVET HÅLLER SIG STÄNGT','LÄS DE 32 ARKEN FÖRST'];
       this.toast('DJUPRUNORNA VÄNTAR',80);
       if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.65);
       return true;
@@ -622,7 +632,7 @@ Object.assign(G,{
     const nextIndex=entries.findIndex(e=>e&&e.key&&!progress.discovered[e.key]);
     if(nextIndex<0){
       cave.messageT=140;
-      cave.messageLines=['ALLA DJUPRUNOR ÄR LÄSTA','ARKIVET LYSER STILLA'];
+      cave.messageLines=['DJUPARKIVET LYSER STILLA','ALLA 10 RUNOR ÄR LÄSTA'];
       this.toast('DJUPRUNOR 10/10',90);
       if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.85);
       return true;
@@ -653,7 +663,7 @@ Object.assign(G,{
     obj.pulseT=Math.max(obj.pulseT||0,80);
     obj.hintT=Math.max(obj.hintT||0,120);
     cave.messageT=110;
-    cave.messageLines=underwaterCaveCloneData(obj.hintLines||['VATTNET SVARAR INTE ÄN']);
+    cave.messageLines=underwaterCaveCloneData(obj.hintLines||['INGET SVAR I VATTNET']);
     this.toast((def&&def.label)||'NÅGOT RÖR SIG I VATTNET',70);
     if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.8);
     return true;
