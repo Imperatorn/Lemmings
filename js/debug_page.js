@@ -2,6 +2,9 @@
 // Separat kontrollpanel för att provköra spelmoment och alla ljud utan
 // att starta den vanliga titel/meny-loopen i 13_boot.js.
 (function(){
+  if(typeof storageSandboxed!=='function'||!storageSandboxed()){
+    throw new Error('Debugpanelen kräver isolerad lagring.');
+  }
   const $=id=>document.getElementById(id);
   const DBG={
     running:false,timer:null,tick:0,lastLevelIdx:0,
@@ -297,7 +300,6 @@
     if(!l){setStatus('Ingen levande lämmel att göra helig.','warn');return}
     l.holy=true;
     l.holySaveT=-999;
-    G.holyBlessingUnlocked=true;
     const holy=G.normalizeHolyLemmings?G.normalizeHolyLemmings(l):l;
     if(!G.normalizeHolyLemmings)G.holyLevelLemId=l.id;
     if(G.holyLemmingGlow)G.holyLemmingGlow(holy||l,'blessing');
@@ -466,10 +468,9 @@
     G.lems=[holy,...followers];
     G.out=G.lems.length;
     G.spawned=G.level.lem;
-    G.holyBlessingUnlocked=false;
-    G.holyTeleportStoneUnlocked=false;
     G.practiceHolyTeleportStoneUnlocked=true;
     G.practiceHolyTeleportStoneCharged=true;
+    G.levelRunMode='practice';
     G.holyLevelLemId=holy.id;
     G.holyTeleportStoneLemId=holy.id;
     G.selSkill=null;
@@ -499,14 +500,12 @@
     G.out=1;
     G.spawned=G.level.lem;
     G.manual={used:true,active:true,lemId:holy.id,lampOn:false,keys:{left:false,right:false,down:false,run:false,aim:false},jumpQueued:null,aimAngle:0};
-    G.holyBlessingUnlocked=true;
-    G.holySwimFinsUnlocked=withFins?G.holySwimFinsUnlocked:false;
     G.practiceHolySwimFinsUnlocked=withFins;
     holy.swimFins=withFins;
     G.holyLevelLemId=holy.id;
     G.paused=false;
     G.cam=clamp(x-180,0,G.maxCam());
-    if(!G.enterUnderwaterCave||!G.enterUnderwaterCave(holy,z,{splash:false})){setStatus('Kunde inte öppna undervattensgrottan.','warn');return}
+    if(!G.enterUnderwaterCave||!G.enterUnderwaterCave(holy,z,{splash:false,swimFins:withFins})){setStatus('Kunde inte öppna undervattensgrottan.','warn');return}
     finishAnimationSetup(withFins?'Undervattensgrotta med simfötter: piltangenter styr, Shift simmar snabbare, M visar kartan.':'Undervattensgrotta utan simfötter: simma upp för att fly från bläckfisken.');
   }
 

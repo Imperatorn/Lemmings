@@ -85,7 +85,7 @@ if (debugHtml) {
     }
   }
   const debugPageCode = fs.readFileSync(path.join(root, 'js/debug_page.js'), 'utf8');
-  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','makeDebugLemmingHoly','debugLemmingTarget','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','ensureWaterLevelForFishRing({audio:false})','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest','underwaterCaveNoFinsTest','setupUnderwaterCaveTest({swimFins:true})','setupUnderwaterCaveTest({swimFins:false})','G.enterUnderwaterCave(holy,z,{splash:false})']) {
+  for (const token of ['CAVE_ARCHIVE_TESTS','setupFishRingAnimation','setupFishRingRopeAnimation','setupWaterfallCaveAnimation','setupWaterfallCaveScene','setupPortalStoneTest','setupUnderwaterCaveTest','makeDebugLemmingHoly','debugLemmingTarget','handleDebugGamePointer','handleDebugGameKeyDown','debugSelectHudButton','setupRopeAnimation','ensureWaterLevelForFishRing','ensureWaterLevelForFishRing({audio:false})','buildCutsceneButtons','bindDebugCaveControls','handleDebugCaveKeyDown','playDebugCutscene','playDebugRescueCutscene','debugRescueKindForCutsceneId','debugCutsceneWorldContext','spawnMushroom','spawnTree','makeHolyLem','caveGlyphArchive','caveDarkForestArchive','caveMarbleArchive','caveDoublePondsArchive','caveChaosArchive','caveMasterArchive','portalStoneTest','underwaterCaveTest','underwaterCaveNoFinsTest','setupUnderwaterCaveTest({swimFins:true})','setupUnderwaterCaveTest({swimFins:false})','G.enterUnderwaterCave(holy,z,{splash:false,swimFins:withFins})']) {
     if (!debugPageCode.includes(token)) throw new Error(`debug_page.js is missing ${token}`);
   }
   if (debugPageCode.includes("setupWaterfallCaveScene('glyphArchive','fromChurch',spec.label,{audio:false")) {
@@ -94,8 +94,11 @@ if (debugHtml) {
   if (!debugPageCode.includes('quietArchiveJump') || !debugPageCode.includes('audio:withAudio&&!quietArchiveJump')) {
     throw new Error('debug_page.js should suppress the entry waterfall burst only for direct glyph archive debug jumps');
   }
-  if (!debugPageCode.includes('G.enterUnderwaterCave(holy,z,{splash:false})')) {
+  if (!debugPageCode.includes('G.enterUnderwaterCave(holy,z,{splash:false,swimFins:withFins})')) {
     throw new Error('debug_page.js should suppress the initial underwater splash in direct debug jumps');
+  }
+  if (!debugPageCode.includes("typeof storageSandboxed!=='function'||!storageSandboxed()") || /G\.(holyBlessingUnlocked|holyTeleportStoneUnlocked|holySwimFinsUnlocked)\s*=/.test(debugPageCode)) {
+    throw new Error('Debug scenarios must require isolated storage and avoid mutating permanent holy-item profile flags');
   }
   const debugDoAction = debugPageCode.slice(debugPageCode.indexOf('function doAction'));
   if (!debugPageCode.includes("if(action==='underwaterCaveTest'){setupUnderwaterCaveTest({swimFins:true});return}") || debugDoAction.indexOf("if(action==='underwaterCaveTest'") > debugDoAction.indexOf("startSelectedLevel();")) {
@@ -104,7 +107,7 @@ if (debugHtml) {
   if (!debugPageCode.includes("'caveMystery','Runarkiv'") || !debugPageCode.includes('if(withAudio)audioReady();') || !debugPageCode.includes("G.setWaterfallCaveScene(sceneId,spawnId||'entry',{audio:withAudio})")) {
     throw new Error('debug_page.js should expose and initialize the glyph archive mystery music in debug mode');
   }
-  if (!debugPageCode.includes('G.practiceHolyTeleportStoneUnlocked=true') || !debugPageCode.includes('G.practiceHolyTeleportStoneCharged=true') || debugPageCode.includes('G.holyTeleportStoneUnlocked=true')) {
+  if (!debugPageCode.includes('G.practiceHolyTeleportStoneUnlocked=true') || !debugPageCode.includes('G.practiceHolyTeleportStoneCharged=true') || !debugPageCode.includes("G.levelRunMode='practice'") || debugPageCode.includes('G.holyTeleportStoneUnlocked=true')) {
     throw new Error('Debug portal-stone test should use charged temporary practice state, not permanent profile unlocks');
   }
 }
@@ -180,7 +183,7 @@ for (const token of ['UNDERWATER_CAVE_SCENES','UNDERWATER_CAVE_DEEP_RUNE_SET','e
     throw new Error(`Underwater cave scene registry is missing ${token}`);
   }
 }
-for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','underwaterCaveWaterfallDiveSource','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp']) {
+for (const token of ['underwaterCaveActive','underwaterCaveSceneDark','underwaterCaveHasSwimFins','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','underwaterCaveWaterfallDiveSource','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp']) {
   if (!underwaterRuntimeCode.includes(token)) {
     throw new Error(`Underwater cave runtime is missing ${token}`);
   }
@@ -190,7 +193,7 @@ for (const token of ['UNDERWATER_SWIM_ACCEL','UNDERWATER_SWIM_RUN_ACCEL','UNDERW
     throw new Error(`Underwater cave swim tuning is missing ${token}`);
   }
 }
-if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_WAKE_DELAY=60') || !underwaterRuntimeCode.includes('wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY') || !underwaterRuntimeCode.includes('threatT=Math.max(0,(o.t||0)-wakeDelay)') || !underwaterRuntimeCode.includes('escapeWindow') || !underwaterRuntimeCode.includes('opts.splash!==false') || !underwaterRuntimeCode.includes("return this.exitUnderwaterCave('surface')") || underwaterRuntimeCode.includes('if(!hasFins&&AU.sWarn)AU.sWarn()')) {
+if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_WAKE_DELAY=Math.max(1,Math.round(1000/TICK))') || !underwaterRuntimeCode.includes('wakeDelay:UNDERWATER_OCTOPUS_WAKE_DELAY') || !underwaterRuntimeCode.includes('threatT=Math.max(0,(o.t||0)-wakeDelay)') || !underwaterRuntimeCode.includes('escapeWindow') || !underwaterRuntimeCode.includes('opts.splash!==false') || !underwaterRuntimeCode.includes("return this.exitUnderwaterCave('surface')") || underwaterRuntimeCode.includes('if(!hasFins&&AU.sWarn)AU.sWarn()')) {
   throw new Error('Underwater octopus threat should wait briefly before the warning, rise and catch sequence starts');
 }
 if (!underwaterRuntimeCode.includes('UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96') || !underwaterRuntimeCode.includes("o.phase==='grab'") || !underwaterRuntimeCode.includes("phase==='holyRepel'") || !underwaterRuntimeCode.includes('cave.swimY>=UNDERWATER_OCTOPUS_GONE_Y') || !underwaterRuntimeCode.includes('o.goneT>=UNDERWATER_OCTOPUS_GONE_TICKS')) {
@@ -717,7 +720,7 @@ const requiredRuntimeMethods = [
   'waterfallCaveTeleportStoneState','waterfallCaveBehindChurchAltar','discoverWaterfallCaveTeleportStone','updateWaterfallCaveTeleportStone','chargeWaterfallCaveTeleportStoneAtCrystal',
   'waterfallCaveMirrorPoolHit','waterfallCaveMirrorPoolState','resetWaterfallCaveMirrorPoolVisit','triggerWaterfallCaveMirrorPedestal','updateWaterfallCaveMirrorPedestal','waterfallCaveMirrorThrowStonePile','waterfallCaveMirrorStoneHeld','waterfallCaveMirrorStoneThrowLocks','pickWaterfallCaveMirrorStone','throwWaterfallCaveMirrorStone','handleWaterfallCaveMirrorStoneAction','clearWaterfallCaveMirrorStone','updateWaterfallCaveMirrorStone',
   'waterfallCaveChurchHymnDistanceLevel','updateWaterfallCaveChurchHymnDistance',
-  'underwaterCaveActive','underwaterCaveSceneDark','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','underwaterCaveOctopusThreatActive','finishUnderwaterCaveOctopusCatch','updateUnderwaterCaveOctopusThreat','underwaterCaveDeepRuneEntries','syncUnderwaterCaveDeepRuneObjectProgress','readUnderwaterCaveDeepRunes','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
+  'underwaterCaveActive','underwaterCaveSceneDark','underwaterCaveHasSwimFins','setUnderwaterCaveSceneAudio','underwaterCaveDryStandAt','underwaterCaveSurfaceExitSpot','tryEnterUnderwaterCaveFromManual','enterUnderwaterCave','exitUnderwaterCave','setUnderwaterCaveScene','underwaterCaveOctopusThreatActive','finishUnderwaterCaveOctopusCatch','updateUnderwaterCaveOctopusThreat','underwaterCaveDeepRuneEntries','syncUnderwaterCaveDeepRuneObjectProgress','readUnderwaterCaveDeepRunes','updateUnderwaterCave','handleUnderwaterCaveInput','handleUnderwaterCaveKey','handleUnderwaterCaveKeyUp',
   'normalizePendingSkillBonus','shopOptions','pendingBonusForLevel','briefShopSkillBonus','buyBriefShopSkill','handleBriefShopInput','applyPendingSkillBonus',
   'updateDolphins','updateMeteors','updateMushroomEatingEffects','canTrollEatMushroom','growTrollFromMushroom','updateMummyScareEffects',
   'canWarmAtTorch','startTorchWarm','finishTorchWarm','updateTorchWarmEffects',
@@ -1023,6 +1026,15 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
     messageT:0,
     t:0
   });
+  const expectedWakeTicks = Math.max(1, Math.round(1000 / TICK));
+  const wakeProbe = G.underwaterCaveSpawnOctopus({swimX:240}, {x:240});
+  if (!wakeProbe || wakeProbe.wakeDelay !== expectedWakeTicks || Math.abs(wakeProbe.wakeDelay * TICK - 1000) > TICK) {
+    throw new Error('Underwater octopus wake delay should be approximately one real second at normal tempo');
+  }
+  G.holySwimFinsUnlocked = true;
+  if (G.underwaterCaveHasSwimFins({swimFinsOverride:false}) || !G.underwaterCaveHasSwimFins({swimFinsOverride:true})) {
+    throw new Error('Debug swim-fin override should be local to the active cave and take precedence over profile state');
+  }
   G.toasts = [];
   G.holySwimFinsUnlocked = false;
   G.practiceHolySwimFinsUnlocked = false;
@@ -1204,8 +1216,9 @@ for (const name of ['sLemShiver','sLemWarmSigh','sMissileLaunch']) {
   G.levelForceFail = false;
   G.underwaterCave = makeOctopusCave(fastEscape, {up:true}, 84);
   G.underwaterCave.vy = -1.25;
-  G.underwaterCave.octopus.t = 220;
-  G.underwaterCave.octopus.wakeDelay = 60;
+  const wakeTicks = Math.max(1, Math.round(1000 / TICK));
+  G.underwaterCave.octopus.t = wakeTicks + 160;
+  G.underwaterCave.octopus.wakeDelay = wakeTicks;
   G.underwaterCave.octopus.wakeT = 160;
   G.underwaterCave.octopus.reach = 0.82;
   for (let i = 0; i < 16 && G.underwaterCaveActive(); i++) G.updateUnderwaterCave();
@@ -4157,11 +4170,20 @@ if (G.makeSaveState('VERIFY CAVE')) {
   throw new Error('Save-state should not be created while the waterfall cave is active');
 }
 G.waterfallCave = null;
+G.underwaterCave = {active:true};
+if (G.makeSaveState('VERIFY UNDERWATER CAVE')) {
+  throw new Error('Save-state should not be created while the underwater cave is active');
+}
+G.underwaterCave = null;
 G.playCutscene({id:'verify-restore-clears-cutscene',respectPrefs:false,shots:[{duration:8,text:'RESTORE'}]});
 G.waterfallCave = {active:true};
 G.waterfallCaveExitNeedsUpRelease = true;
+G.underwaterCave = {active:true};
+G.underwaterCaveExitCooldown = 17;
+G.underwaterCaveResumeMusic = true;
+G.underwaterCaveResumeWeather = 'rain';
 G.state = 'MENU';
-if (!G.restoreSaveState(savedState) || G.cutsceneActive() || G.waterfallCaveActive() || G.waterfallCaveExitNeedsUpRelease || G.state !== 'PLAY') {
+if (!G.restoreSaveState(savedState) || G.cutsceneActive() || G.waterfallCaveActive() || G.underwaterCaveActive() || G.waterfallCaveExitNeedsUpRelease || G.underwaterCaveExitCooldown !== 0 || G.underwaterCaveResumeMusic || G.underwaterCaveResumeWeather || G.state !== 'PLAY') {
   throw new Error('Restore-state should clear transient overlays and return to play');
 }
 {

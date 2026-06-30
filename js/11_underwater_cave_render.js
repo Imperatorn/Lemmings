@@ -292,7 +292,7 @@ function drawUnderwaterLemmingSide(c,x,y,d,anim,hasFins){
 function drawUnderwaterLemming(c,cave,tk){
   const x=Math.round(cave.swimX||240),y=Math.round(cave.swimY||150),face=cave.facing||'right';
   const anim=underwaterSwimPhase(cave,tk);
-  const hasFins=!!(cave.swimFins||(G.hasHolySwimFins&&G.hasHolySwimFins()));
+  const hasFins=!!cave.swimFins;
   const drawDir=face==='left'?-1:(face==='right'?1:((cave.vx||0)<-0.05?-1:1));
   const grab=!!(cave.octopus&&cave.octopus.phase==='grab');
   const dragFade=grab?clamp(cave.octopus.dragFade||0,0,1):0;

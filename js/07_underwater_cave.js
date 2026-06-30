@@ -5,7 +5,7 @@ const UNDERWATER_SWIM_RUN_ACCEL=0.50;
 const UNDERWATER_SWIM_MAX=1.70;
 const UNDERWATER_SWIM_RUN_MAX=3.75;
 const UNDERWATER_SWIM_DRAG=0.87;
-const UNDERWATER_OCTOPUS_WAKE_DELAY=60;
+const UNDERWATER_OCTOPUS_WAKE_DELAY=Math.max(1,Math.round(1000/TICK));
 const UNDERWATER_OCTOPUS_GRAB_TICKS=38;
 const UNDERWATER_OCTOPUS_DRAG_DEPTH=CH+96;
 const UNDERWATER_OCTOPUS_GONE_Y=CH+34;
@@ -52,6 +52,10 @@ Object.assign(G,{
   },
   underwaterCaveSceneDark(scene){
     return String(scene||'entryPool')!=='entryPool';
+  },
+  underwaterCaveHasSwimFins(cave){
+    if(cave&&typeof cave.swimFinsOverride==='boolean')return cave.swimFinsOverride;
+    return !!(this.hasHolySwimFins&&this.hasHolySwimFins());
   },
   underwaterCaveSceneWantsOctopus(cave,sceneId){
     return !!(cave&&String(sceneId||cave.scene||'entryPool')==='entryPool'&&(cave.manualLampDive||!cave.swimFins));
@@ -226,7 +230,10 @@ Object.assign(G,{
     const key=(this.levelIdx||0)+':'+Math.round(z.x||0)+','+Math.round(z.y||0)+','+Math.round(z.w||0);
     const manualLampDive=!!(opts.manualLampDive&&!l.holy);
     const holyDiver=!!(l.holy&&!manualLampDive);
-    const hasFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
+    const swimFinsOverride=typeof opts.swimFins==='boolean'?opts.swimFins:null;
+    const hasFins=swimFinsOverride==null
+      ? !!(this.hasHolySwimFins&&this.hasHolySwimFins())
+      : swimFinsOverride;
     const wf=opts.waterfallDive||null;
     this.underwaterCave={
       active:true,
@@ -253,6 +260,7 @@ Object.assign(G,{
       swimStrokeT:0,
       facing:spawn.facing||'front',
       swimFins:hasFins,
+      swimFinsOverride,
       octopus:null,
       keys:{left:false,right:false,up:false,down:false,run:false},
       sceneState:{},
@@ -332,7 +340,7 @@ Object.assign(G,{
     cave.facing=spawn.facing||cave.facing||'front';
     cave.mapOpen=false;
     cave.hintT=90;
-    cave.swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
+    cave.swimFins=this.underwaterCaveHasSwimFins?this.underwaterCaveHasSwimFins(cave):!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     if(this.syncUnderwaterCaveOctopusForScene)this.syncUnderwaterCaveOctopusForScene(cave,spawn);
     this.setUnderwaterCaveSceneAudio(def.id);
     this.toast(def.label||'NYTT RUM',80);
@@ -518,7 +526,7 @@ Object.assign(G,{
     if(cave.messageT>0)cave.messageT--;
     if(cave.lampPulseT>0)cave.lampPulseT--;
     cave.keys=cave.keys||{};
-    cave.swimFins=!!(this.hasHolySwimFins&&this.hasHolySwimFins());
+    cave.swimFins=this.underwaterCaveHasSwimFins?this.underwaterCaveHasSwimFins(cave):!!(this.hasHolySwimFins&&this.hasHolySwimFins());
     const b=this.underwaterCaveSceneBounds(cave);
     if(cave.mapOpen){
       if(this.underwaterCaveOctopusThreatActive&&this.underwaterCaveOctopusThreatActive(cave))cave.mapOpen=false;

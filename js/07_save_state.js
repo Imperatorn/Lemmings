@@ -2,7 +2,7 @@
 Object.assign(G,{
   makeSaveState(label){
     if(this.state!=='PLAY'||!this.level||!this.T)return null;
-    if((this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()))return null;
+    if((this.underwaterCaveActive&&this.underwaterCaveActive())||(this.waterfallCaveActive&&this.waterfallCaveActive())||(this.cutsceneActive&&this.cutsceneActive()))return null;
     if(this.portalStone&&this.portalStone.placingExit)return null;
     if(this.practiceRunActive&&this.practiceRunActive())return null;
     const fields=['cam','viewZoom','viewY','out','saved','spawned','doorT','rate','spawnT','timeT','levelTimeT','skills','selSkill','trollUsed',
@@ -47,6 +47,7 @@ Object.assign(G,{
   restoreSaveState(s){
     if(!s||s.v!==1||!LEVELS[s.levelIdx]){this.toast('SPARLÄGET GÅR INTE ATT LADDA');return false}
     if(this.clearCutscene)this.clearCutscene('restore');
+    if(this.exitUnderwaterCave)this.exitUnderwaterCave('silent');
     if(this.exitWaterfallCave)this.exitWaterfallCave('silent');
     AU.stopMusic();AU.stopWeather();
     if(AU.stopWaterfallCave)AU.stopWaterfallCave();
@@ -66,6 +67,10 @@ Object.assign(G,{
     this.waterfallCaveExitNeedsUpRelease=false;
     this.waterfallCaveResumeMusic=false;
     this.waterfallCaveResumeWeather=null;
+    this.underwaterCave=null;
+    this.underwaterCaveExitCooldown=0;
+    this.underwaterCaveResumeMusic=false;
+    this.underwaterCaveResumeWeather=null;
     this.money=Math.max(0,this.money|0);
     this.pendingSkillBonus=this.normalizePendingSkillBonus?this.normalizePendingSkillBonus(this.pendingSkillBonus):{};
     const persisted=loadPersisted();
