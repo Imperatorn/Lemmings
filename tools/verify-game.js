@@ -314,6 +314,9 @@ for (const token of ['levelUnlocked(idx){','selectMenuLevel(idx){','toggleLevelS
 for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','HIMMEL','progression:{']) {
   if (!screensCode.includes(token)) throw new Error(`Menu rendering should expose campaign locked-state visually: ${token}`);
 }
+for (const token of ['chLockReason','LÅST: ','drawSkyResultBackground','HIMLAVÄGEN ÄR ÖPPEN','FLOCKEN HAR NÅTT HIMLEN']) {
+  if (!screensCode.includes(token)) throw new Error(`Screens should polish sky progression and final completion feedback: ${token}`);
+}
 for (const token of ['FRITT SPEL: ÖVNING','PROGRESSION SPARADES INTE']) {
   if (!screensCode.includes(token)) throw new Error(`Practice mode should be visible in screens: ${token}`);
 }
@@ -669,12 +672,12 @@ for (const src of scripts) {
 }
 
 vm.runInContext(
-  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawCutsceneOverlay,drawWaterfallCaveView,drawUnderwaterCaveView,waterfallCaveLemmingScale,drawWaterfallCaveLemming,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK,SAVE_KEY,PROFILE_INDEX_KEY,profileList,activeProfileId,activeProfileName,loadProfileData,saveProfileData,createProfile,setActiveProfile,renameProfile,deleteProfile,loadPersisted,savePersisted,saveGameSlots,writeGameSlots};',
+  'globalThis.__verify={G,LEVELS,THEMES,AU,SKILLS,Lemming,drawPlayWorld,drawMenu,drawResult,drawCutsceneOverlay,drawWaterfallCaveView,drawUnderwaterCaveView,waterfallCaveLemmingScale,drawWaterfallCaveLemming,WCTX,menuChapters,DOLPHIN_RESCUE_CHANCE,FISH_RING_CHANCE,TORCH_WARM_CHANCE,TICK,SAVE_KEY,PROFILE_INDEX_KEY,profileList,activeProfileId,activeProfileName,loadProfileData,saveProfileData,createProfile,setActiveProfile,renameProfile,deleteProfile,loadPersisted,savePersisted,saveGameSlots,writeGameSlots};',
   sandbox,
   {timeout:10000}
 );
 
-const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawCutsceneOverlay, drawWaterfallCaveView, drawUnderwaterCaveView, waterfallCaveLemmingScale, drawWaterfallCaveLemming, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK, SAVE_KEY, PROFILE_INDEX_KEY, profileList, activeProfileId, activeProfileName, loadProfileData, saveProfileData, createProfile, setActiveProfile, renameProfile, deleteProfile, loadPersisted, savePersisted, saveGameSlots, writeGameSlots} = sandbox.__verify;
+const {G, LEVELS, THEMES, AU, SKILLS, Lemming, drawPlayWorld, drawMenu, drawResult, drawCutsceneOverlay, drawWaterfallCaveView, drawUnderwaterCaveView, waterfallCaveLemmingScale, drawWaterfallCaveLemming, WCTX, menuChapters, DOLPHIN_RESCUE_CHANCE, FISH_RING_CHANCE, TORCH_WARM_CHANCE, TICK, SAVE_KEY, PROFILE_INDEX_KEY, profileList, activeProfileId, activeProfileName, loadProfileData, saveProfileData, createProfile, setActiveProfile, renameProfile, deleteProfile, loadPersisted, savePersisted, saveGameSlots, writeGameSlots} = sandbox.__verify;
 
 if (!Array.isArray(LEVELS) || LEVELS.length === 0) throw new Error('LEVELS is empty');
 if (!Array.isArray(SKILLS) || SKILLS.length === 0) throw new Error('SKILLS is empty');
@@ -3953,6 +3956,17 @@ if (!G.menuSettings || !G.menuSettings.musicVol || !G.menuSettings.sfxVol || !G.
   if (!G.levelUnlocked(skyStart + 1)) {
     throw new Error('Clearing the first sky level should unlock the second sky level');
   }
+  const prevSaved = G.saved;
+  const prevLevel = G.level;
+  const prevLevelForceFail = G.levelForceFail;
+  G.levelIdx = LEVELS.length - 1;
+  G.level = LEVELS[G.levelIdx];
+  G.saved = G.level.save;
+  G.levelForceFail = false;
+  drawResult(makeContext2d(), 12);
+  G.saved = prevSaved;
+  G.level = prevLevel;
+  G.levelForceFail = prevLevelForceFail;
   G.levelSelectMode = prevMode;
   G.levelRunMode = prevRunMode;
   G.cleared = prevCleared;

@@ -278,13 +278,19 @@ function drawMenu(c,tk){
     c.fillStyle=locked?(active?'#7a6040':'#383038'):(active?'#d0a060':(hov?'#8f6a3e':'#4a3825'));
     c.fillRect(r.x,r.y,r.w,1);c.fillRect(r.x,r.y,1,r.h);
     c.fillStyle='#070a12';c.fillRect(r.x,r.y+r.h-1,r.w,1);c.fillRect(r.x+r.w-1,r.y,1,r.h);
-    drawTextC(c,locked?'LÅST VÄRLD':chapters[i].name,r.x+r.w/2,r.y+6,1,locked?'#806850':(active?'#fff0b8':'#c8b090'));
+    const tabLabel=locked&&chapters[i].gate!=='sky'?'LÅST VÄRLD':chapters[i].name;
+    drawTextC(c,tabLabel,r.x+r.w/2,r.y+6,1,locked?'#806850':(active?'#fff0b8':'#c8b090'));
     r.locked=locked;
     G.menuTabs.push(r);
   }
   const ch=chapters[G.menuChapter], count=Math.max(0,ch.to-ch.from);
   const chProg=G.chapterProgress?G.chapterProgress(ch):null;
-  const chInfo=chProg&&G.campaignModeEnabled&&G.campaignModeEnabled()?('  ÖPPNA '+chProg.unlocked+'/'+chProg.total):'';
+  const campaign=!!(G.campaignModeEnabled&&G.campaignModeEnabled());
+  const chLocked=campaign&&G.chapterUnlocked?!G.chapterUnlocked(ch):false;
+  const chLockReason=chLocked&&G.levelLockedReason?G.levelLockedReason(ch.from):'';
+  const chInfo=campaign
+    ?(chLocked?(chLockReason?'  LÅST: '+chLockReason:'  LÅST'):(chProg?'  ÖPPNA '+chProg.unlocked+'/'+chProg.total:''))
+    :'';
   drawTextC(c,'BANOR '+String(ch.from+1).padStart(2,'0')+'-'+String(ch.to).padStart(2,'0')+chInfo,CW/2,64,1,'#8a7658');
   for(let row=0;row<count;row++){
     const i=ch.from+row, x=46, w=CW-92, y=78+row*18;
@@ -432,16 +438,58 @@ function drawBrief(c,tk){
   if((tk>>4)&1)drawTextC(c,shopActive?'KLICKA UTANFÖR BUTIKEN FÖR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,promptY,promptScale,'#ffd040');
 }
 
+function drawSkyResultBackground(c,tk){
+  const g=c.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#78bfff');
+  g.addColorStop(0.58,'#dff7ff');
+  g.addColorStop(1,'#ffffff');
+  c.fillStyle=g;c.fillRect(0,0,CW,CH);
+  c.globalAlpha=0.22;
+  c.fillStyle='#fff8c8';
+  c.beginPath();c.arc(CW/2,68,58,0,7);c.fill();
+  c.globalAlpha=0.18;
+  for(let i=0;i<9;i++){
+    const a=-0.55+i*0.14;
+    c.fillRect(Math.round(CW/2+Math.sin(a)*18)-1,22+i*8,2,92-i*4);
+  }
+  c.globalAlpha=1;
+  const cloud=(x,y,w,col)=>{
+    c.fillStyle=col;
+    c.fillRect(x,y+12,w,16);
+    c.fillRect(x+10,y+6,Math.round(w*0.36),18);
+    c.fillRect(x+Math.round(w*0.42),y,Math.round(w*0.28),26);
+    c.fillRect(x+Math.round(w*0.68),y+8,Math.round(w*0.24),20);
+  };
+  cloud(24,196,164,'#f6fdff');
+  cloud(286,205,178,'#f8feff');
+  cloud(94,236,300,'#ffffff');
+  c.fillStyle='rgba(84,146,190,0.16)';
+  for(let i=0;i<7;i++){
+    const x=58+i*62+Math.round(Math.sin((tk+i)*0.09)*3);
+    c.fillRect(x,154+i%2*14,24,2);
+    c.fillRect(x+8,159+i%2*14,38,2);
+  }
+  c.fillStyle='rgba(255,248,180,0.42)';
+  for(let i=0;i<12;i++){
+    const x=42+i*37,y=92+Math.round(Math.sin(tk*0.08+i)*18);
+    c.fillRect(x,y,2,2);
+  }
+}
+
 function drawResult(c,tk){
   const L=G.level,win=!G.levelForceFail&&G.saved>=L.save;
   const practice=G.practiceRunActive&&G.practiceRunActive();
+  const finalSkyWin=!!(win&&!practice&&L&&L.theme==='sky'&&G.levelIdx>=LEVELS.length-1);
   const comp=!practice&&G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
   const runeGuide=G.levelRuneGuidance?G.levelRuneGuidance(G.levelIdx):null;
-  c.fillStyle='#000008';c.fillRect(0,0,CW,CH);
-  drawTextC(c,win?'BRA JOBBAT!':'OJDÅ...',CW/2,50,3,win?'#40ff40':'#ff5050');
+  if(finalSkyWin)drawSkyResultBackground(c,tk);
+  else{c.fillStyle='#000008';c.fillRect(0,0,CW,CH)}
+  if(finalSkyWin)drawTextC(c,'HIMLAVÄGEN ÄR ÖPPEN',CW/2,43,3,'#1f5e84');
+  drawTextC(c,finalSkyWin?'HIMLAVÄGEN ÄR ÖPPEN':(win?'BRA JOBBAT!':'OJDÅ...'),CW/2,finalSkyWin?42:50,3,finalSkyWin?'#fff0b8':(win?'#40ff40':'#ff5050'));
+  if(finalSkyWin)drawTextC(c,'ALLA VÄRLDAR ÄR FULLBORDADE',CW/2,74,1,'#256080');
   const pct=Math.floor(G.saved/L.lem*100),need=Math.ceil(L.save/L.lem*100);
-  drawTextC(c,'DU RÄDDADE '+pct+'%',CW/2,100,2,'#fff');
-  drawTextC(c,'KRAVET VAR '+need+'%',CW/2,122,2,'#a0a0b0');
+  drawTextC(c,'DU RÄDDADE '+pct+'%',CW/2,100,2,finalSkyWin?'#123c58':'#fff');
+  drawTextC(c,'KRAVET VAR '+need+'%',CW/2,122,2,finalSkyWin?'#4f7890':'#a0a0b0');
   if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,'#ffd040');
   if(practice)drawTextC(c,'ÖVNING - PROGRESSION SPARADES INTE',CW/2,G.saved>L.lem?158:146,1,'#ffd080');
   let nextY=170;
@@ -451,14 +499,19 @@ function drawResult(c,tk){
     for(let i=0;i<lines.length&&i<2;i++)drawTextC(c,lines[i],CW/2,y0+i*12,1,comp.full?'#ffe880':'#caa0ff');
     nextY=lines.length>1?182:170;
   }
+  let controlsY=nextY+20,footerY=nextY+42;
   if(win&&G.levelIdx<LEVELS.length-1)
     drawTextC(c,practice?'KLICKA / ENTER: NÄSTA ÖVNING':'KLICKA / ENTER: NÄSTA BANA',CW/2,nextY,1,'#ffd040');
-  else if(win)
-    drawTextC(c,'DU KLARADE ALLA BANOR - LEMMEL-MÄSTARE!',CW/2,nextY,1,'#ffd040');
+  else if(finalSkyWin){
+    drawTextC(c,'FLOCKEN HAR NÅTT HIMLEN',CW/2,nextY,1,'#256080');
+    drawTextC(c,'LEMMEL-MÄSTARE!',CW/2,nextY+12,1,'#ffe880');
+    controlsY=nextY+32;footerY=nextY+54;
+  }else if(win)
+    drawTextC(c,practice?'SISTA ÖVNINGEN KLARAD':'DU KLARADE ALLA BANOR - LEMMEL-MÄSTARE!',CW/2,nextY,1,'#ffd040');
   else
     drawTextC(c,'KLICKA / ENTER: BANMENY',CW/2,nextY,1,'#ffd040');
-  drawTextC(c,'R: SPELA IGEN   ESC/B: BANMENY',CW/2,nextY+20,1,'#8090a0');
-  drawTextC(c,'LÄGE '+G.modeName()+'  VÄDER '+G.weatherShort()+'  SEED '+((G.levelSeed>>>0).toString(36).toUpperCase()),CW/2,nextY+42,1,'#606880');
+  drawTextC(c,'R: SPELA IGEN   ESC/B: BANMENY',CW/2,controlsY,1,finalSkyWin?'#256080':'#8090a0');
+  drawTextC(c,'LÄGE '+G.modeName()+'  VÄDER '+G.weatherShort()+'  SEED '+((G.levelSeed>>>0).toString(36).toUpperCase()),CW/2,footerY,1,finalSkyWin?'#4f7890':'#606880');
 }
 
 
