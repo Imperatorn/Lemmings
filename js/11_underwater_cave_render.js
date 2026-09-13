@@ -662,7 +662,14 @@ function drawUnderwaterMap(c,cave){
   c.strokeStyle='#4aa8b8';c.strokeRect(72.5,38.5,335,207);
   const pos={};
   for(const n of graph.nodes){
-    pos[n.id]={x:118+n.x*78,y:76+n.y*54,w:n.w,h:n.h};
+    pos[n.id]={x:n.x*78,y:n.y*54,w:n.w,h:n.h};
+  }
+  const rooms=Object.values(pos);
+  if(rooms.length){
+    const minX=Math.min(...rooms.map(r=>r.x)),maxX=Math.max(...rooms.map(r=>r.x+r.w));
+    const minY=Math.min(...rooms.map(r=>r.y)),maxY=Math.max(...rooms.map(r=>r.y+r.h));
+    const offsetX=Math.round(CW/2-(minX+maxX)/2),offsetY=Math.round(144-(minY+maxY)/2);
+    for(const r of rooms){r.x+=offsetX;r.y+=offsetY}
   }
   c.strokeStyle='rgba(139,232,255,0.38)';
   for(const l of graph.links){

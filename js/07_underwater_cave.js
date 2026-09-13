@@ -220,6 +220,7 @@ Object.assign(G,{
   },
   enterUnderwaterCave(l,z,opts){
     if(!l||!z)return false;
+    this.showHelp=false;
     opts=opts||{};
     this.underwaterCaveExitCooldown=0;
     if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};

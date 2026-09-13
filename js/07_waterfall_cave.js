@@ -975,6 +975,7 @@ Object.assign(G,{
   },
   enterWaterfallCave(l,wf,opts){
     if(!l||!wf)return false;
+    this.showHelp=false;
     if(this.manual&&this.manual.keys)this.manual.keys={left:false,right:false,down:false,run:false,aim:false};
     if(this.manual)this.manual.jumpQueued=null;
     l.manualVy=0;l.fall=0;l.jumpT=0;l.jumpVy=0;l.manualMoving=false;

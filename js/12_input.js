@@ -183,7 +183,25 @@ function finishPointerAction(id,p){
   if(shouldClick)pressAt(p);
   if(wasDrag)DRAG=null;
 }
+function releaseHeldInput(){
+  ACTIVE_POINTERS.clear();DRAG=null;PINCH=null;G.mDown=false;
+  if(G.manual){
+    for(const key of Object.keys(G.manual.keys||{}))G.manual.keys[key]=false;
+    G.manual.jumpQueued=null;
+  }
+  if(G.underwaterCave){
+    for(const key of Object.keys(G.underwaterCave.keys||{}))G.underwaterCave.keys[key]=false;
+  }
+  if(G.waterfallCaveActive&&G.waterfallCaveActive()){
+    // Run the normal releases so card and room-transition locks are released too.
+    for(const key of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Shift',' '])G.handleWaterfallCaveKeyUp(key);
+    G.clearWaterfallCaveMoveKeys();
+  }
+  if(G.releaseWaterfallCaveEntryBlock)G.releaseWaterfallCaveEntryBlock('ArrowUp');
+}
 function bindInput(){
+  window.addEventListener('blur',releaseHeldInput);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseHeldInput()});
   cvs.addEventListener('contextmenu',e=>{e.preventDefault();});
   cvs.addEventListener('wheel',e=>{
     const p=canvasPos(e);refreshPointer(p);

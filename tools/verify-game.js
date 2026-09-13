@@ -604,6 +604,18 @@ function makeCanvas(){
   }
 }
 
+function makeEventTarget() {
+  const listeners = new Map();
+  return {
+    addEventListener(type, listener) {
+      if (!listeners.has(type)) listeners.set(type, new Set());
+      listeners.get(type).add(listener);
+    },
+    removeEventListener(type, listener) { listeners.get(type)?.delete(listener); },
+    dispatchEvent(event) { for (const listener of listeners.get(event.type) || []) listener(event); }
+  };
+}
+
 const mainCanvas = makeCanvas();
 const sandbox = {
   console,
@@ -648,18 +660,16 @@ const sandbox = {
   AudioContext:function(){},
   webkitAudioContext:function(){},
   window:{
+    ...makeEventTarget(),
     location:{search:''},
     localStorage:{getItem(){return null},setItem(){},removeItem(){}},
-    addEventListener(){},
-    removeEventListener(){},
     innerWidth:480,
     innerHeight:300
   },
   document:{
+    ...makeEventTarget(),
     getElementById(){return mainCanvas},
     createElement(){return makeCanvas()},
-    addEventListener(){},
-    removeEventListener(){},
     fullscreenElement:null,
     documentElement:{style:{},requestFullscreen(){}}
   }
@@ -4562,6 +4572,89 @@ if (ropeLem.state !== 'FALL' || ropeLem.ropeId !== null || ropeLem.fall !== 0) {
   G.trees = prevTrees;
   G.decor = prevDecor;
 }
+
+vm.runInContext(`{
+  const originalDrawText=drawText;
+  const originalMusicOn=AU.musicOn,originalSfxOn=AU.sfxOn;
+  const originalSelectMode=G.levelSelectMode,originalRunMode=G.levelRunMode;
+  const originalCleared=G.cleared,originalRunes=G.runeProgress;
+  const texts=[];
+  const capture=draw=>{texts.length=0;draw();return texts.map(t=>t.text)};
+  drawText=(c,s,x,y,sc)=>texts.push({text:String(s),x,y,w:textW(s,sc),h:5*(sc||1)});
+  AU.musicOn=false;AU.sfxOn=false;
+  try{
+    G.levelSelectMode='campaign';G.levelRunMode='campaign';
+    G.cleared=LEVELS.map(()=>true);G.runeProgress=G.normalizeRuneProgress({});
+    for(let i=0;i<LEVELS.length;i++){
+      G.levelIdx=i;G.level=LEVELS[i];G.levelForceFail=false;
+      for(const saved of [G.level.save-1,G.level.save,G.level.lem+1]){
+        G.saved=saved;
+        const lines=capture(()=>drawResult(WCTX,12));
+        const rescued=Number(lines.find(t=>t.startsWith('DU RÄDDADE ')).match(/([0-9]+)%/)[1]);
+        const required=Number(lines.find(t=>t.startsWith('KRAVET VAR ')).match(/([0-9]+)%/)[1]);
+        if((rescued>=required)!==(saved>=G.level.save))throw new Error('Result percentages contradict win/loss for level '+(i+1));
+        if(texts.some(t=>t.x<0||t.x+t.w>CW||t.y+t.h>CH))throw new Error('Result text overflows for level '+(i+1));
+        const briefing=capture(()=>drawBrief(WCTX,12));
+        if(!briefing.some(t=>t.startsWith('RÄDDA: '+required+'% ')))throw new Error('Briefing and result disagree on rescue requirement');
+      }
+    }
+    G.levelIdx=29;G.level=LEVELS[29];G.saved=G.level.save;G.state='RESULT';
+    let lines=capture(()=>drawResult(WCTX,12));
+    if(!lines.includes('HIMLEN ÄR LÅST - RUNOR 0/32')||!lines.includes('KLICKA / ENTER: BANMENY')||lines.includes('KLICKA / ENTER: NÄSTA BANA'))throw new Error('Locked sky result should explain the gate and return to the menu');
+    G.advanceFromResult();
+    if(G.state!=='MENU')throw new Error('Locked sky result action differs from its label');
+    for(const rune of G.runeCatalog('surface').runes)G.recordRuneDiscovery(rune);
+    lines=capture(()=>drawResult(WCTX,12));
+    if(!lines.includes('HIMLEN ÄR LÅST - DJUPRUNOR 0/10'))throw new Error('Sky result should show remaining deep runes');
+    for(const rune of G.runeCatalog('deep').runes)G.recordRuneDiscovery(rune);
+    lines=capture(()=>drawResult(WCTX,12));
+    if(!lines.includes('KLICKA / ENTER: NÄSTA BANA')||lines.some(t=>t.includes('ÄR LÅST')))throw new Error('Unlocked sky result should offer the next level');
+    G.advanceFromResult();
+    if(G.state!=='BRIEF'||G.levelIdx!==30)throw new Error('Unlocked sky result did not advance');
+    G.levelIdx=29;G.level=LEVELS[29];G.saved=G.level.save;
+    G.levelSelectMode='free';G.levelRunMode='practice';G.runeProgress=G.normalizeRuneProgress({});
+    if(!capture(()=>drawResult(WCTX,12)).includes('KLICKA / ENTER: NÄSTA ÖVNING'))throw new Error('Practice should keep its next-exercise action');
+    G.levelSelectMode='campaign';G.startLevel(1,{audio:false});
+    const wf=G.decor.find(d=>d.t==='waterfall');
+    const l=new Lemming(wf.x,wf.y+wf.h-6);l.state='MANUAL';G.lems=[l];
+    G.manual={active:true,used:true,lemId:l.id,lampOn:true,keys:{right:true,run:true,aim:true},jumpQueued:{super:true}};
+    G.showHelp=true;G.enterWaterfallCave(l,wf,{audio:false,click:false});
+    if(G.showHelp)throw new Error('World help should close when entering a waterfall cave');
+    G.handleWaterfallCaveKey('ArrowRight');G.handleWaterfallCaveKey('Shift');G.tick();
+    const cave=G.waterfallCave,x=cave.lemX;
+    cave.sceneExitBlockedKey='right';cave.sceneExitBlockedTarget='deep';cave.mirrorStoneSpaceBlocked=true;
+    G.manual.keys.right=true;G.manual.keys.aim=true;G.manual.jumpQueued={super:true};
+    G.waterfallCaveExitNeedsUpRelease=true;
+    ACTIVE_POINTERS.set(1,{x:240,y:120,world:true});DRAG={id:1,world:true,moved:false};PINCH={dist:50};
+    window.dispatchEvent({type:'blur'});
+    if(Object.values(cave.keys).some(Boolean)||Object.values(G.manual.keys).some(Boolean)||G.manual.jumpQueued||cave.sceneExitBlockedKey||cave.mirrorStoneSpaceBlocked||G.waterfallCaveExitNeedsUpRelease||DRAG||PINCH||ACTIVE_POINTERS.size)throw new Error('Blur should release held input and associated locks');
+    if(!G.manual.active||!G.manual.lampOn||!G.manual.used)throw new Error('Blur should preserve manual control and lamp state');
+    for(let i=0;i<4;i++)G.tick();
+    if(cave.lemX!==x||cave.walking||cave.running)throw new Error('Waterfall movement should stop after focus loss');
+    G.handleWaterfallCaveKey('ArrowRight');G.tick();G.handleWaterfallCaveKeyUp('ArrowRight');
+    if(cave.lemX<=x)throw new Error('Movement should resume on fresh input');
+    G.exitWaterfallCave('silent');
+    G.showHelp=true;l.holy=true;
+    G.enterUnderwaterCave(l,{x:wf.x-40,y:wf.y+wf.h,w:80},{audio:false,splash:false,swimFins:true});
+    if(G.showHelp)throw new Error('World help should close when diving');
+    G.handleUnderwaterCaveKey('ArrowRight');G.handleUnderwaterCaveKey('Shift');
+    document.hidden=false;document.dispatchEvent({type:'visibilitychange'});
+    if(!G.underwaterCave.keys.right)throw new Error('A visible document should retain held input');
+    document.hidden=true;document.dispatchEvent({type:'visibilitychange'});
+    if(Object.values(G.underwaterCave.keys).some(Boolean))throw new Error('Hiding the document should release swim input');
+    document.hidden=false;
+    const mapCtx=Object.assign({},WCTX),rects=[];
+    mapCtx.fillRect=(x,y,w,h)=>rects.push({x,y,w,h});
+    drawUnderwaterMap(mapCtx,G.underwaterCave);
+    const [frame,...rooms]=rects;
+    if(rooms.length!==underwaterCaveMapGraph().nodes.length||rooms.some(r=>r.x<frame.x+8||r.x+r.w>frame.x+frame.w-8||r.y<72||r.y+r.h>218))throw new Error('Underwater map rooms should fit between the title and footer inside the frame');
+    G.exitUnderwaterCave('silent');
+  }finally{
+    drawText=originalDrawText;AU.musicOn=originalMusicOn;AU.sfxOn=originalSfxOn;
+    G.levelSelectMode=originalSelectMode;G.levelRunMode=originalRunMode;
+    G.cleared=originalCleared;G.runeProgress=originalRunes;document.hidden=false;
+  }
+}`, sandbox, {filename:'interface regression checks', timeout:10000});
 
 const bazookaSchoolIdx = LEVELS.findIndex(L => L.name === 'BAZOOKA-SKOLAN');
 if (bazookaSchoolIdx < 0) throw new Error('Missing BAZOOKA-SKOLAN');

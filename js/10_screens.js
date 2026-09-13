@@ -369,7 +369,7 @@ function drawBrief(c,tk){
   drawTextC(c,'BANA '+(G.levelIdx+1),CW/2,40,2,'#a89878');
   drawTextC(c,L.name,CW/2,62,3,'#f1d982');
   drawTextC(c,'ANTAL LEMLAR: '+L.lem,CW/2,110,1,'#fff');
-  drawTextC(c,'RÄDDA: '+Math.ceil(L.save/L.lem*100)+'% ('+L.save+' ST)',CW/2,124,1,'#fff');
+  drawTextC(c,'RÄDDA: '+Math.floor(L.save/L.lem*100)+'% ('+L.save+' ST)',CW/2,124,1,'#fff');
   drawTextC(c,'TID: '+Math.floor(L.time/60)+' MINUTER',CW/2,138,1,'#fff');
   drawTextC(c,'LÄGE: '+G.modeName()+(G.mode==='classic'?' - FÄRRE SLUMPHÄNDELSER':' - MER KAOS OCH BONUSAR'),CW/2,152,1,G.mode==='classic'?'#a0d0ff':'#ffd040');
   drawTextC(c,'MUSIK '+(AU.musicOn?'PÅ':'AV')+'  SFX '+(AU.sfxOn?'PÅ':'AV')+'  K/M/S ÄNDRAR  H HJÄLP',CW/2,166,1,'#8a9080');
@@ -479,6 +479,8 @@ function drawSkyResultBackground(c,tk){
 function drawResult(c,tk){
   const L=G.level,win=!G.levelForceFail&&G.saved>=L.save;
   const practice=G.practiceRunActive&&G.practiceRunActive();
+  const hasNext=G.levelIdx<LEVELS.length-1;
+  const nextLocked=!!(win&&hasNext&&G.levelUnlocked&&!G.levelUnlocked(G.levelIdx+1));
   const finalSkyWin=!!(win&&!practice&&L&&L.theme==='sky'&&G.levelIdx>=LEVELS.length-1);
   const comp=!practice&&G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
   const runeGuide=G.levelRuneGuidance?G.levelRuneGuidance(G.levelIdx):null;
@@ -487,10 +489,10 @@ function drawResult(c,tk){
   if(finalSkyWin)drawTextC(c,'RESAN ÄR FULLBORDAD',CW/2,43,3,'#1f5e84');
   drawTextC(c,finalSkyWin?'RESAN ÄR FULLBORDAD':(win?'BRA JOBBAT!':'OJDÅ...'),CW/2,finalSkyWin?42:50,3,finalSkyWin?'#fff0b8':(win?'#40ff40':'#ff5050'));
   if(finalSkyWin)drawTextC(c,'FLOCKEN HAR NÅTT HIMLEN',CW/2,74,1,'#256080');
-  const pct=Math.floor(G.saved/L.lem*100),need=Math.ceil(L.save/L.lem*100);
-  drawTextC(c,'DU RÄDDADE '+pct+'%',CW/2,100,2,finalSkyWin?'#123c58':'#fff');
-  drawTextC(c,'KRAVET VAR '+need+'%',CW/2,122,2,finalSkyWin?'#4f7890':'#a0a0b0');
-  if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,'#ffd040');
+  const pct=Math.floor(G.saved/L.lem*100),need=Math.floor(L.save/L.lem*100);
+  drawTextC(c,'DU RÄDDADE '+pct+'% ('+G.saved+' ST)',CW/2,100,2,finalSkyWin?'#123c58':'#fff');
+  drawTextC(c,'KRAVET VAR '+need+'% ('+L.save+' ST)',CW/2,122,2,finalSkyWin?'#4f7890':'#a0a0b0');
+  if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,finalSkyWin?'#73531b':'#ffd040');
   if(practice)drawTextC(c,'ÖVNING - PROGRESSION SPARADES INTE',CW/2,G.saved>L.lem?158:146,1,'#ffd080');
   let nextY=170;
   if(win&&comp&&comp.hasExtra){
@@ -499,17 +501,23 @@ function drawResult(c,tk){
     for(let i=0;i<lines.length&&i<2;i++)drawTextC(c,lines[i],CW/2,y0+i*12,1,comp.full?'#ffe880':'#caa0ff');
     nextY=lines.length>1?182:170;
   }
+  if(nextLocked){
+    const chapter=menuChapters()[menuChapterForLevel(G.levelIdx+1)];
+    const label=chapter&&chapter.gate==='sky'?'HIMLEN ÄR LÅST':'NÄSTA BANA ÄR LÅST';
+    drawTextC(c,label+' - '+G.levelLockedReason(G.levelIdx+1),CW/2,nextY,1,'#caa0ff');
+    nextY+=14;
+  }
   let controlsY=nextY+20,footerY=nextY+42;
-  if(win&&G.levelIdx<LEVELS.length-1)
+  if(!win||nextLocked)
+    drawTextC(c,'KLICKA / ENTER: BANMENY',CW/2,nextY,1,'#ffd040');
+  else if(hasNext)
     drawTextC(c,practice?'KLICKA / ENTER: NÄSTA ÖVNING':'KLICKA / ENTER: NÄSTA BANA',CW/2,nextY,1,'#ffd040');
   else if(finalSkyWin){
     drawTextC(c,'ALLA VÄRLDAR ÄR KLARA',CW/2,nextY,1,'#256080');
-    drawTextC(c,'LEMMEL-MÄSTARE!',CW/2,nextY+12,1,'#ffe880');
+    drawTextC(c,'LEMMEL-MÄSTARE!',CW/2,nextY+12,1,'#73531b');
     controlsY=nextY+32;footerY=nextY+54;
-  }else if(win)
+  }else
     drawTextC(c,practice?'SISTA ÖVNINGEN KLARAD':'DU KLARADE ALLA BANOR - LEMMEL-MÄSTARE!',CW/2,nextY,1,'#ffd040');
-  else
-    drawTextC(c,'KLICKA / ENTER: BANMENY',CW/2,nextY,1,'#ffd040');
   drawTextC(c,'R: SPELA IGEN   ESC/B: BANMENY',CW/2,controlsY,1,finalSkyWin?'#256080':'#8090a0');
   drawTextC(c,'LÄGE '+G.modeName()+'  VÄDER '+G.weatherShort()+'  SEED '+((G.levelSeed>>>0).toString(36).toUpperCase()),CW/2,footerY,1,finalSkyWin?'#4f7890':'#606880');
 }
