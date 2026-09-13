@@ -17,17 +17,23 @@ Behåll laddningsordningen i `LEMMEL.html`:
 10. `07_save_state.js` - spara/ladda-metoder för `G`
 11. `07_manual_control.js` - direktstyrning och manual-skill helpers
 12. `07_waterfall_cave_scenes.js` - scenregister, bounds, exits och objekt för vattenfallsgrottan
-13. `07_waterfall_cave.js` - vattenfallsgrottans runtime-state, input och loot
-14. `07_living_world.js` - levande värld-effekter som svamp, mumier och meteorer
-15. `07_cutscenes.js` - cutscene-API, tidslinjer och overlayrendering
-16. `07_cutscene_scenes.js` - registrerade cutscene-scener och pixelart-innehåll
-17. `08_render.js` - världs- och figur-rendering
-18. `09_hud.js` - HUD och knappar
-19. `10_screens.js` - titel, meny, briefing och overlays
-20. `11_waterfall_cave_render.js` - rendering för vattenfallsgrottans scener
-21. `11_play_render.js` - huvudrendering för spelvyn
-22. `12_input.js` - mus, touch och tangentbord
-23. `13_boot.js` - initiering och huvudloop
+13. `07_underwater_cave_scenes.js` - scenregister, bounds, exits, objekt och djuprunor för undervattensgrottan
+14. `07_runes.js` - runkatalog, profilprogression och runbaserad fullbordad-status
+15. `07_progression.js` - kampanj/fritt banval och upplåsningsregler
+16. `07_portal_stone.js` - portalstenens gameplaylogik
+17. `07_waterfall_cave.js` - vattenfallsgrottans runtime-state, input och loot
+18. `07_underwater_cave.js` - undervattensgrottans runtime-state, input, ljud och hot
+19. `07_living_world.js` - levande värld-effekter som svamp, mumier och meteorer
+20. `07_cutscenes.js` - cutscene-API, tidslinjer och overlayrendering
+21. `07_cutscene_scenes.js` - registrerade cutscene-scener och pixelart-innehåll
+22. `08_render.js` - världs- och figur-rendering
+23. `09_hud.js` - HUD och knappar
+24. `10_screens.js` - titel, meny, briefing och overlays
+25. `11_waterfall_cave_render.js` - rendering för vattenfallsgrottans scener
+26. `11_underwater_cave_render.js` - rendering för undervattensgrottans scener
+27. `11_play_render.js` - huvudrendering för spelvyn
+28. `12_input.js` - mus, touch och tangentbord
+29. `13_boot.js` - initiering och huvudloop
 
 Om en fil flyttas tidigare kan den sakna globala bindningar från filerna ovanför.
 
@@ -46,13 +52,25 @@ bygger alla banor och gör en render-/save-smoketest.
   brutna till tilläggsfiler som monterar metoder på `G`: rep i `07_rope.js`,
   save/load i `07_save_state.js`, direktstyrning i `07_manual_control.js`,
   vattenfallsgrottans scen-data i `07_waterfall_cave_scenes.js`,
-  vattenfallsgrottans runtime i `07_waterfall_cave.js` och levande
+  undervattensgrottans scen-data i `07_underwater_cave_scenes.js`, runor i
+  `07_runes.js`, progression i `07_progression.js`, portalstenen i
+  `07_portal_stone.js`, vattenfallsgrottans runtime i `07_waterfall_cave.js`,
+  undervattensgrottans runtime i `07_underwater_cave.js` och levande
   värld-effekter i `07_living_world.js`.
 - Vattenfallsgrottan är förberedd som ett eget litet adventure-läge. Nya rum
   bör i `WATERFALL_CAVE_SCENES` med `bounds`, `spawns`, `exits` och `objects`.
   Runtime-koden ska i första hand använda `G.setWaterfallCaveScene(...)`,
   `G.waterfallCaveSceneObjects(...)` och `G.waterfallCaveHitObject(...)`
   istället för att hårdkoda scenbyten i update-loopen.
+- Undervattensgrottan är ett separat overlay-läge med egen scenkarta,
+  simlogik, ljussättning, musik och bläckfiskhot. Nya rum bör läggas i
+  `UNDERWATER_CAVE_SCENES` och gå via `G.setUnderwaterCaveScene(...)` så att
+  exits, mörker, objekt och ljud fortsätter följa samma struktur.
+- Save/load blockerar just nu aktiv vattenfallsgrotta, undervattensgrotta och
+  cutscenes. Det är säkrare än att delvis återställa overlay-state. Om
+  grottsparning införs behöver både scenstate, transient input, musik/duckning,
+  väderresume och hotsekvenser få explicita restore-tester i
+  `tools/verify-game.js`.
 - Cutscene-motorn monteras i `07_cutscenes.js`; sceninnehåll och registrering
   ligger i `07_cutscene_scenes.js`. Använd `G.registerCutscene(...)` för
   återanvändbara scener och `G.playCutscene(spec)` för engångsscener. `mode:

@@ -68,8 +68,10 @@ loot i banorna.
 
 ## Banor och innehåll
 
-Banorna definieras i `js/06_levels.js`. Spelet innehåller 30 banor uppdelade i
-tre kapitel på banmenyn.
+Banorna definieras i `js/06_levels.js`. Spelet innehåller 40 banor uppdelade i
+fyra kapitel på banmenyn. Det fjärde kapitlet, `HIMLEN`, låses upp först när
+grundkampanjen är klar och profilen har läst både de 32 vanliga runorna och de
+10 djuprunorna.
 
 Miljöer som används:
 
@@ -80,6 +82,9 @@ Miljöer som används:
 - Grå stengrottor med droppar och mörker
 - Ökenbanor med pyramider, mumier, oaser och ruiner
 - Stadsbanor med tak, tunnelbana, bussar och taxibilar
+- Vattenfallsgrottor med runarkiv, spegeldamm, kyrka, portalsten och simfötter
+- Undervattensgrottor med mörker, lampa, bläckfiskhot och djuparkiv
+- Himmelbanor med moln, höga fall och sista världens progression
 
 Det finns även bonusmål i vissa banor, till exempel fångade lemlar som kan
 släppas fria med knappar.
@@ -139,7 +144,9 @@ js/07_portal_stone.js   teleportstenens gameplaylogik
 js/07_save_state.js     spara/ladda-logik för spelstate
 js/07_manual_control.js direktstyrning, sikte och manual-skill helpers
 js/07_waterfall_cave_scenes.js scenregister, bounds, exits och objekt för vattenfallsgrottan
+js/07_underwater_cave_scenes.js scenregister, bounds, exits, objekt och djuprunor för undervattensgrottan
 js/07_waterfall_cave.js vattenfallsgrottans runtime-state, input och loot
+js/07_underwater_cave.js undervattensgrottans runtime-state, input, ljud och hot
 js/07_living_world.js   svamp, mumier, meteorer och andra levande värld-effekter
 js/07_cutscenes.js      cutscene-API, tidslinjer och overlayrendering
 js/07_cutscene_scenes.js registrerade cutscene-scener och pixelart-innehåll
@@ -147,6 +154,7 @@ js/08_render.js         rendering av värld, figurer, dekor och väder
 js/09_hud.js            HUD, knappar och minikarta
 js/10_screens.js        titel, meny, briefing, resultat och hjälp
 js/11_waterfall_cave_render.js rendering för vattenfallsgrottans scener
+js/11_underwater_cave_render.js rendering för undervattensgrottans scener
 js/11_play_render.js    huvudrendering för spelvyn
 js/12_input.js          mus, touch och tangentbord
 js/13_boot.js           initiering och huvudloop
@@ -200,6 +208,10 @@ Det här är de viktigaste sakerna att känna till innan du fortsätter utveckla
 - Nya fält på `Lemming`, `G` eller dekorobjekt bör få rimliga defaultvärden.
   Spara/ladda använder mycket `Object.assign`, så enkla datafält följer ofta
   med automatiskt, men tillstånd som kräver återinitiering måste kontrolleras.
+- Vanlig save/load gäller normalt spelstate i `PLAY`. Aktiva cutscenes,
+  vattenfallsgrottan och undervattensgrottan blockeras avsiktligt i
+  `js/07_save_state.js`, eftersom de lägena har eget overlay-state, ljudläge och
+  transient input som behöver serialiseras separat om grottsparning ska införas.
 - Vatten och lava har olika regler. Vatten tolererar några pixlars kontakt innan
   drunkning, medan lava ska vara farligt nästan direkt. En fisk nära en lemmel i
   vatten kan ge badring med 20% chans per vattenkontakt. Badring ger `SWIM`,
