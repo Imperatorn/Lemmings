@@ -5,6 +5,8 @@ const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_SETTLE_FRAMES=118;
 const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_FRAMES=92;
 const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_WATERLINE_OFFSET=8;
 const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_PX=50;
+const WATERFALL_CAVE_WALK_SPEED=1.55;
+const WATERFALL_CAVE_RUN_SPEED=2.50;
 
 Object.assign(G,{
   waterfallCaveLootKey(wf){
@@ -1249,7 +1251,7 @@ Object.assign(G,{
       const inv=Math.hypot(dx,dy)>1?1/Math.hypot(dx,dy):1;
       dx*=inv;dy*=inv;
       const running=!!cave.keys.run;
-      const sp=running?2.35:1.55;
+      const sp=running?WATERFALL_CAVE_RUN_SPEED:WATERFALL_CAVE_WALK_SPEED;
       const oldX=cave.lemX==null?240:cave.lemX, oldY=cave.lemY==null?210:cave.lemY;
       let nextX=clamp(oldX+dx*sp,b.minX,b.maxX);
       let nextY=clamp(oldY+dy*sp,b.minY,b.maxY);

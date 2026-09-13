@@ -484,9 +484,9 @@ function drawResult(c,tk){
   const runeGuide=G.levelRuneGuidance?G.levelRuneGuidance(G.levelIdx):null;
   if(finalSkyWin)drawSkyResultBackground(c,tk);
   else{c.fillStyle='#000008';c.fillRect(0,0,CW,CH)}
-  if(finalSkyWin)drawTextC(c,'HIMLAVÄGEN ÄR ÖPPEN',CW/2,43,3,'#1f5e84');
-  drawTextC(c,finalSkyWin?'HIMLAVÄGEN ÄR ÖPPEN':(win?'BRA JOBBAT!':'OJDÅ...'),CW/2,finalSkyWin?42:50,3,finalSkyWin?'#fff0b8':(win?'#40ff40':'#ff5050'));
-  if(finalSkyWin)drawTextC(c,'ALLA VÄRLDAR ÄR FULLBORDADE',CW/2,74,1,'#256080');
+  if(finalSkyWin)drawTextC(c,'RESAN ÄR FULLBORDAD',CW/2,43,3,'#1f5e84');
+  drawTextC(c,finalSkyWin?'RESAN ÄR FULLBORDAD':(win?'BRA JOBBAT!':'OJDÅ...'),CW/2,finalSkyWin?42:50,3,finalSkyWin?'#fff0b8':(win?'#40ff40':'#ff5050'));
+  if(finalSkyWin)drawTextC(c,'FLOCKEN HAR NÅTT HIMLEN',CW/2,74,1,'#256080');
   const pct=Math.floor(G.saved/L.lem*100),need=Math.ceil(L.save/L.lem*100);
   drawTextC(c,'DU RÄDDADE '+pct+'%',CW/2,100,2,finalSkyWin?'#123c58':'#fff');
   drawTextC(c,'KRAVET VAR '+need+'%',CW/2,122,2,finalSkyWin?'#4f7890':'#a0a0b0');
@@ -503,7 +503,7 @@ function drawResult(c,tk){
   if(win&&G.levelIdx<LEVELS.length-1)
     drawTextC(c,practice?'KLICKA / ENTER: NÄSTA ÖVNING':'KLICKA / ENTER: NÄSTA BANA',CW/2,nextY,1,'#ffd040');
   else if(finalSkyWin){
-    drawTextC(c,'FLOCKEN HAR NÅTT HIMLEN',CW/2,nextY,1,'#256080');
+    drawTextC(c,'ALLA VÄRLDAR ÄR KLARA',CW/2,nextY,1,'#256080');
     drawTextC(c,'LEMMEL-MÄSTARE!',CW/2,nextY+12,1,'#ffe880');
     controlsY=nextY+32;footerY=nextY+54;
   }else if(win)

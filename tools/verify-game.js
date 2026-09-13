@@ -314,8 +314,11 @@ for (const token of ['levelUnlocked(idx){','selectMenuLevel(idx){','toggleLevelS
 for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','HIMMEL','progression:{']) {
   if (!screensCode.includes(token)) throw new Error(`Menu rendering should expose campaign locked-state visually: ${token}`);
 }
-for (const token of ['chLockReason','LÅST: ','drawSkyResultBackground','HIMLAVÄGEN ÄR ÖPPEN','FLOCKEN HAR NÅTT HIMLEN']) {
+for (const token of ['chLockReason','LÅST: ','drawSkyResultBackground','RESAN ÄR FULLBORDAD','FLOCKEN HAR NÅTT HIMLEN','ALLA VÄRLDAR ÄR KLARA']) {
   if (!screensCode.includes(token)) throw new Error(`Screens should polish sky progression and final completion feedback: ${token}`);
+}
+if (!waterfallRuntimeCode.includes('const WATERFALL_CAVE_WALK_SPEED=1.55') || !waterfallRuntimeCode.includes('const WATERFALL_CAVE_RUN_SPEED=2.50') || !waterfallRuntimeCode.includes('running?WATERFALL_CAVE_RUN_SPEED:WATERFALL_CAVE_WALK_SPEED')) {
+  throw new Error('Waterfall cave walk and Shift-run speeds should use the tuned named constants');
 }
 for (const token of ['FRITT SPEL: ÖVNING','PROGRESSION SPARADES INTE']) {
   if (!screensCode.includes(token)) throw new Error(`Practice mode should be visible in screens: ${token}`);
@@ -2099,7 +2102,7 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKeyUp('ArrowRight');
   G.handleWaterfallCaveKeyUp('Shift');
   const runCaveMove = G.waterfallCave.lemX - runStartX;
-  if (!(runCaveMove > normalCaveMove * 1.35) || G.waterfallCave.keys.run || G.waterfallCave.running) {
+  if (!(runCaveMove > normalCaveMove * 1.55) || G.waterfallCave.keys.run || G.waterfallCave.running) {
     throw new Error('Holding Shift should make the waterfall cave lemming run faster and release cleanly');
   }
   G.waterfallCave.lemX = G.waterfallCave.bounds.minX;
