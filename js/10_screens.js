@@ -238,13 +238,13 @@ function drawLeaderboardOverlay(c,tk){
   const buttons=G.leaderboardButtons=[];
   const rows=G.profileLeaderboardRows?G.profileLeaderboardRows():[];
   drawText(c,'PROFIL',54,77,1,'#a89878');
-  drawText(c,'AVK',188,77,1,'#a89878');
-  drawText(c,'BEST',226,77,1,'#a89878');
-  drawText(c,'VIN',276,77,1,'#a89878');
-  drawText(c,'FÖRS',318,77,1,'#a89878');
-  drawText(c,'MYNT',366,77,1,'#a89878');
-  for(let i=0;i<rows.length&&i<7;i++){
-    const r=rows[i], y=94+i*17;
+  drawTextC(c,'KLARA',198,77,1,'#a89878');
+  drawTextC(c,'BÄST',244,77,1,'#a89878');
+  drawTextC(c,'VINSTER',288,77,1,'#a89878');
+  drawTextC(c,'FÖRSÖK',334,77,1,'#a89878');
+  drawTextC(c,'MYNT',386,77,1,'#a89878');
+  for(let i=0;i<rows.length&&i<8;i++){
+    const r=rows[i], y=94+i*15;
     c.fillStyle=i%2?'rgba(255,255,255,0.035)':'rgba(190,140,80,0.055)';
     c.fillRect(48,y-3,384,15);
     const mark=(r.holy?(r.stone?' HS':' H'):'');
@@ -371,10 +371,12 @@ function drawBrief(c,tk){
   for(let i=0;i<Math.min(2,(L.story||[]).length);i++)drawTextC(c,L.story[i],CW/2,88+i*10,1,'#bfd9c4');
   drawTextC(c,'ANTAL LEMLAR: '+L.lem,CW/2,110,1,'#fff');
   drawTextC(c,'RÄDDA: '+Math.floor(L.save/L.lem*100)+'% ('+L.save+' ST)',CW/2,124,1,'#fff');
-  drawTextC(c,'TID: '+Math.floor(L.time/60)+' MINUTER',CW/2,138,1,'#fff');
+  drawTextC(c,'TID: '+Math.floor(L.time/60)+':'+String(L.time%60).padStart(2,'0'),CW/2,138,1,'#fff');
   drawTextC(c,'LÄGE: '+G.modeName()+(G.mode==='classic'?' - FÄRRE SLUMPHÄNDELSER':' - MER KAOS OCH BONUSAR'),CW/2,152,1,G.mode==='classic'?'#a0d0ff':'#ffd040');
   drawTextC(c,'MUSIK '+(AU.musicOn?'PÅ':'AV')+'  SFX '+(AU.sfxOn?'PÅ':'AV')+'  K/M/S ÄNDRAR  H HJÄLP',CW/2,166,1,'#8a9080');
-  drawTextC(c,'VÄDER SLUMPAS VARJE FÖRSÖK: SOL, REGN/SKURAR/ÅSKA ELLER SNÖ',CW/2,178,1,'#98b0b0');
+  const weatherHint=L.cave?'GROTTA: SKYDDAD FRÅN REGN OCH SNÖ'
+    :'VÄDER: '+(L.night?'REGN ELLER SNÖ':(L.theme==='desert'?'SOL ELLER REGN':'SOL, REGN ELLER SNÖ'));
+  drawTextC(c,weatherHint,CW/2,178,1,'#98b0b0');
   drawTextC(c,'TEMPO: '+G.tempoName()+'  +/- ÄNDRAR',CW/2,190,1,'#ffd080');
   let infoY=202;
   const affectsProgress=G.selectedLevelAffectsProgress?G.selectedLevelAffectsProgress():true;
@@ -398,7 +400,7 @@ function drawBrief(c,tk){
     infoY+=24;
   }
   if(L.rescues&&L.rescues.length){
-    drawTextC(c,'BONUS: ÖPPNA KNAPPAR OCH RÄDDA FÅNGADE LEMLAR.',CW/2,infoY,1,'#ffd040');
+    drawTextC(c,'BONUS: TRYCK PÅ KNAPPAR FÖR ATT BEFRIA FÅNGADE LEMLAR.',CW/2,infoY,1,'#ffd040');
     drawTextC(c,'EXTRA LEMLAR KAN GE ÖVER 100% RÄDDAT.',CW/2,infoY+12,1,'#ffd040');
     infoY+=24;
   }
@@ -432,9 +434,9 @@ function drawBrief(c,tk){
     drawTextC(c,L.hint,CW/2,runeGuide&&!runeGuide.complete?274:263,1,'#40c040');
     promptY=290;promptScale=1;
   }else{
-    const hintY=Math.min(Math.max(infoY,L.night?226:228),252);
+    const hintY=Math.max(infoY,L.night?226:228);
     drawTextC(c,L.hint,CW/2,hintY,1,'#40c040');
-    promptY=Math.min(hintY+16,276);
+    promptY=hintY+16;
   }
   if((tk>>4)&1)drawTextC(c,shopActive?'KLICKA UTANFÖR BUTIKEN FÖR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM',CW/2,promptY,promptScale,'#ffd040');
 }

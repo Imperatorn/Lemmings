@@ -317,7 +317,7 @@ for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','HIM
 for (const token of ['chLockReason','LÅST: ','drawSkyResultBackground','drawSkyHomecoming','ÄNTLIGEN HEMMA','FLOCKEN HAR HITTAT HEM TILL LÄMMELHIMLEN']) {
   if (!screensCode.includes(token)) throw new Error(`Screens should polish sky progression and final completion feedback: ${token}`);
 }
-if (!waterfallRuntimeCode.includes('const WATERFALL_CAVE_WALK_SPEED=1.55') || !waterfallRuntimeCode.includes('const WATERFALL_CAVE_RUN_SPEED=2.50') || !waterfallRuntimeCode.includes('running?WATERFALL_CAVE_RUN_SPEED:WATERFALL_CAVE_WALK_SPEED')) {
+if (!waterfallRuntimeCode.includes('const WATERFALL_CAVE_WALK_SPEED=1.55') || !waterfallRuntimeCode.includes('const WATERFALL_CAVE_RUN_SPEED=3.50') || !waterfallRuntimeCode.includes('running?WATERFALL_CAVE_RUN_SPEED:WATERFALL_CAVE_WALK_SPEED')) {
   throw new Error('Waterfall cave walk and Shift-run speeds should use the tuned named constants');
 }
 for (const token of ['FRITT SPEL: ÖVNING','PROGRESSION SPARADES INTE']) {
@@ -2113,9 +2113,39 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   G.handleWaterfallCaveKeyUp('ArrowRight');
   G.handleWaterfallCaveKeyUp('Shift');
   const runCaveMove = G.waterfallCave.lemX - runStartX;
-  if (!(runCaveMove > normalCaveMove * 1.55) || G.waterfallCave.keys.run || G.waterfallCave.running) {
+  if (Math.abs(normalCaveMove - 4 * 1.55) > 1e-9 || Math.abs(runCaveMove - 4 * 3.50) > 1e-9 || G.waterfallCave.keys.run || G.waterfallCave.running) {
     throw new Error('Holding Shift should make the waterfall cave lemming run faster and release cleanly');
   }
+  const diagonalStart = {x:G.waterfallCave.lemX,y:G.waterfallCave.lemY};
+  G.handleWaterfallCaveKey('Shift');
+  G.handleWaterfallCaveKey('ArrowRight');
+  G.handleWaterfallCaveKey('ArrowDown');
+  for (let i = 0; i < 4; i++) G.tick();
+  const diagonalDistance = Math.hypot(G.waterfallCave.lemX-diagonalStart.x,G.waterfallCave.lemY-diagonalStart.y);
+  if (Math.abs(diagonalDistance-runCaveMove)>1e-9) throw new Error('Diagonal cave sprint should not be faster than straight sprint');
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  G.handleWaterfallCaveKeyUp('Shift');
+  const releasedX = G.waterfallCave.lemX;
+  G.tick();
+  if (Math.abs(G.waterfallCave.lemX-releasedX-1.55)>1e-9 || G.waterfallCave.running) throw new Error('Releasing Shift should immediately restore precise walking');
+  G.handleWaterfallCaveKeyUp('ArrowRight');
+  G.waterfallCave.lemX = G.waterfallCave.bounds.minX;
+  G.waterfallCave.lemY = 232;
+  G.handleWaterfallCaveKey('Shift');
+  G.handleWaterfallCaveKey('ArrowLeft');
+  const wallAnim = G.waterfallCave.walkAnim, wallSteps = caveSteps.length;
+  for (let i = 0; i < 16; i++) G.tick();
+  if (G.waterfallCave.lemX!==G.waterfallCave.bounds.minX || G.waterfallCave.walking || G.waterfallCave.running || G.waterfallCave.walkAnim!==wallAnim || caveSteps.length!==wallSteps) {
+    throw new Error('A fully blocked sprint should not move, animate, or make footsteps');
+  }
+  G.handleWaterfallCaveKey('ArrowDown');
+  G.tick();
+  if (G.waterfallCave.lemX!==G.waterfallCave.bounds.minX || G.waterfallCave.lemY<=232 || !G.waterfallCave.walking || !G.waterfallCave.running || caveSteps.length<=wallSteps) {
+    throw new Error('Sprinting diagonally along a wall should still move, animate, and make footsteps');
+  }
+  G.handleWaterfallCaveKeyUp('ArrowLeft');
+  G.handleWaterfallCaveKeyUp('ArrowDown');
+  G.handleWaterfallCaveKeyUp('Shift');
   G.waterfallCave.lemX = G.waterfallCave.bounds.minX;
   G.waterfallCave.lemY = 220;
   G.handleWaterfallCaveKey('ArrowUp');
@@ -2308,13 +2338,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!campFire || !G.waterfallCaveCampFireBlocked(G.waterfallCave, campFire.x, campFire.y + 8)) {
     throw new Error('Campfire cave scene is missing a blocking fire zone');
   }
-  G.waterfallCave.lemX = campFire.x - campFire.rx - 8;
-  G.waterfallCave.lemY = campFire.y + 8;
-  G.handleWaterfallCaveKey('ArrowRight');
-  for (let i = 0; i < 24; i++) G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowRight');
-  if (G.waterfallCaveCampFireBlocked(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > campFire.x - campFire.rx + 1) {
-    throw new Error('Campfire cave lemmel can walk into the fire');
+  for (const run of [false,true]) {
+    G.waterfallCave.lemX = campFire.x - campFire.rx - 8;
+    G.waterfallCave.lemY = campFire.y + 8;
+    if (run) G.handleWaterfallCaveKey('Shift');
+    G.handleWaterfallCaveKey('ArrowRight');
+    for (let i = 0; i < 24; i++) G.tick();
+    G.handleWaterfallCaveKeyUp('ArrowRight');
+    G.handleWaterfallCaveKeyUp('Shift');
+    if (G.waterfallCaveCampFireBlocked(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > campFire.x - campFire.rx + 1 || G.waterfallCave.walking) {
+      throw new Error('Walking or sprinting into the fire should stop the lemming and its animation');
+    }
   }
   G.waterfallCave.lemX = G.waterfallCave.campBounds.minX;
   G.waterfallCave.lemY = 226;
@@ -2402,13 +2436,17 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   if (!songCrystal.def.blocker || !G.waterfallCaveSceneBlockerAt(G.waterfallCave, songCrystal.obj.x, songCrystal.obj.y + 8)) {
     throw new Error('Song crystal should be a blocking cave object');
   }
-  G.waterfallCave.lemX = songCrystal.obj.x - 50;
-  G.waterfallCave.lemY = songCrystal.obj.y + 8;
-  G.handleWaterfallCaveKey('ArrowRight');
-  for (let i = 0; i < 36; i++) G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowRight');
-  if (G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > songCrystal.obj.x - 23) {
-    throw new Error('Crystal gallery lemmel can walk through the song crystal');
+  for (const run of [false,true]) {
+    G.waterfallCave.lemX = songCrystal.obj.x - 50;
+    G.waterfallCave.lemY = songCrystal.obj.y + 8;
+    if (run) G.handleWaterfallCaveKey('Shift');
+    G.handleWaterfallCaveKey('ArrowRight');
+    for (let i = 0; i < 36; i++) G.tick();
+    G.handleWaterfallCaveKeyUp('ArrowRight');
+    G.handleWaterfallCaveKeyUp('Shift');
+    if (G.waterfallCaveSceneBlockerAt(G.waterfallCave, G.waterfallCave.lemX, G.waterfallCave.lemY) || G.waterfallCave.lemX > songCrystal.obj.x - 23 || G.waterfallCave.walking) {
+      throw new Error('Walking or sprinting into the song crystal should stop the lemming and its animation');
+    }
   }
   G.waterfallCave.lemX = 240;
   G.waterfallCave.lemY = G.waterfallCaveSceneBounds(G.waterfallCave).maxY;
@@ -2803,13 +2841,20 @@ if (typeof drawCutsceneOverlay !== 'function') throw new Error('Missing drawCuts
   }
   const teleportSoundsBefore = teleportStoneSounds;
   G.clearWaterfallCaveMoveKeys(G.waterfallCave);
-  G.waterfallCave.lemX = 240;
-  G.waterfallCave.lemY = 154;
-  G.waterfallCave.facing = 'back';
-  G.handleWaterfallCaveKey('ArrowUp');
-  for (let i = 0; i < 32; i++) G.tick();
-  G.handleWaterfallCaveKeyUp('ArrowUp');
-  G.tick();
+  for (const run of [false,true]) {
+    G.waterfallCave.lemX = 240;
+    G.waterfallCave.lemY = 154;
+    G.waterfallCave.facing = 'back';
+    if (run) G.handleWaterfallCaveKey('Shift');
+    G.handleWaterfallCaveKey('ArrowUp');
+    for (let i = 0; i < 32; i++) G.tick();
+    G.handleWaterfallCaveKeyUp('ArrowUp');
+    G.handleWaterfallCaveKeyUp('Shift');
+    if (G.waterfallCaveSceneBlockerAt(G.waterfallCave,G.waterfallCave.lemX,G.waterfallCave.lemY) || G.waterfallCave.lemY >= 154 || G.waterfallCave.walking) {
+      throw new Error('Walking or sprinting into the altar should stop the lemming and its animation');
+    }
+    G.tick();
+  }
   let teleportStone = G.waterfallCaveTeleportStoneState(G.waterfallCave);
   if (G.waterfallCave.lemY < 145) {
     throw new Error('Church altar should block walking straight through its front');
@@ -4656,6 +4701,84 @@ vm.runInContext(`{
     G.cleared=originalCleared;G.runeProgress=originalRunes;document.hidden=false;
   }
 }`, sandbox, {filename:'interface regression checks', timeout:10000});
+
+vm.runInContext(`{
+  const prior={level:G.level,levelIdx:G.levelIdx,levelSelectMode:G.levelSelectMode,mode:G.mode,
+    money:G.money,pendingSkillBonus:G.pendingSkillBonus,runeProgress:G.runeProgress,
+    briefShopButtons:G.briefShopButtons,leaderboardButtons:G.leaderboardButtons,
+    profileLeaderboardRows:G.profileLeaderboardRows,rand:G.rand};
+  const originalDrawText=drawText,items=[];
+  const c=Object.assign({},WCTX,{globalAlpha:1});
+  drawText=(ctx,s,x,y,sc=1)=>items.push({text:String(s),x,y:y-2*sc,w:textW(s,sc),h:7*sc});
+  // The shop repaints the lower briefing area; only visible text counts.
+  c.fillRect=function(x,y,w,h){
+    if(this.globalAlpha!==1||!String(this.fillStyle).startsWith('#'))return;
+    for(let i=items.length-1;i>=0;i--){
+      const t=items[i];
+      if(t.x>=x&&t.x+t.w<=x+w&&t.y>=y&&t.y+t.h<=y+h)items.splice(i,1);
+    }
+  };
+  const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+  const checkLayout=label=>{
+    for(let i=0;i<items.length;i++){
+      const a=items[i];
+      if(a.x<0||a.x+a.w>CW||a.y<0||a.y+a.h>CH)throw new Error(label+' overflows: '+a.text);
+      for(let j=i+1;j<items.length;j++)if(overlaps(a,items[j]))throw new Error(label+' overlaps: '+a.text+' / '+items[j].text);
+    }
+  };
+  const progressState=()=>JSON.stringify({money:G.money,bonus:G.pendingSkillBonus,runes:G.runeProgress,stats:G.profileStats,cleared:G.cleared});
+  try{
+    const catalog=G.runeCatalog('surface').runes;
+    const runeStates=[[],catalog.filter(r=>r.order===1),catalog].map(found=>
+      G.normalizeRuneProgress({discovered:Object.fromEntries(found.map(r=>[r.key,r]))}));
+    for(let idx=0;idx<LEVELS.length;idx++){
+      const L=LEVELS[idx];G.levelIdx=idx;G.level=L;
+      const weather=new Set();
+      for(let n=0;n<100;n++){G.rand=()=>n/100;weather.add(G.pickWeather())}
+      G.rand=prior.rand;
+      for(const mode of ['classic','chaos'])for(const selectMode of ['campaign','free']){
+        for(const runes of runeStates)for(const shop of [{money:0,bonus:0},{money:8,bonus:0},{money:0,bonus:2},{money:8,bonus:99}]){
+          G.mode=mode;G.levelSelectMode=selectMode;G.money=shop.money;G.runeProgress=runes;
+          G.pendingSkillBonus=shop.bonus?{[idx]:{build:shop.bonus}}:{};
+          const before=progressState();items.length=0;drawBrief(c,20);
+          const label='Briefing '+(idx+1)+' '+mode+' '+selectMode+' money='+shop.money+' bonus='+shop.bonus;
+          checkLayout(label);
+          if(progressState()!==before)throw new Error(label+' mutated progression');
+          const lines=items.map(t=>t.text);
+          if(!lines.includes('TID: '+Math.floor(L.time/60)+':'+String(L.time%60).padStart(2,'0')))throw new Error(label+' omits timer seconds');
+          if(L.cave){
+            if(!lines.includes('GROTTA: SKYDDAD FRÅN REGN OCH SNÖ'))throw new Error(label+' promises outdoor weather in a cave');
+          }else{
+            const line=lines.find(t=>t.startsWith('VÄDER: '))||'';
+            for(const kind of ['sun','rain','snow'])if(line.includes(WEATHER_CFG[kind].short)!==weather.has(kind))throw new Error(label+' misrepresents '+kind+' weather');
+          }
+          const shopActive=selectMode==='campaign'&&(shop.money>0||shop.bonus>0);
+          if(G.briefShopButtons.length!==(shopActive?G.shopOptions().length:0))throw new Error(label+' lost shop buttons');
+          for(const b of G.briefShopButtons){
+            if(b.x<0||b.y<0||b.x+b.w>CW||b.y+b.h>CH)throw new Error(label+' shop button overflows');
+            const inside=items.filter(t=>overlaps(t,b));
+            if(inside.length!==1||inside.some(t=>t.x<b.x||t.x+t.w>b.x+b.w||t.y<b.y||t.y+t.h>b.y+b.h))throw new Error(label+' shop label does not fit its button');
+          }
+          const prompt=shopActive?'KLICKA UTANFÖR BUTIKEN FÖR ATT STARTA':'KLICKA FÖR ATT SLÄPPA UT DEM';
+          if(!lines.includes(prompt))throw new Error(label+' lost its start prompt');
+          if((selectMode==='free')!==lines.some(t=>t.startsWith('FRITT SPEL:')))throw new Error(label+' mislabels practice');
+          if(!lines.includes(L.hint))throw new Error(label+' hides its level hint');
+        }
+      }
+    }
+    const rows=Array.from({length:8},(_,i)=>({name:i===7?'W'.repeat(18):'Profil '+(i+1),
+      cleared:40-i,sumPct:4500-i*100,wins:120-i,attempts:240-i,money:99-i,holy:true,stone:true}));
+    G.profileLeaderboardRows=()=>rows;
+    const before=progressState(),beforeRows=JSON.stringify(rows);
+    items.length=0;drawLeaderboardOverlay(c,20);checkLayout('Eight-profile leaderboard');
+    rows.forEach((r,i)=>{
+      if(!items.some(t=>t.text===String(i+1)+'. '+r.name+' HS'))throw new Error('Leaderboard omitted profile '+(i+1));
+    });
+    if(items.some(t=>t.x<34||t.x+t.w>CW-34||t.y<34||t.y+t.h>252))throw new Error('Leaderboard text escapes its overlay');
+    if(progressState()!==before||JSON.stringify(rows)!==beforeRows)throw new Error('Leaderboard rendering mutated profile data');
+    if(G.leaderboardButtons.map(b=>b.action).join(',')!=='profiles,close')throw new Error('Leaderboard navigation changed');
+  }finally{drawText=originalDrawText;Object.assign(G,prior)}
+}`, sandbox, {filename:'briefing and leaderboard layout regression checks', timeout:10000});
 
 vm.runInContext(`{
   const surface=G.runeCatalog('surface'),deep=G.runeCatalog('deep');

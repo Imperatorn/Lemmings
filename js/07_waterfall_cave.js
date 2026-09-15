@@ -6,7 +6,7 @@ const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_FRAMES=92;
 const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_WATERLINE_OFFSET=8;
 const WATERFALL_CAVE_MIRROR_PEDESTAL_STATE_RISE_PX=50;
 const WATERFALL_CAVE_WALK_SPEED=1.55;
-const WATERFALL_CAVE_RUN_SPEED=2.50;
+const WATERFALL_CAVE_RUN_SPEED=3.50;
 
 Object.assign(G,{
   waterfallCaveLootKey(wf){
@@ -1269,11 +1269,11 @@ Object.assign(G,{
       cave.lemY=nextY;
       if(dx){cave.dir=dx>0?1:-1;cave.facing=dx>0?'right':'left'}
       else cave.facing=dy<0?'back':'front';
-      cave.walking=true;
-      cave.running=running;
-      cave.walkAnim=(cave.walkAnim||0)+(running?2:1);
+      cave.walking=nextX!==oldX||nextY!==oldY;
+      cave.running=running&&cave.walking;
+      if(cave.walking)cave.walkAnim=(cave.walkAnim||0)+(running?2:1);
       const stepGap=running?7:10;
-      if(AU.sWaterfallCaveStep&&(cave.t-(Number.isFinite(cave.lastStepT)?cave.lastStepT:-999))>=stepGap){
+      if(cave.walking&&AU.sWaterfallCaveStep&&(cave.t-(Number.isFinite(cave.lastStepT)?cave.lastStepT:-999))>=stepGap){
         cave.lastStepT=cave.t;
         cave.stepSide=1-(cave.stepSide||0);
         const far=Number.isFinite(b.exitY)?b.exitY:(Number.isFinite(b.minY)?b.minY:176);
