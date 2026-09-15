@@ -45,12 +45,12 @@ const WATERFALL_CAVE_SCENES={
       {id:'toCamp',key:'down',x0:154,x1:326,yMin:276,target:'camp',spawn:'fromDeep',requiresClosedDeepItem:true}
     ],
     objects:[
-      {id:'cover',runtimeKey:'deepItem',kind:'inspectable',default:{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false,coverAsset:'landsOfLoreCover',coverRect:{x:150,y:30,w:180,h:225},coverBackLines:['Utvecklat av','Johan Forsberg.','','Tilldelat Valdemar,','Tage och Elis.','','Beta-testare:','Micke och Calle','']},hit:{type:'ellipse',rx:33,ry:22},verbs:['look','turn']}
+      {id:'cover',runtimeKey:'deepItem',kind:'inspectable',default:{x:246,y:252,displayScale:0.5,near:false,coverOpen:false,dismissedNear:false,coverCloseArmed:false,coverSide:'front',coverReturnBlocked:false,coverAsset:'landsOfLoreCover',coverRect:{x:150,y:30,w:180,h:225},coverBackLines:['Utvecklat av','Johan Forsberg.','','Till Valdemar,','Tage och Elis.','','Betatestare:','Micke och Calle','']},hit:{type:'ellipse',rx:33,ry:22},verbs:['look','turn']}
     ]
   },
   camp:{
     id:'camp',
-    label:'Lagerelden',
+    label:'Lägerelden',
     render:'camp',
     audio:'campfire',
     boundsKey:'campBounds',
@@ -143,16 +143,8 @@ const WATERFALL_CAVE_SCENES={
       {id:'toChurch',key:'down',x0:154,x1:326,yMin:282,target:'church',spawn:'fromGlyph'}
     ],
     objects:[
-      {id:'runeWall',kind:'runeWall',runeSetSource:'levelSecret',runeSet:{id:'waterfall.glyphArchive',title:'Brobyggarens runor',source:'Runarkivet',world:'Bakom vattenfallet',order:1},default:{x:238,y:182,near:false,activated:false,pulseT:0,readT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read'],
-        runes:[
-          {id:'water',title:'Vattnet',dx:-26,dy:-22,rx:19,ry:28,lines:['Runa 1/6','När vattnet döljer porten','börjar den dolda vägen.']},
-          {id:'dark',title:'Mörkret',dx:-7,dy:-22,rx:19,ry:28,lines:['Runa 2/6','I mörkret prövas modet,','men hjärtat söker ljus.']},
-          {id:'altar',title:'Altaret',dx:15,dy:-22,rx:19,ry:28,lines:['Runa 3/6','Vid altaret väntar handen','som stilla ger välsignelse.']},
-          {id:'fire',title:'Elden',dx:-27,dy:7,rx:20,ry:24,lines:['Runa 4/6','Då mister elden sin hunger','och lågan viker undan.']},
-          {id:'fall',title:'Djupet',dx:6,dy:8,rx:20,ry:24,lines:['Runa 5/6','Djupet kan inte krossa','den som bär heligt ljus.']},
-          {id:'hope',title:'Hoppet',dx:27,dy:9,rx:20,ry:24,lines:['Runa 6/6','Så vandrar lämmeln vidare','och hoppet följer flocken.']}
-        ],
-        readLines:['Runorna viskar:','Läs varje tecken i stenen','så formas hela budskapet.']},
+      {id:'runeWall',kind:'runeWall',runeSetSource:'levelSecret',runeSet:{id:'waterfall.glyphArchive',title:'Vägen hem',source:'Runarkivet',world:'Bakom vattenfallet',order:1},default:{x:238,y:182,near:false,activated:false,pulseT:0,readT:0},hit:{type:'rect',w:124,h:62,dy:-4},verbs:['look','read'],
+        readLines:['Vandrarnas runor','Här finns spår av vägen hem.']},
       {id:'churchCard',kind:'viewCard',displayScale:0.5,default:{x:300,y:252,near:false,activated:false,pulseT:0,cardOpen:false,cardSide:'front',cardCloseArmed:false,dismissedNear:false},hit:{type:'ellipse',rx:27,ry:18},verbs:['look','turn'],card:{asset:'dalaFlodaChurch',backLines:['Floda kyrka']}}
     ]
   },
@@ -204,7 +196,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'flodaChurch',
     label:'Floda kyrkgrotta',
     archiveStyle:'floda',
-    stoneInscription:{title:'BROSTENEN',glyph:'bridge',color:'#d99a54',lines:['Första bron väcker fallet.','Bakom vattnet börjar raden.']},
+    stoneInscription:{title:'BROSTENEN',glyph:'bridge',color:'#d99a54',lines:['Vi sökte också vägen hem.','Våra runor finns längre in.']},
     hiddenScenes:[],
     scenes:{}
   },
@@ -212,7 +204,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'darkForestArchive',
     label:'Skogens runarkiv',
     archiveStyle:'forest',
-    stoneInscription:{title:'ROTSTENEN',glyph:'root',color:'#8fb96a',lines:['Rötterna håller mörkret.','Bär ljuset nära marken.']},
+    stoneInscription:{title:'ROTSTENEN',glyph:'root',color:'#8fb96a',lines:['Lyktan gick först i natten.','Vi andra följde efter.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{
       deep:{objectDefaults:{cover:{coverAsset:'amigaA1200Cover',coverRect:{x:84,y:46,w:312,h:208},coverBackLines:['Tack till Anders Gunderson']}}},
@@ -223,7 +215,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'marbleArchive',
     label:'Marmorns runarkiv',
     archiveStyle:'marble',
-    stoneInscription:{title:'MARMORSTENEN',glyph:'vein',color:'#e6dcc2',lines:['Vit sten gömmer sprickan.','Höj blicken innan du slår.']},
+    stoneInscription:{title:'MARMORSTENEN',glyph:'vein',color:'#e6dcc2',lines:['Stenen bär våra minnen.','Läs dem innan ni går.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -231,7 +223,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'forestRavineArchive',
     label:'Ravinens runarkiv',
     archiveStyle:'ravine',
-    stoneInscription:{title:'RAVINSTENEN',glyph:'rope',color:'#b9d68a',lines:['Repet ger djupet en kant.','Fäst först, gå sedan.']},
+    stoneInscription:{title:'RAVINSTENEN',glyph:'rope',color:'#b9d68a',lines:['En gick över med repet.','Sedan kunde fler följa.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -239,7 +231,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'doublePondsArchive',
     label:'Dammarnas runarkiv',
     archiveStyle:'water',
-    stoneInscription:{title:'DAMMSTENEN',glyph:'waves',color:'#9eefff',lines:['Två dammar delar skenet.','Den låga vägen håller.']},
+    stoneInscription:{title:'DAMMSTENEN',glyph:'waves',color:'#9eefff',lines:['Sex ringar kring dammen.','Vi kastade en sten till.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -247,7 +239,7 @@ const WATERFALL_CAVE_VARIANTS={
     id:'chaosArchive',
     label:'Kaosets runarkiv',
     archiveStyle:'chaos',
-    stoneInscription:{title:'KAOSSTENEN',glyph:'fracture',color:'#ff6a80',lines:['När vägarna bråkar, vänta.','Ett tecken samlar dem.']},
+    stoneInscription:{title:'KAOSSTENEN',glyph:'fracture',color:'#ff6a80',lines:['Vi tappade vägen,','men inte varandra.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   },
@@ -255,12 +247,13 @@ const WATERFALL_CAVE_VARIANTS={
     id:'masterTrialArchive',
     label:'Mästarprovets runarkiv',
     archiveStyle:'master',
-    stoneInscription:{title:'MÄSTARSTENEN',glyph:'crown',color:'#d8b65a',lines:['När alla ark har tänts','söker ljuset djupare.']},
+    stoneInscription:{title:'MÄSTARSTENEN',glyph:'crown',color:'#d8b65a',lines:['Vägen hem går uppåt.','De sista orden sjönk.']},
     hiddenScenes:['church','churchInterior'],
     scenes:{glyphArchive:{removeExits:['toChurch'],removeObjects:['churchCard']}}
   }
 };
 
+// These IDs belong to saved discoveries; narrative titles may change independently.
 const WATERFALL_CAVE_RUNE_LAYOUT=[
   {id:'water',title:'Vattnet',dx:-26,dy:-22,rx:19,ry:28},
   {id:'dark',title:'Mörkret',dx:-7,dy:-22,rx:19,ry:28},
@@ -271,72 +264,61 @@ const WATERFALL_CAVE_RUNE_LAYOUT=[
 ];
 
 const WATERFALL_CAVE_RUNE_SETS={
-  'waterfall.glyphArchive':waterfallCaveMakeRuneSet('waterfall.glyphArchive','Brobyggarens runor',1,[
-    ['När första bron läggs över vattnet','vågar flocken följa efter.'],
-    ['Håll en vän vid kanten','så hinner de andra tänka.'],
-    ['Två plankor räddar fler','än ett förhastat språng.'],
-    ['Vattnet prövar tålamodet','mer än styrkan.'],
-    ['Den som bygger för högt','glömmer vägen hem.'],
-    ['Så börjar färden:','med mod, bro och mål.']
+  'waterfall.glyphArchive':waterfallCaveMakeRuneSet('waterfall.glyphArchive','Vägen hem',1,[
+    {title:'Hemmet',lines:['Vårt hem ligger ovanför molnen.','Där finns plats för hela flocken.']},
+    {title:'Stormen',lines:['Stormen bröt den gamla molnvägen.','Sedan dess söker vi en väg tillbaka.']},
+    {title:'Bron',lines:['Vi byggde bron för dem som kom efter.','Ingen skulle behöva gå ensam.']},
+    {title:'Ljuset',lines:['I kyrkan längre in tog vi emot ljuset.','Det bar vi med oss genom mörkret.']},
+    {title:'Spåren',lines:['Sju arkiv på land bevarar vår färd.','Läs våra spår och hjälp de andra hem.']}
   ]),
-  'waterfall.darkForest':waterfallCaveMakeRuneSet('waterfall.darkForest','Skogens nattbudskap',2,[
-    ['När träden sluter leden','blir lyktan flockens hjärta.'],
-    ['Mörkret skrämmer bara den','som springer utan riktning.'],
-    ['Rötterna minns varje steg','och släpper den varsamt fram.'],
-    ['Vattnet tar den som glömmer','att ljus också kan falla.'],
-    ['Facklorna viskar: stanna','innan ravinen svarar.'],
-    ['I nattens skog bär modet','en liten blå låga.']
+  'waterfall.darkForest':waterfallCaveMakeRuneSet('waterfall.darkForest','Natten i skogen',2,[
+    {title:'Längtan',lines:['Under träden såg vi inte himlen.','Ändå mindes vi hur det var där hemma.']},
+    {title:'Lyktan',lines:['En av oss bar lyktan längs stigen.','Vi höll oss nära varandra.']},
+    {title:'Lägerelden',lines:['Vid elden värmde vi våra händer.','Någon berättade om trädgårdarna hemma.']},
+    {title:'Välsignelsen',lines:['Kyrkans ljus slocknar inte i vatten.','Men ljuset gör inte simtagen starkare.']},
+    {title:'Morgonen',lines:['När natten var över gick vi vidare.','Hemmet fanns kvar, fast vägen saknades.']}
   ]),
-  'waterfall.marbleCave':waterfallCaveMakeRuneSet('waterfall.marbleCave','Marmorns hemliga rad',3,[
-    ['Vit sten döljer gamla hål','under den blanka ytan.'],
-    ['Den som tar höjd ser knappen','som marken inte berättar om.'],
-    ['Tunneln ska vara lagom låg','så flocken inte tappar takten.'],
-    ['Vattenfallet mäter stilla','vem som vågar gå bakom.'],
-    ['Marmor sjunger långsamt','när hackan hittar rätt ådra.'],
-    ['Bakom den kalla stenen','finns en varm väg vidare.']
+  'waterfall.marbleCave':waterfallCaveMakeRuneSet('waterfall.marbleCave','Minnen i marmor',3,[
+    {title:'Arkiven',lines:['Bakom fallen bevarade vi våra minnen.','Vattnet skyddade dem från stormen.']},
+    {title:'Arken',lines:['Trettiotvå ark bevarar vår färd på land.','Läser du en runa, vaknar ett av arken.']},
+    {title:'Minnet',lines:['Arken minns samma ord i alla grottor.','Deras ljus följer dig från arkiv till arkiv.']},
+    {title:'Portalstenen',lines:['Portalstenen kan förena två platser.','Den heliga bäraren visar vägen.']},
+    {title:'Kristallen',lines:['När stenen mörknar söker vi kristallen.','Där kan den få kraft igen.']}
   ]),
-  'waterfall.forestRavine':waterfallCaveMakeRuneSet('waterfall.forestRavine','Ravinens reptecken',4,[
-    ['Ravinen är bredare','än första blicken lovar.'],
-    ['Ett rep över djupet','kan bli en bro av mod.'],
-    ['Bygg ned där marken sjunker','inte där paniken pekar.'],
-    ['Vattnet samlar ekon','från steg som nästan föll.'],
-    ['Träden böjer sig över kanten','men håller inte flocken.'],
-    ['Den som fäster repet väl','binder dagen vid andra sidan.']
+  'waterfall.forestRavine':waterfallCaveMakeRuneSet('waterfall.forestRavine','Över ravinen',4,[
+    {title:'Avståndet',lines:['Från kanten syntes nästa stig.','Vi fick bygga vägen dit tillsammans.']},
+    {title:'Repet',lines:['Den första fäste repet i berget.','De andra klättrade efter.']},
+    {title:'Väntan',lines:['Vi väntade medan bron blev klar.','Sedan kom hela flocken över.']},
+    {title:'De instängda',lines:['Längs vägen fann vi fler av vår sort.','Vi öppnade deras burar.']},
+    {title:'Flocken',lines:['Vägen hem var inte bara vår.','De vi mötte fick följa med.']}
   ]),
-  'waterfall.doublePonds':waterfallCaveMakeRuneSet('waterfall.doublePonds','Dammarnas dubbla sång',5,[
-    ['Två vatten delar vägen','men inte viljan.'],
-    ['Den första bron lär försiktighet','den andra kräver rytm.'],
-    ['Lågt byggda steg håller','fler lämlar kvar på marken.'],
-    ['Mellan dammarna hörs','den kortaste pausen.'],
-    ['Stenarna vid kanten vet','var strömmen blir stark.'],
-    ['När båda speglar tystnar','öppnas runans mening.']
+  'waterfall.doublePonds':waterfallCaveMakeRuneSet('waterfall.doublePonds','Vid spegeldammen',5,[
+    {title:'Spegeln',lines:['Vi såg molnen speglas i dammarna.','Så nära i vattnet, så långt från oss.']},
+    {title:'Spegeldammen',lines:['I grottans damm räknade vi våra kast.','Det sjunde fick stenen att stiga.']},
+    {title:'Simfötterna',lines:['På stenen låg svarta simfötter.','Med dem nådde vi längre under ytan.']},
+    {title:'Djupet',lines:['Det sista arkivet sjönk med molnvägen.','Dess ord finns kvar under vatten.']}
   ]),
   'waterfall.chaosMap':waterfallCaveMakeRuneSet('waterfall.chaosMap','Kaosets ordning',6,[
-    ['När allt händer samtidigt','måste första valet vara enkelt.'],
-    ['Vatten, lava och murar','lyder den som ser mönstret.'],
-    ['Flyg inte från planen','förrän marken har svarat.'],
-    ['Repet minns avståndet','som bron inte når.'],
-    ['Kaos är bara karta','innan tecknen har lästs.'],
-    ['Samla vägarna till en','och flocken följer.']
+    {title:'Omvägarna',lines:['Vi kom genom hetta, skog och sten.','Ingen av vägarna gick rakt hem.']},
+    {title:'Verktygen',lines:['Det krävdes mer än ett par starka händer.','Vi byggde, grävde och hjälptes åt.']},
+    {title:'Mörkret i vattnet',lines:['I djupet sträckte sig armar efter oss.','Kyrkans ljus drev dem tillbaka.']},
+    {title:'Fortsättningen',lines:['När alla ark lyser, sök under ytan.','Ta både ljuset och simfötterna med.']}
   ]),
-  'waterfall.masterTrial':waterfallCaveMakeRuneSet('waterfall.masterTrial','Mästarprovets sista runor',7,[
-    ['Det sista provet bär','alla tidigare misstag.'],
-    ['Den heliga gnistan skyddar','men löser inte vägen.'],
-    ['Lava, vatten, stad och sand','är delar av samma fråga.'],
-    ['Looten lockar, målet väntar','och flocken räknar stegen.'],
-    ['När sista runan tänds','blir minnet större än banan.'],
-    ['Alla tecken tillsammans','pekar mot nästa värld.']
+  'waterfall.masterTrial':waterfallCaveMakeRuneSet('waterfall.masterTrial','Vid världens kant',7,[
+    {title:'Den sista marken',lines:['Här slutar vår vandring på marken.','Hemmet väntar fortfarande ovanför oss.']},
+    {title:'De förlorade orden',lines:['Tio runor vilar i det sjunkna arkivet.','De beskriver vägen upp till molnen.']},
+    {title:'Det heliga ljuset',lines:['En vanlig lampa visar vägen i vattnet.','Men bara heligt ljus väcker djuprunorna.']},
+    {title:'Hemvägen',lines:['För flocken hit och läs de sista orden.','Då kan färden genom himlen börja.']}
   ])
 };
 
 function waterfallCaveMakeRuneSet(id,title,order,parts){
-  const total=WATERFALL_CAVE_RUNE_LAYOUT.length;
+  const total=parts.length;
   return {
     runeSet:{id,title,source:'Runarkivet',world:'Bakom vattenfallet',order,kind:RUNE_KIND_SURFACE},
-    readLines:['Runorna viskar:',title,'Läs varje tecken i stenen.'],
-    runes:WATERFALL_CAVE_RUNE_LAYOUT.map((base,i)=>{
-      const text=Array.isArray(parts&&parts[i])?parts[i]:['Runorna viskar.'];
-      return Object.assign({},base,{kind:RUNE_KIND_SURFACE,lines:['Runa '+(i+1)+'/'+total].concat(text)});
+    readLines:['Vandrarnas runor',title,'Här finns spår av vägen hem.'],
+    runes:parts.map((part,i)=>{
+      return Object.assign({},WATERFALL_CAVE_RUNE_LAYOUT[i],{title:part.title,kind:RUNE_KIND_SURFACE,lines:['Runa '+(i+1)+'/'+total].concat(part.lines)});
     })
   };
 }

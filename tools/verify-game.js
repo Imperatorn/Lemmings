@@ -258,7 +258,7 @@ for (const token of ['WATERFALL_CAVE_SCENES','WATERFALL_CAVE_VARIANTS','WATERFAL
 if (waterfallScenesCode.includes('rootSanctum') || waterfallScenesCode.includes('rootHeart') || waterfallScenesCode.includes("audio:'root-mystery'")) {
   throw new Error('Waterfall cave scene registry should rename the old root sanctum to the church scene');
 }
-if (!waterfallScenesCode.includes('WATERFALL_CAVE_RUNE_SETS') || !waterfallScenesCode.includes('SURFACE_RUNE_TOTAL=32') || !waterfallScenesCode.includes('DEEP_RUNE_TOTAL=10') || !waterfallScenesCode.includes('waterfallCaveSurfaceRuneLimit') || !waterfallScenesCode.includes('waterfallCaveRuneSet') || !waterfallScenesCode.includes('waterfallCaveRuneObjectForSet') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog') || !waterfallScenesCode.includes('Runa 1/6') || !waterfallScenesCode.includes('Runa 6/6')) {
+if (!waterfallScenesCode.includes('WATERFALL_CAVE_RUNE_SETS') || !waterfallScenesCode.includes('SURFACE_RUNE_TOTAL=32') || !waterfallScenesCode.includes('DEEP_RUNE_TOTAL=10') || !waterfallScenesCode.includes('waterfallCaveSurfaceRuneLimit') || !waterfallScenesCode.includes('waterfallCaveRuneSet') || !waterfallScenesCode.includes('waterfallCaveRuneObjectForSet') || !waterfallScenesCode.includes('waterfallCaveRuneCatalog')) {
   throw new Error('Glyph archive rune wall should define separate readable rune text segments');
 }
 if (!waterfallScenesCode.includes('stoneInscription') || !waterfallScenesCode.includes('BROSTENEN') || !waterfallScenesCode.includes('KAOSSTENEN') || !waterfallRenderCode.includes('drawWaterfallCaveStoneGlyph')) {
@@ -314,7 +314,7 @@ for (const token of ['levelUnlocked(idx){','selectMenuLevel(idx){','toggleLevelS
 for (const token of ['G.levelUnlocked','DOLD BANA','LÅST VÄRLD','BANVAL:','HIMMEL','progression:{']) {
   if (!screensCode.includes(token)) throw new Error(`Menu rendering should expose campaign locked-state visually: ${token}`);
 }
-for (const token of ['chLockReason','LÅST: ','drawSkyResultBackground','RESAN ÄR FULLBORDAD','FLOCKEN HAR NÅTT HIMLEN','ALLA VÄRLDAR ÄR KLARA']) {
+for (const token of ['chLockReason','LÅST: ','drawSkyResultBackground','drawSkyHomecoming','ÄNTLIGEN HEMMA','FLOCKEN HAR HITTAT HEM TILL LÄMMELHIMLEN']) {
   if (!screensCode.includes(token)) throw new Error(`Screens should polish sky progression and final completion feedback: ${token}`);
 }
 if (!waterfallRuntimeCode.includes('const WATERFALL_CAVE_WALK_SPEED=1.55') || !waterfallRuntimeCode.includes('const WATERFALL_CAVE_RUN_SPEED=2.50') || !waterfallRuntimeCode.includes('running?WATERFALL_CAVE_RUN_SPEED:WATERFALL_CAVE_WALK_SPEED')) {
@@ -506,6 +506,7 @@ function makeContext2d(){
     clearRect(){},
     strokeRect(){},
     beginPath(){},
+    rect(){},
     arc(){},
     fill(){},
     stroke(){},
@@ -4655,6 +4656,61 @@ vm.runInContext(`{
     G.cleared=originalCleared;G.runeProgress=originalRunes;document.hidden=false;
   }
 }`, sandbox, {filename:'interface regression checks', timeout:10000});
+
+vm.runInContext(`{
+  const surface=G.runeCatalog('surface'),deep=G.runeCatalog('deep');
+  const counts=[5,5,5,5,4,4,4],ids=['water','dark','altar','fire','fall'];
+  if(surface.runes.length!==32||deep.runes.length!==10)throw new Error('The homeward story must retain 32 surface and 10 deep runes');
+  for(let i=0;i<surface.sets.length;i++){
+    const set=surface.sets[i],raw=WATERFALL_CAVE_RUNE_SETS[set.id];
+    const entries=surface.runes.filter(r=>r.setId===set.id);
+    if(entries.length!==counts[i]||raw.runes.length!==counts[i])throw new Error('Narrative contains hidden or missing fragments: '+set.id);
+    entries.forEach((r,j)=>{
+      if(r.key!==set.id+'.'+ids[j]||r.lines[0]!=='Runa '+(j+1)+'/'+counts[i])throw new Error('Story edit changed a saved rune key or numbering');
+      if(r.lines.length!==3||r.lines.some(line=>textW(line,1)>304))throw new Error('Surface inscription exceeds its reading panel: '+r.key);
+    });
+  }
+  deep.runes.forEach((r,i)=>{
+    if(r.key!=='underwater.deepArchive.deep'+String(i+1).padStart(2,'0'))throw new Error('Deep rune save key changed');
+    if(r.lines.length!==2||r.lines.some(line=>textW(line,1)>304))throw new Error('Deep inscription exceeds its reading panel: '+r.key);
+  });
+  for(const v of Object.values(WATERFALL_CAVE_VARIANTS)){
+    if(v.stoneInscription.lines.length!==2||v.stoneInscription.lines.some(line=>textW(line,1)>172))throw new Error('Engraved stone text would be clipped: '+v.id);
+  }
+  for(const room of Object.values(UNDERWATER_CAVE_SCENES))for(const obj of room.objects||[]){
+    if((obj.default.hintLines||[]).some(line=>textW(line,1)>304))throw new Error('Underwater object hint exceeds the panel: '+obj.id);
+  }
+  for(const level of LEVELS){
+    if(level.theme==='sky'&&(!level.story||level.story.length!==2))throw new Error('Sky level is missing its homeward story');
+    if((level.story||[]).some(line=>textW(line,1)>CW-32))throw new Error('Briefing story is too wide: '+level.name);
+  }
+  const legacy={v:1,discovered:{},sets:{},archives:{}};
+  for(const r of surface.runes.concat(deep.runes))legacy.discovered[r.key]={...r,lines:['Old inscription'],discoveredAt:123};
+  const restored=G.normalizeRuneProgress(JSON.parse(JSON.stringify(legacy)));
+  if(G.surfaceRuneSummary(restored).read!==32||G.deepRuneSummary(restored).read!==10||Object.values(restored.discovered).some(r=>r.discoveredAt!==123))throw new Error('Existing discoveries lost after narrative edit');
+
+  const prior={level:G.level,levelIdx:G.levelIdx,saved:G.saved,levelRunMode:G.levelRunMode,levelForceFail:G.levelForceFail,cutscenesOn:G.cutscenesOn,cutscene:G.cutscene};
+  const originalDrawText=drawText,lines=[];
+  drawText=(c,s)=>lines.push(String(s));
+  try{
+    G.levelIdx=LEVELS.length-1;G.level=LEVELS[G.levelIdx];G.saved=G.level.save;
+    G.levelForceFail=false;G.levelRunMode='campaign';
+    const before=JSON.stringify({saved:G.saved,cleared:G.cleared,runes:G.runeProgress,stats:G.profileStats});
+    drawResult(WCTX,0);drawResult(WCTX,50);
+    if(!lines.includes('ÄNTLIGEN HEMMA'))throw new Error('Final campaign win should show the homecoming');
+    if(JSON.stringify({saved:G.saved,cleared:G.cleared,runes:G.runeProgress,stats:G.profileStats})!==before)throw new Error('Homecoming rendering mutated progression or rescue totals');
+    lines.length=0;G.levelRunMode='practice';drawResult(WCTX,20);
+    if(lines.includes('ÄNTLIGEN HEMMA')||!lines.includes('SISTA ÖVNINGEN KLARAD'))throw new Error('Practice must not claim a campaign homecoming');
+    lines.length=0;G.levelRunMode='campaign';G.saved=G.level.save-1;drawResult(WCTX,20);
+    if(lines.includes('ÄNTLIGEN HEMMA')||!lines.includes('OJDÅ...'))throw new Error('Failed final level must not show a homecoming');
+    lines.length=0;G.saved=G.level.save;G.levelForceFail=true;drawResult(WCTX,20);
+    if(lines.includes('ÄNTLIGEN HEMMA'))throw new Error('Forced loss must not show a homecoming');
+    lines.length=0;G.levelForceFail=false;G.levelIdx--;G.level=LEVELS[G.levelIdx];G.saved=G.level.save;drawResult(WCTX,20);
+    if(lines.includes('ÄNTLIGEN HEMMA'))throw new Error('Homecoming must wait for the final sky level');
+    G.cutscenesOn=true;G.playCutscene('homecoming-preview');drawCutsceneOverlay(WCTX,20);G.stopCutscene('skip',true);
+    if(JSON.stringify({cleared:G.cleared,runes:G.runeProgress,stats:G.profileStats})!==JSON.stringify({cleared:JSON.parse(before).cleared,runes:JSON.parse(before).runes,stats:JSON.parse(before).stats}))throw new Error('Homecoming preview changed campaign progress');
+  }finally{drawText=originalDrawText;Object.assign(G,prior)}
+}`, sandbox, {filename:'homeward narrative regression checks', timeout:10000});
 
 const bazookaSchoolIdx = LEVELS.findIndex(L => L.name === 'BAZOOKA-SKOLAN');
 if (bazookaSchoolIdx < 0) throw new Error('Missing BAZOOKA-SKOLAN');

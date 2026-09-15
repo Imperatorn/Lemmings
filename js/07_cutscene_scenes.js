@@ -882,4 +882,12 @@
   G.registerCutscene(makeWaterClimbCutsceneSpec('fullscreen'));
   G.registerCutscene(makeClimbCutsceneSpec('fullscreen'));
   G.registerCutscene(makeTeleportStoneCutsceneSpec('fullscreen'));
+  G.registerCutscene({
+    id:'homecoming-preview',label:'Hemkomsten',group:'Hemresan',order:1,
+    description:'Förhandsvisa molnhemmet utan att ändra kampanjens framsteg.',
+    mode:'fullscreen',sound:false,
+    shots:[{seconds:12,title:'ÄNTLIGEN HEMMA',text:['FLOCKEN HAR HITTAT HEM TILL LÄMMELHIMLEN.','HÄR FINNS TID ATT VILA. OCH ATT VARA TILLSAMMANS.'],
+      draw(c,r,p,cs,tk){drawSkyResultBackground(c,tk)}
+    }]
+  });
 })();

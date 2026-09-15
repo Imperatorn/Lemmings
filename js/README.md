@@ -48,6 +48,23 @@ bygger alla banor och gör en render-/save-smoketest.
 
 ## Praktiska noter för fortsatt utveckling
 
+### Berättelsens röda tråd
+
+Flocken söker hem till lämmelhimlen sedan en storm brutit den gamla molnvägen.
+Runorna är spår efter tidigare vandrare, inte fristående lösenord. De 32 runorna
+på land berättar om hemmet, flocken och utrustningen; de tio i djuparkivet
+beskriver den förlorade fortsättningen upp till molnen. Himmelsbanornas `story`
+för resan vidare till hemkomsten efter bana 40. Himlen är ett hem att nå levande,
+inte en belöning för att förlora lämlar.
+
+Behåll runornas ID:n och fördelningen 5/5/5/5/4/4/4 när texter ändras.
+Upplåsningen kräver fortfarande bana 30, 32 runor på land och 10 djuprunor.
+Slutbilden i `10_screens.js` är presentation i resultatläget, utan egen progression
+eller ändringar av räddningsantal. `Hemkomsten` i debugpanelens filmsamling
+förhandsvisar samma grafik. Tacktexterna på samlarkorten är separata från berättelsen.
+
+### Spelmoduler
+
 - `07_game.js` är fortfarande navet för globalt spelstate, men flera delar är
   brutna till tilläggsfiler som monterar metoder på `G`: rep i `07_rope.js`,
   save/load i `07_save_state.js`, direktstyrning i `07_manual_control.js`,

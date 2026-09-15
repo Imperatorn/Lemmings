@@ -1069,7 +1069,8 @@ function drawWaterfallCaveArchiveDeepHint(c,state,tk){
   if(!state||state.visibleLit<SURFACE_RUNE_TOTAL||state.visibleTotal<SURFACE_RUNE_TOTAL)return false;
   const total=state.deepTotal||DEEP_RUNE_TOTAL;
   const read=state.deepRead||0;
-  if(total<=0||read>=total)return false;
+  if(total<=0)return false;
+  const complete=read>=total;
   const pulse=0.5+0.5*Math.sin(tk*0.08);
   c.save();
   c.globalAlpha=0.20+0.12*pulse;
@@ -1077,8 +1078,9 @@ function drawWaterfallCaveArchiveDeepHint(c,state,tk){
   c.fillRect(170,250,140,1);
   c.globalAlpha=0.76;
   if(typeof drawTextC==='function'){
-    drawTextC(c,'ALLA 32 ARK LYSER',CW/2,262,1,'#ffe6a0');
-    drawTextC(c,read>0?('DJUPRUNOR '+read+'/'+total):'DE SISTA 10 FINNS I DJUPET',CW/2,276,1,'#d8fbff');
+    drawTextC(c,complete?'HEMVÄGENS ALLA RUNOR ÄR LÄSTA':'ALLA 32 ARK LYSER',CW/2,262,1,'#ffe6a0');
+    const next=complete?(G.skyChapterUnlocked&&G.skyChapterUnlocked()?'VÄGEN TILL HIMLEN ÄR ÖPPEN':'FÖR FLOCKEN GENOM MÄSTARPROVET'):(read>0?'DJUPRUNOR '+read+'/'+total:'DE SISTA 10 FINNS I DJUPET');
+    drawTextC(c,next,CW/2,276,1,'#d8fbff');
   }
   c.restore();
   return true;

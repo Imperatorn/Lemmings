@@ -8,6 +8,10 @@ Målet är att rädda tillräckligt många lemlar genom banor med destruerbar
 terräng, vatten, lava, nattmörker, grottor, ökenmiljöer, stadsmiljöer,
 slumphändelser och olika verktyg.
 
+Flocken söker hem till lämmelhimlen sedan en storm brutit den gamla molnvägen.
+Runarkiven och det sjunkna arkivet bevarar spåren av hemvägen. De leder vidare
+till tio himmelsbanor och en animerad hemkomst bland molnen.
+
 ## Starta spelet
 
 Öppna:

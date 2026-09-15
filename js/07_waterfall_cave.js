@@ -247,7 +247,7 @@ Object.assign(G,{
       cave.flags.runesComplete=true;
       if(AU.sWaterfallCaveRunesComplete)AU.sWaterfallCaveRunesComplete();
       else if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(1);
-      this.toast('RUNORNAS BUDSKAP ÄR FULLSTÄNDIGT',150);
+      this.toast('ALLA RUNOR I DET HÄR ARKIVET ÄR LÄSTA',150);
     }
     return true;
   },

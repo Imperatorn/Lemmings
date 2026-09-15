@@ -599,9 +599,9 @@ Object.assign(G,{
     obj.deepRead=deep.read||0;
     obj.deepTotal=deep.total||DEEP_RUNE_TOTAL;
     obj.readComplete=!!deep.complete;
-    if(obj.readComplete)obj.hintLines=['DJUPARKIVET LYSER STILLA','ALLA 10 RUNOR ÄR LÄSTA'];
-    else if(obj.surfaceComplete)obj.hintLines=['DET SJUNKNA ARKIVET HAR ÖPPNATS','LÄS NÄSTA DJUPRUNA'];
-    else obj.hintLines=['ARKIVET HÅLLER SIG STÄNGT','LÄS DE 32 ARKEN FÖRST'];
+    if(obj.readComplete)obj.hintLines=['HEMVÄGENS ALLA RUNOR ÄR LÄSTA',this.skyChapterUnlocked&&this.skyChapterUnlocked()?'VÄGEN TILL HIMLEN ÄR ÖPPEN':'FÖR FLOCKEN GENOM MÄSTARPROVET'];
+    else if(obj.surfaceComplete)obj.hintLines=['HÄR FORTSÄTTER BERÄTTELSEN OM HEMVÄGEN','LÄS NÄSTA DJUPRUNA'];
+    else obj.hintLines=['DE HÄR TECKNEN GÅR ÄNNU INTE ATT LÄSA','SÖK FÖRST DE 32 RUNORNA PÅ LAND'];
     return obj;
   },
   readUnderwaterCaveDeepRunes(hit){
@@ -614,7 +614,7 @@ Object.assign(G,{
     obj.hintT=Math.max(obj.hintT||0,140);
     if(cave.manualLampDive){
       cave.messageT=130;
-      cave.messageLines=['LAMPAN FÅR INTE ARKET ATT VAKNA','ETT HELIGT SKEN KRÄVS'];
+      cave.messageLines=['TECKNEN FÖRBLIR MÖRKA I LAMPLJUSET','DE VÄCKS AV KYRKANS VÄLSIGNELSE'];
       this.toast('LAMPAN RÄCKER INTE',80);
       if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.45);
       return true;
@@ -631,7 +631,7 @@ Object.assign(G,{
     if(this.recordRuneArchiveVisit)this.recordRuneArchiveVisit(Object.assign({},meta,{setId:meta.id}));
     if(!obj.surfaceComplete){
       cave.messageT=130;
-      cave.messageLines=['ARKIVET HÅLLER SIG STÄNGT','LÄS DE 32 ARKEN FÖRST'];
+      cave.messageLines=obj.hintLines.slice();
       this.toast('DJUPRUNORNA VÄNTAR',80);
       if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.65);
       return true;
@@ -641,7 +641,7 @@ Object.assign(G,{
     const nextIndex=entries.findIndex(e=>e&&e.key&&!progress.discovered[e.key]);
     if(nextIndex<0){
       cave.messageT=140;
-      cave.messageLines=['DJUPARKIVET LYSER STILLA','ALLA 10 RUNOR ÄR LÄSTA'];
+      cave.messageLines=obj.hintLines.slice();
       this.toast('DJUPRUNOR 10/10',90);
       if(AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.85);
       return true;
@@ -656,7 +656,7 @@ Object.assign(G,{
     this.toast('DJUPRUNA '+Math.min(entries.length,nextIndex+1)+'/'+entries.length,90);
     if(res&&res.newly&&AU.sWaterfallCaveRuneDiscover)AU.sWaterfallCaveRuneDiscover();
     if(res&&res.setCompletedNow){
-      this.toast('ALLA DJUPRUNOR ÄR LÄSTA',130);
+      this.toast('HEMVÄGENS ALLA RUNOR ÄR LÄSTA',130);
       if(AU.sWaterfallCaveRunesComplete)AU.sWaterfallCaveRunesComplete();
     }else if(!(res&&res.newly)&&AU.sWaterfallCaveCrystalChime)AU.sWaterfallCaveCrystalChime(0.75);
     return true;

@@ -165,7 +165,7 @@ function drawTitle(c,tk){
   drawTitleGround(c,tk);
   drawTitleLemmings(c,tk);
   if((tk>>4)&1)drawTextC(c,'KLICKA FÖR ATT BÖRJA',CW/2,160,2,'#f3df9a');
-  drawTextC(c,'BYGG GRÄV SPRÄNG FLYG - RÄDDA LEMLARNA',CW/2,232,1,'#8ab05c');
+  drawTextC(c,'HJÄLP FLOCKEN ATT HITTA HEM TILL LÄMMELHIMLEN',CW/2,232,1,'#b8d890');
 }
 
 function drawMenuVolumeBar(c,r,val,on){
@@ -368,6 +368,7 @@ function drawBrief(c,tk){
   G.briefShopButtons=[];
   drawTextC(c,'BANA '+(G.levelIdx+1),CW/2,40,2,'#a89878');
   drawTextC(c,L.name,CW/2,62,3,'#f1d982');
+  for(let i=0;i<Math.min(2,(L.story||[]).length);i++)drawTextC(c,L.story[i],CW/2,88+i*10,1,'#bfd9c4');
   drawTextC(c,'ANTAL LEMLAR: '+L.lem,CW/2,110,1,'#fff');
   drawTextC(c,'RÄDDA: '+Math.floor(L.save/L.lem*100)+'% ('+L.save+' ST)',CW/2,124,1,'#fff');
   drawTextC(c,'TID: '+Math.floor(L.time/60)+' MINUTER',CW/2,138,1,'#fff');
@@ -439,41 +440,125 @@ function drawBrief(c,tk){
 }
 
 function drawSkyResultBackground(c,tk){
+  c.save();
   const g=c.createLinearGradient(0,0,0,CH);
-  g.addColorStop(0,'#78bfff');
-  g.addColorStop(0.58,'#dff7ff');
-  g.addColorStop(1,'#ffffff');
+  g.addColorStop(0,'#83c6ed');
+  g.addColorStop(0.62,'#e1f4f8');
+  g.addColorStop(1,'#f4fcff');
   c.fillStyle=g;c.fillRect(0,0,CW,CH);
-  c.globalAlpha=0.22;
-  c.fillStyle='#fff8c8';
-  c.beginPath();c.arc(CW/2,68,58,0,7);c.fill();
-  c.globalAlpha=0.18;
-  for(let i=0;i<9;i++){
-    const a=-0.55+i*0.14;
-    c.fillRect(Math.round(CW/2+Math.sin(a)*18)-1,22+i*8,2,92-i*4);
-  }
-  c.globalAlpha=1;
-  const cloud=(x,y,w,col)=>{
+  const oval=(x,y,rx,ry,col)=>{
     c.fillStyle=col;
-    c.fillRect(x,y+12,w,16);
-    c.fillRect(x+10,y+6,Math.round(w*0.36),18);
-    c.fillRect(x+Math.round(w*0.42),y,Math.round(w*0.28),26);
-    c.fillRect(x+Math.round(w*0.68),y+8,Math.round(w*0.24),20);
+    for(let dy=-ry;dy<ry;dy+=2){
+      const half=Math.round(rx*Math.sqrt(Math.max(0,1-Math.pow((dy+1)/ry,2))));
+      c.fillRect(Math.round(x-half),Math.round(y+dy),half*2,2);
+    }
   };
-  cloud(24,196,164,'#f6fdff');
-  cloud(286,205,178,'#f8feff');
-  cloud(94,236,300,'#ffffff');
-  c.fillStyle='rgba(84,146,190,0.16)';
-  for(let i=0;i<7;i++){
-    const x=58+i*62+Math.round(Math.sin((tk+i)*0.09)*3);
-    c.fillRect(x,154+i%2*14,24,2);
-    c.fillRect(x+8,159+i%2*14,38,2);
+  const cloud=(x,y,w,h,col)=>{
+    oval(x,y,w/2,h*0.40,col);
+    oval(x-w*0.24,y-h*0.18,w*0.23,h*0.46,col);
+    oval(x+w*0.03,y-h*0.34,w*0.25,h*0.58,col);
+    oval(x+w*0.30,y-h*0.10,w*0.20,h*0.42,col);
+  };
+  for(let i=0;i<5;i++){
+    const drift=Math.round(Math.sin(tk*0.008+i*1.7)*5);
+    cloud(8+i*120+drift,98+i%2*18,126,24,'#c0e2ef');
+    cloud(8+i*120+drift,94+i%2*18,122,22,'#effbff');
   }
-  c.fillStyle='rgba(255,248,180,0.42)';
-  for(let i=0;i<12;i++){
-    const x=42+i*37,y=92+Math.round(Math.sin(tk*0.08+i)*18);
-    c.fillRect(x,y,2,2);
+  // The cloud garden is a home, not another obstacle course or gameplay state.
+  cloud(240,199,454,53,'#a6cbdc');
+  cloud(236,191,458,50,'#d5edf6');
+  cloud(240,184,450,40,'#f7fdff');
+  oval(238,179,180,24,'#7fae83');
+  oval(238,174,176,23,'#a9cc8d');
+  oval(237,174,114,12,'#d4dfae');
+
+  const cottage=(x,y,w,roof)=>{
+    c.fillStyle='#96b1b3';c.fillRect(x+4,y-32,w,34);
+    c.fillStyle='#f6f5df';c.fillRect(x,y-34,w,34);
+    c.fillStyle='#dce4d1';c.fillRect(x+w-10,y-34,10,34);
+    c.fillStyle=roof;
+    fillPixelPoly(c,[[x-6,y-32],[x-6,y-38],[x+2,y-38],[x+2,y-46],[x+12,y-46],[x+12,y-52],[x+w-12,y-52],[x+w-12,y-46],[x+w-2,y-46],[x+w-2,y-38],[x+w+6,y-38],[x+w+6,y-32]]);
+    c.fillStyle='#fff8d6';c.fillRect(x-6,y-33,w+12,2);
+    c.fillStyle='#677e77';c.fillRect(x+w/2-5,y-21,10,21);
+    c.fillStyle='#fff0a9';c.fillRect(x+w/2-3,y-19,6,19);
+    for(const wx of [x+7,x+w-15]){
+      c.fillStyle='#748e89';c.fillRect(wx,y-24,8,11);
+      c.fillStyle='#ffe9a0';c.fillRect(wx+1,y-23,6,9);
+      c.fillStyle='#f6f5df';c.fillRect(wx+3,y-23,1,9);c.fillRect(wx+1,y-19,6,1);
+      c.fillStyle='#5c8d62';c.fillRect(wx-2,y-12,12,3);
+      c.fillStyle='#e58c99';c.fillRect(wx,y-15,3,3);c.fillRect(wx+5,y-14,3,2);
+    }
+    c.fillStyle='#c6d4ca';c.fillRect(x+w/2-8,y,16,3);
+  };
+  cottage(103,159,52,'#688f85');
+  cottage(204,157,56,'#b97379');
+  cottage(330,164,54,'#638f97');
+
+  c.fillStyle='#e8edde';
+  for(let x=154;x<330;x+=12){
+    if(x>192&&x<275)continue;
+    c.fillRect(x,148,3,13);
   }
+  c.fillRect(152,152,44,2);c.fillRect(274,152,54,2);
+  for(let i=0;i<28;i++){
+    const x=76+(i*47)%329,y=165+(i*13)%29;
+    if(x>170&&x<300)continue;
+    const sway=Math.round(Math.sin(tk*0.025+i)*0.7);
+    c.fillStyle='#568961';c.fillRect(x,y-4,1,5);
+    c.fillStyle=i%3===0?'#d87092':(i%3===1?'#fff4b8':'#ffffff');
+    c.fillRect(x-1+sway,y-6,3,3);
+    c.fillStyle='#e2b959';c.fillRect(x+sway,y-5,1,1);
+  }
+
+  const neighbor=(x,y,pose,seed,scale=2)=>{
+    c.fillStyle='#7ca487';c.fillRect(x-5,y,10,2);
+    c.save();c.translate(x,y);c.scale(scale,scale);
+    const facing=pose==='wave'?'front':pose;
+    if(pose==='wave'){
+      c.save();c.beginPath();c.rect(-3,-12,5,12);c.clip();
+      drawWaterfallCaveLemming(c,{facing,walking:false},0,0,1);
+      c.restore();
+      const lift=Math.sin(tk*0.045+seed)>0?1:0;
+      c.fillStyle=COL.skin;c.fillRect(2,-6,2,1);c.fillRect(3,-8-lift,1,3+lift);
+    }else drawWaterfallCaveLemming(c,{facing,walking:false},0,0,1);
+    c.restore();
+  };
+  for(const p of [[182,160,'right'],[279,161,'left'],[300,163,'front']])neighbor(p[0],p[1],p[2],0,1);
+  const flock=[
+    [86,177,'right'],[104,179,'left'],[141,173,'wave'],[172,178,'right'],
+    [194,181,'left'],[216,170,'front'],[245,170,'front'],[275,178,'wave'],
+    [303,180,'right'],[322,181,'left'],[364,178,'wave'],[385,185,'left'],
+    [121,199,'wave'],[150,200,'right'],[172,201,'left'],[208,199,'front'],
+    [248,200,'wave'],[288,199,'right'],[308,200,'left'],[343,198,'front']
+  ];
+  for(let i=0;i<flock.length;i++)neighbor(...flock[i],i);
+  c.fillStyle='#758c6c';c.fillRect(201,184,54,2);
+  c.fillStyle='#aa8058';c.fillRect(204,177,3,11);c.fillRect(248,177,3,11);
+  c.fillStyle='#b99062';c.fillRect(198,173,60,5);
+  c.fillStyle='#ead9a7';c.fillRect(198,172,60,2);
+  c.fillStyle='#fdf9e5';
+  for(const x of [208,223,241]){c.fillRect(x,168,4,4);c.fillRect(x+4,169,2,2)}
+  c.fillStyle='#e7c27f';c.fillRect(231,169,7,3);
+  for(let i=0;i<3;i++){
+    const x=209+i*16+Math.round(Math.sin(tk*0.035+i));
+    c.fillStyle='#e6f1d8';c.fillRect(x,161-((tk/14+i*2)|0)%4,1,3);
+  }
+  cloud(-2,217,122,24,'#f9feff');
+  cloud(480,213,148,28,'#f9feff');
+  c.restore();
+}
+
+function drawSkyHomecoming(c,tk){
+  drawSkyResultBackground(c,tk);
+  drawTextC(c,'ÄNTLIGEN HEMMA',CW/2,24,3,'#ffffff');
+  drawTextC(c,'ÄNTLIGEN HEMMA',CW/2,23,3,'#245773');
+  drawTextC(c,'FLOCKEN HAR HITTAT HEM TILL LÄMMELHIMLEN',CW/2,49,1,'#315d70');
+  drawTextC(c,'HÄR FINNS TID ATT VILA. OCH ATT VARA TILLSAMMANS.',CW/2,232,1,'#385c4c');
+  drawTextC(c,'TACK FÖR ATT DU HJÄLPTE DEM HEM.',CW/2,246,1,'#385c4c');
+  const L=G.level;
+  drawTextC(c,'DU RÄDDADE '+Math.floor(G.saved/L.lem*100)+'% ('+G.saved+' ST)',CW/2,261,1,'#4d6973');
+  drawTextC(c,'KRAVET VAR '+Math.floor(L.save/L.lem*100)+'% ('+L.save+' ST)',CW/2,271,1,'#4d6973');
+  drawTextC(c,'ENTER/KLICK: BANMENY   R: SPELA IGEN   ESC/B: BANMENY',CW/2,288,1,'#315d70');
 }
 
 function drawResult(c,tk){
@@ -482,17 +567,15 @@ function drawResult(c,tk){
   const hasNext=G.levelIdx<LEVELS.length-1;
   const nextLocked=!!(win&&hasNext&&G.levelUnlocked&&!G.levelUnlocked(G.levelIdx+1));
   const finalSkyWin=!!(win&&!practice&&L&&L.theme==='sky'&&G.levelIdx>=LEVELS.length-1);
+  if(finalSkyWin){drawSkyHomecoming(c,tk);return}
   const comp=!practice&&G.levelCompletionStatus?G.levelCompletionStatus(G.levelIdx):null;
   const runeGuide=G.levelRuneGuidance?G.levelRuneGuidance(G.levelIdx):null;
-  if(finalSkyWin)drawSkyResultBackground(c,tk);
-  else{c.fillStyle='#000008';c.fillRect(0,0,CW,CH)}
-  if(finalSkyWin)drawTextC(c,'RESAN ÄR FULLBORDAD',CW/2,43,3,'#1f5e84');
-  drawTextC(c,finalSkyWin?'RESAN ÄR FULLBORDAD':(win?'BRA JOBBAT!':'OJDÅ...'),CW/2,finalSkyWin?42:50,3,finalSkyWin?'#fff0b8':(win?'#40ff40':'#ff5050'));
-  if(finalSkyWin)drawTextC(c,'FLOCKEN HAR NÅTT HIMLEN',CW/2,74,1,'#256080');
+  c.fillStyle='#000008';c.fillRect(0,0,CW,CH);
+  drawTextC(c,win?'BRA JOBBAT!':'OJDÅ...',CW/2,50,3,win?'#40ff40':'#ff5050');
   const pct=Math.floor(G.saved/L.lem*100),need=Math.floor(L.save/L.lem*100);
-  drawTextC(c,'DU RÄDDADE '+pct+'% ('+G.saved+' ST)',CW/2,100,2,finalSkyWin?'#123c58':'#fff');
-  drawTextC(c,'KRAVET VAR '+need+'% ('+L.save+' ST)',CW/2,122,2,finalSkyWin?'#4f7890':'#a0a0b0');
-  if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,finalSkyWin?'#73531b':'#ffd040');
+  drawTextC(c,'DU RÄDDADE '+pct+'% ('+G.saved+' ST)',CW/2,100,2,'#fff');
+  drawTextC(c,'KRAVET VAR '+need+'% ('+L.save+' ST)',CW/2,122,2,'#a0a0b0');
+  if(G.saved>L.lem)drawTextC(c,'BONUS: +'+(G.saved-L.lem)+' FÅNGADE LEMLAR',CW/2,146,1,'#ffd040');
   if(practice)drawTextC(c,'ÖVNING - PROGRESSION SPARADES INTE',CW/2,G.saved>L.lem?158:146,1,'#ffd080');
   let nextY=170;
   if(win&&comp&&comp.hasExtra){
@@ -507,19 +590,15 @@ function drawResult(c,tk){
     drawTextC(c,label+' - '+G.levelLockedReason(G.levelIdx+1),CW/2,nextY,1,'#caa0ff');
     nextY+=14;
   }
-  let controlsY=nextY+20,footerY=nextY+42;
+  const controlsY=nextY+20,footerY=nextY+42;
   if(!win||nextLocked)
     drawTextC(c,'KLICKA / ENTER: BANMENY',CW/2,nextY,1,'#ffd040');
   else if(hasNext)
     drawTextC(c,practice?'KLICKA / ENTER: NÄSTA ÖVNING':'KLICKA / ENTER: NÄSTA BANA',CW/2,nextY,1,'#ffd040');
-  else if(finalSkyWin){
-    drawTextC(c,'ALLA VÄRLDAR ÄR KLARA',CW/2,nextY,1,'#256080');
-    drawTextC(c,'LEMMEL-MÄSTARE!',CW/2,nextY+12,1,'#73531b');
-    controlsY=nextY+32;footerY=nextY+54;
-  }else
+  else
     drawTextC(c,practice?'SISTA ÖVNINGEN KLARAD':'DU KLARADE ALLA BANOR - LEMMEL-MÄSTARE!',CW/2,nextY,1,'#ffd040');
-  drawTextC(c,'R: SPELA IGEN   ESC/B: BANMENY',CW/2,controlsY,1,finalSkyWin?'#256080':'#8090a0');
-  drawTextC(c,'LÄGE '+G.modeName()+'  VÄDER '+G.weatherShort()+'  SEED '+((G.levelSeed>>>0).toString(36).toUpperCase()),CW/2,footerY,1,finalSkyWin?'#4f7890':'#606880');
+  drawTextC(c,'R: SPELA IGEN   ESC/B: BANMENY',CW/2,controlsY,1,'#8090a0');
+  drawTextC(c,'LÄGE '+G.modeName()+'  VÄDER '+G.weatherShort()+'  SEED '+((G.levelSeed>>>0).toString(36).toUpperCase()),CW/2,footerY,1,'#606880');
 }
 
 
