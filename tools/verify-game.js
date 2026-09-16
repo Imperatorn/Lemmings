@@ -4835,6 +4835,101 @@ vm.runInContext(`{
   }finally{drawText=originalDrawText;Object.assign(G,prior)}
 }`, sandbox, {filename:'homeward narrative regression checks', timeout:10000});
 
+vm.runInContext(`{
+  const priorG={...G},priorAU={...AU};
+  const started=[],jingles=[],notes=[];
+  try{
+    G.savePrefs=()=>{};G.profileStats={levels:{}};G.cleared=LEVELS.map(()=>false);
+    G.pendingSkillBonus={};G.runeProgress=G.normalizeRuneProgress({});
+    G.levelSelectMode='campaign';G.cutscene=null;
+    AU.musicOn=true;AU.sfxOn=false;AU.homecomingVoices=[];AU.musGain=null;
+    AU.startMusic=kind=>{AU.stopMusic();if(AU.musicOn){started.push(kind);AU.mus={kind,timer:1,step:0,next:0}}};
+    AU.jingle=win=>jingles.push(win);
+    const finish=(idx,practice,win,forced=false)=>{
+      G.startLevel(idx,{audio:false});G.levelRunMode=practice?'practice':'campaign';
+      G.levelForceFail=forced;G.saved=G.level.save-(win?0:1);
+      G.spawned=G.level.lem;G.lems=[];G.timeT=0;G.endT=16;
+      started.length=0;jingles.length=0;G.tick();
+      if(G.state!=='RESULT')throw new Error('Homecoming fixture did not finish the actual level');
+    };
+    for(const [idx,practice,win,forced] of [[39,true,true,false],[39,false,false,false],[39,false,true,true],[38,false,true,false]]){
+      finish(idx,practice,win,forced);
+      if(G.hasFinalSkyVictory()||started.includes('homecoming')||jingles.length!==1)throw new Error('Homecoming stole a normal or practice result');
+    }
+    G.cutscenesOn=false;finish(39,false,true);
+    if(!G.homecomingActive()||started.join(',')!=='homecoming'||jingles.length)throw new Error('Final campaign victory should play homecoming instead of a generic jingle, even with cutscenes disabled');
+    const timer=AU.mus.timer;G.setMusicVolume(.45);
+    if(AU.mus.kind!=='homecoming'||AU.mus.timer!==timer||started.length!==1)throw new Error('Changing final-scene volume restarted or replaced its score');
+    G.toggleMusic();if(AU.musicOn||AU.mus.timer)throw new Error('Homecoming mute left its scheduler running');
+    G.toggleMusic();if(AU.mus.kind!=='homecoming'||!AU.musicOn)throw new Error('Homecoming toggle resumed menu music');
+    G.goToMenu();if(AU.mus.kind!=='menu'||G.homecomingActive())throw new Error('Homecoming leaked into the menu');
+    G.cutscenesOn=true;
+    const before=JSON.stringify({stats:G.profileStats,runes:G.runeProgress,cleared:G.cleared});
+    G.playCutscene('homecoming-preview');
+    if(!G.homecomingActive()||AU.mus.kind!=='homecoming')throw new Error('Preview did not play the ending score');
+    const originalCaption=drawCutsceneCaption,originalFrame=drawCutsceneFrame,originalText=drawText;
+    const previewLines=[];let captions=0,frames=0;
+    try{
+      drawCutsceneCaption=(...args)=>{captions++;originalCaption(...args)};
+      drawCutsceneFrame=(...args)=>{frames++;originalFrame(...args)};
+      drawText=(c,s)=>previewLines.push(String(s));
+      drawCutsceneOverlay(WCTX,20);
+      if(captions||frames||!previewLines.includes('ÄNTLIGEN HEMMA')||previewLines.some(s=>s.startsWith('DU RÄDDADE')))throw new Error('Homecoming preview should use the real artwork and headings without a generic frame or fabricated result');
+      const level=G.level;
+      try{G.level=null;drawSkyHomecoming(WCTX,20,true)}finally{G.level=level}
+      G.stopCutscene('skip',true);
+      G.playCutscene('cutscene-preview-fullscreen');drawCutsceneOverlay(WCTX,20);G.stopCutscene('skip',true);
+      if(captions!==1||frames!==1)throw new Error('Regular cutscenes lost their caption or frame');
+    }finally{drawCutsceneCaption=originalCaption;drawCutsceneFrame=originalFrame;drawText=originalText}
+    G.stopCutscene('skip',true);
+    if(AU.mus.kind!=='menu'||before!==JSON.stringify({stats:G.profileStats,runes:G.runeProgress,cleared:G.cleared}))throw new Error('Preview did not restore music or changed progress');
+    G.playCutscene('homecoming-preview');G.clearCutscene('restart');
+    if(AU.mus.timer)throw new Error('Clearing the preview should not restart stale music');
+    AU.musicOn=false;finish(39,false,true);
+    if(AU.mus.timer||started.length)throw new Error('Final victory ignored the music-off preference');
+    AU.musicOn=true;finish(39,false,true);G.restartCurrentLevel();
+    if(AU.mus.kind==='homecoming'||G.homecomingActive())throw new Error('Replay kept homecoming music');
+
+    if(HOMECOMING_SCORE.bars.length!==32)throw new Error('Homecoming should have four complete eight-bar phrases');
+    for(const bar of HOMECOMING_SCORE.bars){
+      if(bar.mel.length!==6||bar.chord.length!==4||!Number.isInteger(bar.bass)||bar.bass<24||bar.bass>55)throw new Error('Invalid homecoming score bar');
+      if(bar.mel.some(n=>!Number.isInteger(n)||n<-1||n>96)||bar.chord.some(n=>!Number.isInteger(n)||n<48||n>84))throw new Error('Invalid homecoming pitch');
+    }
+    AU.homecomingNote=(note,dur,voice,vol,when,pan)=>notes.push({note,dur,voice,vol,when,pan});
+    const stepDur=60/HOMECOMING_SCORE.bpm/3;
+    for(let step=0;step<192;step++)AU.scheduleHomecomingStep(step,step*stepDur,stepDur);
+    if(notes.some(n=>!Number.isFinite(n.when)||n.when<0||n.dur<=0||n.vol<=0||Math.abs(n.pan)>1))throw new Error('Homecoming scheduled invalid audio');
+    for(const voice of ['bass','pad','harp','flute'])if(!notes.some(n=>n.voice===voice))throw new Error('Missing homecoming voice: '+voice);
+    AU.ctx={currentTime:100};AU.mus={kind:'homecoming',step:12,next:1,timer:1};
+    notes.length=0;AU.pump();
+    if(AU.mus.step>14||AU.mus.next<=100||notes.some(n=>n.when<100))throw new Error('Resuming a background tab burst out old homecoming notes');
+
+    // Exercise actual envelopes, routing and cleanup, including the no-panner fallback.
+    AU.homecomingNote=priorAU.homecomingNote;AU.homecomingVoices=[];AU.on=true;AU.musicOn=true;
+    const oscillators=[],envelopes=[],connections=[];
+    const param=()=>({value:0,setValueAtTime(v,t){this.value=v;envelopes.push([v,t])},
+      linearRampToValueAtTime(v,t){this.value=v;envelopes.push([v,t])},
+      exponentialRampToValueAtTime(v,t){this.value=v;envelopes.push([v,t])},cancelScheduledValues(){}});
+    const node=()=>({connect(n){connections.push(n)},disconnect(){this.disconnected=true}});
+    AU.ctx={currentTime:10,
+      createGain(){return {...node(),gain:param()}},
+      createStereoPanner(){return {...node(),pan:param()}},
+      createOscillator(){const o={...node(),frequency:param(),start(t){this.startT=t},stop(t){this.stopT=t}};oscillators.push(o);return o}
+    };
+    AU.musGain=node();AU.sfxGain=node();
+    AU.homecomingNote(74,1.2,'flute',.068,10,.2);
+    AU.ctx.createStereoPanner=null;AU.homecomingNote(62,2.2,'pad',.024,12,0);
+    if(AU.homecomingVoices.length!==2||connections.includes(AU.sfxGain)||!connections.includes(AU.musGain))throw new Error('Homecoming should play through music volume even with SFX off');
+    if(envelopes.some(([v,t])=>!Number.isFinite(v)||!Number.isFinite(t)||t<10))throw new Error('Homecoming envelope is invalid');
+    AU.stopMusic();
+    if(AU.homecomingVoices.length||oscillators.some(o=>o.stopT>10.2))throw new Error('Stopping homecoming left long or future notes playing');
+    for(const o of oscillators)o.onended();
+    if(oscillators.some(o=>!o.disconnected))throw new Error('Homecoming oscillators were not disconnected');
+    AU.musicOn=false;AU.homecomingNote(74,1,'flute',.068,11,0);
+    if(AU.homecomingVoices.length)throw new Error('Muted homecoming allocated new voices');
+  }finally{Object.assign(G,priorG);Object.assign(AU,priorAU)}
+}`, sandbox, {filename:'homecoming music and lifecycle checks', timeout:10000});
+
 const bazookaSchoolIdx = LEVELS.findIndex(L => L.name === 'BAZOOKA-SKOLAN');
 if (bazookaSchoolIdx < 0) throw new Error('Missing BAZOOKA-SKOLAN');
 G.startLevel(bazookaSchoolIdx);

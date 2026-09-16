@@ -7,6 +7,41 @@ const UNDERWATER_PANIC_GAIN_BOOST=1.34;
 const CHURCH_HYMN_LOOP_START_SECONDS=1;
 const CHURCH_HYMN_LOOP_SECONDS=32;
 const CHURCH_HYMN_LOOP_FADE_SECONDS=1;
+// "Hemkomsten": four eight-bar phrases in 6/8. Zero sustains; -1 is a rest.
+const HOMECOMING_SCORE={bpm:56,bars:[
+  {bass:38,chord:[62,66,69,71],mel:[74,0,0,76,78,0]},
+  {bass:37,chord:[61,64,69,71],mel:[76,0,73,0,0,69]},
+  {bass:35,chord:[59,62,66,69],mel:[74,0,78,0,76,74]},
+  {bass:31,chord:[59,62,66,67],mel:[71,0,0,69,71,74]},
+  {bass:40,chord:[59,64,67,71],mel:[76,0,79,0,78,76]},
+  {bass:42,chord:[62,66,69,74],mel:[78,0,0,76,74,0]},
+  {bass:33,chord:[62,67,69,74],mel:[76,0,74,73,0,71]},
+  {bass:33,chord:[61,64,67,69],mel:[73,0,0,-1,0,0]},
+  {bass:38,chord:[62,66,69,74],mel:[74,0,78,81,0,0]},
+  {bass:42,chord:[61,66,69,73],mel:[80,0,78,76,0,73]},
+  {bass:35,chord:[59,62,66,69],mel:[78,0,0,81,78,76]},
+  {bass:31,chord:[59,62,67,71],mel:[79,0,78,74,0,71]},
+  {bass:40,chord:[59,64,67,71],mel:[76,0,79,83,0,81]},
+  {bass:33,chord:[62,64,69,74],mel:[81,0,79,78,0,76]},
+  {bass:33,chord:[61,64,67,69],mel:[76,0,74,73,0,0]},
+  {bass:38,chord:[62,66,69,71],mel:[74,0,0,0,-1,0]},
+  {bass:31,chord:[59,62,66,67],mel:[71,0,0,74,0,0]},
+  {bass:42,chord:[57,61,64,66],mel:[69,0,73,0,0,0]},
+  {bass:40,chord:[59,64,67,71],mel:[67,0,71,74,0,76]},
+  {bass:35,chord:[59,62,66,69],mel:[78,0,0,74,0,0]},
+  {bass:31,chord:[59,62,67,71],mel:[79,0,78,76,0,74]},
+  {bass:38,chord:[62,66,69,74],mel:[78,0,76,74,0,69]},
+  {bass:40,chord:[59,64,67,71],mel:[71,0,74,76,0,79]},
+  {bass:33,chord:[61,64,67,69],mel:[76,0,0,73,0,0]},
+  {bass:38,chord:[62,66,69,71],mel:[74,0,0,76,78,0]},
+  {bass:37,chord:[61,64,69,71],mel:[81,0,0,78,76,73]},
+  {bass:35,chord:[59,62,66,69],mel:[78,0,81,83,0,81]},
+  {bass:31,chord:[59,62,67,71],mel:[79,0,78,74,0,0]},
+  {bass:40,chord:[59,64,67,71],mel:[76,0,79,78,0,76]},
+  {bass:33,chord:[61,64,67,69],mel:[74,0,73,69,0,73]},
+  {bass:38,chord:[62,66,69,71],mel:[74,0,0,0,0,0]},
+  {bass:38,chord:[62,66,69,74],mel:[-1,0,0,0,0,0]}
+]};
 const AU={
   ctx:null, master:null, musGain:null, sfxGain:null, on:true, musicOn:true, sfxOn:true, musicVol:1, sfxVol:1, musicDuck:1, started:false,
   weather:{timer:null,kind:null,next:0,step:0,loopNodes:[]}, waterfallCave:{loopNodes:[]}, churchHymn:null, fxLast:{},
@@ -1077,6 +1112,7 @@ const AU={
   },
   // --- musik (egenkomponerade slingor) ---
   mus:{timer:null,step:0,next:0,kind:'day'},
+  homecomingVoices:[],
   // melodi/bas i MIDI-nummer, 0 = paus. Åttondelar.
   PAT:{
     menu:{bpm:112,
@@ -1408,6 +1444,83 @@ const AU={
       this.weather.next=t+3.8+Math.random()*5.2;
     }else this.weather.next=t+1.0;
   },
+  homecomingNote(note,dur,voice,vol,when,pan){
+    if(!this.ctx||!this.on||!this.musicOn||!this.musGain)return;
+    const t=when,harp=voice==='harp',pad=voice==='pad';
+    const attack=Math.min(dur*0.22,harp?0.012:(pad?0.52:0.09));
+    const release=Math.min(dur*0.40,pad?0.70:0.32);
+    const gain=this.ctx.createGain(),oscillators=[];
+    const panner=this.ctx.createStereoPanner?this.ctx.createStereoPanner():null;
+    const out=panner||gain;
+    if(panner){panner.pan.setValueAtTime(pan||0,t);gain.connect(panner)}
+    out.connect(this.musGain);
+    gain.gain.setValueAtTime(0.00005,t);
+    gain.gain.linearRampToValueAtTime(vol,t+attack);
+    if(!harp){
+      gain.gain.linearRampToValueAtTime(vol*0.82,Math.max(t+attack,t+dur-release));
+    }
+    gain.gain.exponentialRampToValueAtTime(0.00005,t+dur);
+    const entry={gain,out,oscillators,partials:[]};
+    this.homecomingVoices.push(entry);
+    const harmonics=voice==='flute'?[[1,1],[2,0.12]]:(harp?[[1,1],[2,0.18]]:[[1,1]]);
+    let remaining=harmonics.length;
+    for(const [ratio,level] of harmonics){
+      const o=this.ctx.createOscillator(),partial=this.ctx.createGain();
+      o.type=voice==='flute'&&ratio===1?'triangle':'sine';
+      o.frequency.setValueAtTime(this.midi(note)*ratio,t);
+      partial.gain.setValueAtTime(level,t);o.connect(partial);partial.connect(gain);
+      oscillators.push(o);entry.partials.push(partial);
+      o.onended=()=>{
+        if(--remaining)return;
+        for(const node of [...oscillators,...entry.partials,gain,...(panner?[panner]:[])])node.disconnect();
+        const i=this.homecomingVoices.indexOf(entry);if(i>=0)this.homecomingVoices.splice(i,1);
+      };
+      o.start(t);o.stop(t+dur+0.02);
+    }
+  },
+  stopHomecomingVoices(){
+    const t=this.now(),voices=this.homecomingVoices.splice(0);
+    for(const voice of voices){
+      const p=voice.gain.gain;
+      if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);
+      else{p.cancelScheduledValues(t);p.setValueAtTime(Math.max(0.00005,p.value),t)}
+      p.linearRampToValueAtTime(0.00005,t+0.16);
+      for(const o of voice.oscillators)o.stop(t+0.18);
+    }
+  },
+  scheduleHomecomingStep(step,t,stepDur){
+    const barIndex=Math.floor(step/6)%HOMECOMING_SCORE.bars.length;
+    const bar=HOMECOMING_SCORE.bars[barIndex],beat=step%6;
+    const swell=Math.min(1,(step+3)/12)*(barIndex>=24?1.05:(barIndex>=16?0.82:1));
+    const note=(n,d,v,volume,delay=0,pan=0)=>this.homecomingNote(n,d*stepDur,v,volume*swell,t+delay*stepDur,pan);
+    if(beat===0){
+      note(bar.bass,5.95,'bass',0.105);
+      bar.chord.forEach((n,i)=>note(n,6.15,'pad',0.024,i*0.04,(i-1.5)*0.22));
+    }
+    if(!(barIndex===31&&beat>2)){
+      const arp=bar.chord[[0,2,1,3,1,2][beat]]+12;
+      note(arp,1.8,'harp',beat%3===0?0.034:0.024,0,-0.32);
+      note(arp,1.4,'harp',0.005,0.72,0.4);
+    }
+    const m=bar.mel[beat];
+    if(m>0){
+      let hold=1;while(beat+hold<6&&bar.mel[beat+hold]===0)hold++;
+      note(m,Math.max(0.7,hold-0.08),'flute',0.068,0,0.08);
+      note(m,Math.max(0.6,hold-0.15),'pad',0.010,0.82,-0.24);
+    }
+    if(barIndex>=8&&barIndex<24&&beat===3){
+      note(bar.chord[1]+12,2.8,'pad',0.021,0.05,0.32);
+    }
+  },
+  pumpHomecoming(){
+    const stepDur=60/HOMECOMING_SCORE.bpm/3;
+    // Do not replay a backlog if the browser resumes a suspended tab.
+    if(this.mus.next<this.now()-0.5)this.mus.next=this.now()+0.05;
+    while(this.mus.next<this.now()+0.25){
+      this.scheduleHomecomingStep(this.mus.step,this.mus.next,stepDur);
+      this.mus.next+=stepDur;this.mus.step++;
+    }
+  },
   startMusic(kind){
     this.stopMusic();
     if(!this.ctx||!this.on||!this.musicOn)return;
@@ -1416,7 +1529,10 @@ const AU={
     this.mus.step=0; this.mus.next=this.now()+0.1;
     this.mus.timer=setInterval(()=>this.pump(),50);
   },
-  stopMusic(){ if(this.mus.timer){clearInterval(this.mus.timer);this.mus.timer=null} },
+  stopMusic(){
+    if(this.mus.timer){clearInterval(this.mus.timer);this.mus.timer=null}
+    if(this.homecomingVoices.length)this.stopHomecomingVoices();
+  },
   silenceMusic(fade){
     this.stopMusic();
     if(!this.musGain||!this.musGain.gain)return;
@@ -1504,6 +1620,7 @@ const AU={
   },
   pump(){
     if(!this.ctx)return;
+    if(this.mus.kind==='homecoming'){this.pumpHomecoming();return}
     const P=this.PAT[this.mus.kind], stepDur=60/P.bpm/2;
     while(this.mus.next<this.now()+0.25){
       const i=this.mus.step%P.mel.length, t=this.mus.next;

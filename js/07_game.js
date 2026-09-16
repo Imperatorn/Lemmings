@@ -646,6 +646,7 @@ const G={
       if(AU.stopUnderwaterCaveMysteryMusic)AU.stopUnderwaterCaveMysteryMusic(0.25);
       if(AU.stopUnderwaterCavePanicMusic)AU.stopUnderwaterCavePanicMusic(0.12);
     }
+    else if(this.homecomingActive())AU.startMusic('homecoming');
     else if(this.underwaterCaveActive&&this.underwaterCaveActive()){
       this.underwaterCaveResumeMusic=true;
       AU.stopMusic();
@@ -663,7 +664,10 @@ const G={
   setMusicVolume(v){
     AU.musicOn=true;
     AU.setMusicVolume(v);
-    if(this.underwaterCaveActive&&this.underwaterCaveActive()){
+    if(this.homecomingActive()){
+      if(!AU.mus.timer||AU.mus.kind!=='homecoming')AU.startMusic('homecoming');
+    }
+    else if(this.underwaterCaveActive&&this.underwaterCaveActive()){
       this.underwaterCaveResumeMusic=true;
       AU.stopMusic();
       if(this.setUnderwaterCaveSceneAudio)this.setUnderwaterCaveSceneAudio(this.underwaterCave&&this.underwaterCave.scene,{force:true});
@@ -716,6 +720,14 @@ const G={
     this.toast(this.showHelp?'HJÄLP VISAS':'HJÄLP DOLD');
     AU.sClick();
     return this.showHelp;
+  },
+  hasFinalSkyVictory(){
+    return !!(this.level&&this.level.theme==='sky'&&this.levelIdx===LEVELS.length-1&&
+      !this.practiceRunActive()&&!this.levelForceFail&&this.saved>=this.level.save);
+  },
+  homecomingActive(){
+    return (this.state==='RESULT'&&this.hasFinalSkyVictory())||
+      !!(this.cutscene&&this.cutscene.active&&this.cutscene.id==='homecoming-preview');
   },
   musicKindForLevel(idx){
     const L=LEVELS[idx];
@@ -3587,7 +3599,9 @@ const G={
         const win=!this.levelForceFail&&this.saved>=L.save;
         this.recordLevelResult(win);
         if(win)this.markLevelCleared(this.levelIdx);
-        AU.stopMusic();AU.stopWeather();AU.jingle(win);
+        AU.stopMusic();AU.stopWeather();
+        if(this.hasFinalSkyVictory())AU.startMusic('homecoming');
+        else AU.jingle(win);
       }
     }else this.endT=0;
     // kantscroll

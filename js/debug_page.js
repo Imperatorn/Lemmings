@@ -13,7 +13,7 @@
 
   const MUSIC=[
     ['menu','Levelväljare'],['day','Dag 1'],['day2','Dag 2'],['night','Natt'],
-    ['cave','Grotta'],['caveMystery','Runarkiv'],['desert','Öken'],['lava','Lava'],['city','Stad']
+    ['cave','Grotta'],['caveMystery','Runarkiv'],['desert','Öken'],['lava','Lava'],['city','Stad'],['homecoming','Hemkomsten']
   ];
   const WEATHER=[['sun','Sol/fåglar'],['rain','Regn'],['snow','Snö'],['cave','Dropp'],['stop','Stoppa väder']];
   const CAVE_ARCHIVE_TESTS={
@@ -838,10 +838,11 @@
   }
 
   function playDebugCutscene(id,label){
-    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel();
+    if(!(G.state==='PLAY'&&G.level&&G.T))startSelectedLevel({audio:id!=='homecoming-preview'});
     const rescueKind=debugRescueKindForCutsceneId(id);
     if(rescueKind){playDebugRescueCutscene(rescueKind);return}
     if(!G.cutsceneById||!G.cutsceneById(id)){setStatus('Cutscene saknas: '+id,'warn');return}
+    if(id==='homecoming-preview')audioReady();
     const cs=G.playCutscene(id,{respectPrefs:false});
     if(!cs){setStatus('Kunde inte starta cutscene: '+id,'warn');return}
     finishAnimationSetup('Cutscene: '+(label||id)+'.');

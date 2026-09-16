@@ -176,8 +176,8 @@ function drawCutsceneOverlay(c,tk){
     else if(typeof cs.spec.draw==='function')cs.spec.draw(c,r,p,cs,tk);
     else drawCutscenePixels(c,r,shot,cs,tk,p);
   }catch(err){reportGameError('Cutscene draw error',err)}
-  drawCutsceneCaption(c,r,shot,cs,tk);
-  drawCutsceneFrame(c,r,cs,shot,tk);
+  if(cs.spec.caption!==false)drawCutsceneCaption(c,r,shot,cs,tk);
+  if(cs.spec.frame!==false)drawCutsceneFrame(c,r,cs,shot,tk);
   c.restore();
   return true;
 }

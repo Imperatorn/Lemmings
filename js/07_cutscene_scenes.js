@@ -884,10 +884,19 @@
   G.registerCutscene(makeTeleportStoneCutsceneSpec('fullscreen'));
   G.registerCutscene({
     id:'homecoming-preview',label:'Hemkomsten',group:'Hemresan',order:1,
-    description:'Förhandsvisa molnhemmet utan att ändra kampanjens framsteg.',
+    description:'Förhandsvisa paradiset och hemkomstmusiken utan att ändra kampanjens framsteg.',
     mode:'fullscreen',sound:false,
-    shots:[{seconds:12,title:'ÄNTLIGEN HEMMA',text:['FLOCKEN HAR HITTAT HEM TILL LÄMMELHIMLEN.','HÄR FINNS TID ATT VILA. OCH ATT VARA TILLSAMMANS.'],
-      draw(c,r,p,cs,tk){drawSkyResultBackground(c,tk)}
+    caption:false,frame:false,
+    onStart(g,cs){
+      cs.previousMusic=AU.mus&&AU.mus.timer?AU.mus.kind:null;
+      AU.startMusic('homecoming');
+    },
+    onFinish(g,cs,reason){
+      AU.stopMusic();
+      if((reason==='done'||reason==='skip')&&cs.previousMusic&&AU.musicOn)AU.startMusic(cs.previousMusic);
+    },
+    shots:[{seconds:72,title:'ÄNTLIGEN HEMMA',text:['FLOCKEN HAR HITTAT HEM TILL LÄMMELHIMLEN.','NU ÄR ALLA HEMMA. INGEN BEHÖVER GÅ ENSAM.'],
+      draw(c,r,p,cs,tk){drawSkyHomecoming(c,tk,true)}
     }]
   });
 })();
